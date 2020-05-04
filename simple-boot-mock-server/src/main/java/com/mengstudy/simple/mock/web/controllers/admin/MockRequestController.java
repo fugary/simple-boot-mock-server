@@ -30,8 +30,10 @@ public class MockRequestController {
     @GetMapping
     public SimpleResult<List<MockRequest>> search(@ModelAttribute MockRequestQueryVo queryVo) {
         Page<MockRequest> page = SimpleResultUtils.toPage(queryVo);
-        QueryWrapper<MockRequest> queryWrapper = Wrappers.<MockRequest>query()
-                .eq("group_id", queryVo.getGroupId());
+        QueryWrapper<MockRequest> queryWrapper = Wrappers.<MockRequest>query();
+        if (queryVo.getGroupId() != null) {
+            queryWrapper.eq("group_id", queryVo.getGroupId());
+        }
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         if (StringUtils.isNotBlank(keyword)) {
             queryWrapper.like("request_name", keyword)

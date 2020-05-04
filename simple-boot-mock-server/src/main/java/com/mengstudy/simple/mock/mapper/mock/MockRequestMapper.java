@@ -1,7 +1,6 @@
 package com.mengstudy.simple.mock.mapper.mock;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.mengstudy.simple.mock.entity.mock.MockGroup;
 import com.mengstudy.simple.mock.entity.mock.MockRequest;
 
 /**

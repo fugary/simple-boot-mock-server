@@ -1,6 +1,7 @@
 package com.mengstudy.simple.mock.service.mock;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.mengstudy.simple.mock.entity.mock.MockData;
 import com.mengstudy.simple.mock.entity.mock.MockGroup;
 
 /**
@@ -24,4 +25,13 @@ public interface MockGroupService extends IService<MockGroup> {
      * @return
      */
     boolean existsMockGroup(MockGroup group);
+
+    /**
+     * 匹配路径
+     *
+     * @param requestPath
+     * @param method
+     * @return
+     */
+    MockData matchMockData(String requestPath, String method);
 }

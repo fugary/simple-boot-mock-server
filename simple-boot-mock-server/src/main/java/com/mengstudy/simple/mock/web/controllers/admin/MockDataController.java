@@ -28,8 +28,10 @@ public class MockDataController {
     @GetMapping
     public SimpleResult<List<MockData>> search(@ModelAttribute MockDataQueryVo queryVo) {
         Page<MockData> page = SimpleResultUtils.toPage(queryVo);
-        QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
-                .eq("request_id", queryVo.getRequestId());
+        QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query();
+        if (queryVo.getRequestId() != null) {
+            queryWrapper.eq("request_id", queryVo.getRequestId());
+        }
         return SimpleResultUtils.createSimpleResult(mockDataService.page(page, queryWrapper));
     }
 
