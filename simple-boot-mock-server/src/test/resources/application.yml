@@ -1,0 +1,30 @@
+server:
+  port: 8686
+spring:
+  application:
+    name: simple-boot-mock-server
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:mockdb
+    username: root
+    password: 123456
+  h2:
+    console:
+      enabled: true
+  flyway:
+    baseline-on-migrate: true
+    out-of-order: true
+    placeholder-prefix: "${"
+    table: flyway_schema_history
+    locations: classpath:db/migration
+logging:
+  file:
+    name: logs/simple-boot-mock-server.log
+    max-size: 10MB
+    max-history: 7
+    total-size-cap: 0MB
+  level: # 日志级别
+    root: INFO
+    web: DEBUG
+    org.springframework: INFO
+#  config: classpath:demo-logback.xml
