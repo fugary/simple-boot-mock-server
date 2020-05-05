@@ -66,7 +66,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
                                 .eq("request_id", mockRequest.getId())
                                 .eq("status", 1));
-                        return mockDataList.get(0);
+                        return mockDataList.stream().findFirst().orElse(null);
                     }
                 }
             }

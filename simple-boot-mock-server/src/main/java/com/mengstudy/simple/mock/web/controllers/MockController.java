@@ -3,6 +3,7 @@ package com.mengstudy.simple.mock.web.controllers;
 import com.mengstudy.simple.mock.contants.MockConstants;
 import com.mengstudy.simple.mock.entity.mock.MockData;
 import com.mengstudy.simple.mock.service.mock.MockGroupService;
+import com.mengstudy.simple.mock.utils.MockJsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -27,9 +28,10 @@ public class MockController {
     public ResponseEntity doMock(HttpServletRequest request) {
         MockData data = mockGroupService.matchMockData(request.getServletPath(), request.getMethod());
         if (data != null) {
+            String responseBody = MockJsUtils.mock(data.getResponseBody());
             return ResponseEntity.status(data.getStatusCode())
                     .header(HttpHeaders.CONTENT_TYPE, data.getContentType())
-                    .body(data.getResponseBody());
+                    .body(responseBody);
         }
         return ResponseEntity.notFound().build();
     }
