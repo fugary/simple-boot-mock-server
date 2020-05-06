@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mengstudy.simple.mock.contants.MockErrorConstants;
 import com.mengstudy.simple.mock.entity.mock.MockGroup;
 import com.mengstudy.simple.mock.service.mock.MockGroupService;
+import com.mengstudy.simple.mock.utils.SimpleMockUtils;
 import com.mengstudy.simple.mock.utils.SimpleResultUtils;
 import com.mengstudy.simple.mock.web.vo.SimpleResult;
 import com.mengstudy.simple.mock.web.vo.query.SimpleQueryVo;
@@ -33,8 +34,8 @@ public class MockGroupController {
         QueryWrapper<MockGroup> queryWrapper = Wrappers.query();
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         if (StringUtils.isNotBlank(keyword)) {
-            queryWrapper.like("group_name", keyword)
-            .or().like("group_path", keyword);
+            queryWrapper.and(wrapper -> wrapper.like("group_name", keyword)
+                    .or().like("group_path", keyword));
         }
         return SimpleResultUtils.createSimpleResult(mockGroupService.page(page, queryWrapper));
     }
@@ -51,9 +52,12 @@ public class MockGroupController {
 
     @PostMapping
     public SimpleResult save(@RequestBody MockGroup group) {
+        if (StringUtils.isBlank(group.getGroupPath())) {
+            group.setGroupPath(SimpleMockUtils.uuid());
+        }
         if (mockGroupService.existsMockGroup(group)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
         }
-        return SimpleResultUtils.createSimpleResult(mockGroupService.saveOrUpdate(group));
+        return SimpleResultUtils.createSimpleResult(mockGroupService.saveOrUpdate(SimpleMockUtils.addAuditInfo(group)));
     }
 }

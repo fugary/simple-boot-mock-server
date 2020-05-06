@@ -29,7 +29,7 @@ CREATE TABLE t_mock_group (
 CREATE TABLE t_mock_request (
     id INT(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
     group_id INT(11) COMMENT '分组id',
-    request_name VARCHAR(255) NOT NULL COMMENT '请求名称',
+    request_name VARCHAR(255) NULL COMMENT '请求名称',
     request_path VARCHAR(1000) COMMENT '请求路径',
     method VARCHAR(50) COMMENT '请求方法',
     status INT(11) COMMENT '状态',

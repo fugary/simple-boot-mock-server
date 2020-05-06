@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mengstudy.simple.mock.contants.MockErrorConstants;
 import com.mengstudy.simple.mock.entity.mock.MockRequest;
 import com.mengstudy.simple.mock.service.mock.MockRequestService;
+import com.mengstudy.simple.mock.utils.SimpleMockUtils;
 import com.mengstudy.simple.mock.utils.SimpleResultUtils;
 import com.mengstudy.simple.mock.web.vo.SimpleResult;
 import com.mengstudy.simple.mock.web.vo.query.MockRequestQueryVo;
@@ -36,9 +37,10 @@ public class MockRequestController {
         }
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         if (StringUtils.isNotBlank(keyword)) {
-            queryWrapper.like("request_name", keyword)
-                    .or().like("request_path", keyword);
+            queryWrapper.and(wrapper -> wrapper.like("request_name", keyword)
+                    .or().like("request_path", keyword));
         }
+        queryWrapper.orderByAsc("request_path");
         return SimpleResultUtils.createSimpleResult(mockRequestService.page(page, queryWrapper));
     }
 
@@ -57,6 +59,6 @@ public class MockRequestController {
         if (mockRequestService.existsMockRequest(request)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
         }
-        return SimpleResultUtils.createSimpleResult(mockRequestService.saveOrUpdate(request));
+        return SimpleResultUtils.createSimpleResult(mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(request)));
     }
 }

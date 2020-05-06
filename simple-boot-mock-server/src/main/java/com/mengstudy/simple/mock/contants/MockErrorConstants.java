@@ -18,5 +18,8 @@ public class MockErrorConstants {
     public static final int CODE_404 = 404; // 数据不存在
 
     public static final int CODE_1001 = 1001; // 数据已经存在
-
+    /**
+     * 用户不存在或密码不正确
+     */
+    public static final int CODE_2001 = 2001; //
 }

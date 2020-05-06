@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mengstudy.simple.mock.entity.mock.MockData;
 import com.mengstudy.simple.mock.service.mock.MockDataService;
 import com.mengstudy.simple.mock.utils.MockJsUtils;
+import com.mengstudy.simple.mock.utils.SimpleMockUtils;
 import com.mengstudy.simple.mock.utils.SimpleResultUtils;
 import com.mengstudy.simple.mock.web.vo.SimpleResult;
 import com.mengstudy.simple.mock.web.vo.query.MockDataQueryVo;
@@ -47,8 +48,8 @@ public class MockDataController {
     }
 
     @PostMapping
-    public SimpleResult save(@RequestBody MockData group) {
-        return SimpleResultUtils.createSimpleResult(mockDataService.saveOrUpdate(group));
+    public SimpleResult save(@RequestBody MockData data) {
+        return SimpleResultUtils.createSimpleResult(mockDataService.saveOrUpdate(SimpleMockUtils.addAuditInfo(data)));
     }
 
     @PostMapping("/preview")

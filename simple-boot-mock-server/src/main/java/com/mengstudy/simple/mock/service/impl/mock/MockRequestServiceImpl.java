@@ -35,6 +35,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
                 .eq("group_id", request.getGroupId())
                 .eq("request_path", request.getRequestPath()));
         return existRequests.stream()
-                .anyMatch(existRequest -> !existRequest.getId().equals(request.getId()));
+                .anyMatch(existRequest -> !existRequest.getId().equals(request.getId())
+                        && existRequest.getMethod().equalsIgnoreCase(request.getMethod()));
     }
 }
