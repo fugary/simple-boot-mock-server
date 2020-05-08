@@ -10,6 +10,7 @@ import com.mengstudy.simple.mock.mapper.mock.MockGroupMapper;
 import com.mengstudy.simple.mock.service.mock.MockDataService;
 import com.mengstudy.simple.mock.service.mock.MockGroupService;
 import com.mengstudy.simple.mock.service.mock.MockRequestService;
+import com.mengstudy.simple.mock.utils.SimpleMockUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -83,7 +84,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public MockData matchMockData(String requestPath, String method) {
+    public MockData matchMockData(String requestPath, String method, Integer defaultId) {
         String requestGroupPath = calcGroupPath(requestPath);
         if (StringUtils.isNotBlank(requestGroupPath)) {
             MockGroup mockGroup = getOne(Wrappers.<MockGroup>query()
@@ -102,11 +103,32 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
                                 .eq("request_id", mockRequest.getId())
                                 .eq("status", 1));
-                        return mockDataList.stream().findFirst().orElse(null);
+                        return findMockData(mockDataList, defaultId);
                     }
                 }
             }
         }
         return null;
     }
+
+    /**
+     * 查询MockData
+     *
+     * @param mockDataList
+     * @param defaultId
+     * @return
+     */
+    private MockData findMockData(List<MockData> mockDataList, Integer defaultId) {
+        MockData result = null;
+        for (MockData mockData : mockDataList) {
+            if (defaultId != null && defaultId.equals(mockData.getId())) { // 强制指定
+                return mockData;
+            }
+            if (result == null || (!SimpleMockUtils.isDefault(result) && SimpleMockUtils.isDefault(mockData))) {
+                result = mockData;
+            }
+        }
+        return result;
+    }
+
 }

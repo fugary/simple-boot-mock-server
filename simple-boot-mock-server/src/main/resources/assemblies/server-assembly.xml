@@ -23,7 +23,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>src/main/resources/bin</directory>
+            <directory>src/main/resources/assemblies/bin</directory>
             <outputDirectory>bin</outputDirectory>
             <fileMode>0755</fileMode>
             <filtered>true</filtered>

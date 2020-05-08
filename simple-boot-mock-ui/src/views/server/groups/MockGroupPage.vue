@@ -10,13 +10,13 @@
       </el-form-item>
     </el-form>
     <el-table
-      v-loading="itemsLoading"
       :data="items"
       element-loading-text="Loading"
       border
       fit
       highlight-current-row
-      @row-dblclick="handleEdit($event)">
+      @row-dblclick="handleEdit($event)"
+    >
       <el-table-column label="分组名称" width="200">
         <template slot-scope="scope">
           <span v-if="scope.row.id===currentItem.id">
@@ -27,6 +27,7 @@
           </span>
         </template>
       </el-table-column>
+      <el-table-column prop="groupPath" label="路径ID" width="280"/>
       <el-table-column label="描述信息">
         <template slot-scope="scope">
           <span v-if="scope.row.id===currentItem.id">
@@ -37,7 +38,7 @@
           </span>
         </template>
       </el-table-column>
-      <el-table-column class-name="status-col" label="状态" width="80" align="center">
+      <el-table-column class-name="status-col" label="状态" width="60" align="center">
         <template slot-scope="scope">
           <span v-if="scope.row.id===currentItem.id">
             <el-switch v-model="currentItem.status" :active-value="1" :inactive-value="0" />
@@ -47,23 +48,23 @@
           </span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="创建时间" width="180">
+      <el-table-column align="center" label="创建时间" width="150">
         <template v-if="scope.row.createDate" slot-scope="scope">
           <i class="el-icon-time" />
           <span>{{ scope.row.createDate|date('YYYY-MM-DD HH:mm') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="250">
+      <el-table-column label="操作" width="200">
         <template slot-scope="scope">
           <span v-if="scope.row.id===currentItem.id">
-            <el-button size="mini" type="primary" @click="handleSave()">保存</el-button>
-            <el-button size="mini" @click="handleEdit(scope.row)">重置</el-button>
-            <el-button size="mini" @click="cancelEdit()">取消</el-button>
+            <el-button v-loading="saveLoading" icon="el-icon-check" size="mini" round type="success" title="保存" @click="handleSave()" />
+            <el-button icon="el-icon-refresh-left" size="mini" round type="info" title="重置" @click="handleEdit(scope.row)" />
+            <el-button icon="el-icon-close" size="mini" round title="取消" @click="cancelEdit()" />
           </span>
           <span v-else>
-            <el-button size="mini" type="primary" @click="handleEdit(scope.row)">编辑 </el-button>
-            <el-button size="mini" type="info" @click="handleRequest(scope.row)">配置请求</el-button>
-            <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button icon="el-icon-edit-outline" size="mini" round type="primary" title="编辑" @click="handleEdit(scope.row)" />
+            <el-button icon="el-icon-link" size="mini" round type="info" title="配置请求和响应数据" @click="handleRequest(scope.row)" />
+            <el-button icon="el-icon-delete-solid" size="mini" round type="danger" title="删除" @click="handleDelete(scope.row)" />
           </span>
         </template>
       </el-table-column>
@@ -79,7 +80,6 @@ export default {
   data() {
     return {
       items: null,
-      itemsLoading: true,
       page: {},
       searchParam: {
         keyword: ''
@@ -101,8 +101,7 @@ export default {
       MockGroupApi.search(this.searchParam).then(response => {
         console.info(response)
         this.items = response.data
-        this.itemsLoading = false
-      })
+      }).finally(this.cancelLoading)
     },
     handleEdit(item = this.newGroupItem()) {
       this.currentItem = Object.assign({}, item)
@@ -118,17 +117,19 @@ export default {
       }
       this.currentItem = this.newGroupItem()
     },
+    cancelLoading() {
+      this.saveLoading = false
+    },
     handleRequest(item) {
       this.$router.push({ name: 'MockRequests', params: { groupId: item.id }})
     },
     handleSave() {
       this.saveLoading = true
-      MockGroupApi.saveOrUpdate(this.currentItem).then(response => {
-        this.saveLoading = false
+      MockGroupApi.saveOrUpdate(this.currentItem, { loading: false }).then(response => {
         console.info(response)
         this.doSearch()
         this.cancelEdit()
-      }, this.cancelEdit)
+      }).finally(this.cancelLoading)
     },
     handleDelete(item) {
       this.$confirm('确定要删除该分组?', '提示').then(() => {

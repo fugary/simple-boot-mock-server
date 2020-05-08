@@ -4,6 +4,7 @@ CREATE TABLE t_mock_data (
     request_id INT(11) COMMENT '请求id',
     status INT(11) COMMENT '状态',
     status_code INT(11) COMMENT 'Http状态码',
+    default_flag INT(11) COMMENT '是否默认响应数据',
     content_type VARCHAR(255) COMMENT '返回content类型',
     response_body TEXT COMMENT '返回内容',
     description VARCHAR(1024) COMMENT '描述信息',

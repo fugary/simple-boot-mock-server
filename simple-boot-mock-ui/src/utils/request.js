@@ -1,7 +1,8 @@
 import axios from 'axios'
-import { MessageBox, Message } from 'element-ui'
+import { MessageBox, Message, Loading } from 'element-ui'
 import store from '@/store'
 import { getToken } from '@/utils/auth'
+import { isString } from 'element-ui/src/utils/types'
 
 // create an axios instance
 const service = axios.create({
@@ -14,7 +15,13 @@ const service = axios.create({
 service.interceptors.request.use(
   config => {
     // do something before request is sent
-
+    if (config.loading !== false) {
+      config.loading = isString(config.loading) ? config.loading : true
+      config.loadingInstance = Loading.service({
+        text: isString(config.loading) ? config.loading : 'Loading...',
+        target: '.main-container'
+      })
+    }
     if (store.getters.token) {
       // let each request carry token
       // ['X-Token'] is a custom headers key
@@ -43,6 +50,10 @@ service.interceptors.response.use(
    * You can also judge the status by HTTP Status Code
    */
   response => {
+    const config = response.config
+    if (config.loadingInstance) {
+      config.loadingInstance.close()
+    }
     const res = response.data
 
     // if the custom code is not 20000, it is judged as an error.

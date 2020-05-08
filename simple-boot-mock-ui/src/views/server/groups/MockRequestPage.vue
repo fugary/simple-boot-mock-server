@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-page-header @back="goBack">
       <div slot="content">
-        {{ groupItem.groupName }} 【{{ `/mock/${groupItem.groupPath}` }}】
+        {{ groupItem.groupName }} 【{{ groupUrl }}】
       </div>
     </el-page-header>
     <el-divider />
@@ -17,7 +17,6 @@
     </el-form>
     <el-table
       ref="requestsTable"
-      v-loading="itemsLoading"
       :data="items"
       element-loading-text="Loading"
       border
@@ -28,7 +27,7 @@
     >
       <el-table-column type="expand">
         <template slot-scope="requestScope">
-          <mock-data-edit v-if="requestScope.row.expandDataFlag" :request="requestScope.row" />
+          <mock-data-edit v-if="groupItem.id && requestScope.row.expandDataFlag" :group-item="groupItem" :request="requestScope.row" />
         </template>
       </el-table-column>
       <el-table-column label="请求路径" width="200">
@@ -80,21 +79,27 @@
           <span>{{ scope.row.createDate|date('YYYY-MM-DD HH:mm') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="250">
+      <el-table-column label="操作" width="200">
         <template slot-scope="scope">
           <span v-if="scope.row.id===currentItem.id">
-            <el-button size="mini" type="primary" @click="handleSave()">保存</el-button>
-            <el-button size="mini" @click="handleEdit(scope.row)">重置</el-button>
-            <el-button size="mini" @click="cancelEdit()">取消</el-button>
+            <el-button v-loading="saveLoading" icon="el-icon-check" size="mini" round type="success" title="保存" @click="handleSave()" />
+            <el-button icon="el-icon-refresh-left" size="mini" round type="info" title="重置" @click="handleEdit(scope.row)" />
+            <el-button icon="el-icon-close" size="mini" round title="取消" @click="cancelEdit()" />
           </span>
           <span v-else>
-            <el-button size="mini" type="primary" @click="handleEdit(scope.row)">编辑 </el-button>
-            <el-button size="mini" type="info" @click="doExpandData(scope.row)">配置响应 </el-button>
-            <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button icon="el-icon-edit-outline" size="mini" round type="primary" title="编辑" @click="handleEdit(scope.row)" />
+            <el-button icon="el-icon-view" size="mini" round type="success" title="预览默认或者第一条响应数据" @click="handleDataPreview(scope.row)" />
+            <el-button icon="el-icon-delete-solid" size="mini" round type="danger" title="删除" @click="handleDelete(scope.row)" />
           </span>
         </template>
       </el-table-column>
     </el-table>
+    <mock-data-preview
+      v-if="previewDataConfig.showDataPreview"
+      :request="previewDataConfig.request"
+      :request-url="previewDataConfig.requestUrl"
+      @preview-close="previewDataConfig.showDataPreview=false"
+    />
   </div>
 </template>
 
@@ -102,22 +107,30 @@
 import MockGroupApi from '../../../api/server/MockGroupApi'
 import MockRequestApi from '../../../api/server/MockRequestApi'
 import MockDataEdit from './MockDataEdit'
+import MockDataPreview from './MockDataPreview'
 
 export default {
   name: 'MockGroupPage',
-  components: { MockDataEdit },
+  components: { MockDataEdit, MockDataPreview },
   data() {
     const groupId = this.$route.params.groupId
     return {
       groupId,
       groupItem: {},
+      groupUrl: '',
       items: null,
-      itemsLoading: true,
+      saveLoading: false,
       page: {},
       searchParam: {
         groupId
       },
       currentItem: this.newRequestItem(),
+      previewDataConfig: {
+        request: null,
+        requestUrl: null,
+        dataItem: {},
+        showDataPreview: false
+      },
       // success/info/warning/danger
       allMethods: [{ method: 'GET', type: 'primary' }, { method: 'POST', type: 'success' }, { method: 'DELETE', type: 'danger' }, { method: 'PUT', type: '' }, { method: 'PATCH', type: 'warning' }]
     }
@@ -145,17 +158,17 @@ export default {
     doLoadGroup() {
       MockGroupApi.getById(this.searchParam.groupId).then(response => {
         this.groupItem = response.data
+        this.groupUrl = `/mock/${this.groupItem.groupPath}`
       })
     },
     doSearch() {
       MockRequestApi.search(this.searchParam).then(response => {
         console.info(response)
         this.items = response.data
-        this.itemsLoading = false
-        this.$nextTick(()=>{
+        this.$nextTick(() => {
           this.doExpandData(this.items[0])
         })
-      })
+      }).finally(this.cancelLoading)
     },
     handleEdit(item = this.newRequestItem()) {
       this.currentItem = Object.assign({}, item)
@@ -171,14 +184,16 @@ export default {
       }
       this.currentItem = this.newRequestItem()
     },
+    cancelLoading() {
+      this.saveLoading = false
+    },
     handleSave() {
-      this.itemsLoading = true
-      MockRequestApi.saveOrUpdate(this.currentItem).then(response => {
+      this.saveLoading = true
+      MockRequestApi.saveOrUpdate(this.currentItem, { loading: false }).then(response => {
         console.info(response)
         this.doSearch()
         this.cancelEdit()
-        this.itemsLoading = false
-      }, error => this.itemsLoading = false)
+      }).finally(this.cancelLoading)
     },
     handleDelete(item) {
       this.$confirm('确定要删除该请求?', '提示').then(() => {
@@ -186,14 +201,22 @@ export default {
         MockRequestApi.removeById(item.id).then(this.doSearch)
       })
     },
-    handleDataExpand(request) {
+    handleDataExpand(request, expanded) {
       console.info(arguments)
-      request.expandDataFlag = !request.expandDataFlag
+      request.expandDataFlag = expanded.indexOf(request) > -1 // 判断request是否是展开状态
     },
     doExpandData(item) {
       if (item) {
         this.$refs.requestsTable.toggleRowExpansion(item)
       }
+    },
+    handleDataPreview(request) {
+      const requestUrl = `/mock/${this.groupItem.groupPath}${request.requestPath}`
+      Object.assign(this.previewDataConfig, {
+        showDataPreview: true,
+        request,
+        requestUrl
+      })
     }
   }
 }

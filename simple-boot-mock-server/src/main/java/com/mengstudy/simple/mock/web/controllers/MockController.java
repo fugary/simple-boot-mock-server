@@ -4,6 +4,7 @@ import com.mengstudy.simple.mock.contants.MockConstants;
 import com.mengstudy.simple.mock.entity.mock.MockData;
 import com.mengstudy.simple.mock.service.mock.MockGroupService;
 import com.mengstudy.simple.mock.utils.MockJsUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,8 @@ public class MockController {
 
     @RequestMapping("/**")
     public ResponseEntity doMock(HttpServletRequest request) {
-        MockData data = mockGroupService.matchMockData(request.getServletPath(), request.getMethod());
+        String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
+        MockData data = mockGroupService.matchMockData(request.getServletPath(), request.getMethod(), NumberUtils.toInt(dataId));
         if (data != null) {
             String responseBody = MockJsUtils.mock(data.getResponseBody());
             return ResponseEntity.status(data.getStatusCode())

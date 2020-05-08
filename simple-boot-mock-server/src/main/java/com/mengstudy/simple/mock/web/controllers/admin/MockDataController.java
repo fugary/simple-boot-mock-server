@@ -56,4 +56,9 @@ public class MockDataController {
     public String previewResponse(@RequestBody String data) {
         return MockJsUtils.mock(data);
     }
+
+    @PostMapping("/markDefault")
+    public SimpleResult markDefault(@RequestBody MockData data) {
+        return SimpleResultUtils.createSimpleResult(mockDataService.markMockDataDefault(data));
+    }
 }

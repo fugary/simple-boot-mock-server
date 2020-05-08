@@ -1,6 +1,8 @@
 package com.mengstudy.simple.mock.utils;
 
 import com.mengstudy.simple.mock.entity.mock.MockBase;
+import com.mengstudy.simple.mock.entity.mock.MockData;
+import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,7 +15,7 @@ import java.util.UUID;
  * @author gary.fu
  */
 @Slf4j
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SimpleMockUtils {
     /**
      * 生成uuid
@@ -38,5 +40,25 @@ public class SimpleMockUtils {
             }
         }
         return target;
+    }
+
+    /**
+     * 判断是否是默认响应数据
+     *
+     * @param mockData
+     * @return
+     */
+    public static boolean isDefault(MockData mockData) {
+        return mockData.getDefaultFlag() != null && mockData.getDefaultFlag() == 1;
+    }
+
+    /**
+     * 计算defaultFlag
+     *
+     * @param defaultFlag
+     * @return
+     */
+    public static int getDefaultFlag(Integer defaultFlag) {
+        return defaultFlag == null || defaultFlag == 0 ? 0 : 1;
     }
 }

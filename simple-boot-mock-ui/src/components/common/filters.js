@@ -39,11 +39,13 @@ export default {
       return value.charAt(0).toUpperCase() + value.slice(1)
     })
     Vue.filter('limitTo', (input, limit, begin) => {
-      input = input ? input.toString() : ''
+      input = (input ? input.toString() : '').trim()
       begin = (!begin || isNaN(begin)) ? 0 : parseInt(begin)
       begin = (begin < 0) ? Math.max(0, input.length + begin) : begin
       if (limit >= 0) {
-        return input.slice(begin, begin + limit)
+        const result = input.slice(begin, begin + limit)
+        const suffix = result.length < input.length ? '...' : ''
+        return `${result}${suffix}`
       } else {
         if (begin === 0) {
           return input.slice(limit, input.length)

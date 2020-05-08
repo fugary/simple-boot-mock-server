@@ -1,9 +1,11 @@
 package com.mengstudy.simple.mock.service.impl.mock;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.mengstudy.simple.mock.entity.mock.MockData;
 import com.mengstudy.simple.mock.mapper.mock.MockDataMapper;
 import com.mengstudy.simple.mock.service.mock.MockDataService;
+import com.mengstudy.simple.mock.utils.SimpleMockUtils;
 import org.springframework.stereotype.Service;
 
 /**
@@ -13,4 +15,21 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> implements MockDataService {
+
+    @Override
+    public boolean markMockDataDefault(MockData mockData) {
+        MockData existMockData = getById(mockData.getId());
+        boolean result = false;
+        if (existMockData != null && existMockData.getRequestId().equals(mockData.getRequestId())) {
+            result = update(Wrappers.<MockData>update()
+                    .eq("request_id", existMockData.getRequestId())
+                    .set("default_flag", 0));
+            if (SimpleMockUtils.isDefault(mockData)) {
+                result = update(Wrappers.<MockData>update()
+                        .eq("id", existMockData.getId())
+                        .set("default_flag", 1));
+            }
+        }
+        return result;
+    }
 }

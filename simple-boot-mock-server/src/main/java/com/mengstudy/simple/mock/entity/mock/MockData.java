@@ -14,6 +14,7 @@ public class MockData extends MockBase {
     private Integer groupId;
     private Integer requestId;
     private Integer statusCode;
+    private Integer defaultFlag;
     private String contentType;
     private String responseBody;
     private String description;

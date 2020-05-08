@@ -31,7 +31,8 @@ public interface MockGroupService extends IService<MockGroup> {
      *
      * @param requestPath
      * @param method
+     * @param defaultId
      * @return
      */
-    MockData matchMockData(String requestPath, String method);
+    MockData matchMockData(String requestPath, String method, Integer defaultId);
 }

@@ -4,7 +4,7 @@ spring:
   application:
     name: simple-boot-mock-server
   messages:
-    basename: i18n/errors,i18n/messages
+    basename: messages
     encoding: UTF-8
   datasource:
     driver-class-name: org.h2.Driver
@@ -25,6 +25,10 @@ spring:
     placeholder-prefix: "${"
     table: flyway_schema_history
     locations: classpath:db/migration
+  cache:
+    cache-names: mock-meta-data-cache
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=300s
 mybatis-plus:
   global-config:
     db-config:

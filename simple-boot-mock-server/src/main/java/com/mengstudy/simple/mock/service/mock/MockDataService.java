@@ -9,4 +9,12 @@ import com.mengstudy.simple.mock.entity.mock.MockData;
  * @author gary.fu
  */
 public interface MockDataService extends IService<MockData> {
+
+    /**
+     * 标记为default
+     *
+     * @param mockData
+     * @return
+     */
+    boolean markMockDataDefault(MockData mockData);
 }

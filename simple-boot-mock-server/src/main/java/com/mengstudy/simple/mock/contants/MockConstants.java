@@ -14,4 +14,13 @@ public class MockConstants {
     public static final String MOCK_PREFIX = "/mock";
 
     public static final String ALL_PATH_PATTERN = "/**";
+
+    public static final String FILTER_PATH_PATTERN = "/*";
+
+    public static final String MOCK_DATA_ID_HEADER = "mock-data-id";
+
+    public static final String MOCK_DATA_PREVIEW_HEADER = "mock-data-preview";
+
+    public static final String MOCK_META_DATA_REQ = "mock-meta-req";
+
 }
