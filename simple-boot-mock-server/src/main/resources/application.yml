@@ -1,5 +1,5 @@
 server:
-  port: 8686
+  port: 9086
 spring:
   application:
     name: simple-boot-mock-server
@@ -8,7 +8,7 @@ spring:
     encoding: UTF-8
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:file:~/simple-boot-mock/mockdb;AUTO_SERVER=TRUE
+    url: @spring.database.url@
 #    url: jdbc:h2:mem:simpledb
     username: root
     password: 123456
@@ -25,10 +25,6 @@ spring:
     placeholder-prefix: "${"
     table: flyway_schema_history
     locations: classpath:db/migration
-  cache:
-    cache-names: mock-meta-data-cache
-    caffeine:
-      spec: maximumSize=500,expireAfterWrite=300s
 mybatis-plus:
   global-config:
     db-config:
@@ -37,7 +33,7 @@ mybatis-plus:
     banner: false
 logging:
   file:
-    name: logs/simple-boot-mock-server.log
+    name: @logging.file.name@
     max-size: 10MB
     max-history: 7
     total-size-cap: 0MB

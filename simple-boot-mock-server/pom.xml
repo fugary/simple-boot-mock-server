@@ -32,12 +32,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
-            <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>
@@ -78,13 +78,35 @@
             </resource>
             <resource>
                 <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>static/**</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <excludes>
+                    <exclude>static/**</exclude>
+                </excludes>
             </resource>
         </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                        <exclude>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -97,7 +119,7 @@
                         </goals>
                         <configuration>
                             <descriptors>
-                                <descriptor>src/main/resources/assemblies/server-assembly.xml</descriptor>
+                                <descriptor>src/main/resources/assemblies/assembly.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </execution>
@@ -105,5 +127,24 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <spring.database.url>jdbc:h2:file:~/simple-boot-mock/mockdb;AUTO_SERVER=TRUE</spring.database.url>
+                <logging.file.name>c:/logs/simple-boot-mock/simple-boot-mock-server.log</logging.file.name>
+            </properties>
+        </profile>
+        <profile>
+            <id>production</id>
+            <properties>
+                <spring.database.url>jdbc:h2:file:./data/simple-boot-mock/mockdb;AUTO_SERVER=TRUE</spring.database.url>
+                <logging.file.name>logs/simple-boot-mock/simple-boot-mock-server.log</logging.file.name>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>
