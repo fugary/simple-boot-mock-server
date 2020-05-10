@@ -27,7 +27,7 @@ export default [
       {
         path: process.env.VUE_APP_BASE_API + '/h2-console',
         component: Layout,
-        meta: { title: '数据库控制台', icon: 'form' }
+        meta: { title: '数据库控制台', icon: 'form', external: true }
       }
     ]
   }

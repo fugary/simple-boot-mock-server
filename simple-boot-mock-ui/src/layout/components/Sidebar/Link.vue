@@ -14,11 +14,15 @@ export default {
     to: {
       type: String,
       required: true
+    },
+    external: {
+      type: Boolean,
+      default: false
     }
   },
   methods: {
     linkProps(url) {
-      if (isExternal(url)) {
+      if (isExternal(url) || this.external) {
         return {
           is: 'a',
           href: url,

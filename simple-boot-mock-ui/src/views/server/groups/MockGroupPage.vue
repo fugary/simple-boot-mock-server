@@ -9,66 +9,70 @@
         <el-button type="success" @click="handleEdit()">新增</el-button>
       </el-form-item>
     </el-form>
-    <el-table
-      :data="items"
-      element-loading-text="Loading"
-      border
-      fit
-      highlight-current-row
-      @row-dblclick="handleEdit($event)"
-    >
-      <el-table-column label="分组名称" width="200">
-        <template slot-scope="scope">
-          <span v-if="scope.row.id===currentItem.id">
-            <el-input v-model="currentItem.groupName" size="mini" autocomplete="off" />
-          </span>
-          <span v-else>
-            {{ scope.row.groupName }}
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="groupPath" label="路径ID" width="280"/>
-      <el-table-column label="描述信息">
-        <template slot-scope="scope">
-          <span v-if="scope.row.id===currentItem.id">
-            <el-input v-model="currentItem.description" autosize type="textarea" size="mini" autocomplete="off" />
-          </span>
-          <span v-else>
-            {{ scope.row.description }}
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column class-name="status-col" label="状态" width="60" align="center">
-        <template slot-scope="scope">
-          <span v-if="scope.row.id===currentItem.id">
-            <el-switch v-model="currentItem.status" :active-value="1" :inactive-value="0" />
-          </span>
-          <span v-else>
-            <el-tag effect="dark" size="mini" disable-transitions :type="scope.row.status?'success':'danger'">{{ scope.row.status|statusFilter }}</el-tag>
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column align="center" label="创建时间" width="150">
-        <template v-if="scope.row.createDate" slot-scope="scope">
-          <i class="el-icon-time" />
-          <span>{{ scope.row.createDate|date('YYYY-MM-DD HH:mm') }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="200">
-        <template slot-scope="scope">
-          <span v-if="scope.row.id===currentItem.id">
-            <el-button v-loading="saveLoading" icon="el-icon-check" size="mini" round type="success" title="保存" @click="handleSave()" />
-            <el-button icon="el-icon-refresh-left" size="mini" round type="info" title="重置" @click="handleEdit(scope.row)" />
-            <el-button icon="el-icon-close" size="mini" round title="取消" @click="cancelEdit()" />
-          </span>
-          <span v-else>
-            <el-button icon="el-icon-edit-outline" size="mini" round type="primary" title="编辑" @click="handleEdit(scope.row)" />
-            <el-button icon="el-icon-link" size="mini" round type="info" title="配置请求和响应数据" @click="handleRequest(scope.row)" />
-            <el-button icon="el-icon-delete-solid" size="mini" round type="danger" title="删除" @click="handleDelete(scope.row)" />
-          </span>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-form ref="groupForm" class="table-form" :model="currentItem" :rules="groupFormRules">
+      <el-table
+        :data="items"
+        element-loading-text="Loading"
+        border
+        fit
+        highlight-current-row
+        @row-dblclick="handleEdit($event)"
+      >
+        <el-table-column label="分组名称" width="200">
+          <template slot-scope="scope">
+            <span v-if="scope.row.id===currentItem.id">
+              <el-form-item prop="groupName">
+                <el-input v-model="currentItem.groupName" size="mini" autocomplete="off" />
+              </el-form-item>
+            </span>
+            <span v-else>
+              {{ scope.row.groupName }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="groupPath" label="路径ID" width="280" />
+        <el-table-column label="描述信息">
+          <template slot-scope="scope">
+            <span v-if="scope.row.id===currentItem.id">
+              <el-input v-model="currentItem.description" autosize type="textarea" size="mini" autocomplete="off" />
+            </span>
+            <span v-else>
+              {{ scope.row.description }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column class-name="status-col" label="状态" width="60" align="center">
+          <template slot-scope="scope">
+            <span v-if="scope.row.id===currentItem.id">
+              <el-switch v-model="currentItem.status" :active-value="1" :inactive-value="0" />
+            </span>
+            <span v-else>
+              <el-tag effect="dark" size="mini" disable-transitions :type="scope.row.status?'success':'danger'">{{ scope.row.status|statusFilter }}</el-tag>
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column align="center" label="创建时间" width="150">
+          <template v-if="scope.row.createDate" slot-scope="scope">
+            <i class="el-icon-time" />
+            <span>{{ scope.row.createDate|date('YYYY-MM-DD HH:mm') }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200">
+          <template slot-scope="scope">
+            <span v-if="scope.row.id===currentItem.id">
+              <el-button v-loading="saveLoading" icon="el-icon-check" size="mini" round type="success" title="保存" @click="handleSave()" />
+              <el-button icon="el-icon-refresh-left" size="mini" round type="info" title="重置" @click="handleEdit(scope.row)" />
+              <el-button icon="el-icon-close" size="mini" round title="取消" @click="cancelEdit()" />
+            </span>
+            <span v-else>
+              <el-button icon="el-icon-edit-outline" size="mini" round type="primary" title="编辑" @click="handleEdit(scope.row)" />
+              <el-button icon="el-icon-link" size="mini" round type="info" title="配置请求和响应数据" @click="handleRequest(scope.row)" />
+              <el-button icon="el-icon-delete-solid" size="mini" round type="danger" title="删除" @click="handleDelete(scope.row)" />
+            </span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-form>
   </div>
 </template>
 
@@ -85,7 +89,10 @@ export default {
         keyword: ''
       },
       currentItem: this.newGroupItem(),
-      saveLoading: false
+      saveLoading: false,
+      groupFormRules: {
+        groupName: { required: true, message: '分组名称不能为空' }
+      }
     }
   },
   mounted() {
@@ -104,17 +111,12 @@ export default {
       }).finally(this.cancelLoading)
     },
     handleEdit(item = this.newGroupItem()) {
+      this.$cleanNewItem(this.items)
       this.currentItem = Object.assign({}, item)
-      if (!item.id) {
-        if (!this.items.length || this.items[this.items.length - 1].id !== item.id) {
-          this.items.push(item)
-        }
-      }
+      this.$editTableItem(this.items, item)
     },
     cancelEdit() {
-      if (!this.currentItem.id) {
-        this.items.pop()
-      }
+      this.$cleanNewItem(this.items)
       this.currentItem = this.newGroupItem()
     },
     cancelLoading() {
@@ -124,12 +126,16 @@ export default {
       this.$router.push({ name: 'MockRequests', params: { groupId: item.id }})
     },
     handleSave() {
-      this.saveLoading = true
-      MockGroupApi.saveOrUpdate(this.currentItem, { loading: false }).then(response => {
-        console.info(response)
-        this.doSearch()
-        this.cancelEdit()
-      }).finally(this.cancelLoading)
+      this.$refs.groupForm.validate(valid => {
+        if (valid) {
+          this.saveLoading = true
+          MockGroupApi.saveOrUpdate(this.currentItem, { loading: false }).then(response => {
+            console.info(response)
+            this.doSearch()
+            this.cancelEdit()
+          }).finally(this.cancelLoading)
+        }
+      })
     },
     handleDelete(item) {
       this.$confirm('确定要删除该分组?', '提示').then(() => {

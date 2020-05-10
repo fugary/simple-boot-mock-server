@@ -15,85 +15,89 @@
         <el-button type="success" @click="handleEdit()">新增</el-button>
       </el-form-item>
     </el-form>
-    <el-table
-      ref="requestsTable"
-      :data="items"
-      element-loading-text="Loading"
-      border
-      fit
-      highlight-current-row
-      @row-dblclick="handleEdit($event)"
-      @expand-change="handleDataExpand"
-    >
-      <el-table-column type="expand">
-        <template slot-scope="requestScope">
-          <mock-data-edit v-if="groupItem.id && requestScope.row.expandDataFlag" :group-item="groupItem" :request="requestScope.row" />
-        </template>
-      </el-table-column>
-      <el-table-column label="请求路径" width="200">
-        <template slot-scope="scope">
-          <span v-if="scope.row.id === currentItem.id">
-            <el-input v-model="currentItem.requestPath" size="mini" placeholder="请求路径" />
-          </span>
-          <span v-else>{{ scope.row.requestPath }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="请求方法" width="100">
-        <template slot-scope="scope">
-          <span v-if="scope.row.id === currentItem.id">
-            <el-select v-model="currentItem.method" size="mini" placeholder="请求方法">
-              <el-option
-                v-for="item in allMethods"
-                :key="item.method"
-                :label="item.method"
-                :value="item.method"
-              />
-            </el-select>
-          </span>
-          <el-tag v-else effect="dark" disable-transitions :type="methodType(scope.row.method)">
-            {{ scope.row.method }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column class-name="status-col" label="状态" width="110" align="center">
-        <template slot-scope="scope">
-          <span v-if="scope.row.id === currentItem.id">
-            <el-switch v-model="currentItem.status" :active-value="1" :inactive-value="0" />
-          </span>
-          <el-tag v-else effect="dark" size="mini" disable-transitions :type="scope.row.status?'success':'danger'">
-            {{ scope.row.status|statusFilter }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="请求名称" prop="requestName">
-        <template slot-scope="scope">
-          <span v-if="scope.row.id === currentItem.id">
-            <el-input v-model="currentItem.requestName" size="mini" placeholder="请求名称" />
-          </span>
-          <span v-else>{{ scope.row.requestName }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column align="center" prop="created_at" label="创建时间" width="150">
-        <template v-if="scope.row.createDate" slot-scope="scope">
-          <i class="el-icon-time" />
-          <span>{{ scope.row.createDate|date('YYYY-MM-DD HH:mm') }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="200">
-        <template slot-scope="scope">
-          <span v-if="scope.row.id===currentItem.id">
-            <el-button v-loading="saveLoading" icon="el-icon-check" size="mini" round type="success" title="保存" @click="handleSave()" />
-            <el-button icon="el-icon-refresh-left" size="mini" round type="info" title="重置" @click="handleEdit(scope.row)" />
-            <el-button icon="el-icon-close" size="mini" round title="取消" @click="cancelEdit()" />
-          </span>
-          <span v-else>
-            <el-button icon="el-icon-edit-outline" size="mini" round type="primary" title="编辑" @click="handleEdit(scope.row)" />
-            <el-button icon="el-icon-view" size="mini" round type="success" title="预览默认或者第一条响应数据" @click="handleDataPreview(scope.row)" />
-            <el-button icon="el-icon-delete-solid" size="mini" round type="danger" title="删除" @click="handleDelete(scope.row)" />
-          </span>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-form class="table-form" :model="currentItem" ref="requestForm" :rules="requestFormRules">
+      <el-table
+        ref="requestsTable"
+        :data="items"
+        element-loading-text="Loading"
+        border
+        fit
+        highlight-current-row
+        @row-dblclick="handleEdit($event)"
+        @expand-change="handleDataExpand"
+      >
+        <el-table-column type="expand">
+          <template slot-scope="requestScope">
+            <mock-data-edit v-if="groupItem.id && requestScope.row.expandDataFlag" :group-item="groupItem" :request="requestScope.row" />
+          </template>
+        </el-table-column>
+        <el-table-column label="请求路径" width="200">
+          <template slot-scope="scope">
+            <span v-if="scope.row.id === currentItem.id">
+              <el-form-item prop="requestPath">
+                <el-input v-model="currentItem.requestPath" size="mini" placeholder="请求路径" />
+              </el-form-item>
+            </span>
+            <span v-else>{{ scope.row.requestPath }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="请求方法" width="100">
+          <template slot-scope="scope">
+            <span v-if="scope.row.id === currentItem.id">
+              <el-select v-model="currentItem.method" size="mini" placeholder="请求方法">
+                <el-option
+                  v-for="item in allMethods"
+                  :key="item.method"
+                  :label="item.method"
+                  :value="item.method"
+                />
+              </el-select>
+            </span>
+            <el-tag v-else effect="dark" disable-transitions :type="methodType(scope.row.method)">
+              {{ scope.row.method }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column class-name="status-col" label="状态" width="110" align="center">
+          <template slot-scope="scope">
+            <span v-if="scope.row.id === currentItem.id">
+              <el-switch v-model="currentItem.status" :active-value="1" :inactive-value="0" />
+            </span>
+            <el-tag v-else effect="dark" size="mini" disable-transitions :type="scope.row.status?'success':'danger'">
+              {{ scope.row.status|statusFilter }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="请求名称" prop="requestName">
+          <template slot-scope="scope">
+            <span v-if="scope.row.id === currentItem.id">
+              <el-input v-model="currentItem.requestName" size="mini" placeholder="请求名称" />
+            </span>
+            <span v-else>{{ scope.row.requestName }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column align="center" prop="created_at" label="创建时间" width="150">
+          <template v-if="scope.row.createDate" slot-scope="scope">
+            <i class="el-icon-time" />
+            <span>{{ scope.row.createDate|date('YYYY-MM-DD HH:mm') }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200">
+          <template slot-scope="scope">
+            <span v-if="scope.row.id===currentItem.id">
+              <el-button v-loading="saveLoading" icon="el-icon-check" size="mini" round type="success" title="保存" @click="handleSave()" />
+              <el-button icon="el-icon-refresh-left" size="mini" round type="info" title="重置" @click="handleEdit(scope.row)" />
+              <el-button icon="el-icon-close" size="mini" round title="取消" @click="cancelEdit()" />
+            </span>
+            <span v-else>
+              <el-button icon="el-icon-edit-outline" size="mini" round type="primary" title="编辑" @click="handleEdit(scope.row)" />
+              <el-button icon="el-icon-view" size="mini" round type="success" title="预览默认或者第一条响应数据" @click="handleDataPreview(scope.row)" />
+              <el-button icon="el-icon-delete-solid" size="mini" round type="danger" title="删除" @click="handleDelete(scope.row)" />
+            </span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-form>
     <mock-data-preview
       v-if="previewDataConfig.showDataPreview"
       :request="previewDataConfig.request"
@@ -125,6 +129,9 @@ export default {
         groupId
       },
       currentItem: this.newRequestItem(),
+      requestFormRules: {
+        requestPath: { required: true, message: '请求路径不能为空' }
+      },
       previewDataConfig: {
         request: null,
         requestUrl: null,
@@ -171,29 +178,28 @@ export default {
       }).finally(this.cancelLoading)
     },
     handleEdit(item = this.newRequestItem()) {
+      this.$cleanNewItem(this.items)
       this.currentItem = Object.assign({}, item)
-      if (!item.id) {
-        if (!this.items.length || this.items[this.items.length - 1].id !== item.id) {
-          this.items.push(item)
-        }
-      }
+      this.$editTableItem(this.items, item)
     },
     cancelEdit() {
-      if (!this.currentItem.id) {
-        this.items.pop()
-      }
+      this.$cleanNewItem(this.items)
       this.currentItem = this.newRequestItem()
     },
     cancelLoading() {
       this.saveLoading = false
     },
     handleSave() {
-      this.saveLoading = true
-      MockRequestApi.saveOrUpdate(this.currentItem, { loading: false }).then(response => {
-        console.info(response)
-        this.doSearch()
-        this.cancelEdit()
-      }).finally(this.cancelLoading)
+      this.$refs.requestForm.validate(valid => {
+        if (valid) {
+          this.saveLoading = true
+          MockRequestApi.saveOrUpdate(this.currentItem, { loading: false }).then(response => {
+            console.info(response)
+            this.doSearch()
+            this.cancelEdit()
+          }).finally(this.cancelLoading)
+        }
+      })
     },
     handleDelete(item) {
       this.$confirm('确定要删除该请求?', '提示').then(() => {

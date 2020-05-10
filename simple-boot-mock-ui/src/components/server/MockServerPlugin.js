@@ -22,5 +22,20 @@ export default {
         e.clearSelection()
       })
     })
+    Object.assign(Vue.prototype, {
+      $cleanNewItem(items) {
+        if (items.length && !items[items.length - 1].id) {
+          items.pop()
+        }
+      },
+      $editTableItem(items = [], item) {
+        Object.assign({}, item)
+        if (!item.id) {
+          if (!items.length || items[items.length - 1].id !== item.id) {
+            items.push(item)
+          }
+        }
+      }
+    })
   }
 }

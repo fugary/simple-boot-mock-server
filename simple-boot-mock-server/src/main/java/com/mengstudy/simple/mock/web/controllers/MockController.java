@@ -28,12 +28,11 @@ public class MockController {
     @RequestMapping("/**")
     public ResponseEntity doMock(HttpServletRequest request) {
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
-        MockData data = mockGroupService.matchMockData(request.getServletPath(), request.getMethod(), NumberUtils.toInt(dataId));
+        MockData data = mockGroupService.matchMockData(request, NumberUtils.toInt(dataId));
         if (data != null) {
-            String responseBody = MockJsUtils.mock(data.getResponseBody());
             return ResponseEntity.status(data.getStatusCode())
                     .header(HttpHeaders.CONTENT_TYPE, data.getContentType())
-                    .body(responseBody);
+                    .body(data.getResponseBody());
         }
         return ResponseEntity.notFound().build();
     }

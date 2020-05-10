@@ -10,6 +10,7 @@ import com.mengstudy.simple.mock.mapper.mock.MockGroupMapper;
 import com.mengstudy.simple.mock.service.mock.MockDataService;
 import com.mengstudy.simple.mock.service.mock.MockGroupService;
 import com.mengstudy.simple.mock.service.mock.MockRequestService;
+import com.mengstudy.simple.mock.utils.MockJsUtils;
 import com.mengstudy.simple.mock.utils.SimpleMockUtils;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,7 +88,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public MockData matchMockData(String requestPath, String method, Integer defaultId) {
+    public MockData matchMockData(HttpServletRequest request, Integer defaultId) {
+        String requestPath = request.getServletPath();
+        String method = request.getMethod();
         String requestGroupPath = calcGroupPath(requestPath);
         if (StringUtils.isNotBlank(requestGroupPath)) {
             MockGroup mockGroup = getOne(Wrappers.<MockGroup>query()
@@ -98,17 +104,46 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
                 // 请求是否匹配上Request，如果匹配上就查询Data
                 for (MockRequest mockRequest : mockRequests) {
-                    if (pathMatcher.match(groupPath + StringUtils.prependIfMissing(mockRequest.getRequestPath(), "/"), requestPath)
+                    String configRequestPath = StringUtils.prependIfMissing(mockRequest.getRequestPath(), "/");
+                    configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant path不支持:var格式，只支持{var}格式
+                    String configPath = groupPath + configRequestPath;
+                    if (pathMatcher.match(configPath, requestPath)
                             && StringUtils.equalsIgnoreCase(method, mockRequest.getMethod())) {
                         List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
                                 .eq("request_id", mockRequest.getId())
                                 .eq("status", 1));
-                        return findMockData(mockDataList, defaultId);
+                        MockData mockData = findMockData(mockDataList, defaultId);
+                        processMockData(request, mockData, configPath, requestPath);
+                        return mockData;
                     }
                 }
             }
         }
         return null;
+    }
+
+    /**
+     * 处理MockData数据
+     *
+     * @param request
+     * @param mockData
+     * @param configPath
+     * @param requestPath
+     */
+    protected void processMockData(HttpServletRequest request, MockData mockData, String configPath, String requestPath) {
+        String responseBody = StringUtils.trimToEmpty(mockData.getResponseBody());
+        Map<String, String> variables = pathMatcher.extractUriTemplateVariables(configPath, requestPath);
+        Enumeration<String> parameterNames = request.getParameterNames();
+        while (parameterNames.hasMoreElements()) {
+            String paramName = parameterNames.nextElement();
+            variables.put(paramName, StringUtils.trimToEmpty(request.getParameter(paramName)));
+        }
+        for (Map.Entry<String, String> entry : variables.entrySet()) {
+            responseBody = responseBody
+                    .replace(StringUtils.join("{{", entry.getKey(), "}}"), entry.getValue())
+                    .replace(StringUtils.join("${", entry.getKey(), "}"), entry.getValue());
+        }
+        mockData.setResponseBody(MockJsUtils.mock(responseBody)); // 使用Mockjs来处理响应数据
     }
 
     /**

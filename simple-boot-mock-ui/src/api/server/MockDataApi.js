@@ -29,13 +29,12 @@ MockDataApi.previewRequest = function(requestUrl, requestItem, dataId, config) {
   })
   const headers = Object.assign({
     'mock-data-preview': true
-  }, dataId ? { 'mock-data-id': dataId } : {})// 预览的时候强制指定一个ID
+  }, dataId ? { 'mock-data-id': dataId } : {}, config.headers || {})// 预览的时候强制指定一个ID
   return req(Object.assign({
     url: requestUrl,
     method: requestItem.method,
-    headers,
     transformResponse: res => res // 信息不要转换掉，这边需要预览原始信息
-  }, config))
+  }, config, { headers }))
 }
 
 MockDataApi.processResponse = function(response) {

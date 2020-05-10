@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.mengstudy.simple.mock.entity.mock.MockData;
 import com.mengstudy.simple.mock.entity.mock.MockGroup;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Created on 2020/5/3 22:36 .<br>
  *
@@ -29,10 +31,9 @@ public interface MockGroupService extends IService<MockGroup> {
     /**
      * 匹配路径
      *
-     * @param requestPath
-     * @param method
+     * @param request
      * @param defaultId
      * @return
      */
-    MockData matchMockData(String requestPath, String method, Integer defaultId);
+    MockData matchMockData(HttpServletRequest request, Integer defaultId);
 }
