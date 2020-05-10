@@ -35,10 +35,9 @@ public class SimpleResultUtils {
      * @return
      */
     public static <T> Page<T> toPage(SimpleQueryVo queryVo) {
-        if (queryVo.getPage() != null) {
-            return new Page<>(queryVo.getPage().getCurrent(), queryVo.getPage().getSize());
-        }
-        return new Page<>();
+        Integer current = queryVo.getCurrent() == null || queryVo.getCurrent() < 0 ? 1 : queryVo.getCurrent();
+        Integer size = queryVo.getSize() == null || queryVo.getSize() < 0 ? 10 : queryVo.getSize();
+        return new Page<>(current, size);
     }
 
     /**

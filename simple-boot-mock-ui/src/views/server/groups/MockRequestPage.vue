@@ -97,6 +97,15 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-pagination
+        background
+        layout="total, prev, pager, next"
+        :page-size="searchParam.size"
+        :current-page.sync="searchParam.current"
+        :total="page.total"
+        hide-on-single-page
+        @current-change="doSearch"
+      />
     </el-form>
     <mock-data-preview
       v-if="previewDataConfig.showDataPreview"
@@ -124,10 +133,13 @@ export default {
       groupUrl: '',
       items: null,
       saveLoading: false,
-      page: {},
       searchParam: {
-        groupId
+        groupId,
+        keyword: '',
+        current: 1,
+        size: 10
       },
+      page: {},
       currentItem: this.newRequestItem(),
       requestFormRules: {
         requestPath: { required: true, message: '请求路径不能为空' }
@@ -172,6 +184,7 @@ export default {
       MockRequestApi.search(this.searchParam).then(response => {
         console.info(response)
         this.items = response.data
+        Object.assign(this.page, response.page || {})
         this.$nextTick(() => {
           this.doExpandData(this.items[0])
         })
@@ -217,7 +230,9 @@ export default {
       }
     },
     handleDataPreview(request) {
-      const requestUrl = `/mock/${this.groupItem.groupPath}${request.requestPath}`
+      let requestPath = request.requestPath || ''
+      requestPath = requestPath.startsWith('/') ? requestPath : `/${requestPath}`
+      const requestUrl = `${this.groupUrl}${requestPath}`
       Object.assign(this.previewDataConfig, {
         showDataPreview: true,
         request,

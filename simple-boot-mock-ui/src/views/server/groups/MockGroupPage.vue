@@ -72,6 +72,15 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-pagination
+        background
+        layout="total, prev, pager, next"
+        :page-size="searchParam.size"
+        :current-page.sync="searchParam.current"
+        :total="page.total"
+        hide-on-single-page
+        @current-change="doSearch"
+      />
     </el-form>
   </div>
 </template>
@@ -84,10 +93,12 @@ export default {
   data() {
     return {
       items: null,
-      page: {},
       searchParam: {
-        keyword: ''
+        keyword: '',
+        current: 1,
+        size: 10
       },
+      page: {},
       currentItem: this.newGroupItem(),
       saveLoading: false,
       groupFormRules: {
@@ -108,6 +119,7 @@ export default {
       MockGroupApi.search(this.searchParam).then(response => {
         console.info(response)
         this.items = response.data
+        Object.assign(this.page, response.page || {})
       }).finally(this.cancelLoading)
     },
     handleEdit(item = this.newGroupItem()) {

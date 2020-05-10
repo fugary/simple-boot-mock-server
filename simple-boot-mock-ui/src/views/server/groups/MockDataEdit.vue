@@ -13,14 +13,14 @@
     >
       <el-table-column label="默认" width="60">
         <template slot-scope="scope">
-          <el-icon v-if="scope.row.defaultFlag" class="el-icon-s-flag" type="primary"/>
+          <el-icon v-if="scope.row.defaultFlag" class="el-icon-s-flag" type="primary" />
         </template>
       </el-table-column>
       <el-table-column property="" label="状态码" width="100">
         <template slot-scope="scope">
           <span v-if="scope.row.id === currentDataItem.id">
             <el-select v-model="currentDataItem.statusCode" size="mini" placeholder="请求方法">
-              <el-option v-for="item in allStatusCodes" :key="item" :label="item" :value="item"/>
+              <el-option v-for="item in allStatusCodes" :key="item" :label="item" :value="item" />
             </el-select>
           </span>
           <span v-else>{{ scope.row.statusCode }}</span>
@@ -34,7 +34,7 @@
               size="mini"
               placeholder="Content Type"
             >
-              <el-option v-for="item in allContentTypes" :key="item" :label="item" :value="item"/>
+              <el-option v-for="item in allContentTypes" :key="item" :label="item" :value="item" />
             </el-select>
           </span>
           <span v-else>{{ scope.row.contentType }}</span>
@@ -43,7 +43,7 @@
       <el-table-column class-name="status-col" label="状态" width="60" align="center">
         <template slot-scope="scope">
           <span v-if="scope.row.id === currentDataItem.id">
-            <el-switch v-model="currentDataItem.status" :active-value="1" :inactive-value="0"/>
+            <el-switch v-model="currentDataItem.status" :active-value="1" :inactive-value="0" />
           </span>
           <el-tag v-else effect="dark" size="mini" disable-transitions :type="scope.row.status?'success':'danger'">{{
             scope.row.status|statusFilter }}
@@ -67,11 +67,11 @@
       <el-table-column width="220">
         <template slot="header" slot-scope="scope">
           <span>操作</span>
-          <el-button icon="el-icon-plus" size="mini" circle type="success" title="新增响应数据" @click="handleDataEdit()"/>
+          <el-button icon="el-icon-plus" size="mini" circle type="success" title="新增响应数据" @click="handleDataEdit()" />
         </template>
         <template slot-scope="scope">
           <span v-if="scope.row.id===currentDataItem.id">
-            <el-button icon="el-icon-check" size="mini" circle type="success" title="保存" @click="handleDataSave()"/>
+            <el-button icon="el-icon-check" size="mini" circle type="success" title="保存" @click="handleDataSave()" />
             <el-button
               icon="el-icon-refresh-left"
               size="mini"
@@ -80,7 +80,7 @@
               title="重置"
               @click="handleDataEdit(scope.row)"
             />
-            <el-button icon="el-icon-close" size="mini" circle title="取消" @click="cancelDataEdit()"/>
+            <el-button icon="el-icon-close" size="mini" circle title="取消" @click="cancelDataEdit()" />
           </span>
           <span v-else>
             <el-button
@@ -149,8 +149,10 @@ export default {
     request: { type: Object, required: true },
     groupItem: { type: Object }
   },
-  data () {
-    const requestUrl = `/mock/${this.groupItem.groupPath}${this.request.requestPath}`
+  data() {
+    let requestPath = this.request.requestPath || ''
+    requestPath = requestPath.startsWith('/') ? requestPath : `/${requestPath}`
+    const requestUrl = `/mock/${this.groupItem.groupPath}${requestPath}`
     return {
       requestUrl,
       dataItems: [],
@@ -167,19 +169,19 @@ export default {
     }
   },
   watch: {
-    request: function (req) {
+    request: function(req) {
       if (req) {
         this.doSearchRequestData()
       }
     }
   },
-  mounted () {
+  mounted() {
     if (this.request) {
       this.doSearchRequestData()
     }
   },
   methods: {
-    newDataItem () {
+    newDataItem() {
       return {
         requestId: this.request.id,
         groupId: this.request.groupId,
@@ -188,52 +190,53 @@ export default {
         contentType: this.allContentTypes[0]
       }
     },
-    doSearchRequestData () {
+    doSearchRequestData() {
       const request = this.request
       MockDataApi.search({
         groupId: request.groupId,
-        requestId: request.id
+        requestId: request.id,
+        size: 50
       }).then(response => {
         console.info(response)
         this.dataItems = response.data
       }).finally(this.cancelLoading)
     },
-    handleDataEdit (item = this.newDataItem()) {
+    handleDataEdit(item = this.newDataItem()) {
       this.$cleanNewItem(this.dataItems)
       this.currentDataItem = Object.assign({}, item)
       this.$editTableItem(this.dataItems, item)
     },
-    handleDataDetailEdit (item) {
+    handleDataDetailEdit(item) {
       this.currentDataDetailItem = item
       this.showDataDetailDialog = true
     },
-    cancelDataEdit () {
+    cancelDataEdit() {
       this.$cleanNewItem(this.dataItems)
       this.currentDataItem = this.newDataItem()
     },
-    cancelLoading () {
+    cancelLoading() {
       this.saveLoading = false
     },
-    handleDataSave () {
+    handleDataSave() {
       MockDataApi.saveOrUpdate(this.currentDataItem, { loading: false }).then(response => {
         console.info(response)
         this.doSearchRequestData()
         this.cancelDataEdit()
       }).finally(this.cancelLoading)
     },
-    handleDataDelete (item) {
+    handleDataDelete(item) {
       this.$confirm('确定要删除该响应数据?', '提示').then(() => {
         console.info(item)
         MockDataApi.removeById(item.id).then(this.doSearchRequestData)
       })
     },
-    handleDataPreview (dataItem = {}) {
+    handleDataPreview(dataItem = {}) {
       Object.assign(this.previewDataConfig, {
         showDataPreview: true,
         dataItem
       })
     },
-    markDefault (dataItem) {
+    markDefault(dataItem) {
       const { requestId, id } = dataItem
       this.saveLoading = true
       MockDataApi.markDefault({

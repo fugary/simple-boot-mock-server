@@ -131,19 +131,21 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
      * @param requestPath
      */
     protected void processMockData(HttpServletRequest request, MockData mockData, String configPath, String requestPath) {
-        String responseBody = StringUtils.trimToEmpty(mockData.getResponseBody());
-        Map<String, String> variables = pathMatcher.extractUriTemplateVariables(configPath, requestPath);
-        Enumeration<String> parameterNames = request.getParameterNames();
-        while (parameterNames.hasMoreElements()) {
-            String paramName = parameterNames.nextElement();
-            variables.put(paramName, StringUtils.trimToEmpty(request.getParameter(paramName)));
+        if (mockData != null) {
+            String responseBody = StringUtils.trimToEmpty(mockData.getResponseBody());
+            Map<String, String> variables = pathMatcher.extractUriTemplateVariables(configPath, requestPath);
+            Enumeration<String> parameterNames = request.getParameterNames();
+            while (parameterNames.hasMoreElements()) {
+                String paramName = parameterNames.nextElement();
+                variables.put(paramName, StringUtils.trimToEmpty(request.getParameter(paramName)));
+            }
+            for (Map.Entry<String, String> entry : variables.entrySet()) {
+                responseBody = responseBody
+                        .replace(StringUtils.join("{{", entry.getKey(), "}}"), entry.getValue())
+                        .replace(StringUtils.join("${", entry.getKey(), "}"), entry.getValue());
+            }
+            mockData.setResponseBody(MockJsUtils.mock(responseBody)); // 使用Mockjs来处理响应数据
         }
-        for (Map.Entry<String, String> entry : variables.entrySet()) {
-            responseBody = responseBody
-                    .replace(StringUtils.join("{{", entry.getKey(), "}}"), entry.getValue())
-                    .replace(StringUtils.join("${", entry.getKey(), "}"), entry.getValue());
-        }
-        mockData.setResponseBody(MockJsUtils.mock(responseBody)); // 使用Mockjs来处理响应数据
     }
 
     /**
