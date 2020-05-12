@@ -84,9 +84,9 @@
               </template>
             </el-table-column>
           </el-table>
-          <div v-if="previewDataResult.data" v-highlightjs="previewDataResult.data">
+          <pre v-if="previewDataResult.data" v-highlightjs="previewDataResult.data">
             <code />
-          </div>
+          </pre>
         </el-card>
       </el-tab-pane>
       <el-tab-pane v-if="previewDataResult.requestHeaders" label="请求头信息">
@@ -111,7 +111,8 @@
 
 <script>
 import MockDataApi from '../../../api/server/MockDataApi'
-import 'highlight.js/scss/monokai.scss'
+import 'highlight.js/styles/monokai-sublime.css'
+import hljs from 'highlight.js'
 
 export default {
   name: 'MockDataPreview',

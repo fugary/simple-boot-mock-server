@@ -1,6 +1,7 @@
 import MockModelApi from '@/api/server/MockModelApi'
 import request from '@/utils/request'
 import axios from 'axios'
+import hljs from 'highlight.js'
 
 const MOCK_DATA_URL = '/admin/data'
 const MockDataApi = new MockModelApi(MOCK_DATA_URL)
@@ -38,13 +39,14 @@ MockDataApi.previewRequest = function(requestUrl, requestItem, dataId, config) {
 }
 
 MockDataApi.processResponse = function(response) {
+  const { config } = response
   if (!response.status) {
-    response = response.response
+    response = response.response || {}
   }
-  const { data, headers, request, status, config } = response
+  const { headers = {}, request = {}, status } = response
   const requestInfo = [{
     name: 'Request URL',
-    value: request.responseURL
+    value: request.responseURL || config.url
   }, {
     name: 'Status Code',
     value: status
@@ -60,6 +62,13 @@ MockDataApi.processResponse = function(response) {
         name,
         value: headers[name]
       })
+    }
+  }
+  let data = response.data
+  if (data) {
+    const result = hljs.highlightAuto(data)
+    if (result.language === 'json') {
+      data = JSON.stringify(JSON.parse(data), null, '  ')
     }
   }
   return {

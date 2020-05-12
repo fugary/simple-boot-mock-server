@@ -1,11 +1,15 @@
 package com.mengstudy.simple.mock.utils;
 
+import com.mengstudy.simple.mock.contants.MockConstants;
 import com.mengstudy.simple.mock.entity.mock.MockBase;
 import com.mengstudy.simple.mock.entity.mock.MockData;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.UUID;
 
@@ -60,5 +64,15 @@ public class SimpleMockUtils {
      */
     public static int getDefaultFlag(Integer defaultFlag) {
         return defaultFlag == null || defaultFlag == 0 ? 0 : 1;
+    }
+
+    /**
+     * mock 预览
+     * @param request
+     * @return
+     */
+    public static boolean isMockPreview(HttpServletRequest request){
+        return BooleanUtils.toBoolean(StringUtils
+                .defaultIfBlank(request.getHeader(MockConstants.MOCK_DATA_PREVIEW_HEADER), Boolean.FALSE.toString()));
     }
 }
