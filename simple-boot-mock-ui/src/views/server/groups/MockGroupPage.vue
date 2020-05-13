@@ -124,7 +124,13 @@ export default {
     },
     handleEdit(item = this.newGroupItem()) {
       this.$cleanNewItem(this.items)
-      this.currentItem = Object.assign({}, item)
+      if (item.id) {
+        MockGroupApi.getById(item.id).then(response => {
+          this.currentItem = response.data || Object.assign({}, item)
+        })
+      } else {
+        this.currentItem = Object.assign({}, item)
+      }
       this.$editTableItem(this.items, item)
     },
     cancelEdit() {

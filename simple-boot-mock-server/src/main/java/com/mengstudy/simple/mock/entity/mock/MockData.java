@@ -19,4 +19,6 @@ public class MockData extends MockBase {
     private String responseBody;
     private String description;
     private String headers;
+    private String mockParams;
+
 }

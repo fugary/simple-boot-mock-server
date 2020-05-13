@@ -1,5 +1,5 @@
 <template>
-  <el-form ref="dataForm" class="table-form" :model="currentDataItem" :rules="dataFormRules">
+  <el-form ref="dataForm" class="table-form" :model="currentDataItem">
     <el-table
       v-if="request.id && currentDataItem"
       :data="dataItems"
@@ -132,9 +132,64 @@
       v-if="previewDataConfig.showDataPreview"
       :request="request"
       :request-url="requestUrl"
-      :data-item-id="previewDataConfig.dataItem.id"
+      :data-item="previewDataConfig.dataItem"
       @preview-close="previewDataConfig.showDataPreview=false"
     />
+    <el-dialog title="编辑响应数据" :visible.sync="showDataDetailDialog" width="800px" @close="cancelDataEdit">
+      <el-form :model="currentDataItem">
+        <el-form-item label="状态码" :label-width="formLabelWidth">
+          <el-select v-model="currentDataItem.statusCode" size="mini" placeholder="请求方法">
+            <el-option v-for="item in allStatusCodes" :key="item" :label="item" :value="item" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Content Type" :label-width="formLabelWidth">
+          <el-select
+            v-model="currentDataItem.contentType"
+            size="mini"
+            placeholder="Content Type"
+          >
+            <el-option v-for="item in allContentTypes" :key="item" :label="item" :value="item" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态" :label-width="formLabelWidth">
+          <el-switch v-model="currentDataItem.status" :active-value="1" :inactive-value="0" />
+        </el-form-item>
+        <el-form-item label="是否默认请求" :label-width="formLabelWidth">
+          <el-switch v-model="currentDataItem.defaultFlag" :active-value="1" :inactive-value="0" />
+        </el-form-item>
+        <el-form-item label="响应内容" :label-width="formLabelWidth">
+          <el-input
+            v-model="currentDataItem.responseBody"
+            autosize
+            type="textarea"
+            size="mini"
+            placeholder="响应内容"
+          />
+        </el-form-item>
+        <el-form-item label="附加响应头" :label-width="formLabelWidth">
+          <el-input
+            v-model="currentDataItem.headers"
+            autosize
+            type="textarea"
+            size="mini"
+            placeholder="附加响应头"
+          />
+        </el-form-item>
+        <el-form-item label="描述信息" :label-width="formLabelWidth">
+          <el-input
+            v-model="currentDataItem.description"
+            autosize
+            type="textarea"
+            size="mini"
+            placeholder="描述信息"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancelDataEdit">取消</el-button>
+        <el-button type="primary" v-loading="saveLoading" @click="handleDataSave">确定</el-button>
+      </div>
+    </el-dialog>
   </el-form>
 </template>
 
@@ -157,14 +212,14 @@ export default {
       requestUrl,
       dataItems: [],
       currentDataItem: {},
-      dataFormRules: {},
       previewDataConfig: {
         dataItem: {},
         showDataPreview: false
       },
       saveLoading: false,
       showDataDetailDialog: false,
-      allStatusCodes: [200, 302, 404, 500],
+      formLabelWidth: '150px',
+      allStatusCodes: [200, 302, 400, 404, 500],
       allContentTypes: ['application/json', 'application/xml', 'text/html', 'text/css', 'application/javascript']
     }
   },
@@ -203,15 +258,22 @@ export default {
     },
     handleDataEdit(item = this.newDataItem()) {
       this.$cleanNewItem(this.dataItems)
-      this.currentDataItem = Object.assign({}, item)
+      if (item.id) {
+        MockDataApi.getById(item.id).then(response => {
+          this.currentDataItem = response.data || Object.assign({}, item)
+        })
+      } else {
+        this.currentDataItem = Object.assign({}, item)
+      }
       this.$editTableItem(this.dataItems, item)
     },
     handleDataDetailEdit(item) {
-      this.currentDataDetailItem = item
+      this.handleDataEdit(item)
       this.showDataDetailDialog = true
     },
     cancelDataEdit() {
       this.$cleanNewItem(this.dataItems)
+      this.showDataDetailDialog = false
       this.currentDataItem = this.newDataItem()
     },
     cancelLoading() {

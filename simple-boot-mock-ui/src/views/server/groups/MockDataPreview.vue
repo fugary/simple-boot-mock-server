@@ -1,73 +1,8 @@
 <template>
   <el-dialog :title="`数据预览【${requestUrl}】`" :visible.sync="showDataPreview" width="1000px">
     <el-tabs type="card">
-      <el-tab-pane label="配置参数">
-        <el-form ref="previewDataForm" size="mini" :model="paramTarget" inline>
-          <el-card v-if="paramTarget.pathParams.length" shadow="never">
-            <div slot="header">
-              <span>路径参数【路径参数不能为空】</span>
-            </div>
-            <el-form-item
-              v-for="(item, index) in paramTarget.pathParams"
-              :key="item.name"
-              :label="item.name"
-              :prop="`pathParams.${index}.value`"
-              :rules="{required: true, message: `${item.name}不能为空`, trigger: 'blur'}"
-            >
-              <el-input v-model="item.value" />
-            </el-form-item>
-          </el-card>
-          <el-card shadow="never">
-            <div slot="header">
-              请求参数
-              <el-button icon="el-icon-plus" size="mini" round type="primary" title="新增请求参数" @click="addRequestParam()">添加参数</el-button>
-              <el-button
-                v-if="request.method!=='GET'"
-                icon="el-icon-edit"
-                size="mini"
-                round
-                type="info"
-                :title="paramTarget.showRequestBody?'删除请求内容':'添加请求内容'"
-                @click="paramTarget.showRequestBody=!paramTarget.showRequestBody"
-              >{{paramTarget.showRequestBody?'删除请求内容':'添加请求内容'}}</el-button>
-            </div>
-            <div v-for="(item, index) in paramTarget.requestParams" :key="index">
-              <el-form-item
-                :prop="`requestParams.${index}.name`"
-                label="参数名"
-                :rules="{required: true, message: `参数名不能为空`, trigger: 'blur'}"
-              >
-                <el-input v-model="item.name" />
-              </el-form-item>
-              <el-form-item
-                :prop="`requestParams.${index}.value`"
-                label="参数值"
-                :rules="{required: true, message: `参数值不能为空`, trigger: 'blur'}"
-              >
-                <el-input v-model="item.value" />
-              </el-form-item>
-              <el-button
-                size="mini"
-                round
-                type="danger"
-                icon="el-icon-delete-solid"
-                @click.prevent="deleteRequestParam(index)"
-              />
-            </div>
-            <el-form-item v-if="paramTarget.showRequestBody" prop="requestBody" label="类型">
-              <el-select
-                v-model="paramTarget.contentType"
-                size="mini"
-                placeholder="Content Type"
-              >
-                <el-option v-for="item in allContentTypes" :key="item" :label="item" :value="item" />
-              </el-select>
-            </el-form-item>
-            <el-form-item v-if="paramTarget.showRequestBody" prop="requestBody" label="请求内容">
-              <el-input v-model="paramTarget.requestBody" type="textarea" autosize />
-            </el-form-item>
-          </el-card>
-        </el-form>
+      <el-tab-pane v-if="request" label="编辑信息">
+        <mock-params-edit ref="paramTargetEdit" :request="request" :data-item="currentDataItem" :result-param-target.sync="paramTarget" :calc-request-url="calcRequestUrl" />
         <el-card v-if="previewDataResult.requestInfo" shadow="never">
           <el-table :data="previewDataResult.requestInfo" :show-header="false">
             <el-table-column prop="name" width="250" />
@@ -112,26 +47,27 @@
 <script>
 import MockDataApi from '../../../api/server/MockDataApi'
 import 'highlight.js/styles/monokai-sublime.css'
-import hljs from 'highlight.js'
+import MockRequestApi from '../../../api/server/MockRequestApi'
+import MockParamsEdit from './MockParamsEdit'
 
 export default {
   name: 'MockDataPreview',
+  components: { MockParamsEdit },
   props: {
     request: { type: Object, required: true },
     requestUrl: { type: String },
-    dataItemId: { type: Number }
+    dataItem: { type: Object }
   },
   data() {
     const calcRequestUrl = this.requestUrl.replace(/\{([\w-]+)\}/ig, ':$1')
-    const paramTarget = this.calcParamTarget(calcRequestUrl)
+    const { dataItem } = this.$props
     return {
+      currentDataItem: dataItem,
       previewDataResult: {},
       showDataPreview: false,
       previewDataLoading: false,
-      pathVariables: {},
       calcRequestUrl,
-      paramTarget,
-      allContentTypes: ['application/json', 'application/xml', 'application/x-www-form-urlencoded']
+      paramTarget: null
     }
   },
   watch: {
@@ -143,39 +79,19 @@ export default {
     }
   },
   mounted() {
-    this.handleDataPreview()
+    if (!this.currentDataItem) {
+      MockRequestApi.getDefaultData(this.request.id).then(response => {
+        this.currentDataItem = response.data
+        this.handleDataPreview()
+      }, this.handleDataPreview)
+    } else {
+      MockDataApi.getById(this.currentDataItem.id).then(response => {
+        this.currentDataItem = response.data
+        this.handleDataPreview()
+      })
+    }
   },
   methods: {
-    addRequestParam() {
-      this.paramTarget.requestParams.push({
-        name: '',
-        value: ''
-      })
-    },
-    deleteRequestParam(index) {
-      this.paramTarget.requestParams.splice(index, 1)
-    },
-    calcParamTarget(calcRequestUrl) {
-      const pathParams = calcRequestUrl.split('/').filter(seg => seg.startsWith(':')).map(seg => seg.substring(1))
-        .reduce((newArr, arrItem) => {
-          if (newArr.indexOf(arrItem) < 0) {
-            newArr.push(arrItem)
-          }
-          return newArr
-        }, []).map(name => {
-          return {
-            name,
-            value: ''
-          }
-        })
-      return {
-        pathParams,
-        requestParams: [],
-        requestBody: '',
-        contentType: 'application/json',
-        showRequestBody: false
-      }
-    },
     handleDataPreview() {
       this.previewDataResult = {}
       this.showDataPreview = true
@@ -187,8 +103,21 @@ export default {
       Object.assign(this.previewDataResult, MockDataApi.processResponse(response))
       this.$forceUpdate()
     },
+    doSaveMockParams() {
+      if (this.paramTarget) {
+        const requestId = this.request.id
+        const id = this.currentDataItem ? this.currentDataItem.id : null
+        const mockParams = JSON.stringify(this.paramTarget)
+        MockRequestApi.saveMockParams({
+          requestId,
+          id,
+          mockParams
+        }, { loading: false })
+      }
+    },
     doDataPreview() {
-      this.$refs.previewDataForm.validate(valid => {
+      console.info(this.$refs.paramTargetEdit)
+      this.$refs.paramTargetEdit.$refs.paramTargetForm.validate(valid => {
         if (valid) {
           this.previewDataLoading = true
           let requestUrl = this.calcRequestUrl
@@ -200,14 +129,20 @@ export default {
             return results
           }, {})
           const data = this.paramTarget.showRequestBody ? this.paramTarget.requestBody : null
-          const headers = this.paramTarget.showRequestBody ? { 'content-type': this.paramTarget.contentType } : null
+          const headers = Object.assign(this.paramTarget.showRequestBody ? { 'content-type': this.paramTarget.contentType } : {},
+            this.paramTarget.headerParams.reduce((results, item) => {
+              results[item.name] = item.value
+              return results
+            }, {}))
           const config = {
             loading: false,
             params,
             data,
             headers
           }
-          MockDataApi.previewRequest(requestUrl, this.request, this.dataItemId, config)
+          const dataItemId = this.currentDataItem ? this.currentDataItem.id : null
+          this.doSaveMockParams()
+          MockDataApi.previewRequest(requestUrl, this.request, dataItemId, config)
             .then(this.calcResponse, this.calcResponse)
         }
       })

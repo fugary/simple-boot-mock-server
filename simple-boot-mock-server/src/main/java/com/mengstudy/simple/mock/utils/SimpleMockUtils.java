@@ -53,7 +53,7 @@ public class SimpleMockUtils {
      * @return
      */
     public static boolean isDefault(MockData mockData) {
-        return mockData.getDefaultFlag() != null && mockData.getDefaultFlag() == 1;
+        return getDefaultFlag(mockData.getDefaultFlag()) == 1;
     }
 
     /**

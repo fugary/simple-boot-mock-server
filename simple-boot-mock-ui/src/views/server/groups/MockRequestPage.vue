@@ -31,7 +31,7 @@
             <mock-data-edit v-if="groupItem.id && requestScope.row.expandDataFlag" :group-item="groupItem" :request="requestScope.row" />
           </template>
         </el-table-column>
-        <el-table-column label="请求路径" width="200">
+        <el-table-column label="请求路径" width="250">
           <template slot-scope="scope">
             <span v-if="scope.row.id === currentItem.id">
               <el-form-item prop="requestPath">
@@ -68,18 +68,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="请求名称" prop="requestName">
+        <el-table-column label="描述信息" prop="description">
           <template slot-scope="scope">
             <span v-if="scope.row.id === currentItem.id">
-              <el-input v-model="currentItem.requestName" size="mini" placeholder="请求名称" />
+              <el-input v-model="currentItem.description" size="mini" placeholder="描述信息" />
             </span>
-            <span v-else>{{ scope.row.requestName }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column align="center" prop="created_at" label="创建时间" width="150">
-          <template v-if="scope.row.createDate" slot-scope="scope">
-            <i class="el-icon-time" />
-            <span>{{ scope.row.createDate|date('YYYY-MM-DD HH:mm') }}</span>
+            <span v-else>{{ scope.row.description }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200">
@@ -192,7 +186,13 @@ export default {
     },
     handleEdit(item = this.newRequestItem()) {
       this.$cleanNewItem(this.items)
-      this.currentItem = Object.assign({}, item)
+      if (item.id) {
+        MockRequestApi.getById(item.id).then(response => {
+          this.currentItem = response.data || Object.assign({}, item)
+        })
+      } else {
+        this.currentItem = Object.assign({}, item)
+      }
       this.$editTableItem(this.items, item)
     },
     cancelEdit() {
@@ -230,13 +230,16 @@ export default {
       }
     },
     handleDataPreview(request) {
-      let requestPath = request.requestPath || ''
-      requestPath = requestPath.startsWith('/') ? requestPath : `/${requestPath}`
-      const requestUrl = `${this.groupUrl}${requestPath}`
-      Object.assign(this.previewDataConfig, {
-        showDataPreview: true,
-        request,
-        requestUrl
+      MockRequestApi.getById(request.id).then(response => {
+        request = response.data
+        let requestPath = request.requestPath || ''
+        requestPath = requestPath.startsWith('/') ? requestPath : `/${requestPath}`
+        const requestUrl = `${this.groupUrl}${requestPath}`
+        Object.assign(this.previewDataConfig, {
+          showDataPreview: true,
+          request,
+          requestUrl
+        })
       })
     }
   }

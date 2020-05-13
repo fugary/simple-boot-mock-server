@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mengstudy.simple.mock.contants.MockErrorConstants;
+import com.mengstudy.simple.mock.entity.mock.MockData;
 import com.mengstudy.simple.mock.entity.mock.MockRequest;
 import com.mengstudy.simple.mock.service.mock.MockRequestService;
 import com.mengstudy.simple.mock.utils.SimpleMockUtils;
@@ -47,6 +48,16 @@ public class MockRequestController {
     @GetMapping("/{id}")
     public SimpleResult<MockRequest> get(@PathVariable("id") Integer id) {
         return SimpleResultUtils.createSimpleResult(mockRequestService.getById(id));
+    }
+
+    @GetMapping("/getDefaultData/{requestId}")
+    public SimpleResult<MockData> getDefaultData(@PathVariable("requestId") Integer requestId) {
+        return SimpleResultUtils.createSimpleResult(mockRequestService.findMockData(requestId, null));
+    }
+
+    @PostMapping("/saveMockParams")
+    public SimpleResult saveMockParams(@RequestBody MockData data) {
+        return SimpleResultUtils.createSimpleResult(mockRequestService.saveMockParams(data));
     }
 
     @DeleteMapping("/{id}")

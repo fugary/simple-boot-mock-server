@@ -11,7 +11,6 @@ import com.mengstudy.simple.mock.service.mock.MockDataService;
 import com.mengstudy.simple.mock.service.mock.MockGroupService;
 import com.mengstudy.simple.mock.service.mock.MockRequestService;
 import com.mengstudy.simple.mock.utils.MockJsUtils;
-import com.mengstudy.simple.mock.utils.SimpleMockUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -109,10 +108,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     String configPath = groupPath + configRequestPath;
                     if (pathMatcher.match(configPath, requestPath)
                             && StringUtils.equalsIgnoreCase(method, mockRequest.getMethod())) {
-                        List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
-                                .eq("request_id", mockRequest.getId())
-                                .eq("status", 1));
-                        MockData mockData = findMockData(mockDataList, defaultId);
+                        MockData mockData = mockRequestService.findMockData(mockRequest, defaultId);
                         processMockData(request, mockData, configPath, requestPath);
                         return mockData;
                     }
@@ -146,26 +142,6 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             }
             mockData.setResponseBody(MockJsUtils.mock(responseBody)); // 使用Mockjs来处理响应数据
         }
-    }
-
-    /**
-     * 查询MockData
-     *
-     * @param mockDataList
-     * @param defaultId
-     * @return
-     */
-    private MockData findMockData(List<MockData> mockDataList, Integer defaultId) {
-        MockData result = null;
-        for (MockData mockData : mockDataList) {
-            if (defaultId != null && defaultId.equals(mockData.getId())) { // 强制指定
-                return mockData;
-            }
-            if (result == null || (!SimpleMockUtils.isDefault(result) && SimpleMockUtils.isDefault(mockData))) {
-                result = mockData;
-            }
-        }
-        return result;
     }
 
 }

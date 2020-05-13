@@ -32,4 +32,13 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
         }
         return result;
     }
+
+    @Override
+    public boolean saveOrUpdate(MockData entity) {
+        boolean result = super.saveOrUpdate(entity);
+        if(result && SimpleMockUtils.isDefault(entity)){
+            this.markMockDataDefault(entity);
+        }
+        return result;
+    }
 }
