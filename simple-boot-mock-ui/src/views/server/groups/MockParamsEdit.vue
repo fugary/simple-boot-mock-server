@@ -133,7 +133,7 @@ export default {
     }
   },
   data() {
-    const mockParams = this.request.mockParams || (this.dataItem ? this.dataItem.mockParams : null)
+    const mockParams = (this.dataItem ? this.dataItem.mockParams : null) || this.request.mockParams
     const paramTarget = this.calcTarget(mockParams)
     this.$emit('update:result-param-target', paramTarget)
     return {

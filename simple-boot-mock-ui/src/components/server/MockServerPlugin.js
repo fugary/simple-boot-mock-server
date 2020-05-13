@@ -1,4 +1,5 @@
 import ClipboardJS from 'clipboard/dist/clipboard'
+import { Message } from 'element-ui'
 export default {
   name: 'MockServerPlugin',
   install(Vue, params = {}) {
@@ -9,11 +10,24 @@ export default {
       }
       return statusMap[status]
     })
-    Vue.directive('clipboard', (el, binding) => {
-      const clipboardInstance = new ClipboardJS(el)
-      clipboardInstance.on('success', e => {
-        e.clearSelection()
-      })
+    Vue.directive('clipboard', {
+      bind(el, binding, vnode) {
+        const clipboardInstance = new ClipboardJS(el, {
+          text() {
+            return vnode.clipboardText
+          }
+        })
+        clipboardInstance.on('success', e => {
+          e.clearSelection()
+          Message.success('Copy Success.')
+        })
+        vnode.clipboardText = binding.value
+        vnode.clipboardInstance = clipboardInstance
+      }, update(el, binding, vnode) {
+        vnode.clipboardText = binding.value
+      }, unbind(el, binding, vnode) {
+        vnode.clipboardInstance.destroy()
+      }
     })
     Object.assign(Vue.prototype, {
       $cleanNewItem(items) {

@@ -2,19 +2,33 @@
   <el-dialog :title="`数据预览【${requestUrl}】`" :visible.sync="showDataPreview" width="1000px">
     <el-tabs type="card">
       <el-tab-pane v-if="request" label="编辑信息">
-        <mock-params-edit ref="paramTargetEdit" :request="request" :data-item="currentDataItem" :result-param-target.sync="paramTarget" :calc-request-url="calcRequestUrl" />
+        <mock-params-edit
+          ref="paramTargetEdit"
+          :request="request"
+          :data-item="currentDataItem"
+          :result-param-target.sync="paramTarget"
+          :calc-request-url="calcRequestUrl"
+        />
         <el-card v-if="previewDataResult.requestInfo" shadow="never">
           <el-table :data="previewDataResult.requestInfo" :show-header="false">
             <el-table-column prop="name" width="250" />
             <el-table-column prop="value">
               <template slot-scope="scope">
-                <span v-if="scope.row.name==='Status Code'">
+                <span v-if="scope.row.name==='Code'">
                   <el-tag effect="dark" disable-transitions :type="scope.row.value===200?'success':'danger'">
                     {{ scope.row.value }}
                   </el-tag>
                 </span>
                 <span v-else>
                   {{ scope.row.value }}
+                  <el-button
+                    v-if="scope.row.name==='URL'"
+                    v-clipboard="scope.row.value"
+                    type="info"
+                    icon="el-icon-document-copy"
+                    size="mini"
+                    round
+                  />
                 </span>
               </template>
             </el-table-column>
@@ -38,6 +52,12 @@
       </el-tab-pane>
     </el-tabs>
     <div slot="footer" class="dialog-footer">
+      <el-button
+        v-if="previewDataResult.data"
+        v-clipboard="previewDataResult.data"
+        type="info"
+        icon="el-icon-document-copy"
+      >复制响应内容</el-button>
       <el-button @click="showDataPreview=false">关闭</el-button>
       <el-button v-loading="previewDataLoading" type="success" @click="doDataPreview()">预览</el-button>
     </div>

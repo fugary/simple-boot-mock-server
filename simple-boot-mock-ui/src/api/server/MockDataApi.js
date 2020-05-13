@@ -45,13 +45,13 @@ MockDataApi.processResponse = function(response) {
   }
   const { headers = {}, request = {}, status } = response
   const requestInfo = [{
-    name: 'Request URL',
+    name: 'URL',
     value: request.responseURL || config.url
   }, {
-    name: 'Status Code',
+    name: 'Code',
     value: status
   }, {
-    name: 'Request Method',
+    name: 'Method',
     value: config.method
   }]
   const requestHeaders = JSON.parse(headers['mock-meta-req'] || '[]')

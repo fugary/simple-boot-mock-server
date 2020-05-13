@@ -53,7 +53,6 @@
         </el-table-column>
         <el-table-column align="center" label="创建时间" width="150">
           <template v-if="scope.row.createDate" slot-scope="scope">
-            <i class="el-icon-time" />
             <span>{{ scope.row.createDate|date('YYYY-MM-DD HH:mm') }}</span>
           </template>
         </el-table-column>
