@@ -35,7 +35,7 @@ public class MockController {
         if (data != null) {
             if(HttpStatus.MOVED_TEMPORARILY.value() == data.getStatusCode()){
                 if(SimpleMockUtils.isMockPreview(request)){
-                    return ResponseEntity.ok("重定向不支持预览功能");
+                    return ResponseEntity.ok("重定向请设为默认响应后复制URL到浏览器访问");
                 }
                 return ResponseEntity.status(data.getStatusCode()).header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
             }

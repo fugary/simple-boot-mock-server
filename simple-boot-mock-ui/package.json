@@ -1,6 +1,6 @@
 {
   "name": "simple-boot-mock-ui",
-  "version": "4.2.1",
+  "version": "0.9.1",
   "description": "Simple boot mock server ui based on vue admin template",
   "author": "Gary Fu <fufuguo@icloud.com>",
   "license": "MIT",
