@@ -38,29 +38,7 @@
         >{{ paramTarget.showRequestBody?'删除请求体':'添加请求体' }}
         </el-link>
       </el-divider>
-      <div v-for="(item, index) in paramTarget.requestParams" :key="index">
-        <el-form-item
-          :prop="`requestParams.${index}.name`"
-          label="参数名"
-          :rules="{required: true, message: `参数名不能为空`, trigger: 'blur'}"
-        >
-          <el-input v-model="item.name" />
-        </el-form-item>
-        <el-form-item
-          :prop="`requestParams.${index}.value`"
-          label="参数值"
-          :rules="{required: true, message: `参数值不能为空`, trigger: 'blur'}"
-        >
-          <el-input v-model="item.value" />
-        </el-form-item>
-        <el-button
-          size="mini"
-          round
-          type="danger"
-          icon="el-icon-delete-solid"
-          @click.prevent="deleteRequestParam(paramTarget.requestParams, index)"
-        />
-      </div>
+      <common-params-edit :params.sync="paramTarget.requestParams" :show-add-button="false" />
       <el-form-item v-if="paramTarget.showRequestBody" prop="requestBody" label="类型">
         <el-select
           v-model="paramTarget.contentType"
@@ -87,49 +65,28 @@
           添加请求头
         </el-link>
       </el-divider>
-      <div v-for="(item, index) in paramTarget.headerParams" :key="index">
-        <el-form-item
-          :prop="`headerParams.${index}.name`"
-          label="参数名"
-          :rules="{required: true, message: `参数名不能为空`, trigger: 'blur'}"
-        >
-          <el-input v-model="item.name" />
-        </el-form-item>
-        <el-form-item
-          :prop="`headerParams.${index}.value`"
-          label="参数值"
-          :rules="{required: true, message: `参数值不能为空`, trigger: 'blur'}"
-        >
-          <el-input v-model="item.value" />
-        </el-form-item>
-        <el-button
-          size="mini"
-          round
-          type="danger"
-          icon="el-icon-delete-solid"
-          @click.prevent="deleteRequestParam(paramTarget.headerParams, index)"
-        />
-      </div>
+      <common-params-edit :params.sync="paramTarget.headerParams" form-prop="headerParams" :show-add-button="false" />
     </div>
   </el-form>
 </template>
 
 <script>
+import CommonParamsEdit from './CommonParamsEdit'
 export default {
   name: 'MockParamsEdit',
+  components: { CommonParamsEdit },
   props: {
     request: {
       type: Object,
       required: true
     },
     dataItem: {
-      type: Object
+      type: Object,
+      default: null
     },
     calcRequestUrl: {
-      type: String
-    },
-    resultParamTarget: {
-      type: Object
+      type: String,
+      default: ''
     }
   },
   data() {

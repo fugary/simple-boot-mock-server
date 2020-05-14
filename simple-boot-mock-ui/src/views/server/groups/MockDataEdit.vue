@@ -71,7 +71,7 @@
         </template>
         <template slot-scope="scope">
           <span v-if="scope.row.id===currentDataItem.id">
-            <el-button icon="el-icon-check" size="mini" circle type="success" title="保存" @click="handleDataSave()" />
+            <el-button icon="el-icon-check" size="mini" circle type="success" title="保存" @click="handleDataSave('dataForm')" />
             <el-button
               icon="el-icon-refresh-left"
               size="mini"
@@ -135,8 +135,8 @@
       :data-item="previewDataConfig.dataItem"
       @preview-close="previewDataConfig.showDataPreview=false"
     />
-    <el-dialog title="编辑响应数据" :visible.sync="showDataDetailDialog" width="800px" @close="cancelDataEdit">
-      <el-form :model="currentDataItem">
+    <el-dialog v-if="showDataDetailDialog" title="编辑响应数据" :visible.sync="showDataDetailDialog" width="800px" @close="cancelDataEdit">
+      <el-form :model="currentDataItem" ref="dataItemForm">
         <el-form-item label="状态码" :label-width="formLabelWidth">
           <el-select v-model="currentDataItem.statusCode" size="mini" placeholder="请求方法">
             <el-option v-for="item in allStatusCodes" :key="item" :label="item" :value="item" />
@@ -166,15 +166,6 @@
             placeholder="响应内容"
           />
         </el-form-item>
-        <el-form-item label="附加响应头" :label-width="formLabelWidth">
-          <el-input
-            v-model="currentDataItem.headers"
-            autosize
-            type="textarea"
-            size="mini"
-            placeholder="附加响应头"
-          />
-        </el-form-item>
         <el-form-item label="描述信息" :label-width="formLabelWidth">
           <el-input
             v-model="currentDataItem.description"
@@ -184,10 +175,15 @@
             placeholder="描述信息"
           />
         </el-form-item>
+        <el-form-item label="附加响应头" :label-width="formLabelWidth">
+          <div class="el-form--inline">
+            <common-params-edit :params.sync="currentDataItem.headerParams" form-prop="headerParams" />
+          </div>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancelDataEdit">取消</el-button>
-        <el-button type="primary" v-loading="saveLoading" @click="handleDataSave">确定</el-button>
+        <el-button v-loading="saveLoading" type="primary" @click="handleDataSave('dataItemForm')">确定</el-button>
       </div>
     </el-dialog>
   </el-form>
@@ -196,10 +192,11 @@
 <script>
 import MockDataApi from '../../../api/server/MockDataApi'
 import MockDataPreview from './MockDataPreview'
+import CommonParamsEdit from './CommonParamsEdit'
 
 export default {
   name: 'MockDataEdit',
-  components: { MockDataPreview },
+  components: { MockDataPreview, CommonParamsEdit },
   props: {
     request: { type: Object, required: true },
     groupItem: { type: Object }
@@ -242,7 +239,8 @@ export default {
         groupId: this.request.groupId,
         status: 1,
         statusCode: this.allStatusCodes[0],
-        contentType: this.allContentTypes[0]
+        contentType: this.allContentTypes[0],
+        headerParams: []
       }
     },
     doSearchRequestData() {
@@ -261,10 +259,12 @@ export default {
       if (item.id) {
         MockDataApi.getById(item.id).then(response => {
           this.currentDataItem = response.data || Object.assign({}, item)
+          this.currentDataItem.headerParams = JSON.parse(this.currentDataItem.headers || '[]')
         })
       } else {
         this.currentDataItem = Object.assign({}, item)
       }
+      this.currentDataItem.headerParams = JSON.parse(this.currentDataItem.headers || '[]')
       this.$editTableItem(this.dataItems, item)
     },
     handleDataDetailEdit(item) {
@@ -279,12 +279,19 @@ export default {
     cancelLoading() {
       this.saveLoading = false
     },
-    handleDataSave() {
-      MockDataApi.saveOrUpdate(this.currentDataItem, { loading: false }).then(response => {
-        console.info(response)
-        this.doSearchRequestData()
-        this.cancelDataEdit()
-      }).finally(this.cancelLoading)
+    handleDataSave(formKey) {
+      this.$refs[formKey].validate(valid => {
+        if (valid) {
+          const saveItem = Object.assign({}, this.currentDataItem)
+          saveItem.headers = saveItem.headerParams && saveItem.headerParams.length ? JSON.stringify(saveItem.headerParams) : ''
+          delete saveItem.headerParams
+          MockDataApi.saveOrUpdate(saveItem, { loading: false }).then(response => {
+            console.info(response)
+            this.doSearchRequestData()
+            this.cancelDataEdit()
+          }).finally(this.cancelLoading)
+        }
+      })
     },
     handleDataDelete(item) {
       this.$confirm('确定要删除该响应数据?', '提示').then(() => {

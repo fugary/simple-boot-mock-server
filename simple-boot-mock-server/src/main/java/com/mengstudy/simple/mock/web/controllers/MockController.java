@@ -16,6 +16,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import static com.mengstudy.simple.mock.utils.SimpleMockUtils.calcHeaders;
+
 /**
  * Created on 2020/5/3 20:23 .<br>
  *
@@ -33,13 +35,15 @@ public class MockController {
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
         MockData data = mockGroupService.matchMockData(request, NumberUtils.toInt(dataId));
         if (data != null) {
+            HttpHeaders httpHeaders = calcHeaders(data.getHeaders());
             if(HttpStatus.MOVED_TEMPORARILY.value() == data.getStatusCode()){
                 if(SimpleMockUtils.isMockPreview(request)){
                     return ResponseEntity.ok("重定向请设为默认响应后复制URL到浏览器访问");
                 }
-                return ResponseEntity.status(data.getStatusCode()).header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
+                return ResponseEntity.status(data.getStatusCode()).headers(httpHeaders).header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
             }
             return ResponseEntity.status(data.getStatusCode())
+                    .headers(httpHeaders)
                     .header(HttpHeaders.CONTENT_TYPE, data.getContentType())
                     .body(data.getResponseBody());
         }

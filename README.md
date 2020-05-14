@@ -10,11 +10,13 @@
 
 /xxxx.jar——可执行jar，可用`java -jar`命令启动，也可以直接用start.bat启动
 
+/data——H2数据库文件（运行后产生）
+
 /config——application.yml配置文件
 
 /bin——start.bat和start.sh启动文件
 
-/logs——日志输出目录
+/logs——日志输出目录（运行后产生）
 
 ## simple-boot-mock-server服务
 
@@ -50,4 +52,14 @@
    1. 响应里面配置重定向的URL
    2. 配置Status Code为302
 
-启动后在：http://localhost:9086/地址访问
+可以使用`java -jar`，也可以使用快捷的bat或者sh文件运行
+
+Windows下`bin/start.bat`
+
+Linux下`bin/start.sh`
+
+启动后在：http://localhost:9086/ 地址访问
+
+运行参考文档：
+
+https://www.jianshu.com/p/56e0efec455d

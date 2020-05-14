@@ -83,6 +83,7 @@ export default {
     const { dataItem } = this.$props
     return {
       currentDataItem: dataItem,
+      previewDataItemFlag: !!dataItem,
       previewDataResult: {},
       showDataPreview: false,
       previewDataLoading: false,
@@ -160,7 +161,7 @@ export default {
             data,
             headers
           }
-          const dataItemId = this.currentDataItem ? this.currentDataItem.id : null
+          const dataItemId = this.currentDataItem && this.previewDataItemFlag ? this.currentDataItem.id : null
           this.doSaveMockParams()
           MockDataApi.previewRequest(requestUrl, this.request, dataItemId, config)
             .then(this.calcResponse, this.calcResponse)

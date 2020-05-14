@@ -26,7 +26,7 @@ export default {
       }, update(el, binding, vnode) {
         vnode.clipboardText = binding.value
       }, unbind(el, binding, vnode) {
-        vnode.clipboardInstance.destroy()
+        vnode.clipboardInstance && vnode.clipboardInstance.destroy()
       }
     })
     Object.assign(Vue.prototype, {
@@ -36,7 +36,6 @@ export default {
         }
       },
       $editTableItem(items = [], item) {
-        Object.assign({}, item)
         if (!item.id) {
           if (!items.length || items[items.length - 1].id !== item.id) {
             items.push(item)

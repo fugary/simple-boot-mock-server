@@ -8,9 +8,12 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpHeaders;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -68,11 +71,28 @@ public class SimpleMockUtils {
 
     /**
      * mock 预览
+     *
      * @param request
      * @return
      */
-    public static boolean isMockPreview(HttpServletRequest request){
+    public static boolean isMockPreview(HttpServletRequest request) {
         return BooleanUtils.toBoolean(StringUtils
                 .defaultIfBlank(request.getHeader(MockConstants.MOCK_DATA_PREVIEW_HEADER), Boolean.FALSE.toString()));
+    }
+
+    /**
+     * 计算保存为json的头信息
+     *
+     * @param headers
+     * @return
+     */
+    public static HttpHeaders calcHeaders(String headers) {
+        if (StringUtils.isNotBlank(headers)) {
+            List<Map<String, String>> headerList = JsonUtils.fromJson(headers, List.class);
+            HttpHeaders httpHeaders = new HttpHeaders();
+            headerList.stream().forEach(map -> httpHeaders.add(map.get("name"), map.get("value")));
+            return httpHeaders;
+        }
+        return null;
     }
 }
