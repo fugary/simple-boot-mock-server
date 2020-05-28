@@ -41,7 +41,7 @@ public class MockRequestController {
             queryWrapper.and(wrapper -> wrapper.like("request_name", keyword)
                     .or().like("request_path", keyword));
         }
-        queryWrapper.orderByAsc("request_path");
+        queryWrapper.orderByAsc("request_path", "create_date");
         return SimpleResultUtils.createSimpleResult(mockRequestService.page(page, queryWrapper));
     }
 
