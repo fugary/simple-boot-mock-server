@@ -1,0 +1,12 @@
+// 参考：https://element.eleme.cn/#/zh-CN/component/custom-theme
+/* 改变主题色变量 */
+$--color-primary: #5A4082;
+$--color-success: #5CB85C;
+$--color-danger: #EB3941;
+$--menu-background-color: #5A4082;
+$--menu-item-font-color: #DDDDDD;
+$--menu-item-hover-fill: #776AED;
+$--main-padding: 15px;
+$---menu--inline-background-color: #3B2C50;
+// 通用的布局等样式
+@import "../common";

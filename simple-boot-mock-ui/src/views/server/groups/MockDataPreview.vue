@@ -78,7 +78,7 @@ export default {
     requestUrl: { type: String },
     dataItem: { type: Object }
   },
-  data() {
+  data () {
     const calcRequestUrl = this.requestUrl.replace(/\{([\w-]+)\}/ig, ':$1')
     const { dataItem } = this.$props
     return {
@@ -92,14 +92,14 @@ export default {
     }
   },
   watch: {
-    showDataPreview: function(flag) {
+    showDataPreview: function (flag) {
       if (!flag) {
         console.info('preview close.............')
         this.$emit('preview-close', flag)
       }
     }
   },
-  mounted() {
+  mounted () {
     if (!this.currentDataItem) {
       MockRequestApi.getDefaultData(this.request.id).then(response => {
         this.currentDataItem = response.data
@@ -113,18 +113,18 @@ export default {
     }
   },
   methods: {
-    handleDataPreview() {
+    handleDataPreview () {
       this.previewDataResult = {}
       this.showDataPreview = true
       this.$nextTick(this.doDataPreview)
     },
-    calcResponse(response) {
+    calcResponse (response) {
       this.previewDataLoading = false
       console.dir(response)
       Object.assign(this.previewDataResult, MockDataApi.processResponse(response))
       this.$forceUpdate()
     },
-    doSaveMockParams() {
+    doSaveMockParams () {
       if (this.paramTarget) {
         const requestId = this.request.id
         const id = this.currentDataItem ? this.currentDataItem.id : null
@@ -136,7 +136,7 @@ export default {
         }, { loading: false })
       }
     },
-    doDataPreview() {
+    doDataPreview () {
       console.info(this.$refs.paramTargetEdit)
       this.$refs.paramTargetEdit.$refs.paramTargetForm.validate(valid => {
         if (valid) {

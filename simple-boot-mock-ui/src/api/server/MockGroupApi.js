@@ -1,3 +1,3 @@
-import MockModelApi from '@/api/server/MockModelApi'
+import RequestModelApi from '@/utils/RequestModelApi'
 
-export default new MockModelApi('/admin/groups')
+export default new RequestModelApi('/admin/groups')

@@ -89,7 +89,7 @@ export default {
       default: ''
     }
   },
-  data() {
+  data () {
     const mockParams = (this.dataItem ? this.dataItem.mockParams : null) || this.request.mockParams
     const paramTarget = this.calcTarget(mockParams)
     this.$emit('update:result-param-target', paramTarget)
@@ -100,14 +100,14 @@ export default {
   },
   watch: {
     paramTarget: {
-      handler(target) {
+      handler (target) {
         this.$emit('update:result-param-target', target)
       },
       deep: true
     }
   },
   methods: {
-    calcTarget(value) {
+    calcTarget (value) {
       const target = this.calcParamTarget(this.calcRequestUrl)
       if (value) {
         const pathParams = target.pathParams
@@ -126,16 +126,16 @@ export default {
       }
       return target
     },
-    addRequestParam(params) {
+    addRequestParam (params) {
       params.push({
         name: '',
         value: ''
       })
     },
-    deleteRequestParam(params, index) {
+    deleteRequestParam (params, index) {
       params.splice(index, 1)
     },
-    calcParamTarget(calcRequestUrl) {
+    calcParamTarget (calcRequestUrl) {
       const pathParams = calcRequestUrl.split('/').filter(seg => seg.startsWith(':')).map(seg => seg.substring(1))
         .reduce((newArr, arrItem) => {
           if (newArr.indexOf(arrItem) < 0) {

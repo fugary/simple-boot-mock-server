@@ -89,7 +89,7 @@ import MockGroupApi from '../../../api/server/MockGroupApi'
 
 export default {
   name: 'MockGroupPage',
-  data() {
+  data () {
     return {
       items: null,
       searchParam: {
@@ -105,23 +105,23 @@ export default {
       }
     }
   },
-  mounted() {
+  mounted () {
     this.doSearch()
   },
   methods: {
-    newGroupItem() {
+    newGroupItem () {
       return {
         status: 1
       }
     },
-    doSearch() {
+    doSearch () {
       MockGroupApi.search(this.searchParam).then(response => {
         console.info(response)
         this.items = response.data
         Object.assign(this.page, response.page || {})
       }).finally(this.cancelLoading)
     },
-    handleEdit(item = this.newGroupItem()) {
+    handleEdit (item = this.newGroupItem()) {
       this.$cleanNewItem(this.items)
       if (item.id) {
         MockGroupApi.getById(item.id).then(response => {
@@ -132,17 +132,17 @@ export default {
       }
       this.$editTableItem(this.items, item)
     },
-    cancelEdit() {
+    cancelEdit () {
       this.$cleanNewItem(this.items)
       this.currentItem = this.newGroupItem()
     },
-    cancelLoading() {
+    cancelLoading () {
       this.saveLoading = false
     },
-    handleRequest(item) {
-      this.$router.push({ name: 'MockRequests', params: { groupId: item.id }})
+    handleRequest (item) {
+      this.$router.push({ name: 'MockRequests', params: { groupId: item.id } })
     },
-    handleSave() {
+    handleSave () {
       this.$refs.groupForm.validate(valid => {
         if (valid) {
           this.saveLoading = true
@@ -154,10 +154,10 @@ export default {
         }
       })
     },
-    handleDelete(item) {
+    handleDelete (item) {
       this.$confirm('确定要删除该分组?', '提示').then(() => {
         console.info(item)
-        MockGroupApi.removeById(item.id).then(this.doSearch)
+        MockGroupApi.deleteById(item.id).then(this.doSearch)
       })
     }
   }

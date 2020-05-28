@@ -1,19 +1,21 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import getters from './getters'
-import app from './modules/app'
-import settings from './modules/settings'
-import user from './modules/user'
+import ThemeStore from './ThemeStore'
+import createPersistedState from 'vuex-persistedstate'
 
 Vue.use(Vuex)
 
-const store = new Vuex.Store({
-  modules: {
-    app,
-    settings,
-    user
-  },
-  getters
-})
+const PERSIST_PATHS = ['Theme.persistData']
 
-export default store
+export default new Vuex.Store({
+  state: {
+  },
+  mutations: {},
+  actions: {},
+  modules: {
+    Theme: ThemeStore
+  },
+  plugins: [createPersistedState({
+    paths: PERSIST_PATHS
+  })]
+})

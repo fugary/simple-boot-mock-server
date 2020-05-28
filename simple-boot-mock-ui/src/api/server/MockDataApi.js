@@ -1,31 +1,30 @@
-import MockModelApi from '@/api/server/MockModelApi'
-import request from '@/utils/request'
+import RequestModelApi, { $http } from '@/utils/RequestModelApi'
 import axios from 'axios'
 import hljs from 'highlight.js'
 
 const MOCK_DATA_URL = '/admin/data'
-const MockDataApi = new MockModelApi(MOCK_DATA_URL)
+const MockDataApi = new RequestModelApi(MOCK_DATA_URL)
 
-MockDataApi.preview = function(data, config) {
-  return request(Object.assign({
+MockDataApi.preview = function (data, config) {
+  return $http(Object.assign({
     url: `${MOCK_DATA_URL}/preview`,
     method: 'post',
     data
   }, config))
 }
 
-MockDataApi.markDefault = function(data, config) {
-  return request(Object.assign({
+MockDataApi.markDefault = function (data, config) {
+  return $http(Object.assign({
     url: `${MOCK_DATA_URL}/markDefault`,
     method: 'post',
     data
   }, config))
 }
 
-MockDataApi.previewRequest = function(requestUrl, requestItem, dataId, config) {
+MockDataApi.previewRequest = function (requestUrl, requestItem, dataId, config) {
   const req = axios.create({
-    baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
-    // withCredentials: true, // send cookies when cross-domain requests
+    baseURL: process.env.VUE_APP_BASE_URL, // url = base url + request url
+    // withCredentials: true, // send cookies when cross-domain request
     timeout: 60000 // request timeout,
   })
   const headers = Object.assign({
@@ -38,7 +37,7 @@ MockDataApi.previewRequest = function(requestUrl, requestItem, dataId, config) {
   }, config, { headers }))
 }
 
-MockDataApi.processResponse = function(response) {
+MockDataApi.processResponse = function (response) {
   const { config } = response
   if (!response.status) {
     response = response.response || {}

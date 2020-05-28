@@ -1,36 +1,30 @@
 import Vue from 'vue'
-
-import 'normalize.css/normalize.css' // A modern alternative to CSS resets
-
-import VueHighlightJS from 'vue-highlightjs'
-import ElementUI from 'element-ui'
-import 'element-ui/lib/theme-chalk/index.css'
-import locale from 'element-ui/lib/locale/lang/zh-CN' // lang i18n
-
-import '@/styles/index.scss' // global css
-
-import App from './App'
-import store from './store'
+import App from './App.vue'
 import router from './router'
-
-import '@/icons' // icon
-import '@/permission' // permission control
-import filters from '@/components/common/filters'
-import MockServerPlugin from '@/components/server/MockServerPlugin'
-
-// set ElementUI lang to EN
-Vue.use(ElementUI, { locale })
-// 如果想要中文版 element-ui，按如下方式声明
-// Vue.use(ElementUI)
+import store from './store'
+// 引入ElementUI的js和css
+import ElementUI from 'element-ui'
+import VueHighlightJS from 'vue-highlightjs'
+// 样式配置
+import './assets/css/main.scss'
+import CommonFilterPlugin from './utils/CommonFilterPlugin'
+import MockServerPlugin from './utils/MockServerPlugin'
+import SimplePlugin from './utils/SimplePlugin'
+// 配置ElementUI
+Vue.use(ElementUI)
+// 自定义插件
+Vue.use(SimplePlugin)
 Vue.use(VueHighlightJS)
-Vue.use(filters)
+Vue.use(CommonFilterPlugin)
 Vue.use(MockServerPlugin)
 
 Vue.config.productionTip = false
 
 new Vue({
-  el: '#app',
   router,
   store,
-  render: h => h(App)
-})
+  render: h => h(App),
+  mounted () {
+    this.$changeTheme(store.getters['Theme/currentTheme'] || undefined)
+  }
+}).$mount('#app')

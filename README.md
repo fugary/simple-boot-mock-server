@@ -32,7 +32,7 @@
 
 ## simple-boot-mock-ui
 
-主要基于[vue-admin-template](https://github.com/PanJiaChen/vue-admin-template)开发界面。
+已经从最开始的基础框架Vue-Admin-Template转到自己整合的主题框架[simple-element-ui-template](https://github.com/fugary/simple-element-ui-template)，定制了展示界面。
 
 使用vue打包后自动复制到simple-boot-mock-server项目下的/src/main/resources/static目录
 

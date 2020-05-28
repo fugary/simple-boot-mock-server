@@ -62,7 +62,7 @@ export default {
       default: 'value'
     }
   },
-  data() {
+  data () {
     const requestParams = this.$props.params || []
     return {
       requestParams
@@ -70,27 +70,27 @@ export default {
   },
   watch: {
     requestParams: {
-      handler(v) {
+      handler (v) {
         this.$emit('update:params', v)
       },
       deep: true
     },
     params: {
-      handler(params) {
+      handler (params) {
         this.requestParams = params
       },
       deep: true
     }
   },
   methods: {
-    addRequestParam() {
+    addRequestParam () {
       const { nameKey, valueKey } = this.$props
       const newParam = {}
       newParam[nameKey] = ''
       newParam[valueKey] = ''
       this.requestParams.push(newParam)
     },
-    deleteRequestParam(index) {
+    deleteRequestParam (index) {
       this.requestParams.splice(index, 1)
     }
   }

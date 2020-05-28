@@ -119,7 +119,7 @@ import MockDataPreview from './MockDataPreview'
 export default {
   name: 'MockGroupPage',
   components: { MockDataEdit, MockDataPreview },
-  data() {
+  data () {
     const groupId = this.$route.params.groupId
     return {
       groupId,
@@ -148,19 +148,19 @@ export default {
       allMethods: [{ method: 'GET', type: 'primary' }, { method: 'POST', type: 'success' }, { method: 'DELETE', type: 'danger' }, { method: 'PUT', type: '' }, { method: 'PATCH', type: 'warning' }]
     }
   },
-  mounted() {
+  mounted () {
     this.doLoadGroup()
     this.doSearch()
   },
   methods: {
-    methodType(method) {
+    methodType (method) {
       const found = this.allMethods.filter(item => item.method === method)[0]
       return found ? found.type : ''
     },
-    goBack() {
+    goBack () {
       this.$router.go(-1)
     },
-    newRequestItem() {
+    newRequestItem () {
       return {
         editing: false,
         status: 1,
@@ -168,13 +168,13 @@ export default {
         groupId: this.groupId
       }
     },
-    doLoadGroup() {
+    doLoadGroup () {
       MockGroupApi.getById(this.searchParam.groupId).then(response => {
         this.groupItem = response.data
         this.groupUrl = `/mock/${this.groupItem.groupPath}`
       })
     },
-    doSearch() {
+    doSearch () {
       MockRequestApi.search(this.searchParam).then(response => {
         console.info(response)
         this.items = response.data
@@ -184,7 +184,7 @@ export default {
         })
       }).finally(this.cancelLoading)
     },
-    handleEdit(item = this.newRequestItem()) {
+    handleEdit (item = this.newRequestItem()) {
       this.$cleanNewItem(this.items)
       if (item.id) {
         MockRequestApi.getById(item.id).then(response => {
@@ -195,14 +195,14 @@ export default {
       }
       this.$editTableItem(this.items, item)
     },
-    cancelEdit() {
+    cancelEdit () {
       this.$cleanNewItem(this.items)
       this.currentItem = this.newRequestItem()
     },
-    cancelLoading() {
+    cancelLoading () {
       this.saveLoading = false
     },
-    handleSave() {
+    handleSave () {
       this.$refs.requestForm.validate(valid => {
         if (valid) {
           this.saveLoading = true
@@ -214,22 +214,22 @@ export default {
         }
       })
     },
-    handleDelete(item) {
+    handleDelete (item) {
       this.$confirm('确定要删除该请求?', '提示').then(() => {
         console.info(item)
-        MockRequestApi.removeById(item.id).then(this.doSearch)
+        MockRequestApi.deleteById(item.id).then(this.doSearch)
       })
     },
-    handleDataExpand(request, expanded) {
+    handleDataExpand (request, expanded) {
       console.info(arguments)
       request.expandDataFlag = expanded.indexOf(request) > -1 // 判断request是否是展开状态
     },
-    doExpandData(item) {
+    doExpandData (item) {
       if (item) {
         this.$refs.requestsTable.toggleRowExpansion(item)
       }
     },
-    handleDataPreview(request) {
+    handleDataPreview (request) {
       MockRequestApi.getById(request.id).then(response => {
         request = response.data
         let requestPath = request.requestPath || ''

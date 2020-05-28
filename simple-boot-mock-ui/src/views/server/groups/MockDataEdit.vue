@@ -65,7 +65,7 @@
         </template>
       </el-table-column>
       <el-table-column width="220">
-        <template slot="header" slot-scope="scope">
+        <template slot="header">
           <span>操作</span>
           <el-button icon="el-icon-plus" size="mini" circle type="success" title="新增响应数据" @click="handleDataEdit()" />
         </template>
@@ -201,7 +201,7 @@ export default {
     request: { type: Object, required: true },
     groupItem: { type: Object }
   },
-  data() {
+  data () {
     let requestPath = this.request.requestPath || ''
     requestPath = requestPath.startsWith('/') ? requestPath : `/${requestPath}`
     const requestUrl = `/mock/${this.groupItem.groupPath}${requestPath}`
@@ -221,19 +221,19 @@ export default {
     }
   },
   watch: {
-    request: function(req) {
+    request: function (req) {
       if (req) {
         this.doSearchRequestData()
       }
     }
   },
-  mounted() {
+  mounted () {
     if (this.request) {
       this.doSearchRequestData()
     }
   },
   methods: {
-    newDataItem() {
+    newDataItem () {
       return {
         requestId: this.request.id,
         groupId: this.request.groupId,
@@ -243,7 +243,7 @@ export default {
         headerParams: []
       }
     },
-    doSearchRequestData() {
+    doSearchRequestData () {
       const request = this.request
       MockDataApi.search({
         groupId: request.groupId,
@@ -254,7 +254,7 @@ export default {
         this.dataItems = response.data
       }).finally(this.cancelLoading)
     },
-    handleDataEdit(item = this.newDataItem()) {
+    handleDataEdit (item = this.newDataItem()) {
       this.$cleanNewItem(this.dataItems)
       if (item.id) {
         MockDataApi.getById(item.id).then(response => {
@@ -267,19 +267,19 @@ export default {
       this.currentDataItem.headerParams = JSON.parse(this.currentDataItem.headers || '[]')
       this.$editTableItem(this.dataItems, item)
     },
-    handleDataDetailEdit(item) {
+    handleDataDetailEdit (item) {
       this.handleDataEdit(item)
       this.showDataDetailDialog = true
     },
-    cancelDataEdit() {
+    cancelDataEdit () {
       this.$cleanNewItem(this.dataItems)
       this.showDataDetailDialog = false
       this.currentDataItem = this.newDataItem()
     },
-    cancelLoading() {
+    cancelLoading () {
       this.saveLoading = false
     },
-    handleDataSave(formKey) {
+    handleDataSave (formKey) {
       this.$refs[formKey].validate(valid => {
         if (valid) {
           const saveItem = Object.assign({}, this.currentDataItem)
@@ -293,19 +293,19 @@ export default {
         }
       })
     },
-    handleDataDelete(item) {
+    handleDataDelete (item) {
       this.$confirm('确定要删除该响应数据?', '提示').then(() => {
         console.info(item)
-        MockDataApi.removeById(item.id).then(this.doSearchRequestData)
+        MockDataApi.deleteById(item.id).then(this.doSearchRequestData)
       })
     },
-    handleDataPreview(dataItem = {}) {
+    handleDataPreview (dataItem = {}) {
       Object.assign(this.previewDataConfig, {
         showDataPreview: true,
         dataItem
       })
     },
-    markDefault(dataItem) {
+    markDefault (dataItem) {
       const { requestId, id } = dataItem
       this.saveLoading = true
       MockDataApi.markDefault({
