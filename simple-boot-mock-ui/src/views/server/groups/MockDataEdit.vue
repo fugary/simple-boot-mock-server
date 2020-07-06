@@ -1,5 +1,5 @@
 <template>
-  <el-form ref="dataForm" class="table-form" :model="currentDataItem">
+  <el-form ref="dataForm" class="table-form padding-lr" :model="currentDataItem">
     <el-table
       v-if="request.id && currentDataItem"
       :data="dataItems"
