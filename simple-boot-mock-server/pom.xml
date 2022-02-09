@@ -145,6 +145,13 @@
                 <logging.file.name>logs/simple-boot-mock/simple-boot-mock-server.log</logging.file.name>
             </properties>
         </profile>
+        <profile>
+            <id>docker</id>
+            <properties>
+                <spring.database.url>jdbc:h2:file:${MOCK_DATA_DIR:/data}/simple-boot-mock/db/mockdb;AUTO_SERVER=TRUE</spring.database.url>
+                <logging.file.name>${MOCK_DATA_DIR:/data}/simple-boot-mock/logs/simple-boot-mock-server.log</logging.file.name>
+            </properties>
+        </profile>
     </profiles>
 
 </project>
