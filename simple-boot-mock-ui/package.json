@@ -38,7 +38,7 @@
     "eslint-plugin-standard": "^4.1.0",
     "eslint-plugin-vue": "^7.20.0",
     "moment-locales-webpack-plugin": "^1.2.0",
-    "node-sass": "^6.0.1",
+    "node-sass": "^7.0.0",
     "sass-loader": "^10.2.1",
     "terser-webpack-plugin": "^4.2.3",
     "vue-template-compiler": "^2.6.14"
