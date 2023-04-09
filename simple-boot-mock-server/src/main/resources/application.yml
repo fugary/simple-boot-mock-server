@@ -19,6 +19,8 @@ spring:
   h2:
     console:
       enabled: true
+      settings:
+        web-allow-others: true
   flyway:
     baseline-on-migrate: true
     out-of-order: true
