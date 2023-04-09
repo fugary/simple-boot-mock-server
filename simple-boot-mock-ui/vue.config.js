@@ -41,9 +41,7 @@ module.exports = {
   devServer: {
     host: '0.0.0.0',
     port: port,
-    https: false,
-    hotOnly: false,
-    disableHostCheck: true
+    https: false
     // See https://github.com/vuejs/vue-cli/blob/dev/docs/cli-service.md#configuring-proxy
     // 服务器端配置cors之后，测试环境也不再使用proxy配置
     // proxy: {
