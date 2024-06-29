@@ -33,14 +33,10 @@ mybatis-plus:
       table-prefix: t_
       table-underline: true
     banner: false
-logging:
+logging: # 日志相关配置
+  level:
+    root: info
+  config: classpath:logback-spring.xml
   file:
-    name: @logging.file.name@
-    max-size: 10MB
-    max-history: 7
-    total-size-cap: 0MB
-  level: # 日志级别
-    root: INFO
-    web: DEBUG
-    org.springframework: INFO
-#  config: classpath:demo-logback.xml
+    path: C:/logs/${spring.application.name}
+    name: ${logging.file.path}/${spring.application.name}.log
