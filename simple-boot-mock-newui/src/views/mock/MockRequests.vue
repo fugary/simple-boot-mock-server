@@ -12,6 +12,7 @@ import { useFormStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useDefaultPage } from '@/config'
 import { $i18nBundle } from '@/messages'
+import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -177,9 +178,14 @@ const saveMockRequest = item => {
         :buttons="requestButtons"
         :buttons-column-attrs="{width:'250px'}"
         :loading="loading"
+        expand-table
         @page-size-change="loadMockRequests()"
         @current-page-change="loadMockRequests()"
-      />
+      >
+        <template #expand="{item}">
+          <mock-data-table :request-item="item" />
+        </template>
+      </common-table>
     </el-main>
     <simple-edit-window
       v-model="currentRequest"
