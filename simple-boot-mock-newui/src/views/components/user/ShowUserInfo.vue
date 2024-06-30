@@ -1,16 +1,15 @@
 <script setup>
-import { useResourceApi } from '@/hooks/ApiHooks'
+import MockUserApi from '@/api/mock/MockUserApi'
 import UserInfo from '@/views/components/user/UserInfo.vue'
 import { ref } from 'vue'
 
-const { getById } = useResourceApi('/admin/users')
 const showWindow = ref(false)
 const userDetail = ref({})
 const loading = ref(false)
 const showUserInfo = (id) => {
   userDetail.value = {}
   loading.value = true
-  getById(id).then(data => {
+  MockUserApi.getById(id).then(data => {
     loading.value = false
     if (data.success && data.resultData) {
       userDetail.value = data.resultData

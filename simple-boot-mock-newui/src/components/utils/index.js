@@ -64,8 +64,8 @@ export const useMenuName = item => {
       return toLabelByKey(menuInfo.labelKey)
     }
   }
-  if (item.meta && item.meta.labelKey) {
-    return toLabelByKey(item.meta.labelKey)
+  if (item.meta && (item.meta.label || item.meta.labelKey)) {
+    return item.meta.label || toLabelByKey(item.meta.labelKey)
   }
   return item.name || 'No Name'
 }

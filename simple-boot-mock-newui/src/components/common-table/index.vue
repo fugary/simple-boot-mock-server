@@ -38,7 +38,7 @@ const props = defineProps({
   },
   border: {
     type: Boolean,
-    default: false
+    default: true
   },
   /**
    * el-button

@@ -2,16 +2,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
-import { useResourceApi } from '@/hooks/ApiHooks'
 import { showUserInfo } from '@/utils/DynamicUtils'
+import MockUserApi from '@/api/mock/MockUserApi'
 
 const page = ref(useDefaultPage())
 
-const { search } = useResourceApi('/admin/users')
-
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: { keyword: '', page: page.value },
-  searchMethod: search
+  searchMethod: MockUserApi.search
 })
 const loadUsers = (pageNumber) => searchMethod(pageNumber)
 

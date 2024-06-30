@@ -43,6 +43,8 @@ CREATE TABLE t_mock_request
     create_date  timestamp,
     modifier     varchar(255),
     modify_date  timestamp,
+    mock_params  text,
+    headers      text,
     PRIMARY KEY (id)
 );
 CREATE TABLE t_mock_user

@@ -2,13 +2,17 @@
 import { computed, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
-import { useResourceApi } from '@/hooks/ApiHooks'
-import { defineTableButtons } from '@/components/utils'
+import { defineFormOptions, defineTableButtons } from '@/components/utils'
+import MockGroupApi from '@/api/mock/MockGroupApi'
+import { $coreConfirm, $goto } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
+import { $i18nBundle } from '@/messages'
+import { useFormStatus } from '@/consts/GlobalConstants'
+import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 
 const page = ref(useDefaultPage())
 
-const { search } = useResourceApi('/admin/groups')
+const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: { page: page.value },
@@ -29,10 +33,12 @@ const columns = [{
   property: 'groupName'
 }, {
   label: '路径ID',
-  property: 'groupPath'
+  property: 'groupPath',
+  minWidth: '150px'
 }, {
   label: '代理路径',
-  property: 'proxyUrl'
+  property: 'proxyUrl',
+  minWidth: '150px'
 }, {
   label: '描述',
   property: 'description'
@@ -40,7 +46,7 @@ const columns = [{
   labelKey: 'common.label.status',
   property: 'status',
   formatter (data) {
-    return <DelFlagTag v-model={data.status} />
+    return <DelFlagTag v-model={data.status}/>
   }
 }, {
   labelKey: 'common.label.createDate',
@@ -51,39 +57,62 @@ const buttons = defineTableButtons([{
   labelKey: 'common.label.edit',
   type: 'primary',
   click: item => {
-    // showUserInfo(item.id)
-    console.log('======================', item)
-    // 查看
+    newOrEdit(item.id)
   }
 }, {
   labelKey: 'common.label.config',
   type: 'success',
   click: item => {
-    // showUserInfo(item.id)
-    console.log('======================', item)
-    // 查看
+    $goto(`/mock/groups/${item.id}`)
   }
 }, {
   labelKey: 'common.label.delete',
   type: 'danger',
-  click: item => {
-    // showUserInfo(item.id)
-    console.log('======================', item)
-    // 查看
-  }
+  click: item => deleteGroup(item)
 }])
 //* ************搜索框**************//
 const searchFormOptions = computed(() => {
   return [
     {
-      label: '关键字',
+      labelKey: 'common.label.keywords',
       prop: 'keyword'
     }
   ]
 })
-const doSearch = form => {
-  console.info('=================searchParam', form, searchParam.value)
-  loadMockGroups()
+
+const deleteGroup = group => {
+  $coreConfirm($i18nBundle('common.msg.commonDeleteConfirm', [group.groupName]))
+    .then(() => deleteById(group.id))
+    .then(() => loadMockGroups())
+}
+
+const showEditWindow = ref(false)
+const currentGroup = ref()
+const newOrEdit = async id => {
+  if (id) {
+    await getById(id).then(data => {
+      data.resultData && (currentGroup.value = data.resultData)
+    })
+  } else {
+    currentGroup.value = {
+      status: 1
+    }
+  }
+  showEditWindow.value = true
+}
+const editFormOptions = defineFormOptions([{
+  label: '分组名称',
+  prop: 'groupName',
+  required: true
+}, {
+  label: '代理地址',
+  prop: 'proxyUrl'
+}, useFormStatus(), {
+  labelKey: '备注信息',
+  prop: 'description'
+}])
+const saveGroupItem = (item) => {
+  saveOrUpdate(item).then(() => loadMockGroups())
 }
 </script>
 
@@ -96,18 +125,33 @@ const doSearch = form => {
       :model="searchParam"
       :options="searchFormOptions"
       :submit-label="$t('common.label.search')"
-      @submit-form="doSearch"
-    />
+      @submit-form="loadMockGroups"
+    >
+      <template #buttons>
+        <el-button
+          type="info"
+          @click="newOrEdit()"
+        >
+          {{ $t('common.label.new') }}
+        </el-button>
+      </template>
+    </common-form>
     <common-table
       v-model:page="page"
       :data="tableData"
       :columns="columns"
       :buttons="buttons"
-      buttons-slot="buttons"
       :buttons-column-attrs="{width:'250px'}"
       :loading="loading"
-      @page-size-change="loadUsers()"
-      @current-page-change="loadUsers()"
+      @page-size-change="loadMockGroups()"
+      @current-page-change="loadMockGroups()"
+    />
+    <simple-edit-window
+      v-model="currentGroup"
+      v-model:show-edit-window="showEditWindow"
+      :form-options="editFormOptions"
+      name="Mock分组"
+      :save-current-item="saveGroupItem"
     />
   </el-container>
 </template>

@@ -3,7 +3,7 @@ import { isObject } from 'lodash-es'
 import { toFlatKeyValue } from '@/utils'
 
 /**
- * 通用restful api减少开发
+ * 通用crud restful api减少开发
  * @param url
  * @param methods
  * @return {*&{search: (function(*, *): Promise<axios.AxiosResponse<any>>), getById: (function(*, *): Promise<axios.AxiosResponse<any>>), deleteById: (function(*, *): Promise<axios.AxiosResponse<any>>), saveOrUpdate: (function(*, *): Promise<axios.AxiosResponse<any>>)}}

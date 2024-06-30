@@ -90,6 +90,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         if (saveToRequest && mockData.getRequestId() != null) {
             MockRequest savedMockRequest = getById(mockData.getRequestId());
             if (savedMockRequest != null) {
+                savedMockRequest.setHeaders(mockData.getHeaders());
                 savedMockRequest.setMockParams(mockData.getMockParams());
                 SimpleMockUtils.addAuditInfo(savedMockRequest);
                 updateById(savedMockRequest);

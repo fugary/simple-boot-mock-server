@@ -15,6 +15,7 @@ public class MockRequest extends MockBase{
     private String requestPath;
     private String method;
     private String description;
+    private String headers;
     private String mockParams;
 
 }

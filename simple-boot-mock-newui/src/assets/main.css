@@ -392,6 +392,16 @@ html, body, #app, .index-container {
     margin-right: 4px;
 }
 
+.common-message-alert .el-message-box__btns,
+.common-message-confirm .el-message-box__btns {
+    justify-content: center;
+    flex-direction: row-reverse;
+}
+
+.common-message-confirm .el-message-box__btns .el-button+.el-button{
+    margin-right: 12px;
+}
+
 .flex-grow2 {
     flex-grow: 2;
 }

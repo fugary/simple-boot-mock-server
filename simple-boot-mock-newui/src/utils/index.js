@@ -1,15 +1,18 @@
 import dayjs from 'dayjs'
-import { markRaw } from 'vue'
+import { markRaw, ref } from 'vue'
 import { isObject, isArray, set, isNumber } from 'lodash-es'
 import { ElLoading, ElMessageBox, ElMessage } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import numeral from 'numeral'
 import { useClipboard } from '@vueuse/core'
-import { LOADING_DELAY, SYSTEM_KEY } from '@/config'
+import { LOADING_DELAY, SYSTEM_KEY, REMEMBER_SEARCH_PARAM_ENABLED } from '@/config'
 import { $i18nBundle } from '@/messages'
 import { useRoute } from 'vue-router'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
+import { useGlobalSearchParamStore } from '@/stores/GlobalSearchParamStore'
 import { useTabsViewStore } from '@/stores/TabsViewStore'
+import { LoadSaveParamMode } from '@/consts/GlobalConstants'
 
 export const useSystemKey = () => {
   return SYSTEM_KEY
@@ -138,6 +141,40 @@ export const $openWin = (path, target = '_blank', forceNewWin = false) => {
 window.open = $openWin
 
 export const $openNewWin = path => $openWin(path, '_blank', true)
+
+/**
+ * 统一处理一些backUrl信息
+ * @param [defaultUrl] 默认返回路径
+ * @return {{backUrl: Ref<String>, setBackUrl: (backUrl:String)=>void, goBack: () => void}
+ */
+export const useBackUrl = (defaultUrl) => {
+  const backUrl = ref(defaultUrl)
+  const setBackUrl = (url) => {
+    backUrl.value = url
+  }
+  const goBack = () => {
+    console.info('===================================goback', backUrl.value, window.history)
+    if (backUrl.value) {
+      if (REMEMBER_SEARCH_PARAM_ENABLED && useGlobalConfigStore().loadSaveParamMode === LoadSaveParamMode.BACK) {
+        useGlobalSearchParamStore().setSaveParamBack(true)
+      }
+      $goto(backUrl.value, true)
+    } else if (window.history.length > 1) {
+      window.history.go(-1)
+    } else {
+      window.close()
+    }
+  }
+  const route = useRoute()
+  if (route?.query?.backUrl) {
+    setBackUrl(route.query.backUrl)
+  }
+  return {
+    backUrl,
+    setBackUrl,
+    goBack
+  }
+}
 
 /**
  * @param {RouteLocationNormalizedLoaded} route 路由，不可为空

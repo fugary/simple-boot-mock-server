@@ -1,3 +1,4 @@
+import { $i18nBundle } from '@/messages'
 /**
  * 全局布局模式
  * @readonly
@@ -24,4 +25,18 @@ export const LoadSaveParamMode = {
   ALL: 'all',
   BACK: 'back',
   NEVER: 'never'
+}
+
+export const useFormStatus = (prop = 'status', activeValue = 1, inactiveValue = 0) => {
+  return {
+    labelKey: 'common.label.status',
+    prop,
+    type: 'switch',
+    attrs: {
+      activeValue,
+      inactiveValue,
+      activeText: $i18nBundle('common.label.statusEnabled'),
+      inactiveText: $i18nBundle('common.label.statusDisabled')
+    }
+  }
 }
