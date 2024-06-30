@@ -1,6 +1,7 @@
 <script setup lang="jsx">
 import { useRoute } from 'vue-router'
-import { $goto, useBackUrl } from '@/utils'
+import { ElTag } from 'element-plus'
+import { $coreConfirm, $goto, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, { ALL_METHODS } from '@/api/mock/MockRequestApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
@@ -9,28 +10,58 @@ import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { ref, computed } from 'vue'
 import { useFormStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
+import { useDefaultPage } from '@/config'
+import { $i18nBundle } from '@/messages'
 
 const route = useRoute()
 const groupId = route.params.groupId
 
 const { goBack } = useBackUrl('/mock/groups')
-
+const page = ref(useDefaultPage())
 const { groupItem, groupUrl, loadSuccess } = useMockGroupItem(groupId)
 
 const { tableData, loading, searchParam, searchMethod: loadMockRequests } = useTableAndSearchForm({
-  defaultParam: { groupId },
+  defaultParam: { groupId, page: page.value },
   searchMethod: MockRequestApi.search,
   saveParam: false
 })
 
 loadMockRequests()
 
+const methodOptions = ALL_METHODS.map(method => {
+  return {
+    value: method.method,
+    label: method.method
+  }
+})
+
+const methodsConfig = Object.fromEntries(ALL_METHODS.map(method => [method.method, method]))
+
+//* ************搜索框**************//
+const searchFormOptions = computed(() => {
+  return [
+    {
+      labelKey: 'common.label.keywords',
+      prop: 'keyword'
+    }, {
+      label: '请求方法',
+      prop: 'method',
+      type: 'select',
+      children: methodOptions
+    }
+  ]
+})
+
 const columns = defineTableColumns([{
   label: '请求路径',
   property: 'requestPath'
 }, {
   label: '请求方法',
-  property: 'method'
+  property: 'method',
+  formatter (data) {
+    const config = methodsConfig[data.method]
+    return <ElTag type={config.type} effect="dark">{data.method}</ElTag>
+  }
 }, {
   label: '描述',
   property: 'description'
@@ -46,8 +77,7 @@ const requestButtons = defineTableButtons([{
   labelKey: 'common.label.edit',
   type: 'primary',
   click: item => {
-    // newOrEdit(item.id)
-    console.log(item)
+    newOrEdit(item.id)
   }
 }, {
   labelKey: 'common.label.config',
@@ -59,8 +89,9 @@ const requestButtons = defineTableButtons([{
   labelKey: 'common.label.delete',
   type: 'danger',
   click: item => {
-    // deleteGroup(item)
-    console.log(item)
+    $coreConfirm($i18nBundle('common.msg.commonDeleteConfirm', [`${item.requestPath}#${item.method}`]))
+      .then(() => MockRequestApi.deleteById(item.id))
+      .then(() => loadMockRequests())
   }
 }])
 
@@ -82,16 +113,16 @@ const newOrEdit = async id => {
   showEditWindow.value = true
 }
 const editFormOptions = computed(() => {
-  const methodOptions = ALL_METHODS.map(method => {
-    return {
-      value: method.method,
-      label: method.method
-    }
-  })
   return defineFormOptions([{
     label: '请求路径',
     prop: 'requestPath',
-    required: true
+    required: true,
+    change (val) {
+      console.log('====================change1', val)
+      if (val && !val.startsWith('/')) {
+        currentRequest.value.requestPath = `/${val.trim()}`
+      }
+    }
   }, {
     label: '请求方法',
     prop: 'method',
@@ -106,6 +137,11 @@ const editFormOptions = computed(() => {
     prop: 'description'
   }])
 })
+
+const saveMockRequest = item => {
+  MockRequestApi.saveOrUpdate(item)
+    .then(() => loadMockRequests())
+}
 
 </script>
 
@@ -136,11 +172,14 @@ const editFormOptions = computed(() => {
         </template>
       </common-form>
       <common-table
+        v-model:page="page"
         :data="tableData"
         :columns="columns"
         :buttons="requestButtons"
         :buttons-column-attrs="{width:'250px'}"
         :loading="loading"
+        @page-size-change="loadMockRequests()"
+        @current-page-change="loadMockRequests()"
       />
     </el-main>
     <simple-edit-window
@@ -148,7 +187,7 @@ const editFormOptions = computed(() => {
       v-model:show-edit-window="showEditWindow"
       :form-options="editFormOptions"
       name="Mock请求"
-      :save-current-item="MockRequestApi.saveOrUpdate"
+      :save-current-item="saveMockRequest"
     />
   </el-container>
 </template>

@@ -4,7 +4,7 @@ export const ALL_METHODS = [
   { method: 'GET', type: 'primary' },
   { method: 'POST', type: 'success' },
   { method: 'DELETE', type: 'danger' },
-  { method: 'PUT', type: '' },
-  { method: 'PATCH', type: 'warning' }]
+  { method: 'PUT', type: 'warning' },
+  { method: 'PATCH', type: 'info' }]
 
 export default useResourceApi('/admin/requests')

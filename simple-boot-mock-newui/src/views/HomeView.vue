@@ -37,8 +37,10 @@ useMenuConfigStore().loadBusinessMenus()
       <el-header
         v-if="globalConfigStore.layoutMode === GlobalLayoutMode.TOP && globalConfigStore.isShowBreadcrumb"
         class="tabs-header"
+        style="height: 40px"
       >
         <common-breadcrumb
+          style="padding-top:15px"
           :show-icon="tabsViewStore.isShowTabIcon"
           :label-config="breadcrumbConfigStore.breadcrumbConfig"
         />

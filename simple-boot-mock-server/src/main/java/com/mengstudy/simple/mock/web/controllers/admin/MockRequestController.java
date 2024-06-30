@@ -38,10 +38,12 @@ public class MockRequestController {
         }
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         if (StringUtils.isNotBlank(keyword)) {
-            queryWrapper.and(wrapper -> wrapper.like("request_name", keyword)
-                    .or().like("request_path", keyword));
+            queryWrapper.and(wrapper -> wrapper.like("request_path", keyword));
         }
-        queryWrapper.orderByAsc("request_path", "create_date");
+        if (StringUtils.isNotBlank(queryVo.getMethod())) {
+            queryWrapper.and(wrapper -> wrapper.eq("method", queryVo.getMethod()));
+        }
+        queryWrapper.orderByAsc("request_path", "method");
         return SimpleResultUtils.createSimpleResult(mockRequestService.page(page, queryWrapper));
     }
 
