@@ -9,4 +9,13 @@ import com.mengstudy.simple.mock.entity.mock.MockUser;
  * @author gary.fu
  */
 public interface MockUserService extends IService<MockUser> {
+
+    /**
+     * 检查是否有重复
+     *
+     * @param user
+     * @return
+     */
+    boolean existsUser(MockUser user);
+
 }

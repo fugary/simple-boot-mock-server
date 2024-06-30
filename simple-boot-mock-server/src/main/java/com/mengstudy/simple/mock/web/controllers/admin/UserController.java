@@ -2,17 +2,22 @@ package com.mengstudy.simple.mock.web.controllers.admin;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mengstudy.simple.mock.contants.MockErrorConstants;
 import com.mengstudy.simple.mock.entity.mock.MockUser;
 import com.mengstudy.simple.mock.service.mock.MockUserService;
-import com.mengstudy.simple.mock.service.token.TokenService;
+import com.mengstudy.simple.mock.utils.SimpleMockUtils;
 import com.mengstudy.simple.mock.utils.SimpleResultUtils;
 import com.mengstudy.simple.mock.web.vo.SimpleResult;
+import com.mengstudy.simple.mock.web.vo.query.SimpleQueryVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Created on 2020/5/5 18:40 .<br>
@@ -21,23 +26,40 @@ import org.springframework.web.bind.annotation.*;
  */
 @Slf4j
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/admin/users")
 public class UserController {
 
     @Autowired
     private MockUserService mockUserService;
 
-    @Autowired
-    private TokenService tokenService;
-
-    @PostMapping("/login")
-    public SimpleResult<String> login(@RequestBody MockUser user) {
-        MockUser loginUser = mockUserService.getOne(Wrappers.<MockUser>query().eq("user_name",
-                user.getUserName()));
-        if (loginUser == null || !StringUtils.equalsIgnoreCase(user.getUserPassword(), loginUser.getUserPassword())) {
-            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2001);
+    @GetMapping
+    public SimpleResult<List<MockUser>> search(@ModelAttribute SimpleQueryVo queryVo) {
+        Page<MockUser> page = SimpleResultUtils.toPage(queryVo);
+        QueryWrapper<MockUser> queryWrapper = Wrappers.query();
+        String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
+        if (StringUtils.isNotBlank(keyword)) {
+            queryWrapper.and(wrapper -> wrapper.like("user_name", keyword)
+                    .or().like("nick_name", keyword));
         }
-        return SimpleResultUtils.createSimpleResult(tokenService.createToken(loginUser));
+        return SimpleResultUtils.createSimpleResult(mockUserService.page(page, queryWrapper));
+    }
+
+    @GetMapping("/{id}")
+    public SimpleResult<MockUser> get(@PathVariable("id") Integer id) {
+        return SimpleResultUtils.createSimpleResult(mockUserService.getById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public SimpleResult remove(@PathVariable("id") Integer id) {
+        return SimpleResultUtils.createSimpleResult(mockUserService.removeById(id));
+    }
+
+    @PostMapping
+    public SimpleResult save(@RequestBody MockUser user) {
+        if (mockUserService.existsUser(user)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
+        }
+        return SimpleResultUtils.createSimpleResult(mockUserService.saveOrUpdate(SimpleMockUtils.addAuditInfo(user)));
     }
 
     @GetMapping("/info")
@@ -45,10 +67,5 @@ public class UserController {
         DecodedJWT decode = JWT.decode(token);
         String name = decode.getClaim("name").asString();
         return SimpleResultUtils.createSimpleResult(mockUserService.getOne(Wrappers.<MockUser>query().eq("user_name", name)));
-    }
-
-    @PostMapping("/logout")
-    public SimpleResult logout() {
-        return SimpleResultUtils.createSimpleResult(true);
     }
 }

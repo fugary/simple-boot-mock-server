@@ -19,6 +19,7 @@
         <relativePath/> <!-- lookup parent from repository 从maven仓库查找父工程-->
     </parent>
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
         <mybatis-plus-boot-starter.version>3.5.7</mybatis-plus-boot-starter.version>
         <java-jwt.version>4.4.0</java-jwt.version>

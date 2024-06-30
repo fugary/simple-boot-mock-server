@@ -1,6 +1,7 @@
 package com.mengstudy.simple.mock.config;
 
 import com.mengstudy.simple.mock.web.filters.MockMetaDataFilter;
+import com.mengstudy.simple.mock.web.filters.locale.CustomHeaderLocaleContextResolver;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -9,9 +10,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.server.i18n.LocaleContextResolver;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,6 +28,14 @@ import static com.mengstudy.simple.mock.contants.MockConstants.*;
 @Configuration
 @EnableConfigurationProperties({SimpleMockConfigProperties.class})
 public class ApplicationConfig {
+
+    @Bean
+    public LocaleContextResolver localeContextResolver(){
+        CustomHeaderLocaleContextResolver localeContextResolver = new CustomHeaderLocaleContextResolver();
+        localeContextResolver.setDefaultLocale(Locale.CHINA);
+        localeContextResolver.setSupportedLocales(Arrays.asList(Locale.CHINA, Locale.US));
+        return localeContextResolver;
+    }
 
     @Bean
     public CorsFilter corsFilter() {

@@ -35,8 +35,13 @@ public class SimpleResultUtils {
      * @return
      */
     public static <T> Page<T> toPage(SimpleQueryVo queryVo) {
-        Integer current = queryVo.getCurrent() == null || queryVo.getCurrent() < 0 ? 1 : queryVo.getCurrent();
-        Integer size = queryVo.getSize() == null || queryVo.getSize() < 0 ? 10 : queryVo.getSize();
+        SimplePage page = queryVo.getPage();
+        int current = 1;
+        int size = 10;
+        if (page != null) {
+            current = Math.toIntExact(page.getCurrent() < 0 ? 1 : page.getCurrent());
+            size = Math.toIntExact(page.getSize() < 0 ? 10 : page.getSize());
+        }
         return new Page<>(current, size);
     }
 
@@ -61,7 +66,7 @@ public class SimpleResultUtils {
         if (data == null || data.getRecords() == null) {
             return createSimpleResult(MockErrorConstants.CODE_404);
         }
-        return SimpleResult.<List<T>>builder().data(data.getRecords())
+        return SimpleResult.<List<T>>builder().resultData(data.getRecords())
                 .page(fromPage(data))
                 .message(getErrorMsg(MockErrorConstants.CODE_0)).build();
     }
@@ -77,7 +82,7 @@ public class SimpleResultUtils {
         if (data == null) {
             return createSimpleResult(MockErrorConstants.CODE_404);
         }
-        return SimpleResult.<T>builder().data(data)
+        return SimpleResult.<T>builder().resultData(data)
                 .message(getErrorMsg(MockErrorConstants.CODE_0)).build();
     }
 

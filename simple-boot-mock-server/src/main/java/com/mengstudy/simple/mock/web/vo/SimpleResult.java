@@ -1,5 +1,6 @@
 package com.mengstudy.simple.mock.web.vo;
 
+import com.mengstudy.simple.mock.contants.MockErrorConstants;
 import com.mengstudy.simple.mock.web.vo.query.SimplePage;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,11 +29,18 @@ public class SimpleResult<T> {
     /**
      * 响应的数据
      */
-    private T data;
+    private T resultData;
 
     /**
      * 分页数据
      */
     private SimplePage page;
 
+    /**
+     * 是否成功
+     * @return
+     */
+    public boolean isSuccess(){
+        return code == MockErrorConstants.CODE_0;
+    }
 }

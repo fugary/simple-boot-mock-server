@@ -14,6 +14,5 @@ public class SimpleQueryVo implements Serializable {
 
     private static final long serialVersionUID = -4434584087743713106L;
     private String keyword;
-    private Integer current;
-    private Integer size;
+    private SimplePage page;
 }
