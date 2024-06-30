@@ -10,12 +10,10 @@ import { $i18nBundle } from '@/messages'
 import { useFormStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 
-const page = ref(useDefaultPage())
-
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
-  defaultParam: { page: page.value },
+  defaultParam: { page: useDefaultPage() },
   searchMethod: search
 })
 const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
@@ -137,7 +135,7 @@ const saveGroupItem = (item) => {
       </template>
     </common-form>
     <common-table
-      v-model:page="page"
+      v-model:page="searchParam.page"
       :data="tableData"
       :columns="columns"
       :buttons="buttons"

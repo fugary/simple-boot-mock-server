@@ -39,8 +39,8 @@ public class SimpleResultUtils {
         int current = 1;
         int size = 10;
         if (page != null) {
-            current = Math.toIntExact(page.getCurrent() < 0 ? 1 : page.getCurrent());
-            size = Math.toIntExact(page.getSize() < 0 ? 10 : page.getSize());
+            current = Math.toIntExact(page.getPageNumber() < 0 ? 1 : page.getPageNumber());
+            size = Math.toIntExact(page.getPageSize() < 0 ? 10 : page.getPageSize());
         }
         return new Page<>(current, size);
     }

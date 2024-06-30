@@ -77,13 +77,13 @@ export const REMEMBER_SEARCH_PARAM_ENABLED = true
 /**
  * 默认分页数据
  *
- * @param size
+ * @param pageSize
  * @return {CommonPage}
  */
-export const useDefaultPage = (size = PAGE_SIZE) => {
+export const useDefaultPage = (pageSize = PAGE_SIZE) => {
   return {
-    size,
-    current: 1
+    pageSize,
+    pageNumber: 1
   }
 }
 

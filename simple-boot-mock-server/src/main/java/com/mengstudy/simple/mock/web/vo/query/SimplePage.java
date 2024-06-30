@@ -18,9 +18,9 @@ public class SimplePage implements Serializable {
 
 
     private static final long serialVersionUID = 3872817998806496090L;
-    private long current;
-    private long size;
-    private long total;
-    private long pages;
+    private long pageNumber;
+    private long pageSize;
+    private long totalCount;
+    private long pageCount;
 
 }

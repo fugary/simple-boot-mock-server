@@ -17,11 +17,10 @@ const route = useRoute()
 const groupId = route.params.groupId
 
 const { goBack } = useBackUrl('/mock/groups')
-const page = ref(useDefaultPage())
 const { groupItem, groupUrl, loadSuccess } = useMockGroupItem(groupId)
 
 const { tableData, loading, searchParam, searchMethod: loadMockRequests } = useTableAndSearchForm({
-  defaultParam: { groupId, page: page.value },
+  defaultParam: { groupId, page: useDefaultPage() },
   searchMethod: MockRequestApi.search,
   saveParam: false
 })
@@ -172,7 +171,7 @@ const saveMockRequest = item => {
         </template>
       </common-form>
       <common-table
-        v-model:page="page"
+        v-model:page="searchParam.page"
         :data="tableData"
         :columns="columns"
         :buttons="requestButtons"

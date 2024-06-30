@@ -2,6 +2,12 @@ import { ref, watch } from 'vue'
 import { isFunction, isNumber } from 'lodash-es'
 import { useGlobalSearchParamStore } from '@/stores/GlobalSearchParamStore'
 
+const defaultPageProcessor = (searchResult, searchParam) => {
+  if (searchResult.page && searchParam.value.page) {
+    Object.assign(searchParam.value.page, searchResult.page)
+  }
+}
+
 /**
  * 通用搜索表格表单封装
  * @param {CommonTableAndSearchForm} param 参数
@@ -10,8 +16,8 @@ import { useGlobalSearchParamStore } from '@/stores/GlobalSearchParamStore'
 export const useTableAndSearchForm = ({
   searchMethod,
   defaultParam = {},
-  dataProcessor = resultData => resultData,
-  pageProcessor = (resultData, searchParam) => resultData.page && Object.assign(searchParam.value, ...resultData.page || {}),
+  dataProcessor = searchResult => searchResult.resultData,
+  pageProcessor = defaultPageProcessor,
   saveParam = true
 }) => {
   const globalSearchParamStore = useGlobalSearchParamStore()
@@ -20,7 +26,7 @@ export const useTableAndSearchForm = ({
   const searchParam = ref(saveParam ? globalSearchParamStore.getCurrentParam(defaultParam) : defaultParam)
   const searchTableItems = async (pageNumber, newParams = {}) => {
     if (isNumber(pageNumber) && searchParam.value) {
-      searchParam.value.current = pageNumber
+      searchParam.value?.page && (searchParam.value.page.pageNumber = pageNumber)
     }
     loading.value = true
     saveParam && globalSearchParamStore.saveCurrentParam(searchParam.value)
@@ -29,9 +35,8 @@ export const useTableAndSearchForm = ({
     loading.value = false
     console.log('=======================', searchResult)
     if (searchResult.success && searchResult.resultData) {
-      const resultData = searchResult.resultData
-      tableData.value = isFunction(dataProcessor) && dataProcessor?.(resultData, searchParam)
-      pageProcessor?.(resultData, searchParam)
+      tableData.value = isFunction(dataProcessor) && dataProcessor?.(searchResult, searchParam)
+      pageProcessor?.(searchResult, searchParam)
     }
     return searchResult
   }
