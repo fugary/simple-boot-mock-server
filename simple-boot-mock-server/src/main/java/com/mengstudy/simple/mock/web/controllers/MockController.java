@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -70,7 +71,7 @@ public class MockController {
     }
 
     @RequestMapping("/proxy/**")
-    public ResponseEntity<byte[]> proxy(@RequestParam(value = "_url", required = false) String proxyUrl, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<byte[]> proxy(@RequestParam(value = "_url", required = false) String proxyUrl, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (SimpleMockUtils.isValidProxyUrl(proxyUrl)) {
             String pathPrefix = request.getContextPath() + "/mock/\\w+(/.*)";
             String requestUrl = request.getRequestURI();
@@ -93,7 +94,9 @@ public class MockController {
                     headers.add(headerName, headerValue);
                 }
             }
-            HttpEntity<?> entity = new HttpEntity<>(headers);
+            headers.add(MockConstants.SIMPLE_BOOT_MOCK_HEADER, "1");
+            InputStreamResource resource = new InputStreamResource(request.getInputStream());
+            HttpEntity<?> entity = new HttpEntity<>(resource, headers);
             try {
                 return restTemplate.exchange(targetUri, Optional.ofNullable(HttpMethod.resolve(request.getMethod())).orElse(HttpMethod.GET),
                         entity, byte[].class);
