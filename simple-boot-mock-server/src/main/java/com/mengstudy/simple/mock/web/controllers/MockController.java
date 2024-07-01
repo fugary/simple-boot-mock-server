@@ -21,6 +21,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,11 +78,11 @@ public class MockController {
             if (matcher.matches()) {
                 requestUrl = matcher.group(1);
             }
-            String url = UriComponentsBuilder.fromUriString(proxyUrl)
+            URI targetUri = UriComponentsBuilder.fromUriString(proxyUrl)
                     .path(requestUrl)
                     .query(request.getQueryString())
                     .replaceQueryParam("_url")
-                    .build(true).toString();
+                    .build(true).toUri();
             HttpHeaders headers = new HttpHeaders();
             Enumeration<String> headerNames = request.getHeaderNames();
             Set<String> excludes = new HashSet<>(Arrays.asList(HttpHeaders.HOST.toLowerCase()));
@@ -94,7 +95,7 @@ public class MockController {
             }
             HttpEntity<?> entity = new HttpEntity<>(headers);
             try {
-                return restTemplate.exchange(url, Optional.ofNullable(HttpMethod.resolve(request.getMethod())).orElse(HttpMethod.GET),
+                return restTemplate.exchange(targetUri, Optional.ofNullable(HttpMethod.resolve(request.getMethod())).orElse(HttpMethod.GET),
                         entity, byte[].class);
             } catch (HttpClientErrorException e) {
                 return ResponseEntity.status(e.getStatusCode())

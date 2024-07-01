@@ -9,6 +9,7 @@ import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
 import { useFormStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
+import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
 
@@ -32,7 +33,14 @@ const columns = [{
 }, {
   label: '路径ID',
   property: 'groupPath',
-  minWidth: '150px'
+  minWidth: '150px',
+  formatter (data) {
+    const path = `/mock/${data.groupPath}`
+    return <>
+      {data.groupPath}&nbsp;
+      <MockUrlCopyLink urlPath={path}/>
+      </>
+  }
 }, {
   label: '代理路径',
   property: 'proxyUrl',
@@ -104,7 +112,14 @@ const editFormOptions = defineFormOptions([{
   required: true
 }, {
   label: '代理地址',
-  prop: 'proxyUrl'
+  prop: 'proxyUrl',
+  tooltip: '配置的请求之外的地址将发送到代理地址获取数据，支持http和https',
+  rules: [{
+    message: '代理地址必须是正常的http或者https地址',
+    validator: () => {
+      return !currentGroup.value?.proxyUrl || /^https?:\/\//.test(currentGroup.value?.proxyUrl)
+    }
+  }]
 }, useFormStatus(), {
   labelKey: '备注信息',
   prop: 'description'

@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { useRoute } from 'vue-router'
 import { ElTag } from 'element-plus'
-import { $coreConfirm, $goto, useBackUrl } from '@/utils'
+import { $coreConfirm, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, { ALL_METHODS } from '@/api/mock/MockRequestApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
@@ -13,6 +13,7 @@ import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useDefaultPage } from '@/config'
 import { $i18nBundle } from '@/messages'
 import MockDataTable from '@/views/components/mock/MockDataTable.vue'
+import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -80,10 +81,10 @@ const requestButtons = defineTableButtons([{
     newOrEdit(item.id)
   }
 }, {
-  labelKey: 'common.label.config',
+  labelKey: 'common.label.preview',
   type: 'success',
   click: item => {
-    $goto(`/mock/groups/${item.id}`)
+    console.log('==============预览', item)
   }
 }, {
   labelKey: 'common.label.delete',
@@ -152,6 +153,7 @@ const saveMockRequest = item => {
         <span class="text-large font-600 mr-3">
           {{ groupItem.groupName }} 【{{ groupUrl }}】
         </span>
+        <mock-url-copy-link :url-path="groupUrl" />
       </template>
     </el-page-header>
     <el-main v-if="loadSuccess">
