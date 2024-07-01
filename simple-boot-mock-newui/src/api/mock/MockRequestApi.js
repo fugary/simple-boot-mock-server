@@ -15,7 +15,7 @@ export const ALL_METHODS = [
  */
 export const getMockUrl = (path) => {
   let baseUrl = location.origin
-  if (!/^https?:\/\//.test(BASE_URL)) {
+  if (/^https?:\/\//.test(BASE_URL)) {
     baseUrl = BASE_URL
   }
   return `${baseUrl}${path}`
