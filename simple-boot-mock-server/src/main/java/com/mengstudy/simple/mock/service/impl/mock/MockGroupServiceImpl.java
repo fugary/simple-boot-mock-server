@@ -14,6 +14,7 @@ import com.mengstudy.simple.mock.utils.MockJsUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -87,12 +88,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public MockData matchMockData(HttpServletRequest request, Integer defaultId) {
+    public Pair<MockGroup, MockData> matchMockData(HttpServletRequest request, Integer defaultId) {
         String requestPath = request.getServletPath();
         String method = request.getMethod();
         String requestGroupPath = calcGroupPath(requestPath);
+        MockGroup mockGroup = null;
         if (StringUtils.isNotBlank(requestGroupPath)) {
-            MockGroup mockGroup = getOne(Wrappers.<MockGroup>query()
+            mockGroup = getOne(Wrappers.<MockGroup>query()
                     .eq("group_path", requestGroupPath)
                     .eq("status", 1));
             if (mockGroup != null) {
@@ -110,12 +112,12 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                             && StringUtils.equalsIgnoreCase(method, mockRequest.getMethod())) {
                         MockData mockData = mockRequestService.findMockData(mockRequest, defaultId);
                         processMockData(request, mockData, configPath, requestPath);
-                        return mockData;
+                        return Pair.of(mockGroup, mockData);
                     }
                 }
             }
         }
-        return null;
+        return Pair.of(mockGroup, null);
     }
 
     /**

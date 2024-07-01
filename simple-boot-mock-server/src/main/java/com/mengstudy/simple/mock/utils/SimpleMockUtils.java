@@ -95,4 +95,13 @@ public class SimpleMockUtils {
         }
         return null;
     }
+
+    /**
+     * 是否是可用proxyUrl
+     * @param proxyUrl
+     * @return
+     */
+    public static boolean isValidProxyUrl(String proxyUrl) {
+        return StringUtils.isNotBlank(proxyUrl) && proxyUrl.matches("https?://.*");
+    }
 }

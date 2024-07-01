@@ -1,5 +1,6 @@
 package com.mengstudy.simple.mock.config;
 
+import com.mengstudy.simple.mock.utils.http.SimpleHttpClientUtils;
 import com.mengstudy.simple.mock.web.filters.MockMetaDataFilter;
 import com.mengstudy.simple.mock.web.filters.locale.CustomHeaderLocaleContextResolver;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -7,6 +8,9 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -69,5 +73,12 @@ public class ApplicationConfig {
         registration.setName("mockMetaDataFilter");
         registration.setOrder(2);
         return registration;
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(
+                SimpleHttpClientUtils.getHttpClient());
+        return new RestTemplate(clientHttpRequestFactory);
     }
 }

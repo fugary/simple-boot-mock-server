@@ -3,6 +3,7 @@ package com.mengstudy.simple.mock.service.mock;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.mengstudy.simple.mock.entity.mock.MockData;
 import com.mengstudy.simple.mock.entity.mock.MockGroup;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -35,5 +36,5 @@ public interface MockGroupService extends IService<MockGroup> {
      * @param defaultId
      * @return
      */
-    MockData matchMockData(HttpServletRequest request, Integer defaultId);
+    Pair<MockGroup, MockData> matchMockData(HttpServletRequest request, Integer defaultId);
 }
