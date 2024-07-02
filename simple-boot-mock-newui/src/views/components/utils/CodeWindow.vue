@@ -61,6 +61,7 @@ const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 96px)' : cod
     destroy-on-close
     :title="codeConfig.title"
     class="flex-column"
+    append-to-body
     :buttons="buttons"
     show-fullscreen
   >

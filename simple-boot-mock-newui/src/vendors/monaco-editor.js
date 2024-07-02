@@ -57,21 +57,27 @@ self.MonacoEnvironment = {
   }
 }
 
-const langCheckConfig = {
-  json: /(\{[\s\S]*})|(\[[\s\S]*])/,
-  html: /(<[\s\S]*>)/,
-  sql: /(SELECT\s.*?\bFROM\b)|(INSERT\s.*?\bINTO\b)|(UPDATE\s.*?\bSET\b)|(DELETE\s.*?\bFROM\b)/i
-}
+const langCheckConfig = [{
+  type: 'javascript',
+  checkReg: /function|var|let|const|return|if|else|for|while|=>/
+}, {
+  type: 'json',
+  checkReg: /(\{[\s\S]*})|(\[[\s\S]*])/
+}, {
+  type: 'html',
+  checkReg: /(<[\s\S]*>)/
+}, {
+  type: 'html',
+  checkReg: /(SELECT\s.*?\bFROM\b)|(INSERT\s.*?\bINTO\b)|(UPDATE\s.*?\bSET\b)|(DELETE\s.*?\bFROM\b)/i
+}]
 
 export const $checkLang = value => {
   const val = value?.trim() || ''
   if (val) {
-    for (const langKey in langCheckConfig) {
-      const checkReg = langCheckConfig[langKey]
-      if (checkReg instanceof RegExp && checkReg.test(val)) {
-        return langKey
-      } else if (isFunction(checkReg) && checkReg(val)) {
-        return langKey
+    for (const langConfig of langCheckConfig) {
+      const checkReg = langConfig.checkReg
+      if ((checkReg instanceof RegExp && checkReg.test(val)) || (isFunction(checkReg) && checkReg(val))) {
+        return langConfig.type
       }
     }
   }

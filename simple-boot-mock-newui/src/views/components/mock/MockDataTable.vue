@@ -11,7 +11,9 @@ import { useFormStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { previewMockRequest } from '@/utils/DynamicUtils'
 import { $i18nBundle } from '@/messages'
+import { ElLink, ElMessage } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
+import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 
 const props = defineProps({
   groupItem: {
@@ -25,30 +27,44 @@ const props = defineProps({
 })
 const columns = defineTableColumns([{
   label: '默认',
-  width: '80px',
+  width: '60px',
   formatter (data) {
     return data.defaultFlag ? <CommonIcon icon="Flag"/> : ''
   }
 }, {
   label: '状态码',
-  property: 'statusCode'
+  property: 'statusCode',
+  minWidth: '60px'
 }, {
   label: 'Content Type',
-  property: 'contentType'
+  property: 'contentType',
+  minWidth: '120px'
 }, {
   labelKey: 'common.label.status',
+  minWidth: '60px',
   formatter (data) {
     return <DelFlagTag v-model={data.status}/>
   }
 }, {
   label: 'Response',
-  property: 'responseBody'
+  property: 'responseBody',
+  minWidth: '300px',
+  formatter (data) {
+    let showStr = data.responseBody
+    if (data.responseBody && data.responseBody.length > 120) {
+      showStr = data.responseBody.substring(0, 120) + '...'
+    }
+    return <>
+      <ElLink type="primary" onClick={() => toEditDataResponse(data)}>
+        {showStr}
+      </ElLink>
+    </>
+  }
 }, {
   headerSlot: 'buttonHeader',
   slot: 'buttons',
   width: '300px'
 }])
-console.log('========================', props.requestItem)
 const { tableData, loading, searchMethod: loadMockData } = useTableAndSearchForm({
   defaultParam: { requestId: props.requestItem.id },
   searchMethod: MockDataApi.search,
@@ -60,18 +76,24 @@ onMounted(() => {
 const buttons = defineTableButtons([{
   labelKey: 'common.label.edit',
   type: 'primary',
+  icon: 'Edit',
   click: item => {
     newOrEdit(item.id)
   }
 }, {
   labelKey: 'common.label.preview',
   type: 'success',
+  icon: 'RemoveRedEyeFilled',
   click: item => {
     previewMockRequest(props.groupItem, props.groupItem, item)
   }
 }, {
   label: '设为默认',
-  type: 'success',
+  type: 'primary',
+  icon: 'Flag',
+  buttonIf (item) {
+    return !item.defaultFlag
+  },
   click: item => {
     item.defaultFlag = 1
     markDefault(item).then(() => loadMockData())
@@ -79,6 +101,7 @@ const buttons = defineTableButtons([{
 }, {
   labelKey: 'common.label.delete',
   type: 'danger',
+  icon: 'DeleteFilled',
   click: item => {
     $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
       .then(() => MockDataApi.deleteById(item.id))
@@ -110,7 +133,6 @@ const newOrEdit = async id => {
 const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({ readOnly: false })
 
 const editFormOptions = computed(() => {
-  console.log('========================languageRef', languageRef)
   return defineFormOptions([{
     label: '状态码',
     prop: 'statusCode',
@@ -144,7 +166,6 @@ const editFormOptions = computed(() => {
     label: '响应体',
     type: 'vue-monaco-editor',
     prop: 'responseBody',
-    required: true,
     attrs: {
       value: currentDataItem.value?.responseBody,
       'onUpdate:value': (value) => {
@@ -171,6 +192,17 @@ const saveMockData = (data) => {
   return MockDataApi.saveOrUpdate(dataItem)
     .then(() => loadMockData())
 }
+
+const dataResponseEditRef = ref()
+
+const toEditDataResponse = (mockData) => {
+  dataResponseEditRef.value?.toEditDataResponse(mockData)
+}
+
+const saveDataResponse = (mockData) => {
+  return saveMockData(mockData).then(() => ElMessage.success($i18nBundle('common.msg.saveSuccess')))
+}
+
 </script>
 
 <template>
@@ -183,6 +215,7 @@ const saveMockData = (data) => {
       <template #buttonHeader>
         {{ $t('common.label.operation') }}
         <el-button
+          v-common-tooltip="$t('common.label.new')"
           type="primary"
           size="small"
           @click="newOrEdit()"
@@ -193,17 +226,17 @@ const saveMockData = (data) => {
       <template #buttons="{item}">
         <template v-for="(button, index) in buttons">
           <el-button
-            v-if="button.enabled!==false"
+            v-if="button.enabled!==false&&(!button.buttonIf||button.buttonIf(item))"
             :key="index"
+            v-common-tooltip="button.label || $t(button.labelKey)"
             :type="button.type"
-            :icon="button.icon"
             :size="button.size||'small'"
             :disabled="button.disabled"
             :round="button.round??true"
             :circle="button.circle"
             @click="button.click?.(item)"
           >
-            {{ button.label || $t(button.labelKey) }}
+            <common-icon :icon="button.icon" />
           </el-button>
         </template>
       </template>
@@ -229,6 +262,10 @@ const saveMockData = (data) => {
         </common-form-control>
       </template>
     </simple-edit-window>
+    <mock-data-response-edit
+      ref="dataResponseEditRef"
+      @save-data-response="saveDataResponse"
+    />
   </el-container>
 </template>
 
