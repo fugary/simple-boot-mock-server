@@ -46,7 +46,7 @@ const columns = [{
   property: 'proxyUrl',
   minWidth: '150px'
 }, {
-  label: '描述',
+  labelKey: 'common.label.description',
   property: 'description'
 }, {
   labelKey: 'common.label.status',
@@ -121,11 +121,14 @@ const editFormOptions = defineFormOptions([{
     }
   }]
 }, useFormStatus(), {
-  labelKey: '备注信息',
-  prop: 'description'
+  labelKey: 'common.label.description',
+  prop: 'description',
+  attrs: {
+    type: 'textarea'
+  }
 }])
 const saveGroupItem = (item) => {
-  saveOrUpdate(item).then(() => loadMockGroups())
+  return saveOrUpdate(item).then(() => loadMockGroups())
 }
 </script>
 

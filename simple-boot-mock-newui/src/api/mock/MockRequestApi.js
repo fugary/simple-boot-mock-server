@@ -1,5 +1,6 @@
 import { useResourceApi } from '@/hooks/ApiHooks'
 import { BASE_URL } from '@/config'
+import { $http } from '@/vendors/axios'
 
 export const ALL_METHODS = [
   { method: 'GET', type: 'primary' },
@@ -21,4 +22,21 @@ export const getMockUrl = (path) => {
   return `${baseUrl}${path}`
 }
 
-export default useResourceApi('/admin/requests')
+const MOCK_REQUEST_URL = '/admin/requests'
+
+export const getDefaultData = (id, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_REQUEST_URL}/getDefaultData/${id}`,
+    method: 'get'
+  }, config)).then(response => response.data)
+}
+
+export const saveMockParams = (data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_REQUEST_URL}/saveMockParams`,
+    method: 'post',
+    data
+  }, config))
+}
+
+export default useResourceApi(MOCK_REQUEST_URL)

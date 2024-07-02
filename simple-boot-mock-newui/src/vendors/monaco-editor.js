@@ -1,14 +1,13 @@
 import VueMonacoEditor, { loader } from '@guolao/vue-monaco-editor'
 import { ref, watch, toRaw, h, withDirectives, resolveDirective } from 'vue'
-const MonacoLoader = () => import('monaco-editor')
+import * as monaco from 'monaco-editor'
+import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
+import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
+import HtmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
+import JsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import { isFunction } from 'lodash-es'
 
-const WorkerImporters = {
-  JsonWorker: () => import('monaco-editor/esm/vs/language/json/json.worker?worker'),
-  CssWorker: () => import('monaco-editor/esm/vs/language/css/css.worker?worker'),
-  HtmlWorker: () => import('monaco-editor/esm/vs/language/html/html.worker?worker'),
-  JsWorker: () => import('monaco-editor/esm/vs/language/typescript/ts.worker?worker'),
-  EditorWorker: () => import('monaco-editor/esm/vs/editor/editor.worker?worker')
-}
 /**
  * 默认配置
  * @type {IStandaloneEditorConstructionOptions}
@@ -33,21 +32,11 @@ export const defineMonacoOptions = (config) => {
   }
 }
 
-const getMonacoWorker = async (key) => {
-  const workerModule = await WorkerImporters[key]?.()
-  return workerModule?.default
-}
-
 /**
  * vs路径问题：https://www.npmjs.com/package/@guolao/vue-monaco-editor
  */
 self.MonacoEnvironment = {
-  getWorker: async function (workerId, label) {
-    const JsonWorker = await getMonacoWorker('JsonWorker')
-    const CssWorker = await getMonacoWorker('CssWorker')
-    const HtmlWorker = await getMonacoWorker('HtmlWorker')
-    const JsWorker = await getMonacoWorker('JsWorker')
-    const EditorWorker = await getMonacoWorker('EditorWorker')
+  getWorker: function (workerId, label) {
     switch (label) {
       case 'json':
         return new JsonWorker()
@@ -78,7 +67,10 @@ export const $checkLang = value => {
   const val = value?.trim() || ''
   if (val) {
     for (const langKey in langCheckConfig) {
-      if (langCheckConfig[langKey].test(val)) {
+      const checkReg = langCheckConfig[langKey]
+      if (checkReg instanceof RegExp && checkReg.test(val)) {
+        return langKey
+      } else if (isFunction(checkReg) && checkReg(val)) {
         return langKey
       }
     }
@@ -122,10 +114,12 @@ export const useMonacoEditorOptions = (config) => {
       })
     }
   }
-  watch([contentRef, editorRef], () => {
-    languageRef.value = $checkLang(contentRef.value)
-    if (contentRef.value && editorRef.value && monacoEditorOptions.readOnly) {
-      formatDocument()
+  watch([contentRef, editorRef], ([content], [oldContent]) => {
+    if (!oldContent && content) {
+      languageRef.value = $checkLang(contentRef.value)
+      if (contentRef.value && editorRef.value && monacoEditorOptions.readOnly) {
+        formatDocument()
+      }
     }
     if (editorRef.value && !editorRef.value.__internalPasteFunc__) {
       const editor = toRaw(editorRef.value)
@@ -156,9 +150,7 @@ export default {
   install (app) {
     app.component(VueMonacoEditor.name, {
       setup (props) {
-        if (loader.__getMonacoInstance() === null) {
-          MonacoLoader().then(monaco => loader.config({ monaco }))
-        }
+        loader.config({ monaco })
         return () => h(VueMonacoEditor, props, () => [getLoadingDiv()])
       }
     })

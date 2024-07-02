@@ -14,6 +14,7 @@ import { useDefaultPage } from '@/config'
 import { $i18nBundle } from '@/messages'
 import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import { previewMockRequest } from '@/utils/DynamicUtils'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -64,11 +65,10 @@ const columns = defineTableColumns([{
     return <ElTag type={config.type} effect="dark">{data.method}</ElTag>
   }
 }, {
-  label: '描述',
+  labelKey: 'common.label.description',
   property: 'description'
 }, {
   labelKey: 'common.label.status',
-  property: 'status',
   formatter (data) {
     return <DelFlagTag v-model={data.status}/>
   }
@@ -84,7 +84,7 @@ const requestButtons = defineTableButtons([{
   labelKey: 'common.label.preview',
   type: 'success',
   click: item => {
-    console.log('==============预览', item)
+    previewMockRequest(groupItem.value, item)
   }
 }, {
   labelKey: 'common.label.delete',
@@ -119,7 +119,6 @@ const editFormOptions = computed(() => {
     prop: 'requestPath',
     required: true,
     change (val) {
-      console.log('====================change1', val)
       if (val && !val.startsWith('/')) {
         currentRequest.value.requestPath = `/${val.trim()}`
       }
@@ -134,13 +133,16 @@ const editFormOptions = computed(() => {
       clearable: false
     }
   }, useFormStatus(), {
-    labelKey: '备注信息',
-    prop: 'description'
+    labelKey: 'common.label.description',
+    prop: 'description',
+    attrs: {
+      type: 'textarea'
+    }
   }])
 })
 
 const saveMockRequest = item => {
-  MockRequestApi.saveOrUpdate(item)
+  return MockRequestApi.saveOrUpdate(item)
     .then(() => loadMockRequests())
 }
 
@@ -185,7 +187,10 @@ const saveMockRequest = item => {
         @current-page-change="loadMockRequests()"
       >
         <template #expand="{item}">
-          <mock-data-table :request-item="item" />
+          <mock-data-table
+            :group-item="groupItem"
+            :request-item="item"
+          />
         </template>
       </common-table>
     </el-main>

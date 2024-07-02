@@ -95,6 +95,19 @@ export const addParamsToURL = (url, params = {}) => {
   const baseUrl = hasParams ? url.substring(0, queryIndex) : url
   return `${baseUrl}?${toGetParams({ ...getParams, ...params })}`
 }
+
+/**
+ * 字符串数组转换成选项
+ */
+export const getSingleSelectOptions = (...dataList) => {
+  return (dataList || []).map(data => {
+    return {
+      label: `${data}`,
+      value: data
+    }
+  })
+}
+
 let router = null
 /**
  * @param {string|RouteLocationRaw|number} path 路径、路由对象、数字

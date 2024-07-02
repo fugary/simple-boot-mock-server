@@ -1,4 +1,5 @@
 import { DynamicHelper } from '@/components/directives'
+import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
 
 const ShowUserInfo = () => import('@/views/components/user/ShowUserInfo.vue')
 const CodeWindow = () => import('@/views/components/utils/CodeWindow.vue')
@@ -9,6 +10,14 @@ export const showUserInfo = async (id) => {
     onClosed: () => dynamicHelper.destroy()
   })
   vnode.component?.exposed?.showUserInfo(id)
+}
+
+export const previewMockRequest = async (...args) => {
+  const dynamicHelper = new DynamicHelper()
+  const vnode = await dynamicHelper.createAndRender(MockRequestPreview, {
+    onClosed: () => dynamicHelper.destroy()
+  })
+  vnode.component?.exposed?.previewRequest(...args)
 }
 
 /**

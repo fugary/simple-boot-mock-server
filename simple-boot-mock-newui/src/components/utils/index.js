@@ -30,7 +30,7 @@ const calcWithIf = menuItem => {
  */
 export const useInputType = (option) => {
   const inType = option.type || 'input'
-  if (inType.startsWith('common-') || inType.startsWith('el-')) {
+  if (inType.startsWith('common-') || inType.startsWith('el-') || inType.startsWith('vue-')) {
     return inType // 控件全名
   }
   return `el-${option.type || 'input'}`

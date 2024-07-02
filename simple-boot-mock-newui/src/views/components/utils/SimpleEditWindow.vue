@@ -32,9 +32,11 @@ const internalSaveCurrentItem = ({ form }) => {
     if (valid) {
       props.saveCurrentItem(currentItem.value).then(() => {
         ElMessage.success($i18nBundle('common.msg.saveSuccess'))
+        showEditWindow.value = false
       })
     }
   })
+  return false
 }
 
 </script>
@@ -44,15 +46,27 @@ const internalSaveCurrentItem = ({ form }) => {
     v-model="showEditWindow"
     :title="currentItem?.id?$i18nKey('common.label.commonEdit', name):$i18nKey('common.label.commonAdd', name)"
     :ok-click="internalSaveCurrentItem"
+    append-to-body
   >
     <common-form
       v-if="currentItem"
       class="form-edit-width-100"
       :model="currentItem"
       :options="formOptions"
-      label-width="100px"
       :show-buttons="false"
-    />
+      v-bind="$attrs"
+    >
+      <template
+        v-for="(slot, slotKey) in $slots"
+        :key="slotKey"
+        #[slotKey]="scope"
+      >
+        <slot
+          :name="slotKey"
+          v-bind="scope"
+        />
+      </template>
+    </common-form>
   </common-window>
 </template>
 
