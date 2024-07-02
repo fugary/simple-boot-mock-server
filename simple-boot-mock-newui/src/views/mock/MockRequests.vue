@@ -56,7 +56,14 @@ const searchFormOptions = computed(() => {
 
 const columns = defineTableColumns([{
   label: '请求路径',
-  property: 'requestPath'
+  property: 'requestPath',
+  formatter (data) {
+    const path = `/mock/${groupItem.value?.groupPath}${data.requestPath}`
+    return <>
+      {data.requestPath}&nbsp;
+      <MockUrlCopyLink urlPath={path}/>
+    </>
+  }
 }, {
   label: '请求方法',
   property: 'method',

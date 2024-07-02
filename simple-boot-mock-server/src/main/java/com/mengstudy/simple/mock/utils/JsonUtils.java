@@ -33,6 +33,10 @@ public class JsonUtils {
         MAPPER.disable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME);
     }
 
+    public static ObjectMapper getMapper(){
+        return MAPPER;
+    }
+
     /**
      * 输出到Json字符串
      *

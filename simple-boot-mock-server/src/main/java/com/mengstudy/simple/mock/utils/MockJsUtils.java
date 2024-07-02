@@ -1,13 +1,14 @@
 package com.mengstudy.simple.mock.utils;
 
+import com.mengstudy.simple.mock.utils.servlet.HttpRequestUtils;
+import com.mengstudy.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -38,7 +39,9 @@ public class MockJsUtils {
                 InputStream mockJs = MockJsUtils.class.getClassLoader().getResourceAsStream(MOCK_JS_PATH);
                 InputStreamReader reader = new InputStreamReader(mockJs)
         ) {
-            MOCK_JS_ENGINE.eval(reader);
+            Bindings bindings = MOCK_JS_ENGINE.createBindings();
+            MOCK_JS_ENGINE.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
+            MOCK_JS_ENGINE.eval(reader, bindings);
         } catch (ScriptException | IOException e) {
             log.error("执行MockJs错误", e);
         }
@@ -64,12 +67,24 @@ public class MockJsUtils {
         String result = StringUtils.trimToEmpty(template);
         if (isJson(result)) {
             try {
+                Bindings bindings = MOCK_JS_ENGINE.createBindings();
+                addRequestInfo(bindings);
+                MOCK_JS_ENGINE.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
                 result = MOCK_JS_ENGINE.eval("JSON.stringify(Mock.mock(" + result + "))").toString();
             } catch (ScriptException e) {
                 log.error("执行Mock.mock错误", e);
             }
         }
         return result;
+    }
+
+    public static void addRequestInfo(Bindings bindings) {
+        HttpServletRequest request = HttpRequestUtils.getCurrentRequest();
+        HttpRequestVo requestVo = new HttpRequestVo();
+        if (request != null) {
+            requestVo = HttpRequestUtils.parseRequestVo(request);
+        }
+        bindings.put("request", requestVo);
     }
 
 }
