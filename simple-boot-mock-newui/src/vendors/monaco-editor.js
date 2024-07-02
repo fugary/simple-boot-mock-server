@@ -113,11 +113,26 @@ export const useMonacoEditorOptions = (config) => {
   const languageRef = ref('')
   const editorRef = ref()
   const monacoEditorOptions = defineMonacoOptions(config)
+  const languageModel = ref({
+    language: languageRef
+  })
+  const languageSelectOption = ref({
+    label: '文本格式',
+    type: 'select',
+    prop: 'language',
+    children: [
+      { label: 'JSON', value: 'json' },
+      { label: 'MockJS/JavaScript', value: 'javascript' },
+      { label: 'XML/HTML', value: 'html' },
+      { label: 'PlainText', value: 'text' }
+    ],
+    attrs: {
+      clearable: false
+    }
+  })
   const formatDocument = () => {
     if (editorRef.value) {
-      self.MonacoEnvironment.getWorker(languageRef.value).then(() => {
-        $formatDocument(editorRef.value, monacoEditorOptions.readOnly)
-      })
+      $formatDocument(editorRef.value, monacoEditorOptions.readOnly)
     }
   }
   watch([contentRef, editorRef], ([content], [oldContent]) => {
@@ -143,6 +158,8 @@ export const useMonacoEditorOptions = (config) => {
     languageRef,
     editorRef,
     monacoEditorOptions,
+    languageModel,
+    languageSelectOption,
     formatDocument
   }
 }

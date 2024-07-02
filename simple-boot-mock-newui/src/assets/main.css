@@ -173,6 +173,11 @@ html, body, #app, .index-container {
     border-radius: 0;
     padding-left: 20px;
 }
+.el-dialog.is-fullscreen .el-dialog__header{
+    margin-top: -20px;
+    padding-top: 20px;
+    background: inherit;
+}
 .el-dialog.is-fullscreen .el-dialog__footer{
     bottom: var(--el-dialog-padding-primary);
 }

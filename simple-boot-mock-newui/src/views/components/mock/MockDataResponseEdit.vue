@@ -3,13 +3,9 @@ import { $checkLang, useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { computed, ref } from 'vue'
 import { cloneDeep } from 'lodash-es'
 
-const { contentRef, languageRef, editorRef, monacoEditorOptions } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption } = useMonacoEditorOptions({ readOnly: false })
 const showWindow = ref(false)
 const currentMockData = ref()
-
-const editModel = ref({
-  language: languageRef
-})
 
 const toEditDataResponse = (mockData) => {
   currentMockData.value = cloneDeep(mockData)
@@ -24,21 +20,6 @@ const saveDataResponse = () => {
   currentMockData.value.responseBody = contentRef.value
   showWindow.value = false
   emit('saveDataResponse', currentMockData.value)
-}
-
-const languageSelectOption = {
-  label: '文本格式',
-  type: 'select',
-  prop: 'language',
-  children: [
-    { label: 'JSON', value: 'json' },
-    { label: 'MockJS/JavaScript', value: 'javascript' },
-    { label: 'XML/HTML', value: 'html' },
-    { label: 'PlainText', value: 'text' }
-  ],
-  attrs: {
-    clearable: false
-  }
 }
 
 const fullscreen = ref(false)
@@ -62,7 +43,7 @@ defineExpose({ toEditDataResponse })
   >
     <el-container class="flex-column">
       <common-form-control
-        :model="editModel"
+        :model="languageModel"
         :option="languageSelectOption"
         @change="languageRef=$event"
       />

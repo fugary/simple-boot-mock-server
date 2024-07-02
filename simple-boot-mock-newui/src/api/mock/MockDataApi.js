@@ -80,4 +80,49 @@ export const processResponse = function (response) {
   }
 }
 
+export const calcParamTarget = (groupItem, requestItem, previewData) => {
+  const value = previewData?.mockParams || requestItem?.mockParams
+  const requestPath = `/mock/${groupItem.groupPath}${requestItem.requestPath}`
+  const target = calcParamTargetByUrl(requestPath)
+  if (value) {
+    const pathParams = target.pathParams
+    const savedTarget = JSON.parse(value)
+    Object.assign(target, savedTarget || {})
+    if (savedTarget.pathParams && savedTarget.pathParams.length) {
+      const savePathParams = savedTarget.pathParams.reduce((result, item) => {
+        result[item.name] = item.value
+        return result
+      }, {})
+      pathParams.forEach(item => {
+        item.value = savePathParams[item.name] || ''
+      })
+    }
+    target.pathParams = pathParams
+  }
+  return target
+}
+
+export const calcParamTargetByUrl = (calcRequestUrl) => {
+  const pathParams = calcRequestUrl.split('/').filter(seg => seg.startsWith(':')).map(seg => seg.substring(1))
+    .reduce((newArr, arrItem) => {
+      if (newArr.indexOf(arrItem) < 0) {
+        newArr.push(arrItem)
+      }
+      return newArr
+    }, []).map(name => {
+      return {
+        name,
+        value: ''
+      }
+    })
+  return {
+    pathParams,
+    requestParams: [],
+    headerParams: [],
+    requestBody: '',
+    contentType: 'application/json',
+    showRequestBody: false
+  }
+}
+
 export default useResourceApi(MOCK_DATA_URL)

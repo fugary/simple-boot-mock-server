@@ -17,7 +17,7 @@ export const previewMockRequest = async (...args) => {
   const vnode = await dynamicHelper.createAndRender(MockRequestPreview, {
     onClosed: () => dynamicHelper.destroy()
   })
-  vnode.component?.exposed?.previewRequest(...args)
+  vnode.component?.exposed?.toPreviewRequest(...args)
 }
 
 /**

@@ -32,11 +32,11 @@ const addRequestParam = () => {
 
 const paramOptions = computed(() => {
   return defineFormOptions([{
-    label: '参数名',
+    label: 'Key',
     prop: props.nameKey,
     required: true
   }, {
-    label: '参数值',
+    label: 'Value',
     prop: props.valueKey,
     required: true
   }])
@@ -86,7 +86,7 @@ const paramOptions = computed(() => {
           @click="addRequestParam()"
         >
           <common-icon icon="Plus" />
-          添加参数
+          添加
         </el-button>
       </el-col>
     </el-row>
