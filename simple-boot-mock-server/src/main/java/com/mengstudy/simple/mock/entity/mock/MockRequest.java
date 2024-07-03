@@ -14,8 +14,8 @@ public class MockRequest extends MockBase{
     private Integer groupId;
     private String requestPath;
     private String method;
+    private String matchPattern;
     private String description;
-    private String headers;
     private String mockParams;
 
 }

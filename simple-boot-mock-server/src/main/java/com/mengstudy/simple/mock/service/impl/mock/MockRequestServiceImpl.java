@@ -34,7 +34,8 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     public boolean existsMockRequest(MockRequest request) {
         List<MockRequest> existRequests = list(Wrappers.<MockRequest>query()
                 .eq("group_id", request.getGroupId())
-                .eq("request_path", request.getRequestPath()));
+                .eq("request_path", request.getRequestPath())
+                .eq("match_pattern", request.getMatchPattern()));
         return existRequests.stream()
                 .anyMatch(existRequest -> !existRequest.getId().equals(request.getId())
                         && existRequest.getMethod().equalsIgnoreCase(request.getMethod()));
@@ -90,7 +91,6 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         if (saveToRequest && mockData.getRequestId() != null) {
             MockRequest savedMockRequest = getById(mockData.getRequestId());
             if (savedMockRequest != null) {
-                savedMockRequest.setHeaders(mockData.getHeaders());
                 savedMockRequest.setMockParams(mockData.getMockParams());
                 SimpleMockUtils.addAuditInfo(savedMockRequest);
                 updateById(savedMockRequest);

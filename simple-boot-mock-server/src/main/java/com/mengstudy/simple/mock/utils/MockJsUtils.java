@@ -66,13 +66,9 @@ public class MockJsUtils {
     public static String mock(String template) {
         String result = StringUtils.trimToEmpty(template);
         if (isJson(result)) {
-            try {
-                Bindings bindings = MOCK_JS_ENGINE.createBindings();
-                addRequestInfo(bindings);
-                MOCK_JS_ENGINE.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-                result = MOCK_JS_ENGINE.eval("JSON.stringify(Mock.mock(" + result + "))").toString();
-            } catch (ScriptException e) {
-                log.error("执行Mock.mock错误", e);
+            Object mockRes = eval("JSON.stringify(Mock.mock(" + result + "))");
+            if (mockRes != null) {
+                result = mockRes.toString();
             }
         }
         return result;
@@ -85,6 +81,18 @@ public class MockJsUtils {
             requestVo = HttpRequestUtils.parseRequestVo(request);
         }
         bindings.put("request", requestVo);
+    }
+
+    public static Object eval(String script) {
+        try {
+            Bindings bindings = MOCK_JS_ENGINE.createBindings();
+            addRequestInfo(bindings);
+            MOCK_JS_ENGINE.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+            return MOCK_JS_ENGINE.eval(script);
+        } catch (ScriptException e) {
+            log.error("执行MockJs错误", e);
+        }
+        return null;
     }
 
 }

@@ -107,7 +107,9 @@ const processPasteCode = data => {
   }
   return data
 }
-
+/**
+ * @param config {IStandaloneEditorConstructionOptions} 配置信息
+ */
 export const useMonacoEditorOptions = (config) => {
   const contentRef = ref('')
   const languageRef = ref('')

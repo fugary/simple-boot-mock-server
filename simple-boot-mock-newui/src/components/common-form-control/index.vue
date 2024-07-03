@@ -252,11 +252,12 @@ const formatResult = computed(() => {
       <slot name="afterLabel" />
       <el-tooltip
         v-if="calcOption.tooltip||calcOption.tooltipFunc"
-        class="box-item"
+        class="box-item common-el-tooltip"
         effect="dark"
         :disabled="!calcOption.tooltip"
         :content="calcOption.tooltip"
         placement="top-start"
+        raw-content
       >
         <span>
           <el-link

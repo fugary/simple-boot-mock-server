@@ -47,6 +47,7 @@ const internalSaveCurrentItem = ({ form }) => {
     :title="currentItem?.id?$i18nKey('common.label.commonEdit', name):$i18nKey('common.label.commonAdd', name)"
     :ok-click="internalSaveCurrentItem"
     append-to-body
+    destroy-on-close
   >
     <common-form
       v-if="currentItem"

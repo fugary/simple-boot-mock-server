@@ -15,6 +15,7 @@ import { $i18nBundle } from '@/messages'
 import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { previewMockRequest } from '@/utils/DynamicUtils'
+import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -120,6 +121,7 @@ const newOrEdit = async id => {
   }
   showEditWindow.value = true
 }
+const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({ readOnly: false, minimap: { enabled: false } })
 const editFormOptions = computed(() => {
   return defineFormOptions([{
     label: '请求路径',
@@ -139,7 +141,29 @@ const editFormOptions = computed(() => {
     attrs: {
       clearable: false
     }
-  }, useFormStatus(), {
+  }, useFormStatus(),
+  {
+    label: '匹配规则',
+    type: 'vue-monaco-editor',
+    prop: 'matchPattern',
+    tooltip: `匹配规则支持javascript表达式，可以使用request请求数据: <br>
+        request.body——body内容对象（仅json）<br>
+        request.bodyStr——body内容字符串<br>
+        request.headers——头信息对象<br>
+        request.parameters——request参数对象
+    `,
+    attrs: {
+      value: currentRequest.value?.matchPattern,
+      'onUpdate:value': (value) => {
+        currentRequest.value.matchPattern = value
+        contentRef.value = value
+        languageRef.value = 'javascript'
+      },
+      language: languageRef.value,
+      height: '50px',
+      options: monacoEditorOptions
+    }
+  }, {
     labelKey: 'common.label.description',
     prop: 'description',
     attrs: {

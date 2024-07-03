@@ -13,6 +13,7 @@ import com.mengstudy.simple.mock.service.mock.MockRequestService;
 import com.mengstudy.simple.mock.utils.MockJsUtils;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.InitializingBean;
@@ -33,6 +34,7 @@ import java.util.regex.Pattern;
  *
  * @author gary.fu
  */
+@Slf4j
 @Service
 public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup> implements MockGroupService, InitializingBean {
 
@@ -101,15 +103,15 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 // 查询Request
                 List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query()
                         .eq("group_id", mockGroup.getId())
+                        .eq("method", method)
                         .eq("status", 1));
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
                 // 请求是否匹配上Request，如果匹配上就查询Data
-                for (MockRequest mockRequest : mockRequests) {
+                for (MockRequest mockRequest : sortMockRequests(mockRequests)) {
                     String configRequestPath = StringUtils.prependIfMissing(mockRequest.getRequestPath(), "/");
                     configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant path不支持:var格式，只支持{var}格式
                     String configPath = groupPath + configRequestPath;
-                    if (pathMatcher.match(configPath, requestPath)
-                            && StringUtils.equalsIgnoreCase(method, mockRequest.getMethod())) {
+                    if (pathMatcher.match(configPath, requestPath) && matchRequestPattern(request, mockRequest)) {
                         MockData mockData = mockRequestService.findMockData(mockRequest, defaultId);
                         processMockData(request, mockData, configPath, requestPath);
                         return Pair.of(mockGroup, mockData);
@@ -118,6 +120,23 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             }
         }
         return Pair.of(mockGroup, null);
+    }
+
+    protected List<MockRequest> sortMockRequests(List<MockRequest> mockRequests) {
+        mockRequests.sort((o1, o2) -> {
+            // 按照matchPattern属性排序，长度最长的排前面
+            return StringUtils.length(o2.getMatchPattern()) - StringUtils.length(o1.getMatchPattern());
+        });
+        return mockRequests;
+    }
+
+    protected boolean matchRequestPattern(HttpServletRequest request, MockRequest mockRequest) {
+        if (StringUtils.isNotBlank(mockRequest.getMatchPattern())) {
+            Object result = MockJsUtils.eval("Boolean(" + mockRequest.getMatchPattern() + ")"); // 转Boolean值
+            log.info("requestPath={}, 计算：{}={}", mockRequest.getRequestPath(), mockRequest.getMatchPattern(), result);
+            return Boolean.TRUE.equals(result); // 必须等于true才执行
+        }
+        return true;
     }
 
     /**
