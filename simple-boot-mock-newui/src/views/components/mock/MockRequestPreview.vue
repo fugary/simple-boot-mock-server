@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue'
 import MockRequestApi, { getDefaultData, saveMockParams } from '@/api/mock/MockRequestApi'
 import { calcParamTarget, previewRequest, processResponse } from '@/api/mock/MockDataApi'
-import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import MockRequestForm from '@/views/components/mock/MockRequestForm.vue'
 
 const showWindow = ref(false)
@@ -26,7 +25,6 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData) => {
   requestItem.value = requestData.resultData
   showWindow.value = true
   paramTarget.value = calcParamTarget(groupItem.value, requestItem.value, previewData.value)
-  doDataPreview()
 }
 
 const requestPath = computed(() => {
@@ -40,25 +38,27 @@ const doDataPreview = () => {
   console.log('========================paramTarget1', paramTarget.value)
   let requestUrl = requestPath.value
   paramTarget.value?.pathParams?.forEach(pathParam => {
-    requestUrl = requestUrl.replace(new RegExp(`:${pathParam.name}`, 'g'), pathParam.value)
+    if (pathParam.value) {
+      requestUrl = requestUrl.replace(new RegExp(`:${pathParam.name}`, 'g'), pathParam.value)
+        .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), pathParam.value)
+    }
   })
   const params = paramTarget.value?.requestParams?.reduce((results, item) => {
     results[item.name] = item.value
     return results
   }, {})
-  const data = paramTarget.value?.showRequestBody ? paramTarget.value.requestBody : null
-  const headers = Object.assign(paramTarget.value?.showRequestBody ? { 'content-type': paramTarget.value?.contentType } : {},
+  const data = paramTarget.value.requestBody
+  const headers = Object.assign(data ? { 'content-type': paramTarget.value?.contentType } : {},
     paramTarget.value?.headerParams?.reduce((results, item) => {
       results[item.name] = item.value
       return results
     }, {}))
   const config = {
-    loading: false,
+    loading: true,
     params,
     data,
     headers
   }
-  // const dataItemId = this.currentDataItem && this.previewDataItemFlag ? this.currentDataItem.id : null
   const dataItemId = previewData.value?.id
   doSaveMockParams()
   previewRequest(requestUrl, requestItem.value, dataItemId, config)
@@ -67,7 +67,7 @@ const doDataPreview = () => {
 
 const calcResponse = (response) => {
   responseTarget.value = processResponse(response)
-  console.log('========================response', responseTarget.value)
+  console.log('===============================responseTarget', responseTarget.value)
 }
 
 const doSaveMockParams = () => {
@@ -92,19 +92,24 @@ defineExpose({
 <template>
   <common-window
     v-model="showWindow"
+    width="1000px"
+    :show-cancel="false"
+    :ok-label="$t('common.label.close')"
     show-fullscreen
+    destroy-on-close
   >
     <template #header>
       <span class="el-dialog__title">
-        数据预览【{{ requestPath }}】
-        <mock-url-copy-link :url-path="requestPath" />
+        请求测试
       </span>
     </template>
     <el-container class="flex-column">
       <mock-request-form
         v-if="requestItem"
         v-model="paramTarget"
+        :request-path="requestPath"
         :response-target="responseTarget"
+        @send-request="doDataPreview"
       />
     </el-container>
   </common-window>

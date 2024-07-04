@@ -89,7 +89,7 @@ const requestButtons = defineTableButtons([{
     newOrEdit(item.id)
   }
 }, {
-  labelKey: 'common.label.preview',
+  labelKey: 'common.label.test',
   type: 'success',
   click: item => {
     previewMockRequest(groupItem.value, item)
@@ -121,7 +121,11 @@ const newOrEdit = async id => {
   }
   showEditWindow.value = true
 }
-const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({ readOnly: false, minimap: { enabled: false } })
+const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({
+  readOnly: false,
+  lineNumbers: 'off',
+  minimap: { enabled: false }
+})
 const editFormOptions = computed(() => {
   return defineFormOptions([{
     label: '请求路径',

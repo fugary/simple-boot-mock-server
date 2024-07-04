@@ -59,7 +59,7 @@ self.MonacoEnvironment = {
 
 const langCheckConfig = [{
   type: 'javascript',
-  checkReg: /function|var|let|const|return|if|else|for|while|=>/
+  checkReg: /function|var\s+|let\s+|const\s+|return\s+|=>/
 }, {
   type: 'json',
   checkReg: /(\{[\s\S]*})|(\[[\s\S]*])/
@@ -67,7 +67,7 @@ const langCheckConfig = [{
   type: 'html',
   checkReg: /(<[\s\S]*>)/
 }, {
-  type: 'html',
+  type: 'sql',
   checkReg: /(SELECT\s.*?\bFROM\b)|(INSERT\s.*?\bINTO\b)|(UPDATE\s.*?\bSET\b)|(DELETE\s.*?\bFROM\b)/i
 }]
 
@@ -120,12 +120,12 @@ export const useMonacoEditorOptions = (config) => {
   })
   const languageSelectOption = ref({
     label: '文本格式',
-    type: 'select',
+    type: 'radio-group',
     prop: 'language',
     children: [
       { label: 'JSON', value: 'json' },
-      { label: 'MockJS/JavaScript', value: 'javascript' },
-      { label: 'XML/HTML', value: 'html' },
+      { label: 'JavaScript', value: 'javascript' },
+      { label: 'XML', value: 'html' },
       { label: 'PlainText', value: 'text' }
     ],
     attrs: {
@@ -175,6 +175,9 @@ export default {
   install (app) {
     app.component(VueMonacoEditor.name, {
       setup (props) {
+        monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+          diagnosticCodesToIgnore: [1003, 1128]
+        })
         loader.config({ monaco })
         return () => h(VueMonacoEditor, props, () => [getLoadingDiv()])
       }

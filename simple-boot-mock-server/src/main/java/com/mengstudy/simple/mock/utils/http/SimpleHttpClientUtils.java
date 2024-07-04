@@ -1,6 +1,7 @@
 package com.mengstudy.simple.mock.utils.http;
 
 import com.mengstudy.simple.mock.utils.JsonUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -10,6 +11,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -18,11 +21,17 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,6 +42,7 @@ import java.util.stream.Collectors;
  *
  * @author gary.fu
  */
+@Slf4j
 public class SimpleHttpClientUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(SimpleHttpClientUtils.class);
@@ -52,6 +62,8 @@ public class SimpleHttpClientUtils {
 
     public static final int SOCKET_TIMEOUT = 60000; // 数据获取超时
 
+    private static TrustManager[] trustManagers;
+
     static {
         CLIENT_CONNECTION_MANAGER.setMaxTotal(POOL_SIZE);
         CLIENT_CONNECTION_MANAGER.setDefaultMaxPerRoute(MAX_PER_ROUTE);
@@ -65,6 +77,38 @@ public class SimpleHttpClientUtils {
      */
     public static CloseableHttpClient getHttpClient() {
         return HttpClientBuilder.create().setDefaultRequestConfig(REQUEST_CONFIG).setConnectionManager(CLIENT_CONNECTION_MANAGER).build();
+    }
+
+    public static TrustManager[] getTrustManagers() {
+        if (trustManagers == null) {
+            setTrustManagers(new TrustManager[0]);
+            try {
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                tmf.init((KeyStore) null);
+                setTrustManagers(tmf.getTrustManagers());
+            } catch (NoSuchAlgorithmException | KeyStoreException e) {
+                log.error("获取TrustManager失败", e);
+            }
+        }
+        return trustManagers;
+    }
+
+    public static void setTrustManagers(TrustManager[] trustManagers) {
+        SimpleHttpClientUtils.trustManagers = trustManagers;
+    }
+
+    public static CloseableHttpClient getHttpsClient() {
+        try {
+            SSLContext ctx = SSLContext.getInstance("TLSv1.2");
+            TrustManager[] trustManagers = getTrustManagers();
+            ctx.init(null, trustManagers, null);
+            SSLConnectionSocketFactory ssf = new SSLConnectionSocketFactory(ctx, new NoopHostnameVerifier());
+            return HttpClientBuilder.create()
+                    .setDefaultRequestConfig(REQUEST_CONFIG)
+                    .setSSLSocketFactory(ssf).build();
+        } catch (Exception e) {
+            return getHttpClient();
+        }
     }
 
     public static RequestConfig getRequestConfig(int connectTimeout, int soTimeout) {

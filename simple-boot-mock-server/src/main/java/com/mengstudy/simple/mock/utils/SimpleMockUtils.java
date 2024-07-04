@@ -3,18 +3,17 @@ package com.mengstudy.simple.mock.utils;
 import com.mengstudy.simple.mock.contants.MockConstants;
 import com.mengstudy.simple.mock.entity.mock.MockBase;
 import com.mengstudy.simple.mock.entity.mock.MockData;
+import com.mengstudy.simple.mock.utils.servlet.HttpRequestUtils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created on 2020/5/6 9:06 .<br>
@@ -103,5 +102,57 @@ public class SimpleMockUtils {
      */
     public static boolean isValidProxyUrl(String proxyUrl) {
         return StringUtils.isNotBlank(proxyUrl) && proxyUrl.matches("https?://.*");
+    }
+
+    /**
+     * 过滤部分header请求
+     * @return
+     */
+    public static Set<String> getExcludeHeaders(){
+        List<String> list = Arrays.asList(
+            HttpHeaders.HOST.toLowerCase(),
+            HttpHeaders.ORIGIN.toLowerCase(),
+            HttpHeaders.REFERER.toLowerCase()
+        );
+        return new HashSet<>(list);
+    }
+
+    /**
+     * 判断是否是需要过滤
+     * @return
+     */
+    public static boolean isExcludeHeaders(String headerName){
+        headerName = StringUtils.trimToEmpty(headerName).toLowerCase();
+        return getExcludeHeaders().contains(headerName)
+                || headerName.matches("^(sec-|mock-).*");
+    }
+
+    /**
+     * 前台mock请求
+     * @return
+     */
+    public static boolean isMockRequest(){
+        HttpServletRequest request = HttpRequestUtils.getCurrentRequest();
+        if (request != null) {
+            return request.getHeader(MockConstants.MOCK_DATA_ID_HEADER) != null;
+        }
+        return false;
+    }
+
+    /**
+     * 清理cors相关的头信息，代理时使用自己的头信息
+     * @param response ResponseEntity
+     */
+    public static <T> ResponseEntity<T> removeCorsHeaders(ResponseEntity<T> response) {
+        if (response != null) {
+            HttpHeaders headers = new HttpHeaders();
+            response.getHeaders().forEach((headerName, value) -> {
+                if (!StringUtils.startsWithIgnoreCase(headerName, "access-control-")) {
+                    headers.addAll(headerName, value);
+                }
+            });
+            return new ResponseEntity<>(response.getBody(), headers, response.getStatusCode());
+        }
+        return response;
     }
 }

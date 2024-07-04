@@ -86,11 +86,14 @@ public class MockController {
                     .build(true).toUri();
             HttpHeaders headers = new HttpHeaders();
             Enumeration<String> headerNames = request.getHeaderNames();
-            Set<String> excludes = new HashSet<>(Arrays.asList(HttpHeaders.HOST.toLowerCase()));
             while (headerNames.hasMoreElements()) {
                 String headerName = headerNames.nextElement();
                 String headerValue = request.getHeader(headerName);
-                if (!excludes.contains(headerName.toLowerCase()) && StringUtils.isNotBlank(headerValue)) {
+                boolean excludeHeader = SimpleMockUtils.getExcludeHeaders().contains(headerName.toLowerCase());
+                if (SimpleMockUtils.isMockRequest()) {
+                    excludeHeader = SimpleMockUtils.isExcludeHeaders(headerName.toLowerCase());
+                }
+                if (!excludeHeader && StringUtils.isNotBlank(headerValue)) {
                     headers.add(headerName, headerValue);
                 }
             }
@@ -98,8 +101,9 @@ public class MockController {
             InputStreamResource resource = new InputStreamResource(request.getInputStream());
             HttpEntity<?> entity = new HttpEntity<>(resource, headers);
             try {
-                return restTemplate.exchange(targetUri, Optional.ofNullable(HttpMethod.resolve(request.getMethod())).orElse(HttpMethod.GET),
+                ResponseEntity<byte[]> responseEntity = restTemplate.exchange(targetUri, Optional.ofNullable(HttpMethod.resolve(request.getMethod())).orElse(HttpMethod.GET),
                         entity, byte[].class);
+                return SimpleMockUtils.removeCorsHeaders(responseEntity);
             } catch (HttpClientErrorException e) {
                 return ResponseEntity.status(e.getStatusCode())
                         .headers(e.getResponseHeaders())

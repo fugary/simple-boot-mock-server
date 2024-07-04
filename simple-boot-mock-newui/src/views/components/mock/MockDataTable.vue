@@ -81,7 +81,7 @@ const buttons = defineTableButtons([{
     newOrEdit(item.id)
   }
 }, {
-  labelKey: 'common.label.preview',
+  labelKey: 'common.label.test',
   type: 'success',
   icon: 'RemoveRedEyeFilled',
   click: item => {

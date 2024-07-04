@@ -1,12 +1,14 @@
 import { useResourceApi } from '@/hooks/ApiHooks'
-import { $http } from '@/vendors/axios'
+import { $http, hasLoading } from '@/vendors/axios'
 import axios from 'axios'
+import { $coreHideLoading, $coreShowLoading } from '@/utils'
+import { isString } from 'lodash-es'
 
 const MOCK_DATA_URL = '/admin/data'
 
 export const ALL_STATUS_CODES = [200, 302, 400, 404, 500]
 
-export const ALL_CONTENT_TYPES = ['application/json', 'application/xml', 'text/html', 'text/css', 'application/javascript']
+export const ALL_CONTENT_TYPES = ['application/json', 'application/xml', 'text/html', 'text/css', 'application/javascript', 'application/x-www-form-urlencoded']
 
 export const preview = function (data, config) {
   return $http(Object.assign({
@@ -32,29 +34,33 @@ export const previewRequest = function (requestUrl, requestItem, dataId, config)
   const headers = Object.assign({
     'mock-data-preview': true
   }, dataId ? { 'mock-data-id': dataId } : {}, config.headers || {})// 预览的时候强制指定一个ID
+  config.__startTime = new Date().getTime()
+  if (hasLoading(config)) {
+    $coreShowLoading(isString(config.loading) ? config.loading : undefined)
+  }
   return req(Object.assign({
     url: requestUrl,
     method: requestItem.method,
-    transformResponse: res => res // 信息不要转换掉，这边需要预览原始信息
+    transformResponse: res => res// 信息不要转换掉，这边需要预览原始信息
   }, config, { headers }))
 }
 
 export const processResponse = function (response) {
+  console.log('=========================response', response)
   const { config } = response
+  if (hasLoading(config)) {
+    $coreHideLoading()
+  }
   if (!response.status) {
     response = response.response || {}
   }
   const { headers = {}, request = {}, status } = response
-  const requestInfo = [{
-    name: 'URL',
-    value: request.responseURL || config.url
-  }, {
-    name: 'Code',
-    value: status
-  }, {
-    name: 'Method',
-    value: config.method
-  }]
+  const requestInfo = {
+    url: request.responseURL || config.url,
+    method: config.method?.toUpperCase(),
+    status,
+    duration: config.__startTime ? new Date().getTime() - config.__startTime : 0
+  }
   const requestHeaders = JSON.parse(headers['mock-meta-req'] || '[]')
   const responseHeaders = []
   for (const name in headers) {
@@ -66,12 +72,6 @@ export const processResponse = function (response) {
     }
   }
   const data = response.data
-  // if (data) {
-  //   const result = hljs.highlightAuto(data)
-  //   if (result.language === 'json') {
-  //     data = JSON.stringify(JSON.parse(data), null, '  ')
-  //   }
-  // }
   return {
     data,
     requestInfo,
@@ -83,7 +83,13 @@ export const processResponse = function (response) {
 export const calcParamTarget = (groupItem, requestItem, previewData) => {
   const value = previewData?.mockParams || requestItem?.mockParams
   const requestPath = `/mock/${groupItem.groupPath}${requestItem.requestPath}`
-  const target = calcParamTargetByUrl(requestPath)
+  const target = {
+    pathParams: calcParamTargetByUrl(requestPath),
+    requestParams: [],
+    headerParams: [],
+    contentType: previewData?.contentType || 'application/json',
+    method: requestItem?.method || 'GET'
+  }
   if (value) {
     const pathParams = target.pathParams
     const savedTarget = JSON.parse(value)
@@ -103,7 +109,8 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
 }
 
 export const calcParamTargetByUrl = (calcRequestUrl) => {
-  const pathParams = calcRequestUrl.split('/').filter(seg => seg.startsWith(':')).map(seg => seg.substring(1))
+  return calcRequestUrl.split('/').filter(seg => seg.match(/^[:{]/))
+    .map(seg => seg.replace(/[:{}]/g, ''))
     .reduce((newArr, arrItem) => {
       if (newArr.indexOf(arrItem) < 0) {
         newArr.push(arrItem)
@@ -115,14 +122,6 @@ export const calcParamTargetByUrl = (calcRequestUrl) => {
         value: ''
       }
     })
-  return {
-    pathParams,
-    requestParams: [],
-    headerParams: [],
-    requestBody: '',
-    contentType: 'application/json',
-    showRequestBody: false
-  }
 }
 
 export default useResourceApi(MOCK_DATA_URL)

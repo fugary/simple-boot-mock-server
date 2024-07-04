@@ -14,7 +14,7 @@ export const $http = axios.create({
   timeout: import.meta.env.VITE_APP_API_TIMEOUT
 })
 
-const hasLoading = config => {
+export const hasLoading = config => {
   return config?.loading ?? GLOBAL_LOADING
 }
 

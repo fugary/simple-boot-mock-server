@@ -6,6 +6,25 @@ import {
 } from '@/route/RouteUtils'
 import { TAB_MODE_MAX_CACHES } from '@/config'
 
+const pureTab = tab => {
+  if (tab) {
+    return {
+      ...tab,
+      matched: undefined
+    }
+  }
+}
+
+const serializer = {
+  serialize (state) {
+    const newState = { ...state }
+    newState.historyTabs = state.historyTabs?.map(pureTab)
+    newState.currentTabItem = pureTab(state.currentTabItem)
+    return JSON.stringify(newState)
+  },
+  deserialize: JSON.parse
+}
+
 /**
  * @typedef {Object} TabsViewStore
  * @property {boolean} isTabMode 是否开启tab模式
@@ -208,5 +227,5 @@ export const useTabsViewStore = defineStore('tabsView', () => {
     hasCloseDropdown
   }
 }, {
-  persist: true
+  persist: { serializer }
 })

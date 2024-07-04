@@ -54,7 +54,8 @@ public class ApplicationConfig {
 
     protected CorsConfiguration getCorsConfiguration() {
         final CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedMethods(Stream.of(HttpMethod.GET, HttpMethod.HEAD, HttpMethod.POST, HttpMethod.OPTIONS)
+        config.setAllowedMethods(Stream.of(HttpMethod.GET, HttpMethod.HEAD, HttpMethod.POST,
+                        HttpMethod.OPTIONS, HttpMethod.PATCH, HttpMethod.PUT)
                 .map(Enum::name).collect(Collectors.toList()));
         config.setAllowCredentials(true);
         config.addAllowedOriginPattern("*");
@@ -78,7 +79,7 @@ public class ApplicationConfig {
     @Bean
     public RestTemplate restTemplate() {
         ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(
-                SimpleHttpClientUtils.getHttpClient());
+                SimpleHttpClientUtils.getHttpsClient());
         return new RestTemplate(clientHttpRequestFactory);
     }
 }

@@ -7,7 +7,15 @@ const props = defineProps({
     type: String,
     default: 'requestParams'
   },
+  nameReadOnly: {
+    type: Boolean,
+    default: false
+  },
   showAddButton: {
+    type: Boolean,
+    default: true
+  },
+  showRemoveButton: {
     type: Boolean,
     default: true
   },
@@ -34,7 +42,8 @@ const paramOptions = computed(() => {
   return defineFormOptions([{
     label: 'Key',
     prop: props.nameKey,
-    required: true
+    required: true,
+    disabled: props.nameReadOnly
   }, {
     label: 'Value',
     prop: props.valueKey,
@@ -68,6 +77,7 @@ const paramOptions = computed(() => {
         class="padding-left2"
       >
         <el-button
+          v-if="showRemoveButton"
           type="danger"
           size="small"
           circle
