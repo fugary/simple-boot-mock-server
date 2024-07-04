@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -201,9 +200,8 @@ public class SimpleHttpClientUtils {
      * @param <T>
      * @return
      * @throws IOException
-     * @throws JAXBException
      */
-    public static <T> T calcResponse(HttpResponse response, Class<T> clazz) throws IOException, JAXBException {
+    public static <T> T calcResponse(HttpResponse response, Class<T> clazz) throws IOException {
         HttpEntity httpEntity = response.getEntity();
         if (HttpResponse.class.isAssignableFrom(clazz)) {
             return (T) response;
