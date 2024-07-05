@@ -4,6 +4,8 @@ import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { showUserInfo } from '@/utils/DynamicUtils'
 import MockUserApi from '@/api/mock/MockUserApi'
+import { isAdminUser, $goto, $coreConfirm } from '@/utils'
+import { $i18nBundle } from '@/messages'
 
 const page = ref(useDefaultPage())
 
@@ -31,16 +33,31 @@ const columns = [{
   label: '邮箱',
   property: 'userEmail'
 }]
-const buttons = ref([{
-  labelKey: 'common.label.view',
-  type: 'primary',
-  click: item => {
-    showUserInfo(item.id)
-  },
-  buttonIf (item) {
-    return !!item.id
-  }
-}])
+const buttons = computed(() => {
+  return [{
+    labelKey: 'common.label.edit',
+    type: 'primary',
+    click: item => {
+      $goto(`/admin/users/edit/${item.id}`)
+    },
+    enabled: isAdminUser()
+  }, {
+    labelKey: 'common.label.view',
+    type: 'success',
+    click: item => {
+      showUserInfo(item.id)
+    }
+  }, {
+    labelKey: 'common.label.delete',
+    type: 'danger',
+    click: item => {
+      $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
+        .then(() => MockUserApi.deleteById(item.id))
+        .then(() => loadUsers())
+    },
+    buttonIf: item => isAdminUser() && item.userName !== 'admin'
+  }]
+})
 //* ************搜索框**************//
 const searchFormOptions = computed(() => {
   return [
@@ -67,7 +84,16 @@ const doSearch = form => {
       :options="searchFormOptions"
       :submit-label="$t('common.label.search')"
       @submit-form="doSearch"
-    />
+    >
+      <template #buttons>
+        <el-button
+          type="info"
+          @click="$goto('/admin/users/new')"
+        >
+          {{ $t('common.label.new') }}
+        </el-button>
+      </template>
+    </common-form>
     <common-table
       v-model:page="page"
       :data="tableData"

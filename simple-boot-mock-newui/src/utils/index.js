@@ -14,6 +14,10 @@ import { useGlobalSearchParamStore } from '@/stores/GlobalSearchParamStore'
 import { useTabsViewStore } from '@/stores/TabsViewStore'
 import { LoadSaveParamMode } from '@/consts/GlobalConstants'
 
+export const isAdminUser = () => {
+  return useLoginConfigStore().accountInfo?.userName === 'admin'
+}
+
 export const useSystemKey = () => {
   return SYSTEM_KEY
 }

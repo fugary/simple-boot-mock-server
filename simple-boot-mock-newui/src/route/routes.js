@@ -34,7 +34,10 @@ const router = createRouter({
       }, {
         path: 'personal',
         name: 'personal',
-        component: () => import('@/views/account/PersonalInfo.vue')
+        component: () => import('@/views/admin/UserEdit.vue'),
+        props: {
+          personal: true
+        }
       },
       {
         path: '/:pathMatch(.*)*',

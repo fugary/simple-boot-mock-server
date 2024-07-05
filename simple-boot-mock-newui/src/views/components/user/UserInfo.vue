@@ -31,7 +31,7 @@ defineProps({
     <el-descriptions-item :label="$t('common.label.createDate')">
       {{ $date(user.createDate) }}
     </el-descriptions-item>
-    <el-descriptions-item :label="$t('common.label.createDate')">
+    <el-descriptions-item :label="$t('common.label.modifyDate')">
       {{ $date(user.modifyDate) }}
     </el-descriptions-item>
   </el-descriptions>

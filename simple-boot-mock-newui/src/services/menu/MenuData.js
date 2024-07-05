@@ -25,7 +25,7 @@ export const ALL_MENUS = [
   {
     id: 51,
     parentId: 5,
-    iconCls: 'user',
+    iconCls: 'UserFilled',
     nameCn: '用户管理',
     nameEn: 'Users',
     menuUrl: '/admin/users'
