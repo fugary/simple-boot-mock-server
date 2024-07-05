@@ -190,7 +190,6 @@ const sendRequest = (form) => {
               <common-form-control
                 :model="languageModel"
                 :option="languageSelectOption"
-                @change="languageRef=$event"
               >
                 <template #childAfter>
                   <mock-url-copy-link

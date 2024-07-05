@@ -7,7 +7,7 @@ import MockGroupApi from '@/api/mock/MockGroupApi'
 import { $coreConfirm, $goto } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
-import { useFormStatus } from '@/consts/GlobalConstants'
+import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 
@@ -42,9 +42,12 @@ const columns = [{
       </>
   }
 }, {
-  label: '代理路径',
+  label: '代理地址',
   property: 'proxyUrl',
   minWidth: '150px'
+}, {
+  labelKey: 'common.label.delay',
+  property: 'delay'
 }, {
   labelKey: 'common.label.description',
   property: 'description'
@@ -52,7 +55,8 @@ const columns = [{
   labelKey: 'common.label.status',
   property: 'status',
   formatter (data) {
-    return <DelFlagTag v-model={data.status}/>
+    return <DelFlagTag v-model={data.status} clickToToggle={true}
+                       onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
   }
 }, {
   labelKey: 'common.label.createDate',
@@ -120,7 +124,7 @@ const editFormOptions = defineFormOptions([{
       return !currentGroup.value?.proxyUrl || /^https?:\/\//.test(currentGroup.value?.proxyUrl)
     }
   }]
-}, useFormStatus(), {
+}, useFormStatus(), useFormDelay(), {
   labelKey: 'common.label.description',
   prop: 'description',
   attrs: {

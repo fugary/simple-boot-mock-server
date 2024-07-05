@@ -31,7 +31,7 @@ const loginFormOptions = [{
  */
 const loginVo = ref({
   userName: 'admin',
-  userPassword: '123456'
+  userPassword: ''
 })
 
 const submitForm = form => {

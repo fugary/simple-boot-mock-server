@@ -3,7 +3,8 @@ package com.fugary.simple.mock.service.mock;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
-import org.apache.commons.lang3.tuple.Pair;
+import com.fugary.simple.mock.entity.mock.MockRequest;
+import org.apache.commons.lang3.tuple.Triple;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -36,5 +37,20 @@ public interface MockGroupService extends IService<MockGroup> {
      * @param defaultId
      * @return
      */
-    Pair<MockGroup, MockData> matchMockData(HttpServletRequest request, Integer defaultId);
+    Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer defaultId);
+
+    /**
+     * 计算delay时间
+     * @param group
+     * @param request
+     * @param mockData
+     */
+    Integer calcDelayTime(MockGroup group, MockRequest request, MockData mockData);
+
+    /**
+     * 延迟时间
+     * @param stateTime
+     * @param delayTime
+     */
+    void delayTime(long stateTime,Integer delayTime);
 }

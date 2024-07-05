@@ -40,3 +40,12 @@ export const useFormStatus = (prop = 'status', activeValue = 1, inactiveValue = 
     }
   }
 }
+
+export const useFormDelay = (prop = 'delay') => {
+  return {
+    labelKey: 'common.label.delay',
+    tooltip: '延迟时间，单位：毫秒',
+    type: 'input-number',
+    prop
+  }
+}

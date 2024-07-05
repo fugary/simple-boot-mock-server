@@ -122,6 +122,7 @@ export const useMonacoEditorOptions = (config) => {
     label: '文本格式',
     type: 'radio-group',
     prop: 'language',
+    model: languageModel,
     children: [
       { label: 'JSON', value: 'json' },
       { label: 'JavaScript', value: 'javascript' },

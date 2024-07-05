@@ -82,6 +82,7 @@ common.label.commonParent = 'Parent {0}'
 common.label.commonAdd1 = 'Add {0}'
 common.label.commonCopy = 'Copy {0}'
 common.label.commonSwap = 'Swap {0}'
+common.label.delay = 'Delay'
 
 //* =======================msg=====================//
 common.msg.nonNull = '{0} is required.'
@@ -109,3 +110,4 @@ common.msg.notFound = 'Page not found, please visit other pages!'
 common.msg.accessDenied = 'Page access denied'
 common.msg.emailError = 'E-mail format is invalid.'
 common.msg.cannotEnterChineseCharacters = '{0} cannot enter Chinese characters.'
+common.msg.clickTo = 'Click to {0}'

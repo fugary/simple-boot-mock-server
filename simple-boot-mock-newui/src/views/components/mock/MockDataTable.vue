@@ -7,7 +7,7 @@ import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import CommonIcon from '@/components/common-icon/index.vue'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
-import { useFormStatus } from '@/consts/GlobalConstants'
+import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { previewMockRequest } from '@/utils/DynamicUtils'
 import { $i18nBundle } from '@/messages'
@@ -38,12 +38,16 @@ const columns = defineTableColumns([{
 }, {
   label: 'Content Type',
   property: 'contentType',
-  minWidth: '120px'
+  minWidth: '150px'
+}, {
+  labelKey: 'common.label.delay',
+  property: 'delay'
 }, {
   labelKey: 'common.label.status',
-  minWidth: '60px',
+  minWidth: '80px',
   formatter (data) {
-    return <DelFlagTag v-model={data.status}/>
+    return <DelFlagTag v-model={data.status} clickToToggle={true}
+                       onToggleValue={(status) => saveMockData({ ...data, status })}/>
   }
 }, {
   label: 'Response',
@@ -130,7 +134,7 @@ const newOrEdit = async id => {
   }
   showEditWindow.value = true
 }
-const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef, languageRef, monacoEditorOptions, languageSelectOption } = useMonacoEditorOptions({ readOnly: false })
 
 const editFormOptions = computed(() => {
   return defineFormOptions([{
@@ -159,10 +163,10 @@ const editFormOptions = computed(() => {
       activeText: $i18nBundle('common.label.yes'),
       inactiveText: $i18nBundle('common.label.no')
     }
-  }, useFormStatus(), {
+  }, useFormStatus(), useFormDelay(), {
     label: '响应头',
     slot: 'headerParams'
-  }, {
+  }, languageSelectOption.value, {
     label: '响应体',
     type: 'vue-monaco-editor',
     prop: 'responseBody',
@@ -187,8 +191,10 @@ const editFormOptions = computed(() => {
 
 const saveMockData = (data) => {
   const dataItem = { ...data }
-  dataItem.headers = JSON.stringify(dataItem.headerParams)
-  delete dataItem.headerParams
+  if (dataItem.headerParams) {
+    dataItem.headers = JSON.stringify(dataItem.headerParams)
+    delete dataItem.headerParams
+  }
   return MockDataApi.saveOrUpdate(dataItem)
     .then(() => loadMockData())
 }

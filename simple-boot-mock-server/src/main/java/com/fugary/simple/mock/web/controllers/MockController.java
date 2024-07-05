@@ -1,14 +1,15 @@
 package com.fugary.simple.mock.web.controllers;
 
-import com.fugary.simple.mock.service.mock.MockGroupService;
-import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
+import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.service.mock.MockGroupService;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
@@ -23,7 +24,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,28 +46,31 @@ public class MockController {
     private RestTemplate restTemplate;
 
     @RequestMapping("/**")
-    public ResponseEntity doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public ResponseEntity<?> doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
-        Pair<MockGroup, MockData> dataPair = mockGroupService.matchMockData(request, NumberUtils.toInt(dataId));
+        Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request, NumberUtils.toInt(dataId));
         MockData data = dataPair.getRight();
         MockGroup mockGroup = dataPair.getLeft();
+        long start = System.currentTimeMillis();
+        ResponseEntity<?> responseEntity = ResponseEntity.notFound().build();
         if (data != null) {
             HttpHeaders httpHeaders = SimpleMockUtils.calcHeaders(data.getHeaders());
-            if (HttpStatus.MOVED_TEMPORARILY.value() == data.getStatusCode()) {
+            if (HttpStatus.MOVED_TEMPORARILY.value() == data.getStatusCode()) { // 重定向
                 if (SimpleMockUtils.isMockPreview(request)) {
                     return ResponseEntity.ok("重定向请设为默认响应后复制URL到浏览器访问");
                 }
                 return ResponseEntity.status(data.getStatusCode()).headers(httpHeaders).header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
             }
-            return ResponseEntity.status(data.getStatusCode())
+            responseEntity = ResponseEntity.status(data.getStatusCode())
                     .headers(httpHeaders)
                     .header(HttpHeaders.CONTENT_TYPE, data.getContentType())
                     .body(data.getResponseBody());
         } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(mockGroup.getProxyUrl())) {
             // 所有request没有匹配上,但是有proxy地址
-            return proxy(mockGroup.getProxyUrl(), request, response);
+            responseEntity = proxy(mockGroup.getProxyUrl(), request, response);
         }
-        return ResponseEntity.notFound().build();
+        mockGroupService.delayTime(start, mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight()));
+        return responseEntity;
     }
 
     @RequestMapping("/proxy/**")
@@ -88,7 +93,7 @@ public class MockController {
                 String headerName = headerNames.nextElement();
                 String headerValue = request.getHeader(headerName);
                 boolean excludeHeader = SimpleMockUtils.getExcludeHeaders().contains(headerName.toLowerCase());
-                if (SimpleMockUtils.isMockRequest()) {
+                if (SimpleMockUtils.isMockPreview(request)) {
                     excludeHeader = SimpleMockUtils.isExcludeHeaders(headerName.toLowerCase());
                 }
                 if (!excludeHeader && StringUtils.isNotBlank(headerValue)) {

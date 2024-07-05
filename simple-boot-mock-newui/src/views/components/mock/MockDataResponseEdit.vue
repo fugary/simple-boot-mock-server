@@ -45,7 +45,6 @@ defineExpose({ toEditDataResponse })
       <common-form-control
         :model="languageModel"
         :option="languageSelectOption"
-        @change="languageRef=$event"
       />
       <vue-monaco-editor
         v-model:value="contentRef"

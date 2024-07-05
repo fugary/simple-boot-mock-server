@@ -18,4 +18,18 @@ public interface MockUserService extends IService<MockUser> {
      */
     boolean existsUser(MockUser user);
 
+    /**
+     * 加密密码
+     * @param password
+     * @return
+     */
+    String encryptPassword(String password);
+
+    /**
+     * 密码匹配
+     * @param password
+     * @param encryptPassword
+     * @return
+     */
+    boolean matchPassword(String password, String encryptPassword);
 }

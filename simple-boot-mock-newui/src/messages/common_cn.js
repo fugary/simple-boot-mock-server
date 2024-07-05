@@ -71,6 +71,7 @@ common.label.status = '状态'
 common.label.statusEnabled = '启用'
 common.label.statusDisabled = '禁用'
 common.label.description = '描述'
+common.label.delay = '延迟'
 
 //= ============通用============
 common.label.commonCode = '{0}代码'
@@ -109,3 +110,4 @@ common.msg.notFound = '页面不存在，请访问其他页面'
 common.msg.accessDenied = '没有权限访问该页面'
 common.msg.emailError = '邮箱格式不正确'
 common.msg.cannotEnterChineseCharacters = '{0}不能输入中文！'
+common.msg.clickTo = '点击{0}'

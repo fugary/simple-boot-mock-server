@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -93,7 +94,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public Pair<MockGroup, MockData> matchMockData(HttpServletRequest request, Integer defaultId) {
+    public Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer defaultId) {
         String requestPath = request.getServletPath();
         String method = request.getMethod();
         String requestGroupPath = calcGroupPath(requestPath);
@@ -117,12 +118,41 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     if (pathMatcher.match(configPath, requestPath) && matchRequestPattern(request, mockRequest)) {
                         MockData mockData = mockRequestService.findMockData(mockRequest, defaultId);
                         processMockData(request, mockData, configPath, requestPath);
-                        return Pair.of(mockGroup, mockData);
+                        return Triple.of(mockGroup, mockRequest, mockData);
                     }
                 }
             }
         }
-        return Pair.of(mockGroup, null);
+        return Triple.of(mockGroup, null, null);
+    }
+
+    @Override
+    public Integer calcDelayTime(MockGroup group, MockRequest request, MockData mockData) {
+        if (mockData != null && mockData.getDelay() != null) {
+            return mockData.getDelay();
+        }
+        if (request != null && request.getDelay() != null) {
+            return request.getDelay();
+        }
+        if (group != null && group.getDelay() != null) {
+            return group.getDelay();
+        }
+        return null;
+    }
+
+    @Override
+    public void delayTime(long stateTime, Integer delayTime) {
+        if (delayTime != null) {
+            long nowTime = System.currentTimeMillis();
+            long sleepTime = stateTime + delayTime - nowTime;
+            if (sleepTime > 0) {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    log.error("delayTime error", e);
+                }
+            }
+        }
     }
 
     protected List<MockRequest> sortMockRequests(List<MockRequest> mockRequests) {

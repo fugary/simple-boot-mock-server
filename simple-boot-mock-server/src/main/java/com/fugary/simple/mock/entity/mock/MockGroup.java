@@ -14,6 +14,7 @@ public class MockGroup extends MockBase {
     private String groupName;
     private String groupPath;
     private String proxyUrl;
+    private Integer delay;
     private String description;
 
 }

@@ -7,18 +7,18 @@ spring:
     basename: messages
     encoding: UTF-8
   datasource:
-    driver-class-name: org.h2.Driver
-    url: @spring.database.url@
+    driver-class-name: ${MOCK_DB_CLASS_NAME:org.h2.Driver}
+    url: ${MOCK_DB_URL:@spring.database.url@}
 #    url: jdbc:h2:mem:simpledb
-    username: root
-    password: 123456
+    username: ${MOCK_DB_USERNAME:root}
+    password: ${MOCK_DB_PASSWORD:123456}
     hikari: # 连接池配置
-      maximum-pool-size: 5
+      maximum-pool-size: ${MOCK_DB_POOL_SIZE:5}
       minimum-idle: 2
       connection-test-query: select 1;
   h2:
     console:
-      enabled: true
+      enabled: ${MOCK_DB_H2_CONSOLE:false}
       settings:
         web-allow-others: true
   flyway:
@@ -26,7 +26,7 @@ spring:
     out-of-order: true
     placeholder-prefix: "${"
     table: flyway_schema_history
-    locations: classpath:db/migration
+    locations: classpath:db/${MOCK_DB_TYPE:h2}/migration
 mybatis-plus:
   global-config:
     db-config:
@@ -38,5 +38,5 @@ logging: # 日志相关配置
     root: info
   config: classpath:logback-spring.xml
   file:
-    path: C:/logs/${spring.application.name}
+    path: ${MOCK_LOG_DIR:~/logs/${spring.application.name}}
     name: ${logging.file.path}/${spring.application.name}.log

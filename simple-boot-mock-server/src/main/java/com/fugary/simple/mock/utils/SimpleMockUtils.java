@@ -3,7 +3,6 @@ package com.fugary.simple.mock.utils;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.entity.mock.MockBase;
 import com.fugary.simple.mock.entity.mock.MockData;
-import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -125,18 +124,6 @@ public class SimpleMockUtils {
         headerName = StringUtils.trimToEmpty(headerName).toLowerCase();
         return getExcludeHeaders().contains(headerName)
                 || headerName.matches("^(sec-|mock-).*");
-    }
-
-    /**
-     * 前台mock请求
-     * @return
-     */
-    public static boolean isMockRequest(){
-        HttpServletRequest request = HttpRequestUtils.getCurrentRequest();
-        if (request != null) {
-            return request.getHeader(MockConstants.MOCK_DATA_ID_HEADER) != null;
-        }
-        return false;
     }
 
     /**

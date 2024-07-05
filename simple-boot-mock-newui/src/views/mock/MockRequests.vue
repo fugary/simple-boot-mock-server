@@ -8,7 +8,7 @@ import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons, defineTableColumns } from '@/components/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { ref, computed } from 'vue'
-import { useFormStatus } from '@/consts/GlobalConstants'
+import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useDefaultPage } from '@/config'
 import { $i18nBundle } from '@/messages'
@@ -68,18 +68,28 @@ const columns = defineTableColumns([{
 }, {
   label: '请求方法',
   property: 'method',
+  minWidth: '60px',
   formatter (data) {
     const config = methodsConfig[data.method]
     return <ElTag type={config.type} effect="dark">{data.method}</ElTag>
   }
+}, {
+  labelKey: 'common.label.delay',
+  property: 'delay',
+  minWidth: '60px'
+}, {
+  label: '匹配规则',
+  property: 'matchPattern'
 }, {
   labelKey: 'common.label.description',
   property: 'description'
 }, {
   labelKey: 'common.label.status',
   formatter (data) {
-    return <DelFlagTag v-model={data.status}/>
-  }
+    return <DelFlagTag v-model={data.status} clickToToggle={true}
+                       onToggleValue={(status) => saveMockRequest({ ...data, status })}/>
+  },
+  minWidth: '60px'
 }])
 
 const requestButtons = defineTableButtons([{
@@ -145,7 +155,7 @@ const editFormOptions = computed(() => {
     attrs: {
       clearable: false
     }
-  }, useFormStatus(),
+  }, useFormStatus(), useFormDelay(),
   {
     label: '匹配规则',
     type: 'vue-monaco-editor',
@@ -223,6 +233,7 @@ const saveMockRequest = item => {
       >
         <template #expand="{item}">
           <mock-data-table
+            style="margin-left:40px"
             :group-item="groupItem"
             :request-item="item"
           />

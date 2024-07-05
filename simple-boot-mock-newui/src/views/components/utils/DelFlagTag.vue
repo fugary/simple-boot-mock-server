@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { $i18nBundle } from '@/messages'
+import { $i18nBundle, $i18nKey } from '@/messages'
 
 const props = defineProps({
   typeConfig: {
@@ -22,6 +22,10 @@ const props = defineProps({
   reverse: {
     type: Boolean,
     default: true
+  },
+  clickToToggle: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -55,18 +59,40 @@ const valueConf = computed(() => {
   return props.valueConfig
 })
 
+const reversedValue = computed(() => {
+  return Object.keys(valueConf.value).find(key => key !== `${props.modelValue}`)
+})
+
+const emit = defineEmits(['toggleValue'])
+const tooltip = computed(() => {
+  let toValue = $i18nBundle('common.label.statusEnabled')
+  if (toValue === valueConf.value[props.modelValue]) {
+    toValue = $i18nBundle('common.label.statusDisabled')
+  }
+  return {
+    disabled: !props.clickToToggle,
+    content: $i18nKey('common.msg.clickTo', toValue)
+  }
+})
+
 </script>
 
 <template>
-  <el-tag
-    v-if="valueConf[modelValue]"
-    :effect="effect"
-    class="statusTag"
-    :type="typeConf[modelValue]"
-    v-bind="$attrs"
+  <el-link
+    v-common-tooltip="tooltip"
+    :underline="false"
+    @click="clickToToggle&&emit('toggleValue', reversedValue)"
   >
-    {{ valueConf[modelValue] }}
-  </el-tag>
+    <el-tag
+      v-if="valueConf[modelValue]"
+      :effect="effect"
+      class="statusTag"
+      :type="typeConf[modelValue]"
+      v-bind="$attrs"
+    >
+      {{ valueConf[modelValue] }}
+    </el-tag>
+  </el-link>
 </template>
 
 <style scoped>
