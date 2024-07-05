@@ -49,6 +49,11 @@ export const useLoginConfigStore = defineStore('loginConfig', () => {
     clearLoginInfo () {
       loginResult.value = null
     },
+    updateUserInfo (mockUser) {
+      if (loginResult.value) {
+        loginResult.value.account = mockUser
+      }
+    },
     isLoginIn () {
       if (loginResult.value?.expires) {
         if (dayjs(loginResult.value.expires).isBefore(dayjs())) { // Token过期

@@ -1,10 +1,9 @@
 package com.fugary.simple.mock.web.filters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fugary.simple.mock.web.vo.NameValue;
 import com.fugary.simple.mock.contants.MockConstants;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
+import com.fugary.simple.mock.web.vo.NameValue;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -26,9 +25,7 @@ public class MockMetaDataFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        boolean isPreview = BooleanUtils.toBoolean(StringUtils
-                .defaultIfBlank(request.getHeader(MockConstants.MOCK_DATA_PREVIEW_HEADER), Boolean.FALSE.toString()));
-        if (isPreview) {
+        if (SimpleMockUtils.isMockPreview(request)) {
             Enumeration<String> reqHeaders = request.getHeaderNames();
             ArrayList<NameValue> requestHeaders = new ArrayList<>();
             while (reqHeaders.hasMoreElements()) {

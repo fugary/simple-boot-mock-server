@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.SimpleQueryVo;
 import com.fugary.simple.mock.contants.MockErrorConstants;
@@ -58,6 +59,17 @@ public class UserController {
     public SimpleResult save(@RequestBody MockUser user) {
         if (mockUserService.existsUser(user)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
+        }
+        if (!SecurityUtils.validateUserUpdate(user.getUserName())) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+        }
+        boolean needEncryptPassword= true;
+        if (user.getId() != null) {
+            MockUser existUser = mockUserService.getById(user.getId());
+            needEncryptPassword = existUser == null || !StringUtils.equalsIgnoreCase(existUser.getUserPassword(), user.getUserPassword());
+        }
+        if (needEncryptPassword) {
+            user.setUserPassword(mockUserService.encryptPassword(user.getUserPassword()));
         }
         return SimpleResultUtils.createSimpleResult(mockUserService.saveOrUpdate(SimpleMockUtils.addAuditInfo(user)));
     }
