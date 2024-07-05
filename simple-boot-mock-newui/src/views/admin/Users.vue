@@ -4,7 +4,7 @@ import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { showUserInfo } from '@/utils/DynamicUtils'
 import MockUserApi from '@/api/mock/MockUserApi'
-import { isAdminUser, $goto, $coreConfirm } from '@/utils'
+import { isAdminUser, $goto, $coreConfirm, isUserAdmin } from '@/utils'
 import { $i18nBundle } from '@/messages'
 
 const page = ref(useDefaultPage())
@@ -55,7 +55,7 @@ const buttons = computed(() => {
         .then(() => MockUserApi.deleteById(item.id))
         .then(() => loadUsers())
     },
-    buttonIf: item => isAdminUser() && item.userName !== 'admin'
+    buttonIf: item => isAdminUser() && !isUserAdmin(item.userName)
   }]
 })
 //* ************搜索框**************//

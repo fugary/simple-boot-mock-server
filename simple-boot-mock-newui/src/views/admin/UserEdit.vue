@@ -6,7 +6,7 @@ import { defineFormOptions } from '@/components/utils'
 import { ElMessage } from 'element-plus'
 import { $i18nBundle } from '@/messages'
 import { useRoute } from 'vue-router'
-import { useBackUrl } from '@/utils'
+import { isAdminUser, isUserAdmin, useBackUrl } from '@/utils'
 import { useFormStatus } from '@/consts/GlobalConstants'
 
 const props = defineProps({
@@ -41,12 +41,15 @@ const formOptions = computed(() => {
     label: '用户名',
     prop: 'userName',
     required: true,
-    disabled: props.personal || userAccount.value?.userName === 'admin'
+    disabled: props.personal || isUserAdmin(userAccount.value?.userName)
   }, {
     label: '昵称',
     prop: 'nickName',
     required: true
-  }, useFormStatus(), {
+  }, {
+    ...useFormStatus(),
+    enabled: isAdminUser() && !isUserAdmin(userAccount.value?.userName)
+  }, {
     label: '邮箱',
     prop: 'userEmail',
     rules: [{

@@ -15,7 +15,11 @@ import { useTabsViewStore } from '@/stores/TabsViewStore'
 import { LoadSaveParamMode } from '@/consts/GlobalConstants'
 
 export const isAdminUser = () => {
-  return useLoginConfigStore().accountInfo?.userName === 'admin'
+  return isUserAdmin(useLoginConfigStore().accountInfo?.userName)
+}
+
+export const isUserAdmin = userName => {
+  return userName === 'admin'
 }
 
 export const useSystemKey = () => {

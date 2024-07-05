@@ -44,7 +44,7 @@ export const useLoginConfigStore = defineStore('loginConfig', () => {
      */
     setLoginAccountInfo (resultData) {
       loginResult.value = resultData
-      lastLoginName.value = resultData?.account?.actualLoginName
+      lastLoginName.value = resultData?.account?.userName
     },
     clearLoginInfo () {
       loginResult.value = null

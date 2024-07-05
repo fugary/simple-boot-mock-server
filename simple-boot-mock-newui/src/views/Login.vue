@@ -30,7 +30,7 @@ const loginFormOptions = [{
  * @type {LoginVo}
  */
 const loginVo = ref({
-  userName: 'admin',
+  userName: loginConfigStore.lastLoginName || 'admin',
   userPassword: ''
 })
 
