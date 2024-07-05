@@ -4,6 +4,11 @@ import com.mengstudy.simple.mock.utils.MockJsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
+import javax.script.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 /**
  * Created on 2020/5/14 21:10 .<br>
  *
@@ -12,15 +17,28 @@ import org.junit.jupiter.api.Test;
 @Slf4j
 public class MockJsUtilsTest {
 
+    public static final String MOCK_JS_PATH = "js/mock-min.js";
+
     @Test
-    public void test() {
+    public void test() throws ScriptException {
+        ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("nashorn");
+        try (
+                InputStream mockJs = MockJsUtils.class.getClassLoader().getResourceAsStream(MOCK_JS_PATH);
+                InputStreamReader reader = new InputStreamReader(mockJs)
+        ) {
+            Bindings bindings = scriptEngine.createBindings();
+            scriptEngine.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
+            scriptEngine.eval(reader, bindings);
+        } catch (ScriptException | IOException e) {
+            log.error("执行MockJs错误", e);
+        }
         String input = "{\n" +
                 "    \"user|2\": [{\n" +
                 "        'name': '@cname', \n" +
                 "        'id|+1': 1\n" +
                 "    }]\n" +
                 "}";
-        String output = MockJsUtils.mock(input);
+        String output = (String) scriptEngine.eval("JSON.stringify(Mock.mock(" + input + "))");
         log.info("output: {}", output);
     }
 }

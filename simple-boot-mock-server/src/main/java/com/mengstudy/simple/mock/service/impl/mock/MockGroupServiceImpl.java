@@ -7,6 +7,7 @@ import com.mengstudy.simple.mock.entity.mock.MockData;
 import com.mengstudy.simple.mock.entity.mock.MockGroup;
 import com.mengstudy.simple.mock.entity.mock.MockRequest;
 import com.mengstudy.simple.mock.mapper.mock.MockGroupMapper;
+import com.mengstudy.simple.mock.script.ScriptEngineProvider;
 import com.mengstudy.simple.mock.service.mock.MockDataService;
 import com.mengstudy.simple.mock.service.mock.MockGroupService;
 import com.mengstudy.simple.mock.service.mock.MockRequestService;
@@ -43,6 +44,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
 
     @Autowired
     private MockDataService mockDataService;
+
+    @Autowired
+    private ScriptEngineProvider scriptEngineProvider;
 
     @Setter
     @Getter
@@ -132,7 +136,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
 
     protected boolean matchRequestPattern(HttpServletRequest request, MockRequest mockRequest) {
         if (StringUtils.isNotBlank(mockRequest.getMatchPattern())) {
-            Object result = MockJsUtils.eval("Boolean(" + mockRequest.getMatchPattern() + ")"); // 转Boolean值
+            Object result = scriptEngineProvider.eval("Boolean(" + mockRequest.getMatchPattern() + ")"); // 转Boolean值
             log.info("requestPath={}, 计算：{}={}", mockRequest.getRequestPath(), mockRequest.getMatchPattern(), result);
             return Boolean.TRUE.equals(result); // 必须等于true才执行
         }
@@ -161,7 +165,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         .replace(StringUtils.join("{{", entry.getKey(), "}}"), entry.getValue())
                         .replace(StringUtils.join("${", entry.getKey(), "}"), entry.getValue());
             }
-            mockData.setResponseBody(MockJsUtils.mock(responseBody)); // 使用Mockjs来处理响应数据
+            mockData.setResponseBody(scriptEngineProvider.mock(responseBody)); // 使用Mockjs来处理响应数据
         }
     }
 

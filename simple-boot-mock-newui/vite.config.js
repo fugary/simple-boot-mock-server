@@ -15,7 +15,7 @@ const optionalPlugins = [{
   plugin: viteMockServe({
     mockPath: './mock'
   }),
-  enabled: true
+  enabled: false
 }, {
   plugin: splitVendorChunkPlugin(),
   enabled: true
@@ -44,7 +44,7 @@ export default ({ mode }) => {
       }
     },
     build: {
-      sourcemap: true,
+      sourcemap: false,
       rollupOptions: {
         output: {
           chunkFileNames: JS_FILE_NAMES, // 引入文件名的名称

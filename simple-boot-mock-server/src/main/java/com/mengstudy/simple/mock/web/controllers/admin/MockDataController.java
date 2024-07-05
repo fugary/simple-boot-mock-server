@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mengstudy.simple.mock.entity.mock.MockData;
+import com.mengstudy.simple.mock.script.ScriptEngineProvider;
 import com.mengstudy.simple.mock.service.mock.MockDataService;
 import com.mengstudy.simple.mock.utils.MockJsUtils;
 import com.mengstudy.simple.mock.utils.SimpleMockUtils;
@@ -26,6 +27,9 @@ public class MockDataController {
 
     @Autowired
     private MockDataService mockDataService;
+
+    @Autowired
+    private ScriptEngineProvider scriptEngineProvider;
 
     @GetMapping
     public SimpleResult<List<MockData>> search(@ModelAttribute MockDataQueryVo queryVo) {
@@ -54,7 +58,7 @@ public class MockDataController {
 
     @PostMapping("/preview")
     public String previewResponse(@RequestBody String data) {
-        return MockJsUtils.mock(data);
+        return scriptEngineProvider.mock(data);
     }
 
     @PostMapping("/markDefault")
