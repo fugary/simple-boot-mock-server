@@ -3,6 +3,7 @@ export const common = baseMessages()
 
 common.label.title = '简单Mock服务器'
 common.label.login = '登录'
+common.label.logining = '登录中'
 common.label.index = '首页'
 common.label.settings = '设置'
 common.label.confirm = '确认'

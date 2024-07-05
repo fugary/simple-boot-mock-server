@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.config;
 
+import com.fugary.simple.mock.security.UserSecurityInterceptor;
 import com.fugary.simple.mock.utils.http.SimpleHttpClientUtils;
 import com.fugary.simple.mock.web.filters.MockMetaDataFilter;
 import com.fugary.simple.mock.web.filters.locale.CustomHeaderLocaleContextResolver;
@@ -15,6 +16,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.server.i18n.LocaleContextResolver;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,7 +34,7 @@ import static com.fugary.simple.mock.contants.MockConstants.*;
  */
 @Configuration
 @EnableConfigurationProperties({SimpleMockConfigProperties.class})
-public class ApplicationConfig {
+public class ApplicationConfig implements WebMvcConfigurer {
 
     @Bean
     public LocaleContextResolver localeContextResolver(){
@@ -81,5 +84,15 @@ public class ApplicationConfig {
         ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(
                 SimpleHttpClientUtils.getHttpsClient());
         return new RestTemplate(clientHttpRequestFactory);
+    }
+
+    @Bean
+    public UserSecurityInterceptor userSecurityInterceptor(){
+        return new UserSecurityInterceptor();
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(userSecurityInterceptor()).addPathPatterns("/admin/**");
     }
 }

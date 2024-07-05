@@ -1,12 +1,12 @@
 package com.fugary.simple.mock.security;
 
-import com.fugary.simple.mock.utils.JsonUtils;
-import com.fugary.simple.mock.utils.SimpleResultUtils;
-import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.service.token.TokenService;
+import com.fugary.simple.mock.utils.JsonUtils;
+import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,7 +29,6 @@ import java.io.PrintWriter;
  */
 @Getter
 @Setter
-@Component
 public class UserSecurityInterceptor implements HandlerInterceptor {
 
     @Autowired

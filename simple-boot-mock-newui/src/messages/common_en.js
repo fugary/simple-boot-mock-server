@@ -3,6 +3,7 @@ export const common = baseMessages()
 
 common.label.title = 'Simple Mock Server'
 common.label.login = 'Login'
+common.label.logining = 'Logining'
 common.label.index = 'Home'
 common.label.settings = 'Settings'
 common.label.confirm = 'Confirm'

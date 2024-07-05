@@ -34,10 +34,16 @@ const loginVo = ref({
   userPassword: ''
 })
 
+const loading = ref(false)
+
 const submitForm = form => {
   form.validate(async (valid) => {
     if (valid) {
+      loading.value = true
       const loginResult = await loginConfigStore.login(loginVo.value)
+        .finally(() => {
+          loading.value = false
+        })
       if (loginResult.success) {
         router.push('/')
       } else {
@@ -68,13 +74,16 @@ const formRef = ref()
         :options="loginFormOptions"
         label-width="100px"
         :show-buttons="false"
+        @submit-form="submitForm"
       />
       <template #footer>
         <el-button
           type="primary"
+          :loading="loading"
           @click="submitForm(formRef.form)"
         >
-          {{ $t('common.label.submit') }}
+          <span v-if="!loading">{{ $t('common.label.login') }}</span>
+          <span v-else>{{ $t('common.label.logining') }}</span>
         </el-button>
         <el-button
           @click="formRef.form.resetFields()"

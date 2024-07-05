@@ -11,6 +11,7 @@ import lombok.Data;
 public class MockGroup extends MockBase {
 
     private static final long serialVersionUID = -8012815542682860804L;
+    private String userName;
     private String groupName;
     private String groupPath;
     private String proxyUrl;

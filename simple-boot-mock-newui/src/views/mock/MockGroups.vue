@@ -115,6 +115,10 @@ const editFormOptions = defineFormOptions([{
   prop: 'groupName',
   required: true
 }, {
+  label: '路径ID',
+  prop: 'groupPath',
+  placeholder: '建议不要填写，自动生成'
+}, {
   label: '代理地址',
   prop: 'proxyUrl',
   tooltip: '配置的请求之外的地址将发送到代理地址获取数据，支持http和https',
