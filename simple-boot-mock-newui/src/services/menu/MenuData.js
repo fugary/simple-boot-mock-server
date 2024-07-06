@@ -1,6 +1,7 @@
 import { BASE_URL } from '@/config'
+import { getMockUrl } from '@/api/mock/MockRequestApi'
 
-const dbUrl = `${BASE_URL}${BASE_URL.endsWith('/') ? '' : '/'}h2-console`
+const dbUrl = getMockUrl(`${BASE_URL}${BASE_URL.endsWith('/') ? '' : '/'}h2-console`)
 export const ALL_MENUS = [
   {
     id: 1,
