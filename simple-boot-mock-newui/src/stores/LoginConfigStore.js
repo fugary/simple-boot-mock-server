@@ -28,6 +28,11 @@ export const useLoginConfigStore = defineStore('loginConfig', () => {
    */
   const systemKey = computed(() => loginResult.value?.systemKey || SYSTEM_KEY)
   /**
+   * h2 console是否开启
+   * @type {ComputedRef<Boolean>}
+   */
+  const consoleEnabled = computed(() => loginResult.value?.consoleEnabled ?? false)
+  /**
    * 记住上次登录名
    * @type {Ref<UnwrapRef<string>>}
    */
@@ -39,6 +44,7 @@ export const useLoginConfigStore = defineStore('loginConfig', () => {
     accessToken,
     accountInfo,
     systemKey,
+    consoleEnabled,
     /**
      * @param {{account: Object, accessToken:string}} resultData
      */

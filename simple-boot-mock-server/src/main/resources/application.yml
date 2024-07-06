@@ -7,18 +7,18 @@ spring:
     basename: messages
     encoding: UTF-8
   datasource:
-    driver-class-name: ${MOCK_DB_CLASS_NAME:org.h2.Driver}
-    url: ${MOCK_DB_URL:@spring.database.url@}
+    driver-class-name: ${MOCK_DB_CLASS_NAME:${dbs.${dbs.type}.driver-class-name}}
+    url: ${MOCK_DB_URL:${dbs.${MOCK_DB_TYPE:h2}.url}}
 #    url: jdbc:h2:mem:simpledb
-    username: ${MOCK_DB_USERNAME:root}
-    password: ${MOCK_DB_PASSWORD:123456}
+    username: ${MOCK_DB_USERNAME:${dbs.${dbs.type}.username}}
+    password: ${MOCK_DB_PASSWORD:${dbs.${dbs.type}.password}}
     hikari: # 连接池配置
       maximum-pool-size: ${MOCK_DB_POOL_SIZE:5}
       minimum-idle: 2
       connection-test-query: select 1;
   h2:
     console:
-      enabled: ${MOCK_DB_H2_CONSOLE:false}
+      enabled: ${MOCK_DB_H2_CONSOLE:${dbs.${dbs.type}.console:false}}
       settings:
         web-allow-others: true
   flyway:
@@ -38,5 +38,19 @@ logging: # 日志相关配置
     root: info
   config: classpath:logback-spring.xml
   file:
-    path: ${MOCK_LOG_DIR:~/logs/${spring.application.name}}
+    path: ${MOCK_LOG_DIR:logs/${spring.application.name}}
     name: ${logging.file.path}/${spring.application.name}.log
+# 自定义database信息
+dbs:
+  type: ${MOCK_DB_TYPE:h2}
+  h2:
+    driver-class-name: org.h2.Driver
+    url: @spring.database.url@
+    username: root
+    password: 123456
+    console: true
+  mysql:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mock-db?characterEncoding=utf8&useUnicode=true&serverTimezone=UTC
+    username: root
+    password: 123456

@@ -107,7 +107,8 @@ export const loadAndParseMenus = async () => {
    * @type {[MenuDto]}
    */
   // const menus = await $httpPost('/api/menus', param, config).then(data => data.resultData?.menuList || [])
-  const menus = cloneDeep(ALL_MENUS)
+  const loginConfigStore = useLoginConfigStore()
+  const menus = cloneDeep(ALL_MENUS).filter(menu => !menu.dbConsole || (menu.dbConsole && loginConfigStore.consoleEnabled))
   return processMenus(menus)
 }
 /**

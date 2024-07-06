@@ -11,5 +11,6 @@ public class LoginResultVo implements Serializable {
     private static final long serialVersionUID = -1911470282692277108L;
     private MockUser account;
     private String accessToken;
+    private boolean consoleEnabled;
 
 }

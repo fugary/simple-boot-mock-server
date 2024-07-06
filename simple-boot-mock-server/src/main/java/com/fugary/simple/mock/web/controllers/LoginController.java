@@ -9,6 +9,7 @@ import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.LoginResultVo;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +25,9 @@ public class LoginController {
     @Autowired
     private TokenService tokenService;
 
+    @Value("${spring.h2.console.enabled:false}")
+    private boolean consoleEnabled;
+
     @PostMapping("/login")
     public SimpleResult<LoginResultVo> login(@RequestBody MockUser user) {
         MockUser loginUser = mockUserService.getOne(Wrappers.<MockUser>query().eq("user_name",
@@ -34,6 +38,7 @@ public class LoginController {
         LoginResultVo resultVo = new LoginResultVo();
         resultVo.setAccount(loginUser);
         resultVo.setAccessToken(tokenService.createToken(loginUser));
+        resultVo.setConsoleEnabled(consoleEnabled);
         return SimpleResultUtils.createSimpleResult(resultVo);
     }
 }

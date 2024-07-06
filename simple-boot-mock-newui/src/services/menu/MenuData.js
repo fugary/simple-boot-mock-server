@@ -49,6 +49,7 @@ export const ALL_MENUS = [
     iconCls: 'Coin',
     nameCn: '数据库管理',
     nameEn: 'Database',
+    dbConsole: true,
     external: true,
     menuUrl: dbUrl
   }
