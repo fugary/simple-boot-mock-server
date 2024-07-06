@@ -89,7 +89,7 @@ const buttons = defineTableButtons([{
   type: 'success',
   icon: 'RemoveRedEyeFilled',
   click: item => {
-    previewMockRequest(props.groupItem, props.groupItem, item)
+    previewMockRequest(props.groupItem, props.requestItem, item)
   }
 }, {
   label: '设为默认',

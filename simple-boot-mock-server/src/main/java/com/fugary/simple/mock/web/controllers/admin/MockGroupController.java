@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.SimpleQueryVo;
 import com.fugary.simple.mock.contants.MockErrorConstants;
@@ -65,6 +66,13 @@ public class MockGroupController {
         }
         if (mockGroupService.existsMockGroup(group)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
+        }
+        MockUser loginUser = getLoginUser();
+        if (StringUtils.isBlank(group.getUserName()) && loginUser != null) {
+            group.setUserName(loginUser.getUserName());
+        }
+        if (!SecurityUtils.validateUserUpdate(group.getUserName())) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockGroupService.saveOrUpdate(SimpleMockUtils.addAuditInfo(group)));
     }

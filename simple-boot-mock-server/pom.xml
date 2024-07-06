@@ -150,22 +150,13 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <spring.database.url>jdbc:h2:file:~/simple-boot-mock/mockdb_v2;AUTO_SERVER=TRUE</spring.database.url>
                 <logging.file.name>c:/logs/simple-boot-mock/simple-boot-mock-server.log</logging.file.name>
             </properties>
         </profile>
         <profile>
             <id>production</id>
             <properties>
-                <spring.database.url>jdbc:h2:file:./data/simple-boot-mock/mockdb_v2;AUTO_SERVER=TRUE</spring.database.url>
                 <logging.file.name>logs/simple-boot-mock/simple-boot-mock-server.log</logging.file.name>
-            </properties>
-        </profile>
-        <profile>
-            <id>docker</id>
-            <properties>
-                <spring.database.url>jdbc:h2:file:${MOCK_DATA_DIR:/data}/simple-boot-mock/db/mockdb_v2;AUTO_SERVER=TRUE</spring.database.url>
-                <logging.file.name>${MOCK_DATA_DIR:/data}/simple-boot-mock/logs/simple-boot-mock-server.log</logging.file.name>
             </properties>
         </profile>
     </profiles>

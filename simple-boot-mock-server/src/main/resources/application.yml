@@ -45,12 +45,15 @@ dbs:
   type: ${MOCK_DB_TYPE:h2}
   h2:
     driver-class-name: org.h2.Driver
-    url: @spring.database.url@
+    data-dir: ${MOCK_DB_DATA_DIR:~}
+    url: jdbc:h2:file:${dbs.h2.data-dir}/simple-boot-mock/mockdb_v2;AUTO_SERVER=TRUE
     username: root
     password: 123456
-    console: true
   mysql:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/mock-db?characterEncoding=utf8&useUnicode=true&serverTimezone=UTC
+    server: ${MOCK_DB_MYSQL_SERVER:localhost}
+    port: ${MOCK_DB_MYSQL_PORT:3306}
+    dbname: ${MOCK_DB_MYSQL_DBNAME:mock-db}
+    url: jdbc:mysql://${dbs.mysql.server}:${dbs.mysql.port}/${dbs.mysql.dbname}?characterEncoding=utf8&useUnicode=true&serverTimezone=UTC
     username: root
     password: 123456
