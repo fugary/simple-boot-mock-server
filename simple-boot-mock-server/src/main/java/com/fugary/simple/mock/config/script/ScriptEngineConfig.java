@@ -25,6 +25,7 @@ public class ScriptEngineConfig {
         GenericObjectPoolConfig<ScriptEngine> config = new GenericObjectPoolConfig<>();
         config.setMaxTotal(10); // 设置池中最大对象数
         config.setJmxEnabled(false);
+        config.setMinIdle(2);
         return new GenericObjectPool<>(javaScriptEngineFactory(), config);
     }
 

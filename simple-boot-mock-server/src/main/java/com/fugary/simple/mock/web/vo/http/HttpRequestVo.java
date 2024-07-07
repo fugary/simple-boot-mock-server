@@ -2,6 +2,7 @@ package com.fugary.simple.mock.web.vo.http;
 
 import lombok.Data;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -15,8 +16,9 @@ public class HttpRequestVo {
     private String url;
     private String method;
     private String contentType;
-    private Map<String, String> headers;
-    private Map<String, String> parameters;
+    private Map<String, String> headers = new HashMap<>();
+    private Map<String, String> parameters = new HashMap<>();
+    private Map<String, String> pathParameters = new HashMap<>();
     private Object body;
     private String headersStr;
     private String parametersStr;

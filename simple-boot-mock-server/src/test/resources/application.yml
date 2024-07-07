@@ -1,30 +1,63 @@
 server:
-  port: 8686
+  port: 9086
 spring:
   application:
     name: simple-boot-mock-server
+  messages:
+    basename: messages
+    encoding: UTF-8
   datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:mockdb
-    username: root
-    password: 123456
+    driver-class-name: ${MOCK_DB_CLASS_NAME:${dbs.${dbs.type}.driver-class-name}}
+    url: ${MOCK_DB_URL:${dbs.${MOCK_DB_TYPE:h2}.url}}
+    #    url: jdbc:h2:mem:simpledb
+    username: ${MOCK_DB_USERNAME:${dbs.${dbs.type}.username}}
+    password: ${MOCK_DB_PASSWORD:${dbs.${dbs.type}.password}}
+    hikari: # 连接池配置
+      maximum-pool-size: ${MOCK_DB_POOL_SIZE:5}
+      minimum-idle: 2
+      connection-test-query: select 1;
   h2:
     console:
-      enabled: true
+      enabled: ${MOCK_DB_H2_CONSOLE:${dbs.${dbs.type}.console:false}}
+      settings:
+        web-allow-others: true
   flyway:
     baseline-on-migrate: true
     out-of-order: true
     placeholder-prefix: "${"
     table: flyway_schema_history
-    locations: classpath:db/migration
-logging:
+    locations: classpath:db/${MOCK_DB_TYPE:h2}/migration
+mybatis-plus:
+  global-config:
+    db-config:
+      table-prefix: t_
+      table-underline: true
+    banner: false
+logging: # 日志相关配置
+  level:
+    root: info
+  config: classpath:logback-spring.xml
   file:
-    name: logs/simple-boot-mock-server.log
-    max-size: 10MB
-    max-history: 7
-    total-size-cap: 0MB
-  level: # 日志级别
-    root: INFO
-    web: DEBUG
-    org.springframework: INFO
-#  config: classpath:demo-logback.xml
+    path: ${MOCK_LOG_DIR:logs/${spring.application.name}}
+    name: ${logging.file.path}/${spring.application.name}.log
+# 自定义database信息
+simple:
+  mock:
+    jwt-password: ${MOCK_JWT_PASSWORD:}
+    jwt-expire: ${MOCK_JWT_EXPIRE:7}
+dbs:
+  type: ${MOCK_DB_TYPE:h2}
+  h2:
+    driver-class-name: org.h2.Driver
+    data-dir: ${MOCK_DB_DATA_DIR:~}
+    url: jdbc:h2:file:${dbs.h2.data-dir}/simple-boot-mock/mockdb_v2;AUTO_SERVER=TRUE
+    username: root
+    password: 123456
+  mysql:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    server: ${MOCK_DB_MYSQL_SERVER:localhost}
+    port: ${MOCK_DB_MYSQL_PORT:3306}
+    dbname: ${MOCK_DB_MYSQL_DBNAME:mock-db}
+    url: jdbc:mysql://${dbs.mysql.server}:${dbs.mysql.port}/${dbs.mysql.dbname}?characterEncoding=utf8&useUnicode=true&serverTimezone=UTC
+    username: root
+    password: 12345678

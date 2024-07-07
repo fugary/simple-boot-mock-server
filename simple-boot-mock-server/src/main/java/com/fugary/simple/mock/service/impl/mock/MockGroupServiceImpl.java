@@ -11,6 +11,9 @@ import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
+import com.fugary.simple.mock.utils.MockJsUtils;
+import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
+import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -189,12 +192,15 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 String paramName = parameterNames.nextElement();
                 variables.put(paramName, StringUtils.trimToEmpty(request.getParameter(paramName)));
             }
-            for (Map.Entry<String, String> entry : variables.entrySet()) {
-                responseBody = responseBody
-                        .replace(StringUtils.join("{{", entry.getKey(), "}}"), entry.getValue())
-                        .replace(StringUtils.join("${", entry.getKey(), "}"), entry.getValue());
+            HttpRequestVo requestVo = HttpRequestUtils.parseRequestVo(request);
+            try {
+                requestVo.setPathParameters(variables);
+                MockJsUtils.setCurrentRequestVo(requestVo);
+                responseBody = MockJsUtils.processResponseBody(responseBody, requestVo);
+                mockData.setResponseBody(scriptEngineProvider.mock(responseBody)); // 使用Mockjs来处理响应数据
+            } finally {
+                MockJsUtils.removeCurrentRequestVo();
             }
-            mockData.setResponseBody(scriptEngineProvider.mock(responseBody)); // 使用Mockjs来处理响应数据
         }
     }
 
