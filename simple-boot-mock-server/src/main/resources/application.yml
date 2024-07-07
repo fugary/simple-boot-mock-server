@@ -41,6 +41,10 @@ logging: # 日志相关配置
     path: ${MOCK_LOG_DIR:logs/${spring.application.name}}
     name: ${logging.file.path}/${spring.application.name}.log
 # 自定义database信息
+simple:
+  mock:
+    jwt-password: ${MOCK_JWT_PASSWORD:}
+    jwt-expire: ${MOCK_JWT_EXPIRE:7}
 dbs:
   type: ${MOCK_DB_TYPE:h2}
   h2:

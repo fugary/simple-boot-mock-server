@@ -14,6 +14,8 @@ import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.service.mock.MockUserService;
 import com.fugary.simple.mock.service.token.TokenService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -109,6 +111,9 @@ public class TokenServiceImpl implements TokenService {
     }
 
     protected Algorithm getAlgorithm() {
+        if (StringUtils.isBlank(simpleMockConfigProperties.getJwtPassword())) {
+            simpleMockConfigProperties.setJwtPassword(RandomStringUtils.randomAlphanumeric(16));
+        }
         return Algorithm.HMAC512(simpleMockConfigProperties.getJwtPassword());
     }
 }

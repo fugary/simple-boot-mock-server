@@ -37,17 +37,16 @@ public class UserSecurityInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        SimpleResult<MockUser> userResult = null;
         if (StringUtils.isNotBlank(authorization)) {
             String accessToken = authorization.replaceFirst("Bearer ", StringUtils.EMPTY).trim();
-            SimpleResult<MockUser> userResult = getTokenService().validate(accessToken);
+            userResult = getTokenService().validate(accessToken);
             if (userResult.isSuccess()) {
                 request.setAttribute(MockConstants.MOCK_USER_KEY, userResult.getResultData());
                 return true;
-            } else {
-                responseJson(response, userResult);
             }
         }
-        responseJson(response, SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_401));
+        responseJson(response, userResult == null ? SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_401) : userResult);
         return false;
     }
 

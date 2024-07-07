@@ -14,7 +14,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "simple.mock")
 public class SimpleMockConfigProperties {
 
-    private String jwtPassword = "1234567890";
+    private String jwtPassword = "";
 
     private Integer jwtExpire = 7;
 }
