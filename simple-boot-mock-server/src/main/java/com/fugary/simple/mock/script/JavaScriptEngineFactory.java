@@ -42,7 +42,8 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
 
     @Override
     public ScriptEngine create() throws Exception {
-        ScriptEngine scriptEngine = manager.getEngineByName("nashorn");
+        System.setProperty("nashorn.args", "--language=es6");
+        ScriptEngine scriptEngine = manager.getEngineByName("js");
         try (
                 InputStream mockJs = MockJsUtils.class.getClassLoader().getResourceAsStream(MOCK_JS_PATH);
                 InputStreamReader reader = new InputStreamReader(mockJs)

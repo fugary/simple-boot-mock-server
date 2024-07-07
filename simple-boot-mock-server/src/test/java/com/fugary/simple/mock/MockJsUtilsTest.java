@@ -21,7 +21,8 @@ public class MockJsUtilsTest {
 
     @Test
     public void test() throws ScriptException {
-        ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("nashorn");
+        System.setProperty("nashorn.args", "--language=es6");
+        ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("js");
         try (
                 InputStream mockJs = MockJsUtils.class.getClassLoader().getResourceAsStream(MOCK_JS_PATH);
                 InputStreamReader reader = new InputStreamReader(mockJs)
@@ -39,6 +40,7 @@ public class MockJsUtilsTest {
                 "    }]\n" +
                 "}";
         String output = (String) scriptEngine.eval("JSON.stringify(Mock.mock(" + input + "))");
+        scriptEngine.eval("let a = 1;");
         log.info("output: {}", output);
     }
 }

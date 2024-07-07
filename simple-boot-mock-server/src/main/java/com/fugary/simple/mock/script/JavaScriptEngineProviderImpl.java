@@ -23,6 +23,17 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
 
     private GenericObjectPool<ScriptEngine> scriptEnginePool;
 
+    private boolean isMockJSFragment(String template) {
+        return template.startsWith("Mock.mock(");
+    }
+
+    private String parseMockJSFragment(String template) {
+        if (!isMockJSFragment(template)) {
+            template = "Mock.mock(" + template + ")";
+        }
+        return "JSON.stringify(Mock.mock(" + template + "))";
+    }
+
     /**
      * 针对json使用mockjs解析后输出
      *
@@ -32,8 +43,8 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
     @Override
     public String mock(String template) {
         String result = StringUtils.trimToEmpty(template);
-        if (MockJsUtils.isJson(result)) {
-            Object mockRes = eval("JSON.stringify(Mock.mock(" + result + "))");
+        if (MockJsUtils.isJson(result) || isMockJSFragment(template)) {
+            Object mockRes = eval(parseMockJSFragment(template));
             if (mockRes != null) {
                 result = mockRes.toString();
             }
