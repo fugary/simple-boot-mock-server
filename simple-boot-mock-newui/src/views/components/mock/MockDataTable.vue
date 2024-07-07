@@ -127,6 +127,7 @@ const newOrEdit = async id => {
     await MockDataApi.getById(id).then(data => {
       data.resultData && (currentDataItem.value = data.resultData)
       contentRef.value = currentDataItem.value?.responseBody
+      languageRef.value = currentDataItem.value?.responseFormat || languageRef.value
       currentDataItem.value.headerParams = JSON.parse(currentDataItem.value.headers || '[]')
     })
   } else {
@@ -195,6 +196,7 @@ const saveMockData = (data) => {
     dataItem.headers = JSON.stringify(dataItem.headerParams)
     delete dataItem.headerParams
   }
+  dataItem.responseFormat = languageRef.value
   return MockDataApi.saveOrUpdate(dataItem)
     .then(() => loadMockData())
 }

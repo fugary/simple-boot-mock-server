@@ -25,7 +25,7 @@ const { groupItem, groupUrl, loadSuccess } = useMockGroupItem(groupId)
 
 const { tableData, loading, searchParam, searchMethod: loadMockRequests } = useTableAndSearchForm({
   defaultParam: { groupId, page: useDefaultPage() },
-  searchMethod: MockRequestApi.search,
+  searchMethod: (param) => MockRequestApi.search(param, { loading: true }),
   saveParam: false
 })
 
@@ -178,6 +178,10 @@ const editFormOptions = computed(() => {
       height: '50px',
       options: monacoEditorOptions
     }
+  }, {
+    label: '请求名称',
+    prop: 'requestName',
+    tooltip: '简单接口名称，可不填写'
   }, {
     labelKey: 'common.label.description',
     prop: 'description',

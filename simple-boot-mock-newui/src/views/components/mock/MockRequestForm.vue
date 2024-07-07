@@ -26,6 +26,7 @@ const checkParamsFilled = (params) => {
 const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption, formatDocument } = useMonacoEditorOptions({ readOnly: false })
 const codeHeight = '300px'
 contentRef.value = paramTarget.value?.requestBody
+languageRef.value = paramTarget.value?.requestFormat || languageRef.value
 const {
   contentRef: resContentRef, languageRef: resLanguageRef,
   editorRef: resEditorRef, monacoEditorOptions: resMonacoEditorOptions,
@@ -59,6 +60,7 @@ const sendRequest = (form) => {
   form.validate(valid => {
     if (valid) {
       console.log('===============================发送请求', valid, paramTarget.value)
+      paramTarget.value.requestFormat = languageRef.value
       emit('sendRequest', paramTarget.value)
     }
   })
