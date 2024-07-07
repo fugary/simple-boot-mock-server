@@ -81,6 +81,9 @@ const columns = defineTableColumns([{
   label: '匹配规则',
   property: 'matchPattern'
 }, {
+  label: '请求名称',
+  property: 'requestName'
+}, {
   labelKey: 'common.label.description',
   property: 'description'
 }, {
@@ -91,28 +94,45 @@ const columns = defineTableColumns([{
   },
   minWidth: '60px'
 }])
-
-const requestButtons = defineTableButtons([{
-  labelKey: 'common.label.edit',
-  type: 'primary',
-  click: item => {
-    newOrEdit(item.id)
-  }
-}, {
-  labelKey: 'common.label.test',
-  type: 'success',
-  click: item => {
-    previewMockRequest(groupItem.value, item)
-  }
-}, {
-  labelKey: 'common.label.delete',
-  type: 'danger',
-  click: item => {
-    $coreConfirm($i18nBundle('common.msg.commonDeleteConfirm', [`${item.requestPath}#${item.method}`]))
-      .then(() => MockRequestApi.deleteById(item.id))
-      .then(() => loadMockRequests())
-  }
-}])
+const requestTableRef = ref()
+const expandRequestRows = ref([])
+const requestButtons = computed(() => {
+  return defineTableButtons([{
+    labelKey: 'common.label.edit',
+    type: 'primary',
+    click: item => {
+      newOrEdit(item.id)
+    }
+  }, {
+    label: '展开响应',
+    type: 'primary',
+    click: item => {
+      requestTableRef.value?.table?.toggleRowExpansion(item)
+      console.log('==================================', expandRequestRows.value)
+    },
+    dynamicButton (item) {
+      const expanded = expandRequestRows.value.map(req => req.id).includes(item.id)
+      return {
+        label: expanded ? '收起响应' : '展开响应',
+        type: expanded ? 'info' : 'primary'
+      }
+    }
+  }, {
+    labelKey: 'common.label.test',
+    type: 'success',
+    click: item => {
+      previewMockRequest(groupItem.value, item)
+    }
+  }, {
+    labelKey: 'common.label.delete',
+    type: 'danger',
+    click: item => {
+      $coreConfirm($i18nBundle('common.msg.commonDeleteConfirm', [`${item.requestPath}#${item.method}`]))
+        .then(() => MockRequestApi.deleteById(item.id))
+        .then(() => loadMockRequests())
+    }
+  }])
+})
 
 const newRequestItem = () => ({
   status: 1,
@@ -226,13 +246,15 @@ const saveMockRequest = item => {
         </template>
       </common-form>
       <common-table
+        ref="requestTableRef"
         v-model:page="searchParam.page"
         :data="tableData"
         :columns="columns"
         :buttons="requestButtons"
-        :buttons-column-attrs="{width:'250px'}"
+        :buttons-column-attrs="{minWidth:'280px'}"
         :loading="loading"
         expand-table
+        @expand-change="(_,rows)=>{expandRequestRows=rows}"
         @page-size-change="loadMockRequests()"
         @current-page-change="loadMockRequests()"
       >
