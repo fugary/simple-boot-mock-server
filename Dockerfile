@@ -1,5 +1,5 @@
 # Start with base image
-FROM openjdk:8-jdk-alpine
+FROM adoptopenjdk/openjdk11:alpine-jre
 
 # Add Maintainer Info
 LABEL maintainer="fugary"
@@ -22,7 +22,7 @@ ENV MOCK_DB_MYSQL_PORT=3306
 ENV MOCK_DB_MYSQL_DBNAME=mock-db
 #通用
 ENV MOCK_DB_USERNAME="root"
-ENV MOCK_DB_PASSWORD="123456"
+ENV MOCK_DB_PASSWORD="12345678"
 ENV MOCK_DB_POOL_SIZE=5
 EXPOSE 9086
 

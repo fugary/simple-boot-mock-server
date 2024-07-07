@@ -56,4 +56,4 @@ dbs:
     dbname: ${MOCK_DB_MYSQL_DBNAME:mock-db}
     url: jdbc:mysql://${dbs.mysql.server}:${dbs.mysql.port}/${dbs.mysql.dbname}?characterEncoding=utf8&useUnicode=true&serverTimezone=UTC
     username: root
-    password: 123456
+    password: 12345678
