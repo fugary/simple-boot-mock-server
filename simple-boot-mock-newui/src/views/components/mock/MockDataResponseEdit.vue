@@ -2,8 +2,9 @@
 import { $checkLang, useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { computed, ref } from 'vue'
 import { cloneDeep } from 'lodash-es'
+import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 
-const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption, formatDocument } = useMonacoEditorOptions({ readOnly: false })
 const showWindow = ref(false)
 const currentMockData = ref()
 
@@ -45,7 +46,26 @@ defineExpose({ toEditDataResponse })
       <common-form-control
         :model="languageModel"
         :option="languageSelectOption"
-      />
+      >
+        <template #childAfter>
+          <mock-url-copy-link
+            :content="contentRef"
+            tooltip="复制数据响应体"
+          />
+          <el-link
+            v-common-tooltip="'格式化数据响应体'"
+            type="primary"
+            :underline="false"
+            class="margin-left3"
+            @click="formatDocument"
+          >
+            <common-icon
+              :size="18"
+              icon="FormatIndentIncreaseFilled"
+            />
+          </el-link>
+        </template>
+      </common-form-control>
       <vue-monaco-editor
         v-model:value="contentRef"
         :language="languageRef"

@@ -15,6 +15,8 @@ public class MockErrorConstants {
 
     public static final int CODE_1 = 1; // 操作失败
 
+    public static final int CODE_400 = 400; // 请求错误
+
     public static final int CODE_401 = 401; // 认证失败
 
     public static final int CODE_404 = 404; // 数据不存在

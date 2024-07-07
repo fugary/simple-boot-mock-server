@@ -25,6 +25,7 @@ const checkParamsFilled = (params) => {
 
 const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption, formatDocument } = useMonacoEditorOptions({ readOnly: false })
 const codeHeight = '300px'
+contentRef.value = paramTarget.value?.requestBody
 const {
   contentRef: resContentRef, languageRef: resLanguageRef,
   editorRef: resEditorRef, monacoEditorOptions: resMonacoEditorOptions,
@@ -179,9 +180,9 @@ const sendRequest = (form) => {
           <el-tab-pane>
             <template #label>
               <el-badge
-                :type="paramTarget.requestBody ? 'primary' : 'danger'"
-                :value="paramTarget.requestBody?.length"
-                :show-zero="false"
+                type="primary"
+                :hidden="!paramTarget.requestBody?.length"
+                is-dot
               >
                 请求体
               </el-badge>

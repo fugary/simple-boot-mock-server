@@ -1,10 +1,15 @@
 package com.fugary.simple.mock.script;
 
+import com.fugary.simple.mock.contants.MockErrorConstants;
+import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.MockJsUtils;
+import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 
 import javax.script.Bindings;
@@ -31,7 +36,8 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         if (!isMockJSFragment(template)) {
             template = "Mock.mock(" + template + ")";
         }
-        return "JSON.stringify(Mock.mock(" + template + "))";
+        template = template.replaceAll("(.*)(;+)$", "$1");
+        return "JSON.stringify(" + template + ")";
     }
 
     /**
@@ -61,12 +67,13 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
             return scriptEngine.eval(script);
         } catch (Exception e) {
             log.error("执行MockJs错误", e);
+            SimpleResult<String> result = SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, ExceptionUtils.getStackTrace(e));
+            return JsonUtils.toJson(result);
         } finally {
             if (scriptEngine != null) {
                 scriptEnginePool.returnObject(scriptEngine);
             }
         }
-        return null;
     }
 
     /**

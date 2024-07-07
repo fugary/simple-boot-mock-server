@@ -89,6 +89,19 @@ public class SimpleResultUtils {
     /**
      * 简单Result对象
      *
+     * @param data
+     * @param <T>
+     * @return
+     */
+    public static <T> SimpleResult<T> createSimpleResult(int code, T data) {
+        return SimpleResult.<T>builder().resultData(data)
+                .code(code)
+                .message(getErrorMsg(code)).build();
+    }
+
+    /**
+     * 简单Result对象
+     *
      * @param success
      * @return
      */
