@@ -202,7 +202,7 @@ const editFormOptions = computed(() => {
         languageRef.value = 'javascript'
       },
       language: languageRef.value,
-      height: '50px',
+      height: '100px',
       options: monacoEditorOptions
     }
   }, {

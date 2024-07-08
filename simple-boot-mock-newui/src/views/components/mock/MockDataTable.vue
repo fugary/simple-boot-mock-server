@@ -202,7 +202,7 @@ const editFormOptions = computed(() => {
         patternLanguageRef.value = 'javascript'
       },
       language: patternLanguageRef.value,
-      height: '50px',
+      height: '100px',
       options: patternMonacoEditorOptions
     }
   }, {
