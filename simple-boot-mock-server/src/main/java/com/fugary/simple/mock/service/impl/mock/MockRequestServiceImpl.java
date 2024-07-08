@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created on 2020/5/3 22:37 .<br>
@@ -54,6 +55,8 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)
                 .eq("status", 1));
+        mockDataList = mockDataList.stream().filter(md -> StringUtils.isBlank(md.getMatchPattern()) || md.getId().equals(defaultId))
+                .collect(Collectors.toList());
         return findMockData(mockDataList, defaultId);
     }
 
