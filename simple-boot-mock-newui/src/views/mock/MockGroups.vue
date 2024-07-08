@@ -4,7 +4,7 @@ import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
 import MockGroupApi from '@/api/mock/MockGroupApi'
-import { $coreConfirm, $goto } from '@/utils'
+import { $coreConfirm, $goto, checkShowColumn } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
@@ -27,42 +27,46 @@ onMounted(() => {
  *
  * @type {[CommonTableColumn]}
  */
-const columns = [{
-  label: '分组名称',
-  property: 'groupName'
-}, {
-  label: '路径ID',
-  property: 'groupPath',
-  minWidth: '150px',
-  formatter (data) {
-    const path = `/mock/${data.groupPath}`
-    return <>
-      {data.groupPath}&nbsp;
-      <MockUrlCopyLink urlPath={path}/>
+const columns = computed(() => {
+  return [{
+    label: '分组名称',
+    property: 'groupName'
+  }, {
+    label: '路径ID',
+    property: 'groupPath',
+    minWidth: '150px',
+    formatter (data) {
+      const path = `/mock/${data.groupPath}`
+      return <>
+        {data.groupPath}&nbsp;
+        <MockUrlCopyLink urlPath={path}/>
       </>
-  }
-}, {
-  label: '代理地址',
-  property: 'proxyUrl',
-  minWidth: '150px'
-}, {
-  labelKey: 'common.label.delay',
-  property: 'delay'
-}, {
-  labelKey: 'common.label.description',
-  property: 'description'
-}, {
-  labelKey: 'common.label.status',
-  property: 'status',
-  formatter (data) {
-    return <DelFlagTag v-model={data.status} clickToToggle={true}
-                       onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
-  }
-}, {
-  labelKey: 'common.label.createDate',
-  property: 'createDate',
-  dateFormat: 'YYYY-MM-DD HH:mm:ss'
-}]
+    }
+  }, {
+    label: '代理地址',
+    property: 'proxyUrl',
+    minWidth: '150px'
+  }, {
+    labelKey: 'common.label.delay',
+    property: 'delay',
+    enabled: checkShowColumn(tableData.value, 'delay')
+  }, {
+    labelKey: 'common.label.description',
+    property: 'description',
+    enabled: checkShowColumn(tableData.value, 'description')
+  }, {
+    labelKey: 'common.label.status',
+    property: 'status',
+    formatter (data) {
+      return <DelFlagTag v-model={data.status} clickToToggle={true}
+                         onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
+    }
+  }, {
+    labelKey: 'common.label.createDate',
+    property: 'createDate',
+    dateFormat: 'YYYY-MM-DD HH:mm:ss'
+  }]
+})
 const buttons = defineTableButtons([{
   labelKey: 'common.label.edit',
   type: 'primary',

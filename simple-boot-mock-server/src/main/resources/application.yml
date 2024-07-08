@@ -32,6 +32,7 @@ mybatis-plus:
     db-config:
       table-prefix: t_
       table-underline: true
+      update-strategy: always
     banner: false
 logging: # 日志相关配置
   level:

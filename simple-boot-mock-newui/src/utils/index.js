@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { markRaw, ref } from 'vue'
-import { isObject, isArray, set, isNumber } from 'lodash-es'
+import { isObject, isArray, set, isNumber, isFunction } from 'lodash-es'
 import { ElLoading, ElMessageBox, ElMessage } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import numeral from 'numeral'
@@ -360,6 +360,22 @@ export const $copyText = (text) => {
       }
     }
   }
+}
+
+export const checkShowColumn = (dataList, field) => {
+  let hasFieldData = false
+  dataList = dataList || []
+  let checkFun = (item, field) => isNumber(item[field]) || !!item[field]
+  if (isFunction(field)) {
+    checkFun = field
+  }
+  for (const item of dataList) {
+    if (checkFun(item, field)) {
+      hasFieldData = true
+      break
+    }
+  }
+  return hasFieldData
 }
 
 export default {

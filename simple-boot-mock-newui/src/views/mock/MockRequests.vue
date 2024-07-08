@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { useRoute } from 'vue-router'
 import { ElTag } from 'element-plus'
-import { $coreConfirm, useBackUrl } from '@/utils'
+import { $coreConfirm, checkShowColumn, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, { ALL_METHODS } from '@/api/mock/MockRequestApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
@@ -55,45 +55,52 @@ const searchFormOptions = computed(() => {
   ]
 })
 
-const columns = defineTableColumns([{
-  label: '请求路径',
-  property: 'requestPath',
-  formatter (data) {
-    const path = `/mock/${groupItem.value?.groupPath}${data.requestPath}`
-    return <>
-      {data.requestPath}&nbsp;
-      <MockUrlCopyLink urlPath={path}/>
-    </>
-  }
-}, {
-  label: '请求方法',
-  property: 'method',
-  minWidth: '60px',
-  formatter (data) {
-    const config = methodsConfig[data.method]
-    return <ElTag type={config.type} effect="dark">{data.method}</ElTag>
-  }
-}, {
-  labelKey: 'common.label.delay',
-  property: 'delay',
-  minWidth: '60px'
-}, {
-  label: '匹配规则',
-  property: 'matchPattern'
-}, {
-  label: '请求名称',
-  property: 'requestName'
-}, {
-  labelKey: 'common.label.description',
-  property: 'description'
-}, {
-  labelKey: 'common.label.status',
-  formatter (data) {
-    return <DelFlagTag v-model={data.status} clickToToggle={true}
-                       onToggleValue={(status) => saveMockRequest({ ...data, status })}/>
-  },
-  minWidth: '70px'
-}])
+const columns = computed(() => {
+  return defineTableColumns([{
+    label: '请求路径',
+    property: 'requestPath',
+    formatter (data) {
+      const path = `/mock/${groupItem.value?.groupPath}${data.requestPath}`
+      return <>
+        {data.requestPath}&nbsp;
+        <MockUrlCopyLink urlPath={path}/>
+      </>
+    },
+    minWidth: '200px'
+  }, {
+    label: '请求方法',
+    property: 'method',
+    minWidth: '60px',
+    formatter (data) {
+      const config = methodsConfig[data.method]
+      return <ElTag type={config.type} effect="dark">{data.method}</ElTag>
+    }
+  }, {
+    labelKey: 'common.label.delay',
+    property: 'delay',
+    minWidth: '60px',
+    enabled: checkShowColumn(tableData.value, 'delay')
+  }, {
+    label: '匹配规则',
+    property: 'matchPattern',
+    enabled: checkShowColumn(tableData.value, 'matchPattern')
+  }, {
+    label: '请求名称',
+    property: 'requestName',
+    enabled: checkShowColumn(tableData.value, 'requestName')
+  }, {
+    labelKey: 'common.label.description',
+    property: 'description',
+    enabled: checkShowColumn(tableData.value, 'description')
+  }, {
+    labelKey: 'common.label.status',
+    formatter (data) {
+      return <DelFlagTag v-model={data.status} clickToToggle={true}
+                         onToggleValue={(status) => saveMockRequest({ ...data, status })}/>
+    },
+    minWidth: '70px'
+  }])
+})
 const requestTableRef = ref()
 const expandRequestRows = ref([])
 const requestButtons = computed(() => {
@@ -251,7 +258,7 @@ const saveMockRequest = item => {
         :data="tableData"
         :columns="columns"
         :buttons="requestButtons"
-        :buttons-column-attrs="{minWidth:'280px'}"
+        :buttons-column-attrs="{minWidth:'200px'}"
         :loading="loading"
         expand-table
         row-key="id"

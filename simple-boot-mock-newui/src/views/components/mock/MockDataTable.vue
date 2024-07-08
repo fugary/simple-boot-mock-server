@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { onMounted, ref, computed } from 'vue'
 import { defineTableColumns, defineFormOptions, defineTableButtons } from '@/components/utils'
-import { $coreConfirm, getSingleSelectOptions } from '@/utils'
+import { $coreConfirm, checkShowColumn, getSingleSelectOptions } from '@/utils'
 import MockDataApi, { ALL_STATUS_CODES, ALL_CONTENT_TYPES, markDefault } from '@/api/mock/MockDataApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import CommonIcon from '@/components/common-icon/index.vue'
@@ -25,53 +25,58 @@ const props = defineProps({
     required: true
   }
 })
-const columns = defineTableColumns([{
-  label: '默认',
-  width: '60px',
-  formatter (data) {
-    return data.defaultFlag ? <CommonIcon icon="Flag"/> : ''
-  }
-}, {
-  label: '状态码',
-  property: 'statusCode',
-  minWidth: '60px'
-}, {
-  label: 'Content Type',
-  property: 'contentType',
-  minWidth: '150px'
-}, {
-  labelKey: 'common.label.delay',
-  property: 'delay'
-}, {
-  label: '匹配规则',
-  property: 'matchPattern'
-}, {
-  labelKey: 'common.label.status',
-  minWidth: '80px',
-  formatter (data) {
-    return <DelFlagTag v-model={data.status} clickToToggle={true}
-                       onToggleValue={(status) => saveMockData({ ...data, status })}/>
-  }
-}, {
-  label: 'Response',
-  property: 'responseBody',
-  minWidth: '300px',
-  formatter (data) {
-    let showStr = data.responseBody
-    if (data.responseBody && data.responseBody.length > 120) {
-      showStr = data.responseBody.substring(0, 120) + '...'
+const columns = computed(() => {
+  return defineTableColumns([{
+    label: '默认',
+    width: '60px',
+    formatter (data) {
+      return data.defaultFlag ? <CommonIcon icon="Flag"/> : ''
     }
-    return <>
-      <ElLink type="primary" onClick={() => toEditDataResponse(data)}>
-        {showStr}
-      </ElLink>
-    </>
-  }
-}, {
-  headerSlot: 'buttonHeader',
-  slot: 'buttons',
-  width: '300px'
-}])
+  }, {
+    label: '状态码',
+    property: 'statusCode',
+    minWidth: '60px'
+  }, {
+    label: 'Content Type',
+    property: 'contentType',
+    minWidth: '150px'
+  }, {
+    labelKey: 'common.label.delay',
+    property: 'delay',
+    enabled: checkShowColumn(tableData.value, 'delay')
+  }, {
+    label: '匹配规则',
+    property: 'matchPattern',
+    enabled: checkShowColumn(tableData.value, 'matchPattern'),
+    minWidth: '150px'
+  }, {
+    labelKey: 'common.label.status',
+    minWidth: '80px',
+    formatter (data) {
+      return <DelFlagTag v-model={data.status} clickToToggle={true}
+                         onToggleValue={(status) => saveMockData({ ...data, status })}/>
+    }
+  }, {
+    label: 'Response',
+    property: 'responseBody',
+    minWidth: '250px',
+    formatter (data) {
+      let showStr = data.responseBody
+      if (data.responseBody && data.responseBody.length > 120) {
+        showStr = data.responseBody.substring(0, 120) + '...'
+      }
+      return <>
+        <ElLink type="primary" onClick={() => toEditDataResponse(data)}>
+          {showStr}
+        </ElLink>
+      </>
+    }
+  }, {
+    headerSlot: 'buttonHeader',
+    slot: 'buttons',
+    minWidth: '250px'
+  }])
+})
 const { tableData, loading, searchMethod: loadMockData } = useTableAndSearchForm({
   defaultParam: { requestId: props.requestItem.id },
   searchMethod: MockDataApi.search,
@@ -262,6 +267,7 @@ const saveDataResponse = (mockData) => {
           v-common-tooltip="$t('common.label.new')"
           type="primary"
           size="small"
+          round
           @click="newOrEdit()"
         >
           <common-icon icon="Plus" />
