@@ -67,7 +67,11 @@ Windows下`bin/start.bat`
 
 Linux下`bin/start.sh`
 
+Docker启动：`docker run -p 9086:9086 fugary/simple-boot-mock-server:latest`
+
 启动后在：http://localhost:9086/ 地址访问
+
+默认账号：admin/12345678和mock/mock两个用户
 
 运行参考文档：
 
