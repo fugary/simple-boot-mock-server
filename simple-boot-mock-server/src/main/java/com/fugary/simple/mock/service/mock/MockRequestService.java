@@ -45,13 +45,21 @@ public interface MockRequestService extends IService<MockRequest> {
     List<MockData> loadDataByRequest(Integer requestId);
 
     /**
-     * 查找MockData
+     * 查询默认可用MockData
+     *
+     * @param mockDataList
+     * @return
+     */
+    MockData findMockData(List<MockData> mockDataList);
+
+    /**
+     * 查找指定的MockData
      *
      * @param mockDataList
      * @param defaultId
      * @return
      */
-    MockData findMockData(List<MockData> mockDataList, Integer defaultId);
+    MockData findForceMockData(List<MockData> mockDataList, Integer defaultId);
 
     /**
      * 查找匹配规则的MockData

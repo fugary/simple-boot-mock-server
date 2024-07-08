@@ -114,7 +114,7 @@ const buttons = defineTableButtons([{
   type: 'primary',
   icon: 'Flag',
   buttonIf (item) {
-    return !item.defaultFlag
+    return !item.defaultFlag && !item.matchPattern
   },
   click: item => {
     item.defaultFlag = 1

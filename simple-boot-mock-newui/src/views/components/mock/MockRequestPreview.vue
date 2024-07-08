@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import MockRequestApi, { getDefaultData, saveMockParams } from '@/api/mock/MockRequestApi'
+import MockRequestApi, { saveMockParams } from '@/api/mock/MockRequestApi'
 import { calcParamTarget, previewRequest, processResponse } from '@/api/mock/MockDataApi'
 import MockRequestForm from '@/views/components/mock/MockRequestForm.vue'
 
@@ -14,13 +14,8 @@ const responseTarget = ref()
 const toPreviewRequest = async (mockGroup, mockRequest, viewData) => {
   groupItem.value = mockGroup
   requestItem.value = mockRequest
-  const requestDataPromise = MockRequestApi.getById(mockRequest.id)
-  if (!viewData) {
-    const defaultDataPromise = getDefaultData(mockRequest.id, { showErrorMessage: false })
-    const defaultData = await defaultDataPromise
-    viewData = defaultData.resultData
-  }
   previewData.value = viewData
+  const requestDataPromise = MockRequestApi.getById(mockRequest.id)
   const requestData = await requestDataPromise
   requestItem.value = requestData.resultData
   showWindow.value = true

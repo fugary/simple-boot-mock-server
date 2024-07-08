@@ -124,10 +124,12 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         MockJsUtils.setCurrentRequestVo(requestVo);
                         if (pathMatcher.match(configPath, requestPath) && matchRequestPattern(mockRequest.getMatchPattern())) {
                             List<MockData> mockDataList = mockRequestService.loadDataByRequest(mockRequest.getId());
-                            MockData mockData = mockRequestService.findMockDataByRequest(mockDataList, requestVo);
+                            MockData mockData = mockRequestService.findForceMockData(mockDataList, defaultId);
+                            if (mockData == null) { // request匹配的数据查找
+                                mockData = mockRequestService.findMockDataByRequest(mockDataList, requestVo);
+                            }
                             if (mockData == null) { // 没有配置参数匹，或者没有匹配，过滤掉配置有参数匹配的数据
-                                mockDataList = mockDataList.stream().filter(md -> StringUtils.isBlank(md.getMatchPattern()) || md.getId().equals(defaultId)).collect(Collectors.toList());
-                                mockData = mockRequestService.findMockData(mockDataList, defaultId);
+                                mockData = mockRequestService.findMockData(mockDataList);
                             }
                             processMockData(mockData, requestVo);
                             return Triple.of(mockGroup, mockRequest, mockData);

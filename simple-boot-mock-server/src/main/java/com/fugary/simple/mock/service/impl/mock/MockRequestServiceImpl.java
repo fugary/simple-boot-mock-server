@@ -55,9 +55,11 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)
                 .eq("status", 1));
-        mockDataList = mockDataList.stream().filter(md -> StringUtils.isBlank(md.getMatchPattern()) || md.getId().equals(defaultId))
-                .collect(Collectors.toList());
-        return findMockData(mockDataList, defaultId);
+        MockData mockData = findForceMockData(mockDataList, defaultId);
+        if (mockData != null) {
+            return mockData;
+        }
+        return findMockData(mockDataList);
     }
 
     @Override
@@ -68,23 +70,31 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     }
 
     /**
-     * 查询MockData
+     * 查询默认可用MockData
      *
      * @param mockDataList
-     * @param defaultId
      * @return
      */
-    public MockData findMockData(List<MockData> mockDataList, Integer defaultId) {
+    public MockData findMockData(List<MockData> mockDataList) {
         MockData result = null;
+        // 默认数据从没有matchPattern的数据中查找，默认和匹配规则有冲突
+        mockDataList = mockDataList.stream().filter(md -> StringUtils.isBlank(md.getMatchPattern())).collect(Collectors.toList());
         for (MockData mockData : mockDataList) {
-            if (defaultId != null && defaultId.equals(mockData.getId())) { // 强制指定
-                return mockData;
-            }
             if (result == null || (!SimpleMockUtils.isDefault(result) && SimpleMockUtils.isDefault(mockData))) {
                 result = mockData;
             }
         }
         return result;
+    }
+
+    @Override
+    public MockData findForceMockData(List<MockData> mockDataList, Integer defaultId) {
+        for (MockData mockData : mockDataList) {
+            if (defaultId != null && defaultId.equals(mockData.getId())) { // 强制指定
+                return mockData;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -110,9 +120,6 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
                 savedMockData.setMockParams(mockData.getMockParams());
                 SimpleMockUtils.addAuditInfo(savedMockData);
                 mockDataService.updateById(savedMockData);
-                if(SimpleMockUtils.isDefault(savedMockData)){ // 默认数据也保存到request
-                    saveToRequest = true;
-                }
             }
         }
         if (saveToRequest && mockData.getRequestId() != null) {
