@@ -92,7 +92,7 @@ const columns = defineTableColumns([{
     return <DelFlagTag v-model={data.status} clickToToggle={true}
                        onToggleValue={(status) => saveMockRequest({ ...data, status })}/>
   },
-  minWidth: '60px'
+  minWidth: '70px'
 }])
 const requestTableRef = ref()
 const expandRequestRows = ref([])

@@ -96,7 +96,10 @@ const buttons = defineTableButtons([{
   type: 'warning',
   icon: 'FileCopyFilled',
   click: item => {
-    saveMockData({ ...item, id: undefined })
+    $coreConfirm($i18nBundle('common.msg.confirmCopy'))
+      .then(() => {
+        saveMockData({ ...item, id: undefined })
+      })
   }
 }, {
   label: '设为默认',
