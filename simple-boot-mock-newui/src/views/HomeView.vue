@@ -8,7 +8,7 @@ import { computed } from 'vue'
 import GlobalSettings from '@/views/components/global/GlobalSettings.vue'
 import { useMenuConfigStore } from '@/stores/MenuConfigStore'
 import { useBreadcrumbConfigStore } from '@/stores/BreadcrumbConfigStore'
-import { APP_VERSION } from '@/config'
+import { APP_VERSION, GITHUB_ADDRESS } from '@/config'
 import { useTabModeScrollSaver, getParentRootKey } from '@/route/RouteUtils'
 
 const globalConfigStore = useGlobalConfigStore()
@@ -78,11 +78,12 @@ useMenuConfigStore().loadBusinessMenus()
           <span>
             <el-text>Copyright © 2024 Version: {{ APP_VERSION }}</el-text>&nbsp;
             <el-link
-              href="https://github.com/fugary/simple-boot-mock-server"
+              v-if="GITHUB_ADDRESS"
+              :href="GITHUB_ADDRESS"
               type="primary"
               target="_blank"
             >
-              https://github.com/fugary/simple-boot-mock-server
+              {{ GITHUB_ADDRESS }}
             </el-link>
           </span>
         </el-container>

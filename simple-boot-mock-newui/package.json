@@ -1,6 +1,6 @@
 {
   "name": "simple-element-plus-template",
-  "version": "1.0.0",
+  "version": "2.0.2",
   "private": true,
   "scripts": {
     "dev": "vite --host",
@@ -8,6 +8,10 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "hmr": "vite --debug hmr"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fugary/simple-boot-mock-server"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",

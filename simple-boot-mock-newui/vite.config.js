@@ -32,7 +32,8 @@ export default ({ mode }) => {
   return defineConfig({
     base: env.VITE_APP_CONTEXT_PATH,
     define: {
-      'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version)
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
+      'import.meta.env.VITE_APP_GITHUB_ADDRESS': JSON.stringify(packageJson.repository?.url)
     },
     plugins: [vue(), vueJsx(), eslint(), ...optionalPlugins],
     esbuild: {
