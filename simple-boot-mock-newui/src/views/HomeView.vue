@@ -8,7 +8,7 @@ import { computed } from 'vue'
 import GlobalSettings from '@/views/components/global/GlobalSettings.vue'
 import { useMenuConfigStore } from '@/stores/MenuConfigStore'
 import { useBreadcrumbConfigStore } from '@/stores/BreadcrumbConfigStore'
-import { APP_VERSION, GITHUB_ADDRESS } from '@/config'
+import { APP_VERSION } from '@/config'
 import { useTabModeScrollSaver, getParentRootKey } from '@/route/RouteUtils'
 
 const globalConfigStore = useGlobalConfigStore()
@@ -76,15 +76,7 @@ useMenuConfigStore().loadBusinessMenus()
         </router-view>
         <el-container class="text-center padding-10 flex-center">
           <span>
-            <el-text>Copyright © 2024 Version: {{ APP_VERSION }}</el-text>&nbsp;
-            <el-link
-              v-if="GITHUB_ADDRESS"
-              :href="GITHUB_ADDRESS"
-              type="primary"
-              target="_blank"
-            >
-              {{ GITHUB_ADDRESS }}
-            </el-link>
+            <el-text>Copyright © 2024 Version: {{ APP_VERSION }}</el-text>
           </span>
         </el-container>
         <el-backtop
