@@ -254,6 +254,8 @@ const saveMockRequest = item => {
         :buttons-column-attrs="{minWidth:'280px'}"
         :loading="loading"
         expand-table
+        row-key="id"
+        :expanded-row-keys="expandRequestRows.map(item=>item.id)"
         @expand-change="(_,rows)=>{expandRequestRows=rows}"
         @page-size-change="loadMockRequests()"
         @current-page-change="loadMockRequests()"

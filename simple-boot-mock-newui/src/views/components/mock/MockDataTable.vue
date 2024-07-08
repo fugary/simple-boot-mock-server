@@ -92,6 +92,13 @@ const buttons = defineTableButtons([{
     previewMockRequest(props.groupItem, props.requestItem, item)
   }
 }, {
+  labelKey: 'common.label.copy',
+  type: 'warning',
+  icon: 'FileCopyFilled',
+  click: item => {
+    saveMockData({ ...item, id: undefined })
+  }
+}, {
   label: '设为默认',
   type: 'primary',
   icon: 'Flag',

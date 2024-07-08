@@ -66,6 +66,10 @@ const sendRequest = (form) => {
   })
 }
 
+const showRequestBody = computed(() => {
+  return paramTarget.value?.method !== 'GET'
+})
+
 </script>
 
 <template>
@@ -179,7 +183,7 @@ const sendRequest = (form) => {
               </el-descriptions-item>
             </el-descriptions>
           </el-tab-pane>
-          <el-tab-pane>
+          <el-tab-pane v-if="showRequestBody">
             <template #label>
               <el-badge
                 type="primary"
