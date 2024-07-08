@@ -5,9 +5,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.mapper.mock.MockRequestMapper;
+import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
+import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +22,15 @@ import java.util.List;
  *
  * @author gary.fu
  */
+@Slf4j
 @Service
 public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockRequest> implements MockRequestService {
 
     @Autowired
     private MockDataService mockDataService;
+
+    @Autowired
+    private ScriptEngineProvider scriptEngineProvider;
 
     @Override
     public boolean deleteMockRequest(Integer requestId) {
@@ -42,16 +50,18 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     }
 
     @Override
-    public MockData findMockData(MockRequest request, Integer defaultId) {
-        return findMockData(request.getId(), defaultId);
-    }
-
-    @Override
     public MockData findMockData(Integer requestId, Integer defaultId) {
         List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)
                 .eq("status", 1));
         return findMockData(mockDataList, defaultId);
+    }
+
+    @Override
+    public List<MockData> loadDataByRequest(Integer requestId) {
+        return mockDataService.list(Wrappers.<MockData>query()
+                .eq("request_id", requestId)
+                .eq("status", 1));
     }
 
     /**
@@ -61,7 +71,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
      * @param defaultId
      * @return
      */
-    private MockData findMockData(List<MockData> mockDataList, Integer defaultId) {
+    public MockData findMockData(List<MockData> mockDataList, Integer defaultId) {
         MockData result = null;
         for (MockData mockData : mockDataList) {
             if (defaultId != null && defaultId.equals(mockData.getId())) { // 强制指定
@@ -72,6 +82,20 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             }
         }
         return result;
+    }
+
+    @Override
+    public MockData findMockDataByRequest(List<MockData> mockDataList, HttpRequestVo requestVo) {
+        for (MockData mockData : mockDataList) {
+            if (StringUtils.isNotBlank(mockData.getMatchPattern())) {
+                Object result = scriptEngineProvider.eval("Boolean(" + mockData.getMatchPattern() + ")"); // 转Boolean值
+                log.info("计算数据匹配：{}={}", mockData.getMatchPattern(), result);
+                if (Boolean.TRUE.equals(result)) {
+                    return mockData;
+                }
+            }
+        }
+        return null;
     }
 
     @Override

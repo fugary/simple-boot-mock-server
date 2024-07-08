@@ -43,6 +43,9 @@ const columns = defineTableColumns([{
   labelKey: 'common.label.delay',
   property: 'delay'
 }, {
+  label: '匹配规则',
+  property: 'matchPattern'
+}, {
   labelKey: 'common.label.status',
   minWidth: '80px',
   formatter (data) {
@@ -146,6 +149,7 @@ const newOrEdit = async id => {
   showEditWindow.value = true
 }
 const { contentRef, languageRef, monacoEditorOptions, languageSelectOption } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef: patternContentRef, languageRef: patternLanguageRef, monacoEditorOptions: patternMonacoEditorOptions } = useMonacoEditorOptions({ readOnly: false })
 
 const editFormOptions = computed(() => {
   return defineFormOptions([{
@@ -175,6 +179,28 @@ const editFormOptions = computed(() => {
       inactiveText: $i18nBundle('common.label.no')
     }
   }, useFormStatus(), useFormDelay(), {
+    label: '匹配规则',
+    type: 'vue-monaco-editor',
+    prop: 'matchPattern',
+    tooltip: `匹配规则支持javascript表达式，可以使用request请求数据: <br>
+        request.body——body内容对象（仅json）<br>
+        request.bodyStr——body内容字符串<br>
+        request.headers——头信息对象<br>
+        request.parameters——请求参数对象<br>
+        request.pathParameters——路径参数对象
+    `,
+    attrs: {
+      value: currentDataItem.value?.matchPattern,
+      'onUpdate:value': (value) => {
+        currentDataItem.value.matchPattern = value
+        patternContentRef.value = value
+        patternLanguageRef.value = 'javascript'
+      },
+      language: patternLanguageRef.value,
+      height: '50px',
+      options: patternMonacoEditorOptions
+    }
+  }, {
     label: '响应头',
     slot: 'headerParams'
   }, languageSelectOption.value, {

@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Created on 2020/5/3 22:37 .<br>
@@ -118,10 +119,21 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     String configRequestPath = StringUtils.prependIfMissing(mockRequest.getRequestPath(), "/");
                     configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant path不支持:var格式，只支持{var}格式
                     String configPath = groupPath + configRequestPath;
-                    if (pathMatcher.match(configPath, requestPath) && matchRequestPattern(request, mockRequest)) {
-                        MockData mockData = mockRequestService.findMockData(mockRequest, defaultId);
-                        processMockData(request, mockData, configPath, requestPath);
-                        return Triple.of(mockGroup, mockRequest, mockData);
+                    try {
+                        HttpRequestVo requestVo = calcRequestVo(request, configPath, requestPath);
+                        MockJsUtils.setCurrentRequestVo(requestVo);
+                        if (pathMatcher.match(configPath, requestPath) && matchRequestPattern(mockRequest.getMatchPattern())) {
+                            List<MockData> mockDataList = mockRequestService.loadDataByRequest(mockRequest.getId());
+                            MockData mockData = mockRequestService.findMockDataByRequest(mockDataList, requestVo);
+                            if (mockData == null) { // 没有配置参数匹，或者没有匹配，过滤掉配置有参数匹配的数据
+                                mockDataList = mockDataList.stream().filter(md -> StringUtils.isBlank(md.getMatchPattern()) || md.getId().equals(defaultId)).collect(Collectors.toList());
+                                mockData = mockRequestService.findMockData(mockDataList, defaultId);
+                            }
+                            processMockData(mockData, requestVo);
+                            return Triple.of(mockGroup, mockRequest, mockData);
+                        }
+                    } finally {
+                        MockJsUtils.removeCurrentRequestVo();
                     }
                 }
             }
@@ -166,41 +178,47 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         return mockRequests;
     }
 
-    protected boolean matchRequestPattern(HttpServletRequest request, MockRequest mockRequest) {
-        if (StringUtils.isNotBlank(mockRequest.getMatchPattern())) {
-            Object result = scriptEngineProvider.eval("Boolean(" + mockRequest.getMatchPattern() + ")"); // 转Boolean值
-            log.info("requestPath={}, 计算：{}={}", mockRequest.getRequestPath(), mockRequest.getMatchPattern(), result);
+    protected boolean matchRequestPattern(String matchPattern) {
+        if (StringUtils.isNotBlank(matchPattern)) {
+            Object result = scriptEngineProvider.eval("Boolean(" + matchPattern + ")"); // 转Boolean值
+            log.info("计算匹配：{}={}", matchPattern, result);
             return Boolean.TRUE.equals(result); // 必须等于true才执行
         }
         return true;
     }
 
     /**
-     * 处理MockData数据
-     *
+     * 计算HttpRequestVo信息
      * @param request
-     * @param mockData
      * @param configPath
      * @param requestPath
+     * @return
      */
-    protected void processMockData(HttpServletRequest request, MockData mockData, String configPath, String requestPath) {
-        if (mockData != null) {
-            String responseBody = StringUtils.trimToEmpty(mockData.getResponseBody());
+    protected HttpRequestVo calcRequestVo(HttpServletRequest request, String configPath, String requestPath) {
+        HttpRequestVo requestVo = HttpRequestUtils.parseRequestVo(request);
+        if (pathMatcher.match(configPath, requestPath)) {
             Map<String, String> variables = pathMatcher.extractUriTemplateVariables(configPath, requestPath);
             Enumeration<String> parameterNames = request.getParameterNames();
             while (parameterNames.hasMoreElements()) {
                 String paramName = parameterNames.nextElement();
                 variables.put(paramName, StringUtils.trimToEmpty(request.getParameter(paramName)));
             }
-            HttpRequestVo requestVo = HttpRequestUtils.parseRequestVo(request);
-            try {
-                requestVo.setPathParameters(variables);
-                MockJsUtils.setCurrentRequestVo(requestVo);
-                responseBody = MockJsUtils.processResponseBody(responseBody, requestVo);
-                mockData.setResponseBody(scriptEngineProvider.mock(responseBody)); // 使用Mockjs来处理响应数据
-            } finally {
-                MockJsUtils.removeCurrentRequestVo();
-            }
+            requestVo.setPathParameters(variables);
+        }
+        return requestVo;
+    }
+
+    /**
+     * 处理MockData数据，生成需要的模拟数据
+     *
+     * @param mockData
+     * @param requestVo
+     */
+    protected void processMockData(MockData mockData, HttpRequestVo requestVo) {
+        if (mockData != null) {
+            String responseBody = StringUtils.trimToEmpty(mockData.getResponseBody());
+            responseBody = MockJsUtils.processResponseBody(responseBody, requestVo);
+            mockData.setResponseBody(scriptEngineProvider.mock(responseBody)); // 使用Mockjs来处理响应数据
         }
     }
 

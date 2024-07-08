@@ -5,6 +5,7 @@ import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -34,7 +35,7 @@ public class MockMetaDataFilter extends OncePerRequestFilter {
             }
             response.setHeader(MockConstants.MOCK_META_DATA_REQ, objectMapper.writeValueAsString(requestHeaders));
         }
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(new ContentCachingRequestWrapper(request), response);
     }
 
 }

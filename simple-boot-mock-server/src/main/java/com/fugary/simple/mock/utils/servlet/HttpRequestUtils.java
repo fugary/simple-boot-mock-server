@@ -12,18 +12,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author gary.fu
@@ -153,28 +155,23 @@ public class HttpRequestUtils {
 		requestVo.setMethod(request.getMethod());
 		requestVo.setContentType(request.getContentType());
 		List<MediaType> mediaTypes = MediaType.parseMediaTypes(request.getContentType());
-		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON)){
-			requestVo.setBody(HttpRequestUtils.getJsonBody(request));
-		}
 		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML,
 				MediaType.TEXT_HTML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML)){
-			requestVo.setBodyStr(HttpRequestUtils.getStringBody(request));
+            try {
+                requestVo.setBodyStr(StreamUtils.copyToString(request.getInputStream(), StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                log.error("parse RequestVo body error", e);
+            }
+        }
+		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON)){
+			requestVo.setBody(HttpRequestUtils.getJsonBody(requestVo.getBodyStr()));
 		}
 		return requestVo;
 	}
 
-	public static Object getJsonBody(HttpServletRequest request) {
+	public static Object getJsonBody(String bodyStr) {
 		try {
-			return JsonUtils.getMapper().readValue(request.getReader(), Map.class);
-		} catch (Exception e) {
-			return null;
-		}
-	}
-
-	public static String getStringBody(HttpServletRequest request) {
-		try {
-			return request.getReader().lines()
-					.collect(Collectors.joining(System.lineSeparator()));
+			return JsonUtils.fromJson(bodyStr, Map.class);
 		} catch (Exception e) {
 			return null;
 		}

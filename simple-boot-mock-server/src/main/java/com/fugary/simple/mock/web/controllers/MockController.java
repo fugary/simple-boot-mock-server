@@ -11,13 +11,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
@@ -101,8 +104,8 @@ public class MockController {
                 }
             }
             headers.add(MockConstants.SIMPLE_BOOT_MOCK_HEADER, "1");
-            InputStreamResource resource = new InputStreamResource(request.getInputStream());
-            HttpEntity<?> entity = new HttpEntity<>(resource, headers);
+            Resource bodyResource = getBodyResource(request);
+            HttpEntity<?> entity = new HttpEntity<>(bodyResource, headers);
             try {
                 ResponseEntity<byte[]> responseEntity = restTemplate.exchange(targetUri, Optional.ofNullable(HttpMethod.resolve(request.getMethod())).orElse(HttpMethod.GET),
                         entity, byte[].class);
@@ -116,5 +119,16 @@ public class MockController {
             }
         }
         return ResponseEntity.notFound().build();
+    }
+
+    private static Resource getBodyResource(HttpServletRequest request) throws IOException {
+        Resource bodyResource = new InputStreamResource(request.getInputStream());
+        if(request instanceof ContentCachingRequestWrapper){
+            ContentCachingRequestWrapper contentCachingRequestWrapper = (ContentCachingRequestWrapper) request;
+            if (contentCachingRequestWrapper.getContentAsByteArray().length > 0) {
+                bodyResource = new ByteArrayResource(contentCachingRequestWrapper.getContentAsByteArray());
+            }
+        }
+        return bodyResource;
     }
 }

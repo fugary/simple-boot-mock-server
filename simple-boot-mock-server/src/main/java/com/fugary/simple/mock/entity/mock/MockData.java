@@ -16,6 +16,7 @@ public class MockData extends MockBase {
     private Integer statusCode;
     private Integer defaultFlag;
     private String contentType;
+    private String matchPattern;
     private String responseFormat;
     private String responseBody;
     private Integer delay;
