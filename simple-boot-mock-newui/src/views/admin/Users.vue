@@ -87,6 +87,7 @@ const doSearch = form => {
     >
       <template #buttons>
         <el-button
+          v-if="isAdminUser()"
           type="info"
           @click="$goto('/admin/users/new')"
         >
