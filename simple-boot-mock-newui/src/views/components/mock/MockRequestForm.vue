@@ -287,6 +287,18 @@ const showRequestBody = computed(() => {
                     icon="FormatIndentIncreaseFilled"
                   />
                 </el-link>
+                <el-link
+                  v-common-tooltip="'显示未格式化原始数据'"
+                  type="primary"
+                  :underline="false"
+                  class="margin-left3"
+                  @click="resContentRef=responseTarget?.data"
+                >
+                  <common-icon
+                    :size="40"
+                    icon="RawOnFilled"
+                  />
+                </el-link>
               </template>
             </common-form-control>
             <vue-monaco-editor
