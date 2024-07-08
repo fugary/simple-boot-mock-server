@@ -166,6 +166,7 @@ const showRequestBody = computed(() => {
             <common-params-edit
               v-model="paramTarget.headerParams"
               form-prop="headerParams"
+              header-flag
             />
             <el-descriptions
               v-if="responseTarget"

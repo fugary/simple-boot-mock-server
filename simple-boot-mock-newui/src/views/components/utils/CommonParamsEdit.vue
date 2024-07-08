@@ -1,6 +1,7 @@
 <script setup>
 import { defineFormOptions } from '@/components/utils'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { toFlatKeyValue } from '@/utils'
 
 const props = defineProps({
   formProp: {
@@ -15,6 +16,10 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  showPasteButton: {
+    type: Boolean,
+    default: true
+  },
   showRemoveButton: {
     type: Boolean,
     default: true
@@ -26,6 +31,10 @@ const props = defineProps({
   valueKey: {
     type: String,
     default: 'value'
+  },
+  headerFlag: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -38,12 +47,83 @@ const addRequestParam = () => {
   params.value.push({})
 }
 
+const calcPasteParams = value => {
+  let calcParams = []
+  if (value.startsWith('{')) { // json
+    try {
+      let objValue = JSON.parse(value)
+      if (objValue != null) {
+        objValue = toFlatKeyValue(objValue)
+        calcParams = Object.keys(objValue).map(key => {
+          return {
+            [props.nameKey]: key,
+            [props.valueKey]: objValue[key]
+          }
+        })
+      }
+    } catch (e) {
+      console.log('========================error', e)
+    }
+  } else {
+    if (value.indexOf('?') > -1) {
+      value = value.slice(value.indexOf('?') + 1)
+    }
+    calcParams = new URLSearchParams(value).entries().map(entry => {
+      return {
+        [props.nameKey]: entry[0],
+        [props.valueKey]: entry[1]
+      }
+    })
+  }
+  return calcParams
+}
+
+const showTextModel = ref(false)
+const inputTextModel = ref({
+  text: ''
+})
+const inputTextOption = {
+  label: '粘贴自动计算',
+  tooltip: '支持浏览器GET字符串或者JSON',
+  prop: 'text',
+  labelWidth: '120px',
+  change (value) {
+    if (value) {
+      const calcParams = calcPasteParams(value)
+      params.value = [...calcParams]
+      inputTextModel.value.text = ''
+    }
+  }
+}
+
+const defaultHeaders = ['Accept',
+  'Accept-Charset',
+  'Accept-Encoding',
+  'Accept-Language',
+  'Authorization',
+  'Cookie',
+  'Connection',
+  'Content-Type',
+  'Origin',
+  'Pragma',
+  'User-Agent'
+]
+
 const paramOptions = computed(() => {
   return defineFormOptions([{
     label: 'Key',
     prop: props.nameKey,
     required: true,
-    disabled: props.nameReadOnly
+    disabled: props.nameReadOnly,
+    type: props.headerFlag ? 'autocomplete' : 'input',
+    attrs: {
+      fetchSuggestions: (queryString, cb) => {
+        const dataList = defaultHeaders.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
+          .map(value => ({ value }))
+        cb(dataList)
+      },
+      triggerOnFocus: false
+    }
   }, {
     label: 'Value',
     prop: props.valueKey,
@@ -91,18 +171,36 @@ const paramOptions = computed(() => {
       <el-col>
         <el-button
           v-if="showAddButton"
-          type="info"
+          type="primary"
           size="small"
           @click="addRequestParam()"
         >
           <common-icon icon="Plus" />
           添加
         </el-button>
+        <el-button
+          v-if="showPasteButton"
+          :type="showTextModel?'success':'info'"
+          size="small"
+          @click="showTextModel=!showTextModel"
+        >
+          <common-icon icon="ContentPasteGoFilled" />
+          粘贴
+        </el-button>
+        <common-form-control
+          v-if="showTextModel"
+          class="text-model-cls"
+          :model="inputTextModel"
+          :option="inputTextOption"
+        />
       </el-col>
     </el-row>
   </el-container>
 </template>
 
 <style scoped>
-
+.text-model-cls {
+  float: right;
+  width: calc(100% - 140px) !important;
+}
 </style>

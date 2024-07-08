@@ -308,6 +308,7 @@ const saveDataResponse = (mockData) => {
           <common-params-edit
             v-model="currentDataItem.headerParams"
             form-prop="headerParams"
+            header-flag
           />
         </common-form-control>
       </template>
