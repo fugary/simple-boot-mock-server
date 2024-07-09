@@ -14,8 +14,9 @@ import { useDefaultPage } from '@/config'
 import { $i18nBundle } from '@/messages'
 import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { previewMockRequest } from '@/utils/DynamicUtils'
+import { previewMockRequest, toTestMatchPattern } from '@/utils/DynamicUtils'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
+import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -82,8 +83,15 @@ const columns = computed(() => {
     enabled: checkShowColumn(tableData.value, 'delay')
   }, {
     label: '匹配规则',
-    property: 'matchPattern',
-    enabled: checkShowColumn(tableData.value, 'matchPattern')
+    enabled: checkShowColumn(tableData.value, 'matchPattern'),
+    minWidth: '150px',
+    formatter (data) {
+      if (data.matchPattern) {
+        return <ViewDataLink data={data.matchPattern} tooltip="测试匹配规则"
+                             onViewDataDetails={() => toTestMatchPattern(groupItem, data)
+                               .then(() => loadMockRequests())}/>
+      }
+    }
   }, {
     label: '请求名称',
     property: 'requestName',

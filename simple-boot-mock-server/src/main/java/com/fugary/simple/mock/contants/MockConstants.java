@@ -27,6 +27,10 @@ public class MockConstants {
 
     public static final String MOCK_DATA_PREVIEW_HEADER = "mock-data-preview";
 
+    public static final String MOCK_DATA_MATCH_PATTERN_HEADER = "mock-data-match-pattern";
+
+    public static final String MOCK_DATA_PATH_PARAMS_HEADER = "mock-data-path-params";
+
     public static final String MOCK_META_DATA_REQ = "mock-meta-req";
 
 }

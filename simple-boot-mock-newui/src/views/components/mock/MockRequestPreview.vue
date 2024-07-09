@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import MockRequestApi, { saveMockParams } from '@/api/mock/MockRequestApi'
 import { calcParamTarget, previewRequest, processResponse } from '@/api/mock/MockDataApi'
-import MockRequestForm from '@/views/components/mock/MockRequestForm.vue'
+import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -55,8 +55,14 @@ const doDataPreview = () => {
     headers
   }
   const dataItemId = previewData.value?.id
+  if (dataItemId) {
+    headers['mock-data-id'] = dataItemId
+  }
   doSaveMockParams()
-  previewRequest(requestUrl, requestItem.value, dataItemId, config)
+  previewRequest({
+    url: requestUrl,
+    method: requestItem.value.method
+  }, config)
     .then(calcResponse, calcResponse)
 }
 

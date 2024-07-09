@@ -51,7 +51,9 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         String result = StringUtils.trimToEmpty(template);
         if (MockJsUtils.isJson(result) || isMockJSFragment(template)) {
             Object mockRes = eval(parseMockJSFragment(template));
-            if (mockRes != null) {
+            if (mockRes instanceof SimpleResult) {
+                result = JsonUtils.toJson(mockRes);
+            } else if (mockRes != null) {
                 result = mockRes.toString();
             }
         }
@@ -67,8 +69,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
             return scriptEngine.eval(script);
         } catch (Exception e) {
             log.error("执行MockJs错误", e);
-            SimpleResult<String> result = SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, ExceptionUtils.getStackTrace(e));
-            return JsonUtils.toJson(result);
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, ExceptionUtils.getStackTrace(e));
         } finally {
             if (scriptEngine != null) {
                 scriptEnginePool.returnObject(scriptEngine);

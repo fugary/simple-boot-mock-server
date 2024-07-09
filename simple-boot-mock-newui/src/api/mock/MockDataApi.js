@@ -26,21 +26,21 @@ export const markDefault = function (data, config) {
   }, config))
 }
 
-export const previewRequest = function (requestUrl, requestItem, dataId, config) {
+export const previewRequest = function (reqData, config) {
   const req = axios.create({
     baseURL: import.meta.env.VITE_APP_API_BASE_URL, // url = base url + request url
     timeout: 60000 // request timeout,
   })
   const headers = Object.assign({
     'mock-data-preview': true
-  }, dataId ? { 'mock-data-id': dataId } : {}, config.headers || {})// 预览的时候强制指定一个ID
+  }, config.headers || {})// 预览的时候强制指定一个ID
   config.__startTime = new Date().getTime()
   if (hasLoading(config)) {
     $coreShowLoading(isString(config.loading) ? config.loading : undefined)
   }
   return req(Object.assign({
-    url: requestUrl,
-    method: requestItem.method,
+    url: reqData.url,
+    method: reqData.method,
     transformResponse: res => res// 信息不要转换掉，这边需要预览原始信息
   }, config, { headers }))
 }
@@ -82,7 +82,7 @@ export const processResponse = function (response) {
 
 export const calcParamTarget = (groupItem, requestItem, previewData) => {
   const value = previewData?.mockParams || requestItem?.mockParams
-  const requestPath = `/mock/${groupItem.groupPath}${requestItem.requestPath}`
+  const requestPath = `/mock/${groupItem.groupPath}${requestItem?.requestPath}`
   const target = {
     pathParams: calcParamTargetByUrl(requestPath),
     requestParams: [],

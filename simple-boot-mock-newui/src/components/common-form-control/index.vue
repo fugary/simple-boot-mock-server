@@ -282,6 +282,13 @@ const formatResult = computed(() => {
         @change="controlChange"
       >
         <template
+          v-for="(slot, slotKey) in (calcOption.slots||{})"
+          :key="slotKey"
+          #[slotKey]
+        >
+          {{ slot(modelValue, calcOption) }}
+        </template>
+        <template
           v-if="hasModelText&&formatResult"
           #default
         >

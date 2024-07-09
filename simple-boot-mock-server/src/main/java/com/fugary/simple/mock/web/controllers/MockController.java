@@ -1,11 +1,22 @@
 package com.fugary.simple.mock.web.controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fugary.simple.mock.contants.MockConstants;
+import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockGroupService;
+import com.fugary.simple.mock.utils.JsonUtils;
+import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
+import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
+import com.fugary.simple.mock.web.vo.NameValue;
+import com.fugary.simple.mock.web.vo.SimpleResult;
+import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -28,9 +39,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Created on 2020/5/3 20:23 .<br>
@@ -47,6 +60,9 @@ public class MockController {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private ScriptEngineProvider scriptEngineProvider;
 
     @RequestMapping("/**")
     public ResponseEntity<?> doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -121,7 +137,34 @@ public class MockController {
         return ResponseEntity.notFound().build();
     }
 
-    private static Resource getBodyResource(HttpServletRequest request) throws IOException {
+    /**
+     * 表达式测试
+     * @param request
+     * @return
+     */
+    @RequestMapping("/checkMatchPattern")
+    public SimpleResult<Object> checkMatchPattern(HttpServletRequest request) {
+        try {
+            HttpRequestVo requestVo = calcRequestVo(request);
+            MockJsUtils.setCurrentRequestVo(requestVo);
+            String matchPattern = request.getHeader(MockConstants.MOCK_DATA_MATCH_PATTERN_HEADER);
+            if (StringUtils.isBlank(matchPattern)) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400);
+            }
+            Object result = scriptEngineProvider.eval(matchPattern);
+            if (result instanceof SimpleResult) {
+                return (SimpleResult) result;
+            }
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_0, result);
+        } catch (Exception e){
+            log.error("checkMatchPattern error", e);
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, e.getMessage());
+        }finally {
+            MockJsUtils.removeCurrentRequestVo();
+        }
+    }
+
+    private Resource getBodyResource(HttpServletRequest request) throws IOException {
         Resource bodyResource = new InputStreamResource(request.getInputStream());
         if(request instanceof ContentCachingRequestWrapper){
             ContentCachingRequestWrapper contentCachingRequestWrapper = (ContentCachingRequestWrapper) request;
@@ -130,5 +173,22 @@ public class MockController {
             }
         }
         return bodyResource;
+    }
+
+    private HttpRequestVo calcRequestVo(HttpServletRequest request) {
+        HttpRequestVo requestVo = HttpRequestUtils.parseRequestVo(request);
+        String pathParamsHeader = request.getHeader(MockConstants.MOCK_DATA_PATH_PARAMS_HEADER);
+        if (StringUtils.isNotBlank(pathParamsHeader)) {
+            try {
+                List<NameValue> pathParams = JsonUtils.getMapper().readValue(pathParamsHeader, new TypeReference<>() {});
+                if (pathParams != null) {
+                    requestVo.setPathParameters(pathParams.stream().collect(Collectors
+                            .toMap(NameValue::getName, NameValue::getValue)));
+                }
+            } catch (JsonProcessingException e) {
+                log.error("解析路径参数错误", e);
+            }
+        }
+        return requestVo;
     }
 }

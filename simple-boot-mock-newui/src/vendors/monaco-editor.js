@@ -62,7 +62,7 @@ const langCheckConfig = [{
   checkReg: /function|var\s+|let\s+|const\s+|return\s+|=>/
 }, {
   type: 'json',
-  checkReg: /(\{[\s\S]*})|(\[[\s\S]*])/
+  checkReg: /(^\{[\s\S]*})|(^\[[\s\S]*])/
 }, {
   type: 'html',
   checkReg: /(<[\s\S]*>)/
@@ -126,7 +126,7 @@ export const useMonacoEditorOptions = (config) => {
     children: [
       { label: 'JSON', value: 'json' },
       { label: 'JavaScript', value: 'javascript' },
-      { label: 'XML', value: 'html' },
+      { label: 'XML/HTML', value: 'html' },
       { label: 'PlainText', value: 'text' }
     ],
     attrs: {

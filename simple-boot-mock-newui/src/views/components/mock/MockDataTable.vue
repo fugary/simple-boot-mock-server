@@ -9,11 +9,12 @@ import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { previewMockRequest } from '@/utils/DynamicUtils'
+import { previewMockRequest, toTestMatchPattern } from '@/utils/DynamicUtils'
 import { $i18nBundle } from '@/messages'
 import { ElLink, ElMessage } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
+import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
 
 const props = defineProps({
   groupItem: {
@@ -46,9 +47,15 @@ const columns = computed(() => {
     enabled: checkShowColumn(tableData.value, 'delay')
   }, {
     label: '匹配规则',
-    property: 'matchPattern',
     enabled: checkShowColumn(tableData.value, 'matchPattern'),
-    minWidth: '150px'
+    minWidth: '150px',
+    formatter (data) {
+      if (data.matchPattern) {
+        return <ViewDataLink data={data.matchPattern} tooltip="测试匹配规则"
+                             onViewDataDetails={() => toTestMatchPattern(props.groupItem, props.requestItem, data)
+                               .then(() => loadMockData())}/>
+      }
+    }
   }, {
     labelKey: 'common.label.status',
     minWidth: '80px',

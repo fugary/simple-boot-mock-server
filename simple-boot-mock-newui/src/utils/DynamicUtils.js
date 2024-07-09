@@ -1,5 +1,6 @@
 import { DynamicHelper } from '@/components/directives'
 import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
+import MockMatchPatternPreview from '@/views/components/mock/MockMatchPatternPreview.vue'
 
 const ShowUserInfo = () => import('@/views/components/user/ShowUserInfo.vue')
 const CodeWindow = () => import('@/views/components/utils/CodeWindow.vue')
@@ -18,6 +19,14 @@ export const previewMockRequest = async (...args) => {
     onClosed: () => dynamicHelper.destroy()
   })
   vnode.component?.exposed?.toPreviewRequest(...args)
+}
+
+export const toTestMatchPattern = async (...args) => {
+  const dynamicHelper = new DynamicHelper()
+  const vnode = await dynamicHelper.createAndRender(MockMatchPatternPreview, {
+    onClosed: () => dynamicHelper.destroy()
+  })
+  return vnode.component?.exposed?.toTestMatchPattern(...args)
 }
 
 /**
