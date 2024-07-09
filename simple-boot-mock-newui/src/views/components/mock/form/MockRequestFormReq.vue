@@ -1,7 +1,7 @@
 <script setup>
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { checkParamsFilled } from '@/api/mock/MockRequestApi'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 
@@ -34,15 +34,28 @@ watch(languageRef, lang => {
   paramTarget.value.requestFormat = lang
 })
 
+const currentTabName = ref('requestParamsTab')
+const paramList = ['pathParams', 'requestParams', 'headerParams', 'requestBody']
+if (paramTarget.value) {
+  currentTabName.value = paramTarget.value.method !== 'GET' ? 'requestBodyTab' : 'requestParamsTab'
+  for (const key of paramList) {
+    if (paramTarget.value[key]?.length) {
+      currentTabName.value = `${key}Tab`
+      break
+    }
+  }
+}
 </script>
 
 <template>
   <el-tabs
+    v-model="currentTabName"
     type="border-card"
     class="form-edit-width-100"
   >
     <el-tab-pane
       v-if="paramTarget.pathParams?.length"
+      name="pathParamsTab"
     >
       <template #label>
         <el-badge
@@ -62,7 +75,7 @@ watch(languageRef, lang => {
         :show-paste-button="false"
       />
     </el-tab-pane>
-    <el-tab-pane>
+    <el-tab-pane name="requestParamsTab">
       <template #label>
         <el-badge
           :type="checkParamsFilled(paramTarget.requestParams) ? 'primary' : 'danger'"
@@ -77,7 +90,7 @@ watch(languageRef, lang => {
         form-prop="requestParams"
       />
     </el-tab-pane>
-    <el-tab-pane>
+    <el-tab-pane name="headerParamsTab">
       <template #label>
         <el-badge
           :type="checkParamsFilled(paramTarget.headerParams) ? 'primary' : 'danger'"
@@ -108,7 +121,10 @@ watch(languageRef, lang => {
         </el-descriptions-item>
       </el-descriptions>
     </el-tab-pane>
-    <el-tab-pane v-if="showRequestBody">
+    <el-tab-pane
+      v-if="showRequestBody"
+      name="requestBodyTab"
+    >
       <template #label>
         <el-badge
           type="primary"
