@@ -6,7 +6,7 @@ import { isString } from 'lodash-es'
 
 const MOCK_DATA_URL = '/admin/data'
 
-export const ALL_STATUS_CODES = [200, 302, 400, 404, 500]
+export const ALL_STATUS_CODES = [200, 201, 202, 301, 302, 307, 400, 401, 404, 405, 415, 500, 502, 503]
 
 export const ALL_CONTENT_TYPES = ['application/json', 'application/xml', 'text/html', 'text/css', 'application/javascript', 'application/x-www-form-urlencoded']
 

@@ -74,7 +74,8 @@ public class MockController {
         ResponseEntity<?> responseEntity = ResponseEntity.notFound().build();
         if (data != null) {
             HttpHeaders httpHeaders = SimpleMockUtils.calcHeaders(data.getHeaders());
-            if (HttpStatus.MOVED_TEMPORARILY.value() == data.getStatusCode()) { // 重定向
+            HttpStatus httpStatus = HttpStatus.resolve(data.getStatusCode());
+            if (httpStatus != null && httpStatus.is3xxRedirection()) { // 重定向
                 if (SimpleMockUtils.isMockPreview(request)) {
                     return ResponseEntity.ok("重定向请设为默认响应后复制URL到浏览器访问");
                 }
@@ -125,6 +126,7 @@ public class MockController {
             try {
                 ResponseEntity<byte[]> responseEntity = restTemplate.exchange(targetUri, Optional.ofNullable(HttpMethod.resolve(request.getMethod())).orElse(HttpMethod.GET),
                         entity, byte[].class);
+                responseEntity = processRedirect(responseEntity, request, entity);
                 return SimpleMockUtils.removeCorsHeaders(responseEntity);
             } catch (HttpClientErrorException e) {
                 return ResponseEntity.status(e.getStatusCode())
@@ -135,6 +137,26 @@ public class MockController {
             }
         }
         return ResponseEntity.notFound().build();
+    }
+
+    // 处理重定向请求
+    private ResponseEntity<byte[]> processRedirect(ResponseEntity<byte[]> responseEntity,
+                                                   HttpServletRequest request,
+                                                   HttpEntity<?> entity) {
+        HttpStatus httpStatus = responseEntity.getStatusCode();
+        if (httpStatus.is3xxRedirection()) {
+            URI location = responseEntity.getHeaders().getLocation();
+            if (location != null) {
+                URI targetUri = UriComponentsBuilder.fromUri(location)
+                        .query(request.getQueryString())
+                        .replaceQueryParam("_url")
+                        .build(true).toUri();
+                responseEntity = restTemplate.exchange(targetUri,
+                        Optional.ofNullable(HttpMethod.resolve(request.getMethod())).orElse(HttpMethod.GET),
+                        entity, byte[].class);
+            }
+        }
+        return responseEntity;
     }
 
     /**

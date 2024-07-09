@@ -4,6 +4,7 @@
 package com.fugary.simple.mock.utils.servlet;
 
 import com.fugary.simple.mock.utils.JsonUtils;
+import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -170,11 +171,10 @@ public class HttpRequestUtils {
 	}
 
 	public static Object getJsonBody(String bodyStr) {
-		try {
+		if (MockJsUtils.isJson(bodyStr)) {
 			return JsonUtils.fromJson(bodyStr, Map.class);
-		} catch (Exception e) {
-			return null;
 		}
+		return null;
 	}
 
 	public static boolean isCompatibleWith(List<MediaType> mediaTypes, MediaType...matchTypes) {
