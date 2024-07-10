@@ -4,7 +4,8 @@ import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
 import MockGroupApi from '@/api/mock/MockGroupApi'
-import { $coreConfirm, $goto, checkShowColumn } from '@/utils'
+import { useUserAutocompleteConfig } from '@/api/mock/MockUserApi'
+import { $coreConfirm, $goto, checkShowColumn, isAdminUser } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
@@ -86,12 +87,20 @@ const buttons = defineTableButtons([{
 }])
 //* ************搜索框**************//
 const searchFormOptions = computed(() => {
-  return [
-    {
-      labelKey: 'common.label.keywords',
-      prop: 'keyword'
+  return [{
+    labelKey: 'common.label.user',
+    prop: 'userName',
+    type: 'common-autocomplete',
+    enabled: isAdminUser(),
+    attrs: {
+      autocompleteConfig: useUserAutocompleteConfig(),
+      emptySearchEnabled: true
     }
-  ]
+  },
+  {
+    labelKey: 'common.label.keywords',
+    prop: 'keyword'
+  }]
 })
 
 const deleteGroup = group => {

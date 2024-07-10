@@ -41,7 +41,7 @@ const formOptions = computed(() => {
     label: '用户名',
     prop: 'userName',
     required: true,
-    disabled: props.personal || isUserAdmin(userAccount.value?.userName)
+    disabled: !!userAccount.value?.id
   }, {
     label: '昵称',
     prop: 'nickName',

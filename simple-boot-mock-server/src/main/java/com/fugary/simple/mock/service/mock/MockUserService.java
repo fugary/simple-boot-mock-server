@@ -11,6 +11,14 @@ import com.fugary.simple.mock.entity.mock.MockUser;
 public interface MockUserService extends IService<MockUser> {
 
     /**
+     * 级联删除分组和请求和数据
+     *
+     * @param id
+     * @return
+     */
+    boolean deleteMockUser(Integer id);
+
+    /**
      * 检查是否有重复
      *
      * @param user

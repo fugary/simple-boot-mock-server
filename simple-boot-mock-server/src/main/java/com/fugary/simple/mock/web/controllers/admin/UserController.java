@@ -52,7 +52,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public SimpleResult remove(@PathVariable("id") Integer id) {
-        return SimpleResultUtils.createSimpleResult(mockUserService.removeById(id));
+        return SimpleResultUtils.createSimpleResult(mockUserService.deleteMockUser(id));
     }
 
     @PostMapping

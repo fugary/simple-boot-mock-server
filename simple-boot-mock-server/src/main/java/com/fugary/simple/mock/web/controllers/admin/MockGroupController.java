@@ -3,15 +3,15 @@ package com.fugary.simple.mock.web.controllers.admin;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fugary.simple.mock.contants.MockErrorConstants;
+import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockUser;
+import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
-import com.fugary.simple.mock.web.vo.query.SimpleQueryVo;
-import com.fugary.simple.mock.contants.MockErrorConstants;
-import com.fugary.simple.mock.entity.mock.MockGroup;
-import com.fugary.simple.mock.service.mock.MockGroupService;
+import com.fugary.simple.mock.web.vo.query.MockGroupQueryVo;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +32,12 @@ import static com.fugary.simple.mock.utils.security.SecurityUtils.getLoginUser;
 public class MockGroupController {
 
     private static final Logger log = LoggerFactory.getLogger(MockGroupController.class);
+
     @Autowired
     private MockGroupService mockGroupService;
 
     @GetMapping
-    public SimpleResult<List<MockGroup>> search(@ModelAttribute SimpleQueryVo queryVo) {
+    public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
         QueryWrapper<MockGroup> queryWrapper = Wrappers.query();
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
@@ -45,7 +46,9 @@ public class MockGroupController {
                     .or().like("group_path", keyword));
         }
         MockUser loginUser = getLoginUser();
-        queryWrapper.eq("user_name", loginUser != null ? loginUser.getUserName() : "");
+        String userName = StringUtils.defaultIfBlank(queryVo.getUserName(), loginUser != null ? loginUser.getUserName() : "");
+        userName = SecurityUtils.validateUserUpdate(userName) ? userName : "";
+        queryWrapper.eq("user_name", userName);
         return SimpleResultUtils.createSimpleResult(mockGroupService.page(page, queryWrapper));
     }
 
