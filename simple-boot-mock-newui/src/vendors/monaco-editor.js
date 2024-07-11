@@ -59,7 +59,7 @@ self.MonacoEnvironment = {
 
 const langCheckConfig = [{
   type: 'javascript',
-  checkReg: /function|var\s+|let\s+|const\s+|return\s+|=>/
+  checkReg: /function|var\s+|let\s+|const\s+|return\s+|=>|Mock\.mock|request\./
 }, {
   type: 'json',
   checkReg: /(^\{[\s\S]*})|(^\[[\s\S]*])/

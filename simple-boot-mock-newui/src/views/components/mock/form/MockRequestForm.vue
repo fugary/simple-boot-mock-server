@@ -112,7 +112,7 @@ const sendRequest = (form) => {
       </template>
     </common-form>
     <mock-request-form-res
-      v-if="responseTarget"
+      v-if="responseTarget||mockResponseEditable"
       v-model="paramTarget"
       :mock-response-editable="mockResponseEditable"
       :response-target="responseTarget"

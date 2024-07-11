@@ -1,12 +1,12 @@
 <script setup>
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { computed, watch } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 
 const props = defineProps({
   responseTarget: {
     type: Object,
-    required: true
+    default: undefined
   },
   mockResponseEditable: {
     type: Boolean,
@@ -18,6 +18,7 @@ const paramTarget = defineModel('modelValue', {
   type: Object,
   default: true
 })
+const currentTabName = ref(props.responseTarget ? 'responseData' : 'mockResponseBody')
 
 const {
   contentRef, languageRef, editorRef, monacoEditorOptions,
@@ -25,6 +26,7 @@ const {
 } = useMonacoEditorOptions()
 
 watch(() => props.responseTarget?.data, (data) => {
+  currentTabName.value = props.responseTarget ? 'responseData' : 'mockResponseBody'
   contentRef.value = data
   setTimeout(() => formatDocument())
 }, { immediate: true })
@@ -48,37 +50,50 @@ const emit = defineEmits(['saveMockResponseBody'])
 
 <template>
   <el-container
-    v-if="responseTarget"
     class="flex-column padding-top2"
   >
     <el-tabs
+      v-model="currentTabName"
       type="border-card"
       class="form-edit-width-100 margin-top3 common-tabs"
       addable
     >
-      <template #add-icon>
-        <el-text
-          :type="requestInfo.status===200?'success':'danger'"
-          class="padding-right3"
-        >
-          Status: {{ requestInfo.status }}
-        </el-text>
-        <el-text
-          type="success"
-          class="padding-right3"
-        >
-          Method: {{ requestInfo.method }}
-        </el-text>
-        <el-text
-          type="success"
-          class="padding-right3"
-        >
-          Duration: {{ requestInfo.duration }}ms
-        </el-text>
+      <template
+        #add-icon
+      >
+        <template v-if="responseTarget">
+          <el-text
+            :type="requestInfo.status===200?'success':'danger'"
+            class="padding-right3"
+          >
+            Status: {{ requestInfo.status }}
+          </el-text>
+          <el-text
+            type="success"
+            class="padding-right3"
+          >
+            Method: {{ requestInfo.method }}
+          </el-text>
+          <el-text
+            type="success"
+            class="padding-right3"
+          >
+            Duration: {{ requestInfo.duration }}ms
+          </el-text>
+        </template>
       </template>
-      <el-tab-pane>
+      <el-tab-pane
+        v-if="responseTarget"
+        name="responseData"
+      >
         <template #label>
-          响应体
+          <el-badge
+            type="primary"
+            :hidden="!responseTarget?.data?.length"
+            is-dot
+          >
+            响应体
+          </el-badge>
         </template>
         <el-container class="flex-column">
           <common-form-control
@@ -126,7 +141,10 @@ const emit = defineEmits(['saveMockResponseBody'])
           />
         </el-container>
       </el-tab-pane>
-      <el-tab-pane>
+      <el-tab-pane
+        v-if="responseTarget"
+        name="responseHeaders"
+      >
         <template #label>
           <el-badge
             type="primary"
@@ -151,7 +169,10 @@ const emit = defineEmits(['saveMockResponseBody'])
           </el-descriptions-item>
         </el-descriptions>
       </el-tab-pane>
-      <el-tab-pane v-if="mockResponseEditable">
+      <el-tab-pane
+        v-if="mockResponseEditable"
+        name="mockResponseBody"
+      >
         <template #label>
           <el-badge
             type="primary"
@@ -185,7 +206,7 @@ const emit = defineEmits(['saveMockResponseBody'])
                 />
               </el-link>
               <el-link
-                v-common-tooltip="'保存响应数据，保存后才能测试生效'"
+                v-common-tooltip="'保存响应数据，【发送请求】测试将自动保存'"
                 type="primary"
                 :underline="false"
                 class="margin-left3"

@@ -38,7 +38,7 @@ const requestPath = computed(() => {
   return ''
 })
 
-const doDataPreview = () => {
+const doDataPreview = async () => {
   console.log('========================paramTarget1', paramTarget.value)
   let requestUrl = requestPath.value
   paramTarget.value?.pathParams?.forEach(pathParam => {
@@ -68,6 +68,9 @@ const doDataPreview = () => {
     headers['mock-data-id'] = dataItemId
   }
   doSaveMockParams()
+  if (paramTarget.value?.responseBody !== previewData.value?.responseBody) {
+    await doSaveMockResponseBody()
+  }
   previewRequest({
     url: requestUrl,
     method: requestItem.value.method
@@ -98,7 +101,7 @@ const doSaveMockParams = () => {
 const doSaveMockResponseBody = () => {
   if (previewData.value) {
     previewData.value.responseBody = paramTarget.value.responseBody
-    MockDataApi.saveOrUpdate(previewData.value)
+    return MockDataApi.saveOrUpdate(previewData.value)
       .then(() => {
         ElMessage.success($i18nBundle('common.msg.saveSuccess'))
         saveCallback?.(previewData.value)
