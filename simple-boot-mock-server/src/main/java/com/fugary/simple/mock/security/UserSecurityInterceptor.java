@@ -38,6 +38,9 @@ public class UserSecurityInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
         SimpleResult<MockUser> userResult = null;
+        if (StringUtils.isBlank(authorization)) {
+            authorization = request.getParameter("access_token");
+        }
         if (StringUtils.isNotBlank(authorization)) {
             String accessToken = authorization.replaceFirst("Bearer ", StringUtils.EMPTY).trim();
             userResult = getTokenService().validate(accessToken);

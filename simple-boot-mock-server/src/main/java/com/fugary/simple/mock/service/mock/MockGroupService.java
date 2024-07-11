@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
 import org.apache.commons.lang3.tuple.Triple;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * Created on 2020/5/3 22:36 .<br>
@@ -53,4 +55,11 @@ public interface MockGroupService extends IService<MockGroup> {
      * @param delayTime
      */
     void delayTime(long stateTime,Integer delayTime);
+
+    /**
+     * 加载需要导出的对象
+     * @param groups
+     * @return
+     */
+    List<ExportGroupVo> loadExportGroups(List<MockGroup> groups);
 }

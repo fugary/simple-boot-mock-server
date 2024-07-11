@@ -79,6 +79,7 @@ export const toGetParams = (obj) => {
   if (isObject(obj)) {
     obj = toFlatKeyValue(obj)
     return Object.keys(obj)
+      .filter(key => !!obj[key])
       .map(key => `${key}=${obj[key]}`).join('&')
   }
 }

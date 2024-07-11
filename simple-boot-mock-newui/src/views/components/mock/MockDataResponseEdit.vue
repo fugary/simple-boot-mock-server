@@ -30,6 +30,7 @@ const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 195px)' : '4
 defineExpose({ toEditDataResponse })
 
 const responseBodyTooltip = `响应内容支持根据请求参数替换，使用{{request.parameters.xxx}}格式替换数据: <br>
+        如果是Mock.js数据，不需要用{{}}包裹，直接可以用request对象<br>
         request.body——body内容对象（仅json）<br>
         request.bodyStr——body内容字符串<br>
         request.headers——头信息对象<br>

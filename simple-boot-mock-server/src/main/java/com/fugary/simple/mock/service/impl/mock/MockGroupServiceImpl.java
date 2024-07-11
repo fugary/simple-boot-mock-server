@@ -13,10 +13,15 @@ import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
+import com.fugary.simple.mock.web.vo.export.ExportDataVo;
+import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
+import com.fugary.simple.mock.web.vo.export.ExportRequestVo;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.InitializingBean;
@@ -26,6 +31,8 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
@@ -191,6 +198,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
 
     /**
      * 计算HttpRequestVo信息
+     *
      * @param request
      * @param configPath
      * @param requestPath
@@ -224,4 +232,45 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         }
     }
 
+    @Override
+    public List<ExportGroupVo> loadExportGroups(List<MockGroup> groups) {
+        List<Integer> groupIds = groups.stream().map(MockGroup::getId).collect(Collectors.toList());
+        List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().in("group_id", groupIds));
+        List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query().in("group_id", groupIds));
+        Map<Integer, List<MockRequest>> requestMap = mockRequests.stream().collect(Collectors.groupingBy(MockRequest::getGroupId));
+        Map<Integer, List<MockData>> mockDataMap = mockDataList.stream().collect(Collectors.groupingBy(MockData::getRequestId));
+        return groups.stream().map(group -> {
+            ExportGroupVo exportGroupVo = new ExportGroupVo();
+            copyProperties(exportGroupVo, group);
+            List<MockRequest> requests = requestMap.get(group.getId());
+            List<ExportRequestVo> exportRequests = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(requests)) {
+                exportRequests = requests.stream().map(mockRequest -> {
+                    ExportRequestVo exportRequestVo = new ExportRequestVo();
+                    copyProperties(exportRequestVo, mockRequest);
+                    List<MockData> dataList = mockDataMap.get(mockRequest.getId());
+                    List<ExportDataVo> exportDataList = new ArrayList<>();
+                    if (CollectionUtils.isNotEmpty(dataList)) {
+                        exportDataList = dataList.stream().map(mockData -> {
+                            ExportDataVo exportMockDataVo = new ExportDataVo();
+                            copyProperties(exportMockDataVo, mockData);
+                            return exportMockDataVo;
+                        }).collect(Collectors.toList());
+                    }
+                    exportRequestVo.setDataList(exportDataList);
+                    return exportRequestVo;
+                }).collect(Collectors.toList());
+            }
+            exportGroupVo.setRequests(exportRequests);
+            return exportGroupVo;
+        }).collect(Collectors.toList());
+    }
+
+    protected void copyProperties(Object target, Object source) {
+        try {
+            BeanUtils.copyProperties(target, source);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            log.error("复制属性错误", e);
+        }
+    }
 }

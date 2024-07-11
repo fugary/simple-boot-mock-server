@@ -7,17 +7,31 @@ import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.service.mock.MockGroupService;
+import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
+import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
+import com.fugary.simple.mock.web.vo.export.ExportMockVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupQueryVo;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.fugary.simple.mock.utils.security.SecurityUtils.getLoginUser;
@@ -45,9 +59,7 @@ public class MockGroupController {
             queryWrapper.and(wrapper -> wrapper.like("group_name", keyword)
                     .or().like("group_path", keyword));
         }
-        MockUser loginUser = getLoginUser();
-        String userName = StringUtils.defaultIfBlank(queryVo.getUserName(), loginUser != null ? loginUser.getUserName() : "");
-        userName = SecurityUtils.validateUserUpdate(userName) ? userName : "";
+        String userName = getUserName(queryVo);
         queryWrapper.eq("user_name", userName);
         return SimpleResultUtils.createSimpleResult(mockGroupService.page(page, queryWrapper));
     }
@@ -78,5 +90,46 @@ public class MockGroupController {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockGroupService.saveOrUpdate(SimpleMockUtils.addAuditInfo(group)));
+    }
+
+    @PostMapping("/checkExport")
+    public SimpleResult checkExport(@RequestBody MockGroupQueryVo queryVo) {
+        List<MockGroup> groups = new ArrayList<>();
+        if (queryVo.isExportAll()) {
+            groups = mockGroupService.list(Wrappers.<MockGroup>query().in("user_name", getUserName(queryVo)));
+        } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
+            groups = mockGroupService.listByIds(queryVo.getGroupIds());
+        }
+        return SimpleResultUtils.createSimpleResult(!groups.isEmpty());
+    }
+
+    @GetMapping("/export")
+    public void export(@ModelAttribute MockGroupQueryVo queryVo, HttpServletResponse response) throws IOException {
+        List<MockGroup> groups = new ArrayList<>();
+        if (queryVo.isExportAll()) {
+            groups = mockGroupService.list(Wrappers.<MockGroup>query().in("user_name", getUserName(queryVo)));
+        } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
+            groups = mockGroupService.listByIds(queryVo.getGroupIds());
+        }
+        List<ExportGroupVo> groupVoList = mockGroupService.loadExportGroups(groups);
+        ExportMockVo mockVo = new ExportMockVo();
+        mockVo.setGroups(groupVoList);
+        String json = JsonUtils.toJson(mockVo);
+        String fileName = "mock-groups-" + System.currentTimeMillis() + ".json";
+        response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        response.addHeader("Content-Disposition", "attachment; filename="
+                + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
+        try(InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+                OutputStream outputStream = response.getOutputStream()) {
+            IOUtils.copy(inputStream, outputStream);
+            response.getOutputStream().flush();
+        }
+    }
+
+    protected String getUserName(MockGroupQueryVo queryVo) {
+        MockUser loginUser = getLoginUser();
+        String userName = StringUtils.defaultIfBlank(queryVo.getUserName(), loginUser != null ? loginUser.getUserName() : "");
+        userName = SecurityUtils.validateUserUpdate(userName) ? userName : "";
+        return userName;
     }
 }

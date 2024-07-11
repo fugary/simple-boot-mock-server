@@ -3,14 +3,16 @@ import { computed, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
-import MockGroupApi from '@/api/mock/MockGroupApi'
+import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
 import { useUserAutocompleteConfig } from '@/api/mock/MockUserApi'
-import { $coreConfirm, $goto, checkShowColumn, isAdminUser } from '@/utils'
+import { $coreConfirm, $goto, checkShowColumn, isAdminUser, $coreError, toGetParams } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import { useLoginConfigStore } from '@/stores/LoginConfigStore'
+import { getMockUrl } from '@/api/mock/MockRequestApi'
 
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
 
@@ -151,6 +153,22 @@ const editFormOptions = defineFormOptions([{
 const saveGroupItem = (item) => {
   return saveOrUpdate(item).then(() => loadMockGroups())
 }
+const exportGroups = (groupIds) => {
+  const exportConfig = {
+    exportAll: !groupIds,
+    groupIds,
+    userName: searchParam.value.userName
+  }
+  checkExport(exportConfig, { loading: true, showErrorMessage: false }).then((data) => {
+    if (data.success) {
+      exportConfig.access_token = useLoginConfigStore().accessToken
+      const downloadUrl = `${getMockUrl(`${MOCK_GROUP_URL}/export`)}?${toGetParams(exportConfig)}`
+      downloadByLink(downloadUrl)
+    } else {
+      $coreError('没有需要导出的数据')
+    }
+  })
+}
 </script>
 
 <template>
@@ -170,6 +188,12 @@ const saveGroupItem = (item) => {
           @click="newOrEdit()"
         >
           {{ $t('common.label.new') }}
+        </el-button>
+        <el-button
+          type="success"
+          @click="exportGroups()"
+        >
+          全部导出
         </el-button>
       </template>
     </common-form>
