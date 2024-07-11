@@ -33,6 +33,7 @@ const requestUrl = computed(() => {
   let reqUrl = props.requestPath
   paramTarget.value?.pathParams?.forEach(pathParam => {
     reqUrl = reqUrl.replace(new RegExp(`:${pathParam.name}`, 'g'), pathParam.value)
+      .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), pathParam.value)
   })
   return reqUrl
 })
