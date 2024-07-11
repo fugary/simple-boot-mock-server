@@ -97,7 +97,7 @@ defineExpose({
         v-model="paramTarget"
         :request-path="paramTarget.requestPath"
         :response-target="responseTarget"
-        url-mode
+        match-pattern-mode
         @send-request="doDataPreview"
       />
     </el-container>

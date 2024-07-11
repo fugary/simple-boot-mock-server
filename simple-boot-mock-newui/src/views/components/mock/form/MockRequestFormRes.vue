@@ -7,7 +7,16 @@ const props = defineProps({
   responseTarget: {
     type: Object,
     required: true
+  },
+  mockResponseEditable: {
+    type: Boolean,
+    default: false
   }
+})
+
+const paramTarget = defineModel('modelValue', {
+  type: Object,
+  default: true
 })
 
 const {
@@ -24,7 +33,16 @@ const requestInfo = computed(() => {
   return props.responseTarget?.requestInfo
 })
 
+const {
+  contentRef: contentRef2, languageRef: languageRef2, editorRef: editorRef2, monacoEditorOptions: monacoEditorOptions2,
+  languageModel: languageModel2, languageSelectOption: languageSelectOption2, formatDocument: formatDocument2
+} = useMonacoEditorOptions({ readOnly: false })
+
+contentRef2.value = paramTarget.value?.responseBody
+
 const codeHeight = '300px'
+
+const emit = defineEmits(['saveMockResponseBody'])
 
 </script>
 
@@ -132,6 +150,63 @@ const codeHeight = '300px'
             {{ info.value }}
           </el-descriptions-item>
         </el-descriptions>
+      </el-tab-pane>
+      <el-tab-pane v-if="mockResponseEditable">
+        <template #label>
+          <el-badge
+            type="primary"
+            :hidden="!paramTarget.responseBody?.length"
+            is-dot
+          >
+            Mock响应体
+          </el-badge>
+        </template>
+        <el-container class="flex-column">
+          <common-form-control
+            :model="languageModel2"
+            :option="languageSelectOption2"
+            @change="languageRef2=$event"
+          >
+            <template #childAfter>
+              <mock-url-copy-link
+                :content="contentRef2"
+                tooltip="复制响应体内容"
+              />
+              <el-link
+                v-common-tooltip="'格式化响应体'"
+                type="primary"
+                :underline="false"
+                class="margin-left3"
+                @click="formatDocument2"
+              >
+                <common-icon
+                  :size="18"
+                  icon="FormatIndentIncreaseFilled"
+                />
+              </el-link>
+              <el-link
+                v-common-tooltip="'保存响应数据，保存后才能测试生效'"
+                type="primary"
+                :underline="false"
+                class="margin-left3"
+                @click="emit('saveMockResponseBody', paramTarget.responseBody)"
+              >
+                <common-icon
+                  :size="18"
+                  icon="SaveFilled"
+                />
+              </el-link>
+            </template>
+          </common-form-control>
+          <vue-monaco-editor
+            v-model:value="contentRef2"
+            :language="languageRef2"
+            :height="codeHeight"
+            :options="monacoEditorOptions2"
+            @mount="editorRef2=$event"
+            @change="paramTarget.responseBody=$event"
+          />
+        </el-container>
       </el-tab-pane>
     </el-tabs>
   </el-container>

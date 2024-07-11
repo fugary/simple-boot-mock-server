@@ -15,7 +15,11 @@ const props = defineProps({
     type: String,
     required: true
   },
-  urlMode: {
+  matchPatternMode: {
+    type: Boolean,
+    default: false
+  },
+  mockResponseEditable: {
     type: Boolean,
     default: false
   }
@@ -33,7 +37,7 @@ const requestUrl = computed(() => {
   return reqUrl
 })
 
-const emit = defineEmits(['sendRequest'])
+const emit = defineEmits(['sendRequest', 'saveMockResponseBody'])
 
 const sendRequest = (form) => {
   form.validate(valid => {
@@ -56,7 +60,7 @@ const sendRequest = (form) => {
         <el-row>
           <el-col :span="21">
             <mock-request-form-url
-              v-if="urlMode"
+              v-if="matchPatternMode"
               v-model="paramTarget"
             />
             <el-descriptions
@@ -96,7 +100,7 @@ const sendRequest = (form) => {
         <el-row>
           <el-col>
             <mock-request-form-match-pattern
-              v-if="urlMode"
+              v-if="matchPatternMode"
               v-model="paramTarget"
             />
           </el-col>
@@ -109,7 +113,10 @@ const sendRequest = (form) => {
     </common-form>
     <mock-request-form-res
       v-if="responseTarget"
+      v-model="paramTarget"
+      :mock-response-editable="mockResponseEditable"
       :response-target="responseTarget"
+      @save-mock-response-body="emit('saveMockResponseBody', $event)"
     />
   </el-container>
 </template>

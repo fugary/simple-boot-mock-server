@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import MockRequestApi, { saveMockParams } from '@/api/mock/MockRequestApi'
 import MockDataApi, { calcParamTarget, previewRequest, processResponse } from '@/api/mock/MockDataApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
+import { ElMessage } from 'element-plus'
+import { $i18nBundle } from '@/messages'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -11,7 +13,8 @@ const previewData = ref()
 const paramTarget = ref()
 const responseTarget = ref()
 
-const toPreviewRequest = async (mockGroup, mockRequest, viewData) => {
+let saveCallback
+const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
   groupItem.value = mockGroup
   requestItem.value = mockRequest
   previewData.value = viewData
@@ -25,6 +28,7 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData) => {
   requestItem.value = requestData.resultData
   showWindow.value = true
   paramTarget.value = calcParamTarget(groupItem.value, requestItem.value, previewData.value)
+  saveCallback = callback
 }
 
 const requestPath = computed(() => {
@@ -80,12 +84,25 @@ const doSaveMockParams = () => {
   if (paramTarget.value) {
     const requestId = requestItem.value?.id
     const id = previewData.value?.id
-    const mockParams = JSON.stringify(paramTarget.value)
+    const paramTargetVal = { ...paramTarget.value }
+    delete paramTargetVal.responseBody
+    const mockParams = JSON.stringify(paramTargetVal)
     saveMockParams({
       requestId,
       id,
       mockParams
     }, { loading: false })
+  }
+}
+
+const doSaveMockResponseBody = () => {
+  if (previewData.value) {
+    previewData.value.responseBody = paramTarget.value.responseBody
+    MockDataApi.saveOrUpdate(previewData.value)
+      .then(() => {
+        ElMessage.success($i18nBundle('common.msg.saveSuccess'))
+        saveCallback?.(previewData.value)
+      })
   }
 }
 
@@ -115,7 +132,9 @@ defineExpose({
         v-model="paramTarget"
         :request-path="requestPath"
         :response-target="responseTarget"
+        :mock-response-editable="!!previewData"
         @send-request="doDataPreview"
+        @save-mock-response-body="doSaveMockResponseBody"
       />
     </el-container>
   </common-window>

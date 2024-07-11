@@ -11,7 +11,7 @@ import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { previewMockRequest, toTestMatchPattern } from '@/utils/DynamicUtils'
 import { $i18nBundle } from '@/messages'
-import { ElLink, ElMessage } from 'element-plus'
+import { ElLink, ElMessage, ElTag } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
@@ -31,12 +31,23 @@ const columns = computed(() => {
     label: '默认',
     width: '60px',
     formatter (data) {
-      return data.defaultFlag ? <CommonIcon icon="Flag"/> : ''
+      return data.defaultFlag ? <CommonIcon color="#2d8cf0" icon="Flag"/> : ''
     }
   }, {
     label: '状态码',
     property: 'statusCode',
-    minWidth: '60px'
+    minWidth: '80px',
+    formatter (data) {
+      let type = 'danger'
+      if (data.statusCode < 300) {
+        type = 'success'
+      } else if (data.statusCode < 400) {
+        type = 'primary'
+      } else if (data.statusCode < 500) {
+        type = 'warning'
+      }
+      return <ElTag type={type}>{data.statusCode}</ElTag>
+    }
   }, {
     label: 'Content Type',
     property: 'contentType',
@@ -104,7 +115,9 @@ const buttons = defineTableButtons([{
   type: 'success',
   icon: 'RemoveRedEyeFilled',
   click: item => {
-    previewMockRequest(props.groupItem, props.requestItem, item)
+    previewMockRequest(props.groupItem, props.requestItem, item, (newItem) => {
+      Object.assign(item, newItem)
+    })
   }
 }, {
   labelKey: 'common.label.copy',
