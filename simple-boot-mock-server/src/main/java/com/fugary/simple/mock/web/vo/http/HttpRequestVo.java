@@ -24,4 +24,15 @@ public class HttpRequestVo {
     private String parametersStr;
     private String bodyStr;
 
+    public Map<String, String> getParams() {
+        return parameters;
+    }
+
+    public Map<String, String> getHeader() {
+        return headers;
+    }
+
+    public String getType() {
+        return contentType;
+    }
 }
