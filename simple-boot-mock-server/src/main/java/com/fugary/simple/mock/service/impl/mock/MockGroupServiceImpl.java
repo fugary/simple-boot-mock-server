@@ -7,7 +7,6 @@ import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
-import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.imports.MockGroupImporter;
 import com.fugary.simple.mock.mapper.mock.MockGroupMapper;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
@@ -306,11 +305,10 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     });
                 }
             }
-            MockUser loginUser = SecurityUtils.getLoginUser();
             // 保存数据
             importGroups.forEach(group -> {
                 group.setId(null);
-                group.setUserName(loginUser.getUserName());
+                group.setUserName(SecurityUtils.getUserName(importVo.getUserName()));
                 group.setGroupPath(StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
                 boolean saved = saveOrUpdate(group);
                 if (saved && group.getRequests() != null) {

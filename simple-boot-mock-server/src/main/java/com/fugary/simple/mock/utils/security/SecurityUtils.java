@@ -47,4 +47,17 @@ public class SecurityUtils {
         }
         return false;
     }
+
+    /**
+     * 获取可用的用户名
+     *
+     * @param queryUserName
+     * @return
+     */
+    public static String getUserName(String queryUserName) {
+        MockUser loginUser = getLoginUser();
+        String userName = StringUtils.defaultIfBlank(queryUserName, loginUser != null ? loginUser.getUserName() : "");
+        userName = SecurityUtils.validateUserUpdate(userName) ? userName : "";
+        return userName;
+    }
 }

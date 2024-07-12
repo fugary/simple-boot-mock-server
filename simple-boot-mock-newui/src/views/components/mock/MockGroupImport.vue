@@ -1,5 +1,5 @@
 <script setup lang="jsx">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { $coreAlert, $coreError, isAdminUser } from '@/utils'
 import { useAllUsers } from '@/api/mock/MockUserApi'
@@ -7,13 +7,22 @@ import { defineFormOptions } from '@/components/utils'
 import { ElButton } from 'element-plus'
 import { IMPORT_DUPLICATE_STRATEGY, uploadFiles } from '@/api/mock/MockGroupApi'
 
+const props = defineProps({
+  defaultUser: {
+    type: String,
+    default: ''
+  }
+})
 const showWindow = defineModel('modelValue', { type: Boolean, default: false })
 const { userOptions } = useAllUsers()
 const accountInfo = useLoginConfigStore().accountInfo
 const importModel = ref({
-  userName: accountInfo?.userName,
+  userName: !isAdminUser() ? accountInfo?.userName : (props.defaultUser || accountInfo?.userName),
   type: 'simple',
   duplicateStrategy: IMPORT_DUPLICATE_STRATEGY[0].value
+})
+watch(() => props.defaultUser, (val) => {
+  importModel.value.userName = !isAdminUser() ? accountInfo?.userName : (val || accountInfo?.userName)
 })
 const importFiles = ref([])
 const formOptions = computed(() => {

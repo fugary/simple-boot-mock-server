@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
-import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
+import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL, removeByIds } from '@/api/mock/MockGroupApi'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import { $coreConfirm, $goto, checkShowColumn, isAdminUser, $coreError, toGetParams } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
@@ -104,6 +104,9 @@ const searchFormOptions = computed(() => {
     children: userOptions.value,
     attrs: {
       clearable: false
+    },
+    change () {
+      loadMockGroups(1)
     }
   },
   {
@@ -115,6 +118,12 @@ const searchFormOptions = computed(() => {
 const deleteGroup = group => {
   $coreConfirm($i18nBundle('common.msg.commonDeleteConfirm', [group.groupName]))
     .then(() => deleteById(group.id))
+    .then(() => loadMockGroups())
+}
+
+const deleteGroups = () => {
+  $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
+    .then(() => removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
     .then(() => loadMockGroups())
 }
 
@@ -160,7 +169,7 @@ const editFormOptions = defineFormOptions([{
 const saveGroupItem = (item) => {
   return saveOrUpdate(item).then(() => loadMockGroups())
 }
-const groupTableRef = ref()
+const selectedRows = ref([])
 const exportGroups = (groupIds) => {
   $coreConfirm('确认导出Mock数据？').then(() => {
     const exportConfig = {
@@ -180,12 +189,11 @@ const exportGroups = (groupIds) => {
   })
 }
 const exportSelected = () => {
-  const selectRows = groupTableRef.value.table?.getSelectionRows()
-  if (!selectRows?.length) {
+  if (!selectedRows.value?.length) {
     $coreError('没有需要导出的数据')
     return
   }
-  exportGroups(selectRows.map(group => group.id))
+  exportGroups(selectedRows.value.map(group => group.id))
 }
 const showImportWindow = ref(false)
 </script>
@@ -209,7 +217,7 @@ const showImportWindow = ref(false)
           {{ $t('common.label.new') }}
         </el-button>
         <el-dropdown style="margin-left: 12px;">
-          <el-button type="primary">
+          <el-button type="success">
             导出
             <common-icon icon="ArrowDown" />
           </el-button>
@@ -218,17 +226,27 @@ const showImportWindow = ref(false)
               <el-dropdown-item @click="exportGroups()">
                 全部导出
               </el-dropdown-item>
-              <el-dropdown-item @click="exportSelected">
+              <el-dropdown-item
+                :disabled="!selectedRows?.length"
+                @click="exportSelected"
+              >
                 导出选中部分
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
         <el-button
-          type="primary"
+          type="success"
           @click="showImportWindow = true"
         >
           导入
+        </el-button>
+        <el-button
+          v-if="selectedRows?.length"
+          type="danger"
+          @click="deleteGroups()"
+        >
+          {{ $t('common.label.delete') }}
         </el-button>
       </template>
     </common-form>
@@ -242,6 +260,7 @@ const showImportWindow = ref(false)
       :loading="loading"
       @page-size-change="loadMockGroups()"
       @current-page-change="loadMockGroups()"
+      @selection-change="selectedRows=$event;console.log('====selectedRows', selectedRows)"
     />
     <simple-edit-window
       v-model="currentGroup"
@@ -252,6 +271,7 @@ const showImportWindow = ref(false)
     />
     <mock-group-import
       v-model="showImportWindow"
+      :default-user="searchParam.userName"
       @import-success="loadMockGroups()"
     />
   </el-container>

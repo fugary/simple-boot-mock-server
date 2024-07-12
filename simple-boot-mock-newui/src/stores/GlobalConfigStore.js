@@ -20,7 +20,7 @@ export const useGlobalConfigStore = defineStore('globalConfig', () => {
   const showMenuIcon = ref(true)
   const isLargeScreen = useMediaQuery('(min-width: 1440px)')
   const layoutMode = !isLargeScreen.value && AUTO_LAYOUT_ENABLED ? ref(GlobalLayoutMode.TOP) : ref(GlobalLayoutMode.LEFT)
-  const loadSaveParamMode = ref(LoadSaveParamMode.BACK)
+  const loadSaveParamMode = ref(LoadSaveParamMode.ALL)
   return {
     currentLocale,
     isDarkTheme,

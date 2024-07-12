@@ -63,7 +63,7 @@ public class MockGroupController {
             queryWrapper.and(wrapper -> wrapper.like("group_name", keyword)
                     .or().like("group_path", keyword));
         }
-        String userName = getUserName(queryVo.getUserName());
+        String userName = SecurityUtils.getUserName(queryVo.getUserName());
         queryWrapper.eq("user_name", userName);
         return SimpleResultUtils.createSimpleResult(mockGroupService.page(page, queryWrapper));
     }
@@ -76,6 +76,11 @@ public class MockGroupController {
     @DeleteMapping("/{id}")
     public SimpleResult remove(@PathVariable("id") Integer id) {
         return SimpleResultUtils.createSimpleResult(mockGroupService.deleteMockGroup(id));
+    }
+
+    @DeleteMapping("/removeByIds/{ids}")
+    public SimpleResult removeByIds(@PathVariable("ids") List<Integer> ids) {
+        return SimpleResultUtils.createSimpleResult(mockGroupService.removeByIds(ids));
     }
 
     @PostMapping
@@ -109,7 +114,7 @@ public class MockGroupController {
     public SimpleResult checkExport(@RequestBody MockGroupExportParamVo queryVo) {
         List<MockGroup> groups = new ArrayList<>();
         if (queryVo.isExportAll()) {
-            groups = mockGroupService.list(Wrappers.<MockGroup>query().in("user_name", getUserName(queryVo.getUserName())));
+            groups = mockGroupService.list(Wrappers.<MockGroup>query().in("user_name", SecurityUtils.getUserName(queryVo.getUserName())));
         } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
             groups = mockGroupService.listByIds(queryVo.getGroupIds());
         }
@@ -120,7 +125,7 @@ public class MockGroupController {
     public void export(@ModelAttribute MockGroupExportParamVo queryVo, HttpServletResponse response) throws IOException {
         List<MockGroup> groups = new ArrayList<>();
         if (queryVo.isExportAll()) {
-            groups = mockGroupService.list(Wrappers.<MockGroup>query().in("user_name", getUserName(queryVo.getUserName())));
+            groups = mockGroupService.list(Wrappers.<MockGroup>query().in("user_name", SecurityUtils.getUserName(queryVo.getUserName())));
         } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
             groups = mockGroupService.listByIds(queryVo.getGroupIds());
         }
@@ -137,12 +142,5 @@ public class MockGroupController {
             IOUtils.copy(inputStream, outputStream);
             response.getOutputStream().flush();
         }
-    }
-
-    protected String getUserName(String queryUserName) {
-        MockUser loginUser = getLoginUser();
-        String userName = StringUtils.defaultIfBlank(queryUserName, loginUser != null ? loginUser.getUserName() : "");
-        userName = SecurityUtils.validateUserUpdate(userName) ? userName : "";
-        return userName;
     }
 }

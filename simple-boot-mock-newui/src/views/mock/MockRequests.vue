@@ -51,7 +51,10 @@ const searchFormOptions = computed(() => {
       label: '请求方法',
       prop: 'method',
       type: 'select',
-      children: methodOptions
+      children: methodOptions,
+      change () {
+        loadMockRequests(1)
+      }
     }
   ]
 })
