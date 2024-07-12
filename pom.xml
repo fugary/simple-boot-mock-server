@@ -26,6 +26,7 @@
         <mysql.version>8.0.33</mysql.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-fileupload.version>1.5</commons-fileupload.version>
+        <graalvm.version>22.3.1</graalvm.version>
     </properties>
 
     <dependencyManagement>
@@ -54,6 +55,16 @@
                 <groupId>commons-fileupload</groupId>
                 <artifactId>commons-fileupload</artifactId>
                 <version>${commons-fileupload.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.graalvm.js</groupId>
+                <artifactId>js-scriptengine</artifactId>
+                <version>${graalvm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.graalvm.js</groupId>
+                <artifactId>js</artifactId>
+                <version>${graalvm.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -68,6 +68,7 @@ public class MockJsUtils {
             }
         }
         bindings.put("request", requestVo);
+        bindings.put("_req", requestVo);
     }
 
     /**

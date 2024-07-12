@@ -42,8 +42,11 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
 
     @Override
     public ScriptEngine create() throws Exception {
-        System.setProperty("nashorn.args", "--language=es6");
-        ScriptEngine scriptEngine = manager.getEngineByName("js");
+//        System.setProperty("nashorn.args", "--language=es6");
+        System.setProperty("polyglot.js.nashorn-compat", "true");
+        System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
+        System.setProperty("polyglot.js.ecmascript-version", "2022");
+        ScriptEngine scriptEngine = manager.getEngineByName("graal.js");
         try (
                 InputStream mockJs = MockJsUtils.class.getClassLoader().getResourceAsStream(MOCK_JS_PATH);
                 InputStreamReader reader = new InputStreamReader(mockJs)
