@@ -4,8 +4,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
+import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
 import org.apache.commons.lang3.tuple.Triple;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -62,4 +65,12 @@ public interface MockGroupService extends IService<MockGroup> {
      * @return
      */
     List<ExportGroupVo> loadExportGroups(List<MockGroup> groups);
+
+    /**
+     * 导入数据
+     * @param file
+     * @param importVo
+     * @return
+     */
+    SimpleResult<Integer> doImport(MultipartFile file, MockGroupImportParamVo importVo);
 }

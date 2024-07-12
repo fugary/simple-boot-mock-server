@@ -222,6 +222,24 @@ const formatResult = computed(() => {
   return null
 })
 
+const slotsResult = computed(() => {
+  const results = {}
+  if (calcOption.value?.slots) {
+    const slots = calcOption.value.slots
+    for (const slotKey in slots) {
+      const slot = slots[slotKey]
+      if (isFunction(slot)) {
+        const slotResult = slot(modelValue.value, calcOption.value)
+        results[slotKey] = {
+          result: slotResult,
+          vnode: isVNode(slotResult)
+        }
+      }
+    }
+  }
+  return results
+})
+
 </script>
 
 <template>
@@ -286,7 +304,13 @@ const formatResult = computed(() => {
           :key="slotKey"
           #[slotKey]
         >
-          {{ slot(modelValue, calcOption) }}
+          <component
+            :is="slotsResult[slotKey].result"
+            v-if="slotsResult[slotKey]?.vnode"
+          />
+          <template v-else>
+            {{ slotsResult[slotKey].result }}
+          </template>
         </template>
         <template
           v-if="hasModelText&&formatResult"

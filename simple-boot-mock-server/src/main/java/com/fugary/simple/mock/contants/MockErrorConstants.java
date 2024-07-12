@@ -27,5 +27,17 @@ public class MockErrorConstants {
     /**
      * 用户不存在或密码不正确
      */
-    public static final int CODE_2001 = 2001; //
+    public static final int CODE_2001 = 2001;
+    /**
+     * 上传文件不能为空
+     */
+    public static final int CODE_2002 = 2002;
+    /**
+     * 上传文件解析失败
+     */
+    public static final int CODE_2003 = 2003;
+    /**
+     * 导入的分组路径已存在
+     */
+    public static final int CODE_2004 = 2004;
 }

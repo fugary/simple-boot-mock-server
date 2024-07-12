@@ -32,5 +32,17 @@ public class MockConstants {
     public static final String MOCK_DATA_PATH_PARAMS_HEADER = "mock-data-path-params";
 
     public static final String MOCK_META_DATA_REQ = "mock-meta-req";
+    /**
+     * 中止导入
+     */
+    public static final Integer IMPORT_STRATEGY_ERROR = 1;
+    /**
+     * 跳过重复的
+     */
+    public static final Integer IMPORT_STRATEGY_SKIP = 2;
+    /**
+     * 生成新的
+     */
+    public static final Integer IMPORT_STRATEGY_NEW = 3;
 
 }

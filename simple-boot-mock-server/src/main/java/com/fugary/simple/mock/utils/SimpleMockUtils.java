@@ -6,10 +6,13 @@ import com.fugary.simple.mock.entity.mock.MockData;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -141,5 +144,19 @@ public class SimpleMockUtils {
             return new ResponseEntity<>(response.getBody(), headers, response.getStatusCode());
         }
         return response;
+    }
+
+    /**
+     * 获取上传文件信息
+     *
+     * @param request
+     * @return
+     */
+    public static List<MultipartFile> getUploadFiles(MultipartHttpServletRequest request) {
+        List<MultipartFile> files = request.getFiles("files");
+        if (CollectionUtils.isEmpty(files)) {
+            files = request.getFiles("file");
+        }
+        return files;
     }
 }

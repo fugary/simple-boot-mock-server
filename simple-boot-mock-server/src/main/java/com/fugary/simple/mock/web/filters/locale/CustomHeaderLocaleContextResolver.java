@@ -1,16 +1,14 @@
 package com.fugary.simple.mock.web.filters.locale;
 
 import com.fugary.simple.mock.contants.MockConstants;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.LocaleUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.i18n.LocaleContext;
-import org.springframework.context.i18n.SimpleLocaleContext;
-import org.springframework.lang.NonNull;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.i18n.AcceptHeaderLocaleContextResolver;
+import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 
-import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Locale;
 
 /**
@@ -18,28 +16,23 @@ import java.util.Locale;
  *
  * @author gary.fu
  */
+@Setter
+@Getter
 @Slf4j
-public class CustomHeaderLocaleContextResolver extends AcceptHeaderLocaleContextResolver {
+public class CustomHeaderLocaleContextResolver extends AcceptHeaderLocaleResolver {
 
     @Override
-    @NonNull
-    public LocaleContext resolveLocaleContext(ServerWebExchange exchange) {
-        String language = exchange.getRequest().getHeaders().getFirst(MockConstants.MOCK_LOCALE_KEY);
+    public Locale resolveLocale(HttpServletRequest request) {
+        String language = request.getHeader(MockConstants.MOCK_LOCALE_KEY);
         if (StringUtils.isNotBlank(language)) {
             try {
-                return new SimpleLocaleContext(resolveSupportedLocale(LocaleUtils.toLocale(language)));
+                language = language.replace("-", "_");
+                return LocaleUtils.toLocale(language);
             } catch (Exception e) {
                 log.error("locale格式错误", e);
             }
         }
-        return super.resolveLocaleContext(exchange);
+        return super.resolveLocale(request);
     }
 
-    protected Locale resolveSupportedLocale(Locale locale) {
-        List<Locale> supportedLocales = getSupportedLocales();
-        if (supportedLocales.isEmpty() || supportedLocales.contains(locale)) {
-            return locale;
-        }
-        return getDefaultLocale();
-    }
 }

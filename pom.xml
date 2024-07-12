@@ -25,6 +25,7 @@
         <java-jwt.version>4.4.0</java-jwt.version>
         <mysql.version>8.0.33</mysql.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
+        <commons-fileupload.version>1.5</commons-fileupload.version>
     </properties>
 
     <dependencyManagement>
@@ -48,6 +49,11 @@
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
                 <version>${commons-beanutils.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-fileupload</groupId>
+                <artifactId>commons-fileupload</artifactId>
+                <version>${commons-fileupload.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

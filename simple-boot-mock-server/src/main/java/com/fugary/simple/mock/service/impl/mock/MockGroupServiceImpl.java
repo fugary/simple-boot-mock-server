@@ -3,20 +3,29 @@ package com.fugary.simple.mock.service.impl.mock;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.contants.MockConstants;
+import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.entity.mock.MockUser;
+import com.fugary.simple.mock.imports.MockGroupImporter;
 import com.fugary.simple.mock.mapper.mock.MockGroupMapper;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.utils.MockJsUtils;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
+import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.ExportDataVo;
 import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
+import com.fugary.simple.mock.web.vo.export.ExportMockVo;
 import com.fugary.simple.mock.web.vo.export.ExportRequestVo;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
+import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +38,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
+import org.springframework.util.StreamUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,6 +68,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
 
     @Autowired
     private ScriptEngineProvider scriptEngineProvider;
+
+    @Autowired
+    private List<MockGroupImporter> mockGroupImporters = new ArrayList<>();
 
     @Setter
     @Getter
@@ -264,6 +277,72 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             exportGroupVo.setRequests(exportRequests);
             return exportGroupVo;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public SimpleResult<Integer> doImport(MultipartFile file, MockGroupImportParamVo importVo) {
+        try {
+            String fileData = StreamUtils.copyToString(file.getInputStream(), StandardCharsets.UTF_8);
+            MockGroupImporter importer = MockGroupImporter.findImporter(mockGroupImporters, importVo.getType());
+            ExportMockVo mockVo;
+            if (importer == null || (mockVo = importer.doImport(fileData)) == null) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2003, 0);
+            }
+            List<ExportGroupVo> importGroups = mockVo.getGroups();
+            List<MockGroup> existGroups = checkGroupsExists(importGroups);
+            if (CollectionUtils.isNotEmpty(existGroups)) {
+                Integer duplicateStrategy = Objects.requireNonNullElse(importVo.getDuplicateStrategy(), MockConstants.IMPORT_STRATEGY_ERROR);
+                if(MockConstants.IMPORT_STRATEGY_ERROR.equals(duplicateStrategy)) {
+                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2004, 0);
+                } else if(MockConstants.IMPORT_STRATEGY_SKIP.equals(duplicateStrategy)) {
+                    Set<String> existGroupPaths = existGroups.stream().map(MockGroup::getGroupPath).collect(Collectors.toSet());
+                    importGroups = importGroups.stream().filter(group -> !existGroupPaths.contains(group.getGroupPath())).collect(Collectors.toList());
+                } else if(MockConstants.IMPORT_STRATEGY_NEW.equals(duplicateStrategy)) {
+                    Set<String> existGroupPaths = existGroups.stream().map(MockGroup::getGroupPath).collect(Collectors.toSet());
+                    importGroups.forEach(group -> {
+                        if (existGroupPaths.contains(group.getGroupPath())) {
+                            group.setGroupPath(SimpleMockUtils.uuid());
+                        }
+                    });
+                }
+            }
+            MockUser loginUser = SecurityUtils.getLoginUser();
+            // 保存数据
+            importGroups.forEach(group -> {
+                group.setId(null);
+                group.setUserName(loginUser.getUserName());
+                group.setGroupPath(StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
+                boolean saved = saveOrUpdate(group);
+                if (saved && group.getRequests() != null) {
+                    group.getRequests().forEach(request -> {
+                        request.setId(null);
+                        request.setGroupId(group.getId());
+                        boolean reqSaved = mockRequestService.saveOrUpdate(request);
+                        if (reqSaved && request.getDataList()!=null) {
+                            request.getDataList().forEach(data -> {
+                                data.setId(null);
+                                data.setGroupId(group.getId());
+                                data.setRequestId(request.getId());
+                                mockDataService.saveOrUpdate(data);
+                            });
+                        }
+                    });
+                }
+            });
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_0, importGroups.size());
+        } catch (IOException e) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2003,0);
+        }
+    }
+
+    /**
+     * 是否已经存在判断
+     * @param groups
+     * @return
+     */
+    protected List<MockGroup> checkGroupsExists(List<? extends MockGroup> groups) {
+        List<String> pathList = groups.stream().map(MockGroup::getGroupPath).collect(Collectors.toList());
+        return list(Wrappers.<MockGroup>query().in("group_path", pathList));
     }
 
     protected void copyProperties(Object target, Object source) {

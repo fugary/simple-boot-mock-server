@@ -15,10 +15,12 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-import org.springframework.web.server.i18n.LocaleContextResolver;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
@@ -37,11 +39,19 @@ import static com.fugary.simple.mock.contants.MockConstants.*;
 public class ApplicationConfig implements WebMvcConfigurer {
 
     @Bean
-    public LocaleContextResolver localeContextResolver(){
-        CustomHeaderLocaleContextResolver localeContextResolver = new CustomHeaderLocaleContextResolver();
-        localeContextResolver.setDefaultLocale(Locale.CHINA);
-        localeContextResolver.setSupportedLocales(Arrays.asList(Locale.CHINA, Locale.US));
-        return localeContextResolver;
+    public CommonsMultipartResolver multipartResolver() {
+        CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver();
+        multipartResolver.setMaxUploadSize(5 * 1024 * 1024); // 5MB
+        multipartResolver.setDefaultEncoding(StandardCharsets.UTF_8.name());
+        return multipartResolver;
+    }
+
+    @Bean
+    public LocaleResolver localeResolver(){
+        CustomHeaderLocaleContextResolver headerLocaleResolver = new CustomHeaderLocaleContextResolver();
+        headerLocaleResolver.setDefaultLocale(Locale.CHINA);
+        headerLocaleResolver.setSupportedLocales(Arrays.asList(Locale.CHINA, Locale.US));
+        return headerLocaleResolver;
     }
 
     @Bean

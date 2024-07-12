@@ -4,7 +4,7 @@ import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
 import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
-import { useUserAutocompleteConfig } from '@/api/mock/MockUserApi'
+import { useAllUsers } from '@/api/mock/MockUserApi'
 import { $coreConfirm, $goto, checkShowColumn, isAdminUser, $coreError, toGetParams } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
@@ -13,8 +13,10 @@ import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
+import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
 
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
+const { userOptions } = useAllUsers()
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: { page: useDefaultPage() },
@@ -32,6 +34,11 @@ onMounted(() => {
  */
 const columns = computed(() => {
   return [{
+    width: '50px',
+    attrs: {
+      type: 'selection'
+    }
+  }, {
     label: '分组名称',
     property: 'groupName'
   }, {
@@ -92,11 +99,11 @@ const searchFormOptions = computed(() => {
   return [{
     labelKey: 'common.label.user',
     prop: 'userName',
-    type: 'common-autocomplete',
+    type: 'select',
     enabled: isAdminUser(),
+    children: userOptions.value,
     attrs: {
-      autocompleteConfig: useUserAutocompleteConfig(),
-      emptySearchEnabled: true
+      clearable: false
     }
   },
   {
@@ -153,22 +160,34 @@ const editFormOptions = defineFormOptions([{
 const saveGroupItem = (item) => {
   return saveOrUpdate(item).then(() => loadMockGroups())
 }
+const groupTableRef = ref()
 const exportGroups = (groupIds) => {
-  const exportConfig = {
-    exportAll: !groupIds,
-    groupIds,
-    userName: searchParam.value.userName
-  }
-  checkExport(exportConfig, { loading: true, showErrorMessage: false }).then((data) => {
-    if (data.success) {
-      exportConfig.access_token = useLoginConfigStore().accessToken
-      const downloadUrl = `${getMockUrl(`${MOCK_GROUP_URL}/export`)}?${toGetParams(exportConfig)}`
-      downloadByLink(downloadUrl)
-    } else {
-      $coreError('没有需要导出的数据')
+  $coreConfirm('确认导出Mock数据？').then(() => {
+    const exportConfig = {
+      exportAll: !groupIds,
+      groupIds,
+      userName: searchParam.value.userName
     }
+    checkExport(exportConfig, { loading: true, showErrorMessage: false }).then((data) => {
+      if (data.success) {
+        exportConfig.access_token = useLoginConfigStore().accessToken
+        const downloadUrl = `${getMockUrl(`${MOCK_GROUP_URL}/export`)}?${toGetParams(exportConfig)}`
+        downloadByLink(downloadUrl)
+      } else {
+        $coreError('没有需要导出的数据')
+      }
+    })
   })
 }
+const exportSelected = () => {
+  const selectRows = groupTableRef.value.table?.getSelectionRows()
+  if (!selectRows?.length) {
+    $coreError('没有需要导出的数据')
+    return
+  }
+  exportGroups(selectRows.map(group => group.id))
+}
+const showImportWindow = ref(false)
 </script>
 
 <template>
@@ -189,15 +208,32 @@ const exportGroups = (groupIds) => {
         >
           {{ $t('common.label.new') }}
         </el-button>
+        <el-dropdown style="margin-left: 12px;">
+          <el-button type="primary">
+            导出
+            <common-icon icon="ArrowDown" />
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="exportGroups()">
+                全部导出
+              </el-dropdown-item>
+              <el-dropdown-item @click="exportSelected">
+                导出选中部分
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
         <el-button
-          type="success"
-          @click="exportGroups()"
+          type="primary"
+          @click="showImportWindow = true"
         >
-          全部导出
+          导入
         </el-button>
       </template>
     </common-form>
     <common-table
+      ref="groupTableRef"
       v-model:page="searchParam.page"
       :data="tableData"
       :columns="columns"
@@ -213,6 +249,10 @@ const exportGroups = (groupIds) => {
       :form-options="editFormOptions"
       name="Mock分组"
       :save-current-item="saveGroupItem"
+    />
+    <mock-group-import
+      v-model="showImportWindow"
+      @import-success="loadMockGroups()"
     />
   </el-container>
 </template>
