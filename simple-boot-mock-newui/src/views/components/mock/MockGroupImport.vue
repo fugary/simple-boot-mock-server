@@ -5,7 +5,7 @@ import { $coreAlert, $coreError, isAdminUser } from '@/utils'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import { defineFormOptions } from '@/components/utils'
 import { ElButton } from 'element-plus'
-import { IMPORT_DUPLICATE_STRATEGY, uploadFiles } from '@/api/mock/MockGroupApi'
+import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, uploadFiles } from '@/api/mock/MockGroupApi'
 
 const props = defineProps({
   defaultUser: {
@@ -32,6 +32,14 @@ const formOptions = computed(() => {
     type: 'select',
     disabled: !isAdminUser(),
     children: userOptions.value,
+    attrs: {
+      clearable: false
+    }
+  }, {
+    label: '数据来源',
+    prop: 'type',
+    type: 'select',
+    children: IMPORT_TYPES,
     attrs: {
       clearable: false
     }

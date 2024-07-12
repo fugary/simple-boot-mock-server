@@ -37,6 +37,14 @@ export const IMPORT_DUPLICATE_STRATEGY = [{
   label: '自动生成新路径'
 }]
 
+export const IMPORT_TYPES = [{
+  value: 'simple',
+  label: '当前简单Mock服务'
+}, {
+  value: 'fastmock',
+  label: '老fastmock服务（测试）'
+}]
+
 export const uploadFiles = (files, params = {}, config = {}) => {
   const formData = new FormData()
   files = isArray(files) ? files : [files]

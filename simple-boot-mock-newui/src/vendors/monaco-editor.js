@@ -177,7 +177,7 @@ export default {
     app.component(VueMonacoEditor.name, {
       setup (props) {
         monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-          diagnosticCodesToIgnore: [1003, 1128]
+          diagnosticCodesToIgnore: [1003, 1005, 1128]
         })
         loader.config({ monaco })
         return () => h(VueMonacoEditor, props, () => [getLoadingDiv()])
