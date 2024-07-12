@@ -56,7 +56,12 @@ const formOptions = computed(() => {
       showFileList: false,
       autoUpload: false,
       onExceed (files) {
-        importFiles.value = files // 文件覆盖
+        importFiles.value = [...files.map(file => ({
+          name: file.name,
+          status: 'ready',
+          size: file.size,
+          raw: file
+        }))] // 文件覆盖
       }
     },
     slots: {
