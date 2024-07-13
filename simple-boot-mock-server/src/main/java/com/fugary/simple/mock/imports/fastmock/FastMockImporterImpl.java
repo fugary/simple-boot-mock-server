@@ -5,12 +5,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fugary.simple.mock.entity.mock.MockBase;
 import com.fugary.simple.mock.imports.MockGroupImporter;
 import com.fugary.simple.mock.utils.JsonUtils;
-import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.vo.export.ExportDataVo;
 import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
 import com.fugary.simple.mock.web.vo.export.ExportMockVo;
 import com.fugary.simple.mock.web.vo.export.ExportRequestVo;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -66,7 +66,8 @@ public class FastMockImporterImpl implements MockGroupImporter {
             group.setGroupName(firstMock.getName());
         }
         parseBaseFields(group, firstMock);
-        group.setGroupPath(SimpleMockUtils.uuid());
+        String folderItemsStr = JsonUtils.toJson(valueList);
+        group.setGroupPath(DigestUtils.md5Hex(folderItemsStr + folderId));
         group.setDescription(firstMock.getDescription());
         group.setRequests(toMockRequests(valueList));
         return group;

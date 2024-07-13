@@ -12,11 +12,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.util.StreamUtils;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Create date 2024/7/4<br>
@@ -29,6 +34,19 @@ import javax.script.ScriptException;
 public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
 
     private GenericObjectPool<ScriptEngine> scriptEnginePool;
+
+    private static final String FAST_MOCK_JS_PATH = "js/fastmock.js";
+
+    private static final String FAST_MOCK_JS_CONTENT;
+
+    static {
+        Resource fastMockJs = new ClassPathResource(FAST_MOCK_JS_PATH);
+        try {
+            FAST_MOCK_JS_CONTENT = StreamUtils.copyToString(fastMockJs.getInputStream(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private boolean isMockJSFragment(String template) {
         return template.startsWith("Mock.mock(");
@@ -97,7 +115,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
      */
     protected void addRequestVo(ScriptEngine scriptEngine) throws ScriptException {
         HttpRequestVo requestVo = MockJsUtils.getHttpRequestVo();
-        scriptEngine.eval("request = " + JsonUtils.toJson(requestVo)  + ";");
-        scriptEngine.eval("_req = request;");
+        scriptEngine.eval("globalThis.request = " + JsonUtils.toJson(requestVo)  + ";");
+        scriptEngine.eval(FAST_MOCK_JS_CONTENT);
     }
 }

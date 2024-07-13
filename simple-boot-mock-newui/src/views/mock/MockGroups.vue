@@ -14,6 +14,7 @@ import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
 import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
+import { ElLink } from 'element-plus'
 
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
 const { userOptions } = useAllUsers()
@@ -40,7 +41,10 @@ const columns = computed(() => {
     }
   }, {
     label: '分组名称',
-    property: 'groupName'
+    property: 'groupName',
+    click: item => {
+      $goto(`/mock/groups/${item.id}`)
+    }
   }, {
     label: '路径ID',
     property: 'groupPath',
@@ -48,7 +52,9 @@ const columns = computed(() => {
     formatter (data) {
       const path = `/mock/${data.groupPath}`
       return <>
-        {data.groupPath}&nbsp;
+        <ElLink type="primary" onClick={() => $goto(`/mock/groups/${data.id}`)}>
+          {data.groupPath}
+        </ElLink>&nbsp;
         <MockUrlCopyLink urlPath={path}/>
       </>
     }

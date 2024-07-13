@@ -274,6 +274,7 @@ const saveMockRequest = item => {
         expand-table
         row-key="id"
         :expanded-row-keys="expandRequestRows.map(item=>item.id)"
+        @row-dblclick="requestTableRef?.table?.toggleRowExpansion($event)"
         @expand-change="(_,rows)=>{expandRequestRows=rows}"
         @page-size-change="loadMockRequests()"
         @current-page-change="loadMockRequests()"

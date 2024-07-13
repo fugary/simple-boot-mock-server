@@ -1,6 +1,5 @@
 package com.fugary.simple.mock.script;
 
-import com.fugary.simple.mock.utils.MockJsUtils;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,11 +8,13 @@ import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.graalvm.polyglot.Context;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.util.StreamUtils;
 
 import javax.script.*;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Create date 2024/7/4<br>
@@ -29,6 +30,17 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
      * mockjs的资源路径
      */
     private static final String MOCK_JS_PATH = "js/mock-min.js";
+
+    private static final String MOCK_JS_CONTENT;
+
+    static {
+        Resource mockJs = new ClassPathResource(MOCK_JS_PATH);
+        try {
+            MOCK_JS_CONTENT = StreamUtils.copyToString(mockJs.getInputStream(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private final ScriptEngineManager manager;
 
@@ -56,14 +68,11 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
 //                        .allowNativeAccess(true)
 //                        .allowHostClassLookup(s -> true)
                         .option("js.ecmascript-version", "2022"));
-        try (
-                InputStream mockJs = MockJsUtils.class.getClassLoader().getResourceAsStream(MOCK_JS_PATH);
-                InputStreamReader reader = new InputStreamReader(mockJs)
-        ) {
+        try {
             Bindings bindings = scriptEngine.createBindings();
             scriptEngine.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
-            scriptEngine.eval(reader, bindings);
-        } catch (ScriptException | IOException e) {
+            scriptEngine.eval(MOCK_JS_CONTENT, bindings);
+        } catch (ScriptException e) {
             log.error("执行MockJs错误", e);
         }
         return scriptEngine;
