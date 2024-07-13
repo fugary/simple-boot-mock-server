@@ -5,6 +5,7 @@ import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
+import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 
 /**
  * Create date 2024/7/4<br>
@@ -66,6 +68,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         try {
             scriptEngine = scriptEnginePool.borrowObject();
             addAdditionalBindings(scriptEngine);
+            addRequestVo(scriptEngine);
             return scriptEngine.eval(script);
         } catch (Exception e) {
             log.error("执行MockJs错误", e);
@@ -79,11 +82,22 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
 
     /**
      * 添加其他绑定
+     * @deprecated
      * @param scriptEngine
      */
     protected void addAdditionalBindings(ScriptEngine scriptEngine) {
         Bindings bindings = scriptEngine.createBindings();
         MockJsUtils.addRequestInfo(bindings);
         scriptEngine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+    }
+
+    /**
+     * 添加其他绑定
+     * @param scriptEngine
+     */
+    protected void addRequestVo(ScriptEngine scriptEngine) throws ScriptException {
+        HttpRequestVo requestVo = MockJsUtils.getHttpRequestVo();
+        scriptEngine.eval("const request = " + JsonUtils.toJson(requestVo)  + ";");
+        scriptEngine.eval("const _req = request;");
     }
 }

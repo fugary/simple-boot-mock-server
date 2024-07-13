@@ -25,7 +25,9 @@ public class HttpRequestVo {
     private String bodyStr;
 
     public Map<String, String> getParams() {
-        return parameters;
+        Map<String, String> paramsMap = new HashMap<>(getParameters());
+        paramsMap.putAll(getPathParameters());
+        return paramsMap;
     }
 
     public Map<String, String> getHeader() {

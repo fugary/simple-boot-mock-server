@@ -25,9 +25,9 @@ const {
   languageModel, languageSelectOption, formatDocument
 } = useMonacoEditorOptions()
 
-watch(() => props.responseTarget?.data, (data) => {
-  currentTabName.value = props.responseTarget ? 'responseData' : 'mockResponseBody'
-  contentRef.value = data
+watch(() => props.responseTarget, (responseTarget) => {
+  currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
+  contentRef.value = responseTarget?.data
   setTimeout(() => formatDocument())
 }, { immediate: true })
 

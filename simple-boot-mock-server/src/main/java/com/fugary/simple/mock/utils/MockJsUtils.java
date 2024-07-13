@@ -59,6 +59,12 @@ public class MockJsUtils {
      * @param bindings
      */
     public static void addRequestInfo(Bindings bindings) {
+        HttpRequestVo requestVo = getHttpRequestVo();
+        bindings.put("request", requestVo);
+        bindings.put("_req", requestVo);
+    }
+
+    public static HttpRequestVo getHttpRequestVo() {
         HttpRequestVo requestVo = getCurrentRequestVo();
         if (requestVo == null) {
             HttpServletRequest request = HttpRequestUtils.getCurrentRequest(); // 从request中获取
@@ -67,8 +73,7 @@ public class MockJsUtils {
                 requestVo = HttpRequestUtils.parseRequestVo(request);
             }
         }
-        bindings.put("request", requestVo);
-        bindings.put("_req", requestVo);
+        return requestVo;
     }
 
     /**

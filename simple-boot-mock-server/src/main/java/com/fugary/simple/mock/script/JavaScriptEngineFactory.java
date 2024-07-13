@@ -1,12 +1,14 @@
 package com.fugary.simple.mock.script;
 
 import com.fugary.simple.mock.utils.MockJsUtils;
+import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.graalvm.polyglot.Context;
 
 import javax.script.*;
 import java.io.IOException;
@@ -43,10 +45,17 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
     @Override
     public ScriptEngine create() throws Exception {
 //        System.setProperty("nashorn.args", "--language=es6");
-        System.setProperty("polyglot.js.nashorn-compat", "true");
+//        System.setProperty("polyglot.js.nashorn-compat", "true");
+//        System.setProperty("polyglot.js.ecmascript-version", "2022");
+//        ScriptEngine scriptEngine = manager.getEngineByName("graal.js");
         System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
-        System.setProperty("polyglot.js.ecmascript-version", "2022");
-        ScriptEngine scriptEngine = manager.getEngineByName("graal.js");
+        ScriptEngine scriptEngine = GraalJSScriptEngine.create(null,
+                Context.newBuilder("js") // 安全选项考虑不启用用
+//                        .allowHostAccess(HostAccess.ALL)
+//                        .allowExperimentalOptions(true)
+//                        .allowNativeAccess(true)
+//                        .allowHostClassLookup(s -> true)
+                        .option("js.ecmascript-version", "2022"));
         try (
                 InputStream mockJs = MockJsUtils.class.getClassLoader().getResourceAsStream(MOCK_JS_PATH);
                 InputStreamReader reader = new InputStreamReader(mockJs)

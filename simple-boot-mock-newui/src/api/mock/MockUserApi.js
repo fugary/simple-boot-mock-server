@@ -47,7 +47,7 @@ export const useAllUsers = () => {
   const userOptions = ref([])
   loadAllUsers().then(result => {
     users.value = result || []
-    userOptions.value = result.map(user => ({ label: user.userName, value: user.userName }))
+    userOptions.value = users.value.map(user => ({ label: user.userName, value: user.userName }))
   })
   return {
     users,

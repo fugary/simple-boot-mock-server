@@ -89,6 +89,7 @@ const doSaveMockParams = () => {
     const id = previewData.value?.id
     const paramTargetVal = { ...paramTarget.value }
     delete paramTargetVal.responseBody
+    delete paramTargetVal.method
     const mockParams = JSON.stringify(paramTargetVal)
     saveMockParams({
       requestId,
