@@ -67,7 +67,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         ScriptEngine scriptEngine = null;
         try {
             scriptEngine = scriptEnginePool.borrowObject();
-            addAdditionalBindings(scriptEngine);
+//            addAdditionalBindings(scriptEngine);
             addRequestVo(scriptEngine);
             return scriptEngine.eval(script);
         } catch (Exception e) {
@@ -97,7 +97,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
      */
     protected void addRequestVo(ScriptEngine scriptEngine) throws ScriptException {
         HttpRequestVo requestVo = MockJsUtils.getHttpRequestVo();
-        scriptEngine.eval("const request = " + JsonUtils.toJson(requestVo)  + ";");
-        scriptEngine.eval("const _req = request;");
+        scriptEngine.eval("request = " + JsonUtils.toJson(requestVo)  + ";");
+        scriptEngine.eval("_req = request;");
     }
 }

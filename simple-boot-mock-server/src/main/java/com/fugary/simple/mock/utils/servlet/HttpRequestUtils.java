@@ -12,10 +12,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -97,24 +101,6 @@ public class HttpRequestUtils {
 		return url;
 	}
 
-	/**
-	 * 获取搜索参数
-	 *
-	 * @return
-	 */
-	public static Map<String, Object> getSearchParams(String spId) {
-		HttpSession session = getCurrentSession();
-		Map<String, Object> ccMap = new HashMap<>();
-		if (session != null && StringUtils.isNotBlank(spId)) {
-			ccMap = (Map<String, Object>) session.getAttribute(spId);
-			session.removeAttribute(spId);
-		}
-		if (ccMap == null) {
-			ccMap = new HashMap<>();
-		}
-		return ccMap;
-	}
-
 	public static String getClientIp() {
 		HttpServletRequest currentRequest = getCurrentRequest();
 		String ipAddr = null;
@@ -159,7 +145,7 @@ public class HttpRequestUtils {
 		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML,
 				MediaType.TEXT_HTML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML)){
             try {
-                requestVo.setBodyStr(StreamUtils.copyToString(request.getInputStream(), StandardCharsets.UTF_8));
+                requestVo.setBodyStr(StreamUtils.copyToString(getBodyResource(request).getInputStream(), StandardCharsets.UTF_8));
             } catch (IOException e) {
                 log.error("parse RequestVo body error", e);
             }
@@ -188,4 +174,14 @@ public class HttpRequestUtils {
 		return false;
 	}
 
+	public static Resource getBodyResource(HttpServletRequest request) throws IOException {
+		Resource bodyResource = new InputStreamResource(request.getInputStream());
+		if(request instanceof ContentCachingRequestWrapper){
+			ContentCachingRequestWrapper contentCachingRequestWrapper = (ContentCachingRequestWrapper) request;
+			if (contentCachingRequestWrapper.getContentAsByteArray().length > 0) {
+				bodyResource = new ByteArrayResource(contentCachingRequestWrapper.getContentAsByteArray());
+			}
+		}
+		return bodyResource;
+	}
 }
