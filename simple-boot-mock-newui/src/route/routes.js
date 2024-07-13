@@ -6,6 +6,7 @@ import ToolsRoutes from '@/route/ToolsRoutes'
 import { checkRouteAuthority, processRouteLoading } from '@/authority'
 import { checkReplaceHistoryShouldReplace } from '@/route/RouteUtils'
 import { useTabsViewStore } from '@/stores/TabsViewStore'
+import { closeAllOnRouteChange } from '@/utils/DynamicUtils'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -86,6 +87,7 @@ router.beforeEach(checkRouteAuthority)
 router.afterEach((...args) => {
   processRouteLoading(...args)
   routeScrollBehavior(...args)
+  closeAllOnRouteChange()
 })
 
 export default router

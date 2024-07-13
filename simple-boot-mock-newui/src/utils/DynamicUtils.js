@@ -5,6 +5,11 @@ import MockMatchPatternPreview from '@/views/components/mock/MockMatchPatternPre
 const ShowUserInfo = () => import('@/views/components/user/ShowUserInfo.vue')
 const CodeWindow = () => import('@/views/components/utils/CodeWindow.vue')
 
+export const closeAllOnRouteChange = () => {
+  document.querySelectorAll('.el-overlay:not([style*="display: none"]) .common-window .el-dialog__headerbtn:not(.dialog-fullscreen-btn)')
+    .forEach(target => target?.click())
+}
+
 export const showUserInfo = async (id) => {
   const dynamicHelper = new DynamicHelper()
   const vnode = await dynamicHelper.createAndRender(ShowUserInfo, {
