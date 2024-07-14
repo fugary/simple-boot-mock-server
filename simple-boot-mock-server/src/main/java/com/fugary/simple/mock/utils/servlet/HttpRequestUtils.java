@@ -137,7 +137,7 @@ public class HttpRequestUtils {
 		requestVo.setHeaders(headers);
 		requestVo.setHeadersStr(JsonUtils.toJson(headers));
 		requestVo.setParameters(parameters);
-		requestVo.setParametersStr(JsonUtils.toJson(parameters));
+		requestVo.setParametersStr(request.getQueryString());
 		requestVo.setUrl(HttpRequestUtils.getRequestUrl(request));
 		requestVo.setMethod(request.getMethod());
 		requestVo.setContentType(request.getContentType());

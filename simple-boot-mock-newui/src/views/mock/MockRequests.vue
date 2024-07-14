@@ -241,7 +241,7 @@ const saveMockRequest = item => {
     <el-page-header @back="goBack">
       <template #content>
         <span class="text-large font-600 mr-3">
-          {{ groupItem.groupName }} 【{{ groupUrl }}】
+          {{ groupItem?.groupName }} 【{{ groupUrl }}】
         </span>
         <mock-url-copy-link :url-path="groupUrl" />
       </template>

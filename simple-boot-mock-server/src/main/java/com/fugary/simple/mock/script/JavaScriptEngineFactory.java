@@ -60,6 +60,8 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
 //        System.setProperty("polyglot.js.nashorn-compat", "true");
 //        System.setProperty("polyglot.js.ecmascript-version", "2022");
 //        ScriptEngine scriptEngine = manager.getEngineByName("graal.js");
+        long start = System.currentTimeMillis();
+        log.info("开始创建JavaScript脚本引擎");
         System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
         ScriptEngine scriptEngine = GraalJSScriptEngine.create(null,
                 Context.newBuilder("js") // 安全选项考虑不启用用
@@ -75,6 +77,7 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
         } catch (ScriptException e) {
             log.error("执行MockJs错误", e);
         }
+        log.info("创建JavaScript脚本引擎结束，耗时：{}ms", System.currentTimeMillis() - start);
         return scriptEngine;
     }
 

@@ -61,9 +61,9 @@ public class FastMockImporterImpl implements MockGroupImporter {
                 .collect(Collectors.toList());
         FastMockDto firstMock = valueList.get(0);
         if (folderId == 0) {
-            group.setGroupName("FastMock Default");
+            group.setGroupName("FastMock-Default");
         } else {
-            group.setGroupName(firstMock.getName());
+            group.setGroupName("FastMock-" + firstMock.getName());
         }
         parseBaseFields(group, firstMock);
         String folderItemsStr = JsonUtils.toJson(valueList);
