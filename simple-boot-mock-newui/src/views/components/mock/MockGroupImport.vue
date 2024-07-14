@@ -109,7 +109,7 @@ const doImportGroups = () => {
     title="导入mock数据"
     append-to-body
     destroy-on-close
-    width="600px"
+    width="800px"
     :ok-click="doImportGroups"
   >
     <el-container class="flex-column">

@@ -42,10 +42,18 @@ export const useResourceApi = (url, methods) => {
     }, config)).then(response => response.data)
   }
 
+  function removeByIds (ids, config) {
+    return $http(Object.assign({
+      url: `${url}/removeByIds/${ids}`,
+      method: 'delete'
+    }, config)).then(response => response.data)
+  }
+
   return {
     search,
     getById,
     deleteById,
+    removeByIds,
     saveOrUpdate,
     ...methods
   }

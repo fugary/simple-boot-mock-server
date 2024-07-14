@@ -67,6 +67,11 @@ public class MockRequestController {
         return SimpleResultUtils.createSimpleResult(mockRequestService.deleteMockRequest(id));
     }
 
+    @DeleteMapping("/removeByIds/{ids}")
+    public SimpleResult removeByIds(@PathVariable("ids") List<Integer> ids) {
+        return SimpleResultUtils.createSimpleResult(mockRequestService.removeByIds(ids));
+    }
+
     @PostMapping
     public SimpleResult save(@RequestBody MockRequest request) {
         if (mockRequestService.existsMockRequest(request)) {

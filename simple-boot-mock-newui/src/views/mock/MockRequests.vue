@@ -58,9 +58,14 @@ const searchFormOptions = computed(() => {
     }
   ]
 })
-
+const selectedRows = ref([])
 const columns = computed(() => {
   return defineTableColumns([{
+    width: '50px',
+    attrs: {
+      type: 'selection'
+    }
+  }, {
     label: '请求路径',
     property: 'requestPath',
     formatter (data) {
@@ -151,6 +156,12 @@ const requestButtons = computed(() => {
     }
   }])
 })
+
+const deleteRequests = () => {
+  $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
+    .then(() => MockRequestApi.removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
+    .then(() => loadMockRequests())
+}
 
 const newRequestItem = () => ({
   status: 1,
@@ -261,6 +272,13 @@ const saveMockRequest = item => {
           >
             {{ $t('common.label.new') }}
           </el-button>
+          <el-button
+            v-if="selectedRows?.length"
+            type="danger"
+            @click="deleteRequests()"
+          >
+            {{ $t('common.label.delete') }}
+          </el-button>
         </template>
       </common-form>
       <common-table
@@ -278,6 +296,7 @@ const saveMockRequest = item => {
         @expand-change="(_,rows)=>{expandRequestRows=rows}"
         @page-size-change="loadMockRequests()"
         @current-page-change="loadMockRequests()"
+        @selection-change="selectedRows=$event"
       >
         <template #expand="{item}">
           <mock-data-table

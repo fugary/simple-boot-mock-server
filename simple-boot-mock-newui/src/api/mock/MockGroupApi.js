@@ -19,13 +19,6 @@ export const checkExport = (data, config) => {
   }, config)).then(response => response.data)
 }
 
-export const removeByIds = (ids, config) => {
-  return $http(Object.assign({
-    url: `${MOCK_GROUP_URL}/removeByIds/${ids}`,
-    method: 'delete'
-  }, config)).then(response => response.data)
-}
-
 export const IMPORT_DUPLICATE_STRATEGY = [{
   value: 1,
   label: '中止导入'
@@ -43,6 +36,9 @@ export const IMPORT_TYPES = [{
 }, {
   value: 'fastmock',
   label: '老fastmock服务（测试）'
+}, {
+  value: 'swagger',
+  label: 'Swagger2/OpenAPI3.0（测试）'
 }]
 
 export const uploadFiles = (files, params = {}, config = {}) => {

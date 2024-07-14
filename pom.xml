@@ -27,6 +27,7 @@
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-fileupload.version>1.5</commons-fileupload.version>
         <graalvm.version>22.3.1</graalvm.version>
+        <swagger-parser.version>2.1.22</swagger-parser.version>
     </properties>
 
     <dependencyManagement>
@@ -65,6 +66,11 @@
                 <groupId>org.graalvm.js</groupId>
                 <artifactId>js</artifactId>
                 <version>${graalvm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.parser.v3</groupId>
+                <artifactId>swagger-parser</artifactId>
+                <version>${swagger-parser.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

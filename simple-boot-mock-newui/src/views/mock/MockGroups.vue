@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
-import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL, removeByIds } from '@/api/mock/MockGroupApi'
+import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import { $coreConfirm, $goto, checkShowColumn, isAdminUser, $coreError, toGetParams } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
@@ -129,7 +129,7 @@ const deleteGroup = group => {
 
 const deleteGroups = () => {
   $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
-    .then(() => removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
+    .then(() => MockGroupApi.removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
     .then(() => loadMockGroups())
 }
 
@@ -266,7 +266,7 @@ const showImportWindow = ref(false)
       :loading="loading"
       @page-size-change="loadMockGroups()"
       @current-page-change="loadMockGroups()"
-      @selection-change="selectedRows=$event;console.log('====selectedRows', selectedRows)"
+      @selection-change="selectedRows=$event"
     />
     <simple-edit-window
       v-model="currentGroup"

@@ -26,8 +26,14 @@ const props = defineProps({
     required: true
   }
 })
+const selectedRows = ref([])
 const columns = computed(() => {
   return defineTableColumns([{
+    width: '50px',
+    attrs: {
+      type: 'selection'
+    }
+  }, {
     label: '默认',
     width: '60px',
     formatter (data) {
@@ -150,6 +156,11 @@ const buttons = defineTableButtons([{
       .then(() => loadMockData())
   }
 }])
+const deleteDataList = () => {
+  $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
+    .then(() => MockDataApi.removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
+    .then(() => loadMockData())
+}
 const showEditWindow = ref(false)
 const currentDataItem = ref()
 const newDataItem = () => ({
@@ -280,6 +291,7 @@ const saveDataResponse = (mockData) => {
       :data="tableData"
       :columns="columns"
       :loading="loading"
+      @selection-change="selectedRows=$event"
     >
       <template #buttonHeader>
         {{ $t('common.label.operation') }}
@@ -291,6 +303,16 @@ const saveDataResponse = (mockData) => {
           @click="newOrEdit()"
         >
           <common-icon icon="Plus" />
+        </el-button>
+        <el-button
+          v-if="selectedRows.length"
+          v-common-tooltip="$t('common.label.delete')"
+          type="danger"
+          size="small"
+          round
+          @click="deleteDataList()"
+        >
+          <common-icon icon="DeleteFilled" />
         </el-button>
       </template>
       <template #buttons="{item}">

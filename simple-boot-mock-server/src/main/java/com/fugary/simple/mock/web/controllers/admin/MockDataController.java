@@ -50,6 +50,11 @@ public class MockDataController {
         return SimpleResultUtils.createSimpleResult(mockDataService.removeById(id));
     }
 
+    @DeleteMapping("/removeByIds/{ids}")
+    public SimpleResult removeByIds(@PathVariable("ids") List<Integer> ids) {
+        return SimpleResultUtils.createSimpleResult(mockDataService.removeByIds(ids));
+    }
+
     @PostMapping
     public SimpleResult save(@RequestBody MockData data) {
         return SimpleResultUtils.createSimpleResult(mockDataService.saveOrUpdate(SimpleMockUtils.addAuditInfo(data)));
