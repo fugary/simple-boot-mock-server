@@ -48,7 +48,7 @@ const columns = computed(() => {
   }, {
     label: '路径ID',
     property: 'groupPath',
-    minWidth: '150px',
+    minWidth: '180px',
     formatter (data) {
       const path = `/mock/${data.groupPath}`
       return <>
@@ -61,7 +61,7 @@ const columns = computed(() => {
   }, {
     label: '代理地址',
     property: 'proxyUrl',
-    minWidth: '150px'
+    minWidth: '130px'
   }, {
     labelKey: 'common.label.delay',
     property: 'delay',
@@ -76,7 +76,8 @@ const columns = computed(() => {
     formatter (data) {
       return <DelFlagTag v-model={data.status} clickToToggle={true}
                          onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
-    }
+    },
+    minWidth: '70px'
   }, {
     labelKey: 'common.label.createDate',
     property: 'createDate',
@@ -262,7 +263,7 @@ const showImportWindow = ref(false)
       :data="tableData"
       :columns="columns"
       :buttons="buttons"
-      :buttons-column-attrs="{width:'250px'}"
+      :buttons-column-attrs="{width:'230px'}"
       :loading="loading"
       @page-size-change="loadMockGroups()"
       @current-page-change="loadMockGroups()"

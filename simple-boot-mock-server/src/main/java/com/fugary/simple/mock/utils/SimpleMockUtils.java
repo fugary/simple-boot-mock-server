@@ -3,6 +3,8 @@ package com.fugary.simple.mock.utils;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.entity.mock.MockBase;
 import com.fugary.simple.mock.entity.mock.MockData;
+import com.fugary.simple.mock.entity.mock.MockUser;
+import com.fugary.simple.mock.utils.security.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,10 +43,17 @@ public class SimpleMockUtils {
     public static <T extends MockBase> T addAuditInfo(T target) {
         Date currentDate = new Date();
         if (target != null) {
+            MockUser loginUser = SecurityUtils.getLoginUser();
             if (target.getId() == null) {
-                target.setCreateDate(currentDate);
+                target.setCreateDate(Objects.requireNonNullElse(target.getCreateDate(), currentDate));
+                if (loginUser != null) {
+                    target.setCreator(loginUser.getUserName());
+                }
             } else {
                 target.setModifyDate(currentDate);
+                if (loginUser != null) {
+                    target.setModifier(loginUser.getUserName());
+                }
             }
         }
         return target;
