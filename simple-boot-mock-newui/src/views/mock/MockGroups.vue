@@ -5,7 +5,7 @@ import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
 import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
 import { useAllUsers } from '@/api/mock/MockUserApi'
-import { $coreConfirm, $goto, checkShowColumn, isAdminUser, $coreError, toGetParams } from '@/utils'
+import { $coreConfirm, $goto, checkShowColumn, isAdminUser, $coreError, toGetParams, useCurrentUserName } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
@@ -15,18 +15,30 @@ import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
 import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
 import { ElLink } from 'element-plus'
+import { useSelectProjects } from '@/api/mock/MockProjectApi'
+import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
 const { userOptions } = useAllUsers()
+const { projectOptions, loadSelectProjects } = useSelectProjects()
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
-  defaultParam: { page: useDefaultPage() },
+  defaultParam: { page: useDefaultPage(), userName: useCurrentUserName(), projectCode: MOCK_DEFAULT_PROJECT },
   searchMethod: search
 })
 const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
 
+if (route.params.projectCode) {
+  searchParam.value.projectCode = useRoute().params.projectCode
+}
+
 onMounted(() => {
   loadMockGroups()
+  loadSelectProjects({
+    userName: useCurrentUserName()
+  })
 })
 
 /**
@@ -43,7 +55,7 @@ const columns = computed(() => {
     label: '分组名称',
     property: 'groupName',
     click: item => {
-      $goto(`/mock/groups/${item.id}`)
+      $goto(`/mock/groups/${item.id}?backUrl=${route.fullPath}`)
     }
   }, {
     label: '路径ID',
@@ -52,7 +64,7 @@ const columns = computed(() => {
     formatter (data) {
       const path = `/mock/${data.groupPath}`
       return <>
-        <ElLink type="primary" onClick={() => $goto(`/mock/groups/${data.id}`)}>
+        <ElLink type="primary" onClick={() => $goto(`/mock/groups/${data.id}?backUrl=${route.fullPath}`)}>
           {data.groupPath}
         </ElLink>&nbsp;
         <MockUrlCopyLink urlPath={path}/>
@@ -94,7 +106,7 @@ const buttons = defineTableButtons([{
   labelKey: 'common.label.config',
   type: 'success',
   click: item => {
-    $goto(`/mock/groups/${item.id}`)
+    $goto(`/mock/groups/${item.id}?backUrl=${route.fullPath}`)
   }
 }, {
   labelKey: 'common.label.delete',
@@ -109,6 +121,23 @@ const searchFormOptions = computed(() => {
     type: 'select',
     enabled: isAdminUser(),
     children: userOptions.value,
+    attrs: {
+      clearable: false
+    },
+    change: async (userName) => {
+      await loadSelectProjects({
+        userName
+      })
+      const projectOpt = projectOptions.value.find(option => option.value === searchParam.value.projectCode)
+      searchParam.value.projectCode = projectOpt?.value || MOCK_DEFAULT_PROJECT
+      loadMockGroups(1)
+    }
+  }, {
+    label: '项目',
+    prop: 'projectCode',
+    type: 'select',
+    enabled: projectOptions.value.length > 1,
+    children: projectOptions.value,
     attrs: {
       clearable: false
     },
@@ -143,12 +172,32 @@ const newOrEdit = async id => {
     })
   } else {
     currentGroup.value = {
-      status: 1
+      status: 1,
+      userName: searchParam.value?.userName || useCurrentUserName(),
+      projectCode: searchParam.value?.projectCode || MOCK_DEFAULT_PROJECT
     }
   }
   showEditWindow.value = true
 }
-const editFormOptions = defineFormOptions([{
+const editFormOptions = computed(() => defineFormOptions([{
+  labelKey: 'common.label.user',
+  prop: 'userName',
+  type: 'select',
+  enabled: isAdminUser(),
+  children: userOptions.value,
+  attrs: {
+    clearable: false
+  }
+}, {
+  label: '项目',
+  prop: 'projectCode',
+  type: 'select',
+  enabled: projectOptions.value.length > 1,
+  children: projectOptions.value,
+  attrs: {
+    clearable: false
+  }
+}, {
   label: '分组名称',
   prop: 'groupName',
   required: true
@@ -172,7 +221,7 @@ const editFormOptions = defineFormOptions([{
   attrs: {
     type: 'textarea'
   }
-}])
+}]))
 const saveGroupItem = (item) => {
   return saveOrUpdate(item).then(() => loadMockGroups())
 }
@@ -181,6 +230,7 @@ const exportGroups = (groupIds) => {
   $coreConfirm('确认导出Mock数据？').then(() => {
     const exportConfig = {
       exportAll: !groupIds,
+      projectCode: searchParam.value.projectCode || MOCK_DEFAULT_PROJECT,
       groupIds,
       userName: searchParam.value.userName
     }
@@ -279,6 +329,9 @@ const showImportWindow = ref(false)
     <mock-group-import
       v-model="showImportWindow"
       :default-user="searchParam.userName"
+      :user-options="userOptions"
+      :default-project="searchParam.projectCode"
+      :project-options="projectOptions"
       @import-success="loadMockGroups()"
     />
   </el-container>

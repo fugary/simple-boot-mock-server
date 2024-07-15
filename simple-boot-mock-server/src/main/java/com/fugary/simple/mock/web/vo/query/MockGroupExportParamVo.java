@@ -16,5 +16,6 @@ public class MockGroupExportParamVo implements Serializable {
     private String userName;
     private List<Integer> groupIds;
     private boolean exportAll;
+    private String projectCode;
 }
 

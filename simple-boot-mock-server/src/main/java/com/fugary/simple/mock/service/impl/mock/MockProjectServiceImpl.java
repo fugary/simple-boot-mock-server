@@ -33,15 +33,16 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
                     .eq("user_name", mockProject.getUserName()));
             mockGroups.forEach(mockGroup -> mockGroupService.deleteMockGroup(mockGroup.getId()));
         }
-        return true;
+        return removeById(id);
     }
 
     @Override
     public boolean existsMockProject(MockProject project) {
-        List<MockProject> existProjects = list(Wrappers.<MockProject>query()
-                .eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)
-                .or(wrapper -> wrapper.eq("user_name", project.getUserName())
-                        .eq("project_code", project.getProjectCode())));
+        if (MockConstants.MOCK_DEFAULT_PROJECT.equalsIgnoreCase(project.getProjectCode())) {
+            return true;
+        }
+        List<MockProject> existProjects = list(Wrappers.<MockProject>query().eq("user_name", project.getUserName())
+                .eq("project_code", project.getProjectCode()));
         return existProjects.stream().anyMatch(existProject -> !existProject.getId().equals(project.getId()));
     }
 }

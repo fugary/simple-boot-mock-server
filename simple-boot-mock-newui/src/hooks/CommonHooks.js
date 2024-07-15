@@ -33,7 +33,6 @@ export const useTableAndSearchForm = ({
     const searchResult = await searchMethod({ ...searchParam.value, ...newParams })
       .finally(() => { loading.value = false })
     loading.value = false
-    console.log('=======================', searchResult)
     if (searchResult.success && searchResult.resultData) {
       tableData.value = isFunction(dataProcessor) && dataProcessor?.(searchResult, searchParam)
       pageProcessor?.(searchResult, searchParam)

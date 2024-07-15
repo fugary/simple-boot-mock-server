@@ -18,6 +18,14 @@ export const ALL_MENUS = [
     menuUrl: '/mock/groups'
   },
   {
+    id: 12,
+    parentId: 1,
+    iconCls: 'MessageBox',
+    nameCn: 'Mock项目',
+    nameEn: 'Mock Projects',
+    menuUrl: '/mock/projects'
+  },
+  {
     id: 5,
     iconCls: 'setting',
     nameCn: '系统管理',

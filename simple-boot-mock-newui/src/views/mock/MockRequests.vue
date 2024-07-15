@@ -279,6 +279,11 @@ const saveMockRequest = item => {
           >
             {{ $t('common.label.delete') }}
           </el-button>
+          <el-button
+            @click="goBack()"
+          >
+            {{ $t('common.label.back') }}
+          </el-button>
         </template>
       </common-form>
       <common-table

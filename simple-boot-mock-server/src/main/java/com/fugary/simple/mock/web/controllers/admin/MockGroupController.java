@@ -119,7 +119,8 @@ public class MockGroupController {
     public SimpleResult checkExport(@RequestBody MockGroupExportParamVo queryVo) {
         List<MockGroup> groups = new ArrayList<>();
         if (queryVo.isExportAll()) {
-            groups = mockGroupService.list(Wrappers.<MockGroup>query().in("user_name", SecurityUtils.getUserName(queryVo.getUserName())));
+            groups = mockGroupService.list(Wrappers.<MockGroup>query().eq("user_name", SecurityUtils.getUserName(queryVo.getUserName()))
+                    .eq("project_code", StringUtils.defaultIfBlank(queryVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT)));
         } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
             groups = mockGroupService.listByIds(queryVo.getGroupIds());
         }
@@ -130,7 +131,8 @@ public class MockGroupController {
     public void export(@ModelAttribute MockGroupExportParamVo queryVo, HttpServletResponse response) throws IOException {
         List<MockGroup> groups = new ArrayList<>();
         if (queryVo.isExportAll()) {
-            groups = mockGroupService.list(Wrappers.<MockGroup>query().in("user_name", SecurityUtils.getUserName(queryVo.getUserName())));
+            groups = mockGroupService.list(Wrappers.<MockGroup>query().in("user_name", SecurityUtils.getUserName(queryVo.getUserName()))
+                    .eq("project_code", StringUtils.defaultIfBlank(queryVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT)));
         } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
             groups = mockGroupService.listByIds(queryVo.getGroupIds());
         }

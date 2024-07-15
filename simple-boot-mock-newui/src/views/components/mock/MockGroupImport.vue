@@ -2,27 +2,42 @@
 import { ref, computed, watch } from 'vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { $coreAlert, $coreError, isAdminUser } from '@/utils'
-import { useAllUsers } from '@/api/mock/MockUserApi'
 import { defineFormOptions } from '@/components/utils'
 import { ElButton } from 'element-plus'
 import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, uploadFiles } from '@/api/mock/MockGroupApi'
+import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 
 const props = defineProps({
   defaultUser: {
     type: String,
     default: ''
+  },
+  userOptions: {
+    type: Array,
+    default: () => []
+  },
+  defaultProject: {
+    type: String,
+    default: MOCK_DEFAULT_PROJECT
+  },
+  projectOptions: {
+    type: Array,
+    default: () => []
   }
 })
 const showWindow = defineModel('modelValue', { type: Boolean, default: false })
-const { userOptions } = useAllUsers()
 const accountInfo = useLoginConfigStore().accountInfo
 const importModel = ref({
   userName: !isAdminUser() ? accountInfo?.userName : (props.defaultUser || accountInfo?.userName),
   type: 'simple',
+  projectCode: props.defaultProject,
   duplicateStrategy: IMPORT_DUPLICATE_STRATEGY[0].value
 })
 watch(() => props.defaultUser, (val) => {
   importModel.value.userName = !isAdminUser() ? accountInfo?.userName : (val || accountInfo?.userName)
+})
+watch(() => props.defaultProject, (val) => {
+  importModel.value.projectCode = val
 })
 const importFiles = ref([])
 const formOptions = computed(() => {
@@ -31,7 +46,16 @@ const formOptions = computed(() => {
     prop: 'userName',
     type: 'select',
     disabled: !isAdminUser(),
-    children: userOptions.value,
+    children: props.userOptions,
+    attrs: {
+      clearable: false
+    }
+  }, {
+    label: '项目',
+    prop: 'projectCode',
+    type: 'select',
+    enabled: props.projectOptions.length > 1,
+    children: props.projectOptions,
     attrs: {
       clearable: false
     }

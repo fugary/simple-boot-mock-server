@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockProject;
+import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
@@ -17,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static com.fugary.simple.mock.utils.security.SecurityUtils.getLoginUser;
 
 /**
  * Create date 2024/7/15<br>
@@ -61,6 +64,13 @@ public class MockProjectController {
 
     @PostMapping
     public SimpleResult save(@RequestBody MockProject project) {
+        MockUser loginUser = getLoginUser();
+        if (StringUtils.isBlank(project.getUserName()) && loginUser != null) {
+            project.setUserName(loginUser.getUserName());
+        }
+        if (!SecurityUtils.validateUserUpdate(project.getUserName())) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+        }
         if (mockProjectService.existsMockProject(project)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
         }
@@ -71,8 +81,9 @@ public class MockProjectController {
     public SimpleResult<List<MockProject>> selectProjects(@RequestBody MockProjectQueryVo queryVo) {
         QueryWrapper<MockProject> queryWrapper = Wrappers.<MockProject>query();
         String userName = SecurityUtils.getUserName(queryVo.getUserName());
-        queryWrapper.and(wrapper -> wrapper.eq("user_name", userName)
-                .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT));
+        queryWrapper.eq("status", 1)
+                .and(wrapper -> wrapper.and(wrapper1 -> wrapper1.eq("user_name", userName)
+                        .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)));
         return SimpleResultUtils.createSimpleResult(mockProjectService.list(queryWrapper));
     }
 }

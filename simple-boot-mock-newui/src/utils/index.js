@@ -18,6 +18,10 @@ export const isAdminUser = () => {
   return isUserAdmin(useLoginConfigStore().accountInfo?.userName)
 }
 
+export const useCurrentUserName = () => {
+  return useLoginConfigStore().accountInfo?.userName
+}
+
 export const isUserAdmin = userName => {
   return userName === 'admin'
 }

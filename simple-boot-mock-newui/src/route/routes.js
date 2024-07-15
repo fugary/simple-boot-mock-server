@@ -67,7 +67,6 @@ const router = createRouter({
 const scrollMain = (to, scrollOption) => {
   setTimeout(() => { // 因为有0.3s动画需要延迟到动画之后
     scrollOption = scrollOption || to?.meta?.scroll || { top: 0 }
-    console.log('======================scrollTo', scrollOption.top)
     document.querySelector('.home-main')?.scrollTo(scrollOption)
   }, 350)
 }
