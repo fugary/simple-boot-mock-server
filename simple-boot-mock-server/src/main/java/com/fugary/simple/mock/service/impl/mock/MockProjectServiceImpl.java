@@ -28,7 +28,9 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
     public boolean deleteMockProject(Integer id) {
         MockProject mockProject = getById(id);
         if (mockProject != null) {
-            List<MockGroup> mockGroups = mockGroupService.list(Wrappers.<MockGroup>query().eq("project_code", mockProject.getProjectCode()));
+            List<MockGroup> mockGroups = mockGroupService.list(Wrappers.<MockGroup>query()
+                    .eq("project_code", mockProject.getProjectCode())
+                    .eq("user_name", mockProject.getUserName()));
             mockGroups.forEach(mockGroup -> mockGroupService.deleteMockGroup(mockGroup.getId()));
         }
         return true;

@@ -3,9 +3,11 @@ package com.fugary.simple.mock.service.impl.mock;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.entity.mock.MockGroup;
+import com.fugary.simple.mock.entity.mock.MockProject;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.mapper.mock.MockUserMapper;
 import com.fugary.simple.mock.service.mock.MockGroupService;
+import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockUserService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -25,9 +27,16 @@ public class MockUserServiceImpl extends ServiceImpl<MockUserMapper, MockUser> i
     @Autowired
     private MockGroupService mockGroupService;
 
+    @Autowired
+    private MockProjectService mockProjectService;
+
     @Override
     public boolean deleteMockUser(Integer id) {
         getOptById(id).ifPresent(mockUser -> {
+            mockProjectService.list(Wrappers.<MockProject>query().eq("user_name", mockUser.getUserName()))
+                    .forEach(mockGroup -> {
+                        mockProjectService.deleteMockProject(mockGroup.getId());
+                    });
             mockGroupService.list(Wrappers.<MockGroup>query().eq("user_name", mockUser.getUserName()))
                     .forEach(mockGroup -> {
                         mockGroupService.deleteMockGroup(mockGroup.getId());
