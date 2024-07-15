@@ -42,7 +42,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
     public ExportMockVo doImport(String data) {
         SwaggerParseResult result = new OpenAPIParser().readContents(data, null, null);
         OpenAPI openAPI = result.getOpenAPI();
-        if (openAPI != null) {
+        if (openAPI != null && openAPI.getTags() != null) {
             Map<String, List<Triple<String, PathItem, List<Pair<String, Operation>>>>> pathMap = openAPI.getPaths().entrySet().stream().map(entry -> {
                 PathItem pathItem = entry.getValue();
                 List<Pair<String, Operation>> operations = getAllOperationsInAPath(pathItem);
