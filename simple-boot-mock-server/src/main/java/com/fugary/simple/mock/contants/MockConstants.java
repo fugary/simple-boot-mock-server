@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MockConstants {
 
+    public static final String MOCK_DEFAULT_PROJECT = "default";
+
     public static final String MOCK_USER_KEY = "simple-mock-user";
 
     public static final String MOCK_LOCALE_KEY = "locale";

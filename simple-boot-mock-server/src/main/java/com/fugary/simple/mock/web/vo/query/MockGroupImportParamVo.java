@@ -15,4 +15,5 @@ public class MockGroupImportParamVo implements Serializable {
     private String userName;
     private String type;
     private Integer duplicateStrategy;
+    private String projectCode;
 }

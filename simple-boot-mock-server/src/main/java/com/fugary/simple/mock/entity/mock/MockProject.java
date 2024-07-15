@@ -3,20 +3,15 @@ package com.fugary.simple.mock.entity.mock;
 import lombok.Data;
 
 /**
- * Created on 2020/5/3 22:27 .<br>
+ * Create date 2024/7/15<br>
  *
  * @author gary.fu
  */
 @Data
-public class MockGroup extends MockBase {
+public class MockProject extends MockBase {
 
     private static final long serialVersionUID = -8012815542682860804L;
     private String userName;
-    private String groupName;
-    private String groupPath;
-    private String proxyUrl;
     private String projectCode;
-    private Integer delay;
-    private String description;
-
+    private String projectName;
 }

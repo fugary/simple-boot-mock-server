@@ -3,6 +3,7 @@ package com.fugary.simple.mock.web.controllers.admin;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockUser;
@@ -65,6 +66,7 @@ public class MockGroupController {
         }
         String userName = SecurityUtils.getUserName(queryVo.getUserName());
         queryWrapper.eq("user_name", userName);
+        queryWrapper.eq("project_code", StringUtils.defaultIfBlank(queryVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
         return SimpleResultUtils.createSimpleResult(mockGroupService.page(page, queryWrapper));
     }
 
@@ -87,6 +89,9 @@ public class MockGroupController {
     public SimpleResult save(@RequestBody MockGroup group) {
         if (StringUtils.isBlank(group.getGroupPath())) {
             group.setGroupPath(SimpleMockUtils.uuid());
+        }
+        if (StringUtils.isBlank(group.getProjectCode())) {
+            group.setProjectCode(MockConstants.MOCK_DEFAULT_PROJECT);
         }
         if (mockGroupService.existsMockGroup(group)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);

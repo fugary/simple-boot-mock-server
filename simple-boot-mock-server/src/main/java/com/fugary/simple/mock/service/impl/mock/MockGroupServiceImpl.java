@@ -310,6 +310,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 group.setId(null);
                 group.setUserName(SecurityUtils.getUserName(importVo.getUserName()));
                 group.setGroupPath(StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
+                group.setProjectCode(StringUtils.defaultIfBlank(importVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
                 boolean saved = saveOrUpdate(SimpleMockUtils.addAuditInfo(group));
                 if (saved && group.getRequests() != null) {
                     group.getRequests().forEach(request -> {
