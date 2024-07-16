@@ -1,5 +1,5 @@
 <script setup lang="jsx">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onActivated, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
@@ -21,8 +21,6 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
-const { userOptions } = useAllUsers()
-const { projectOptions, loadSelectProjects } = useSelectProjects()
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: { page: useDefaultPage(), userName: useCurrentUserName(), projectCode: MOCK_DEFAULT_PROJECT },
@@ -34,11 +32,17 @@ if (route.params.projectCode) {
   searchParam.value.projectCode = useRoute().params.projectCode
 }
 
+const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
+const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam)
+
 onMounted(() => {
   loadMockGroups()
-  loadSelectProjects({
-    userName: useCurrentUserName()
-  })
+  loadProjectsAndRefreshOptions()
+})
+
+onActivated(async () => {
+  await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
+  loadMockGroups(1)
 })
 
 /**
@@ -124,12 +128,8 @@ const searchFormOptions = computed(() => {
     attrs: {
       clearable: false
     },
-    change: async (userName) => {
-      await loadSelectProjects({
-        userName
-      })
-      const projectOpt = projectOptions.value.find(option => option.value === searchParam.value.projectCode)
-      searchParam.value.projectCode = projectOpt?.value || MOCK_DEFAULT_PROJECT
+    change: async () => {
+      await loadProjectsAndRefreshOptions()
       loadMockGroups(1)
     }
   }, {

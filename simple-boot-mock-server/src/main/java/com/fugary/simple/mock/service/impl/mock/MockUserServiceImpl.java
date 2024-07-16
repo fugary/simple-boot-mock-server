@@ -42,7 +42,7 @@ public class MockUserServiceImpl extends ServiceImpl<MockUserMapper, MockUser> i
                         mockGroupService.deleteMockGroup(mockGroup.getId());
                     });
         });
-        return true;
+        return removeById(id);
     }
 
     @Override

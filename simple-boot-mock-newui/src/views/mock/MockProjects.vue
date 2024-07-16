@@ -1,5 +1,5 @@
 <script setup lang="jsx">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onActivated, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
@@ -12,15 +12,20 @@ import { useFormStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 
 const { search, getById, deleteById, saveOrUpdate } = MockProjectApi
-const { userOptions } = useAllUsers()
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: { page: useDefaultPage() },
   searchMethod: search
 })
 const loadMockProjects = (pageNumber) => searchMethod(pageNumber)
+const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 
 onMounted(() => {
+  loadMockProjects()
+})
+
+onActivated(async () => {
+  await loadUsersAndRefreshOptions()
   loadMockProjects()
 })
 
