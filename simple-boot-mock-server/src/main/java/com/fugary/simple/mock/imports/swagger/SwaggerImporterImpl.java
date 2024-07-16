@@ -52,7 +52,8 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                 Pair<String, Operation> firstOptionPair = operations.get(0);
                 return firstOptionPair.getRight().getTags().get(0);
             }));
-            List<ExportGroupVo> mockGroups = openAPI.getTags().stream().map(tag -> toMockGroup(tag, openAPI.getInfo(), pathMap.get(tag.getName()))).collect(Collectors.toList());
+            List<ExportGroupVo> mockGroups = openAPI.getTags().stream().filter(tag -> pathMap.get(tag.getName()) != null)
+                    .map(tag -> toMockGroup(tag, openAPI.getInfo(), pathMap.get(tag.getName()))).collect(Collectors.toList());
             ExportMockVo exportMockVo = new ExportMockVo();
             exportMockVo.setGroups(mockGroups);
             return exportMockVo;

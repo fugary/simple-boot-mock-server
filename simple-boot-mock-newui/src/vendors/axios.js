@@ -65,10 +65,11 @@ $http.interceptors.response.use(response => {
     networkErrorFun()
   } else if (error.code === 'ECONNABORTED' && error.message.indexOf('timeout') > -1) {
     networkTimeoutFun()
-  }
-  if (error.response?.status === 401 && !error.response?.config.isLogin) {
+  } else if (error.response?.status === 401 && !error.response?.config.isLogin) {
     // 跳转登录页面
     $goto('/login')
+  } else {
+    ElMessage.error(error.message)
   }
   return error.response
 })

@@ -1,6 +1,6 @@
 <script setup lang="jsx">
 import { useRoute } from 'vue-router'
-import { ElTag } from 'element-plus'
+import { ElTag, ElText } from 'element-plus'
 import { $coreConfirm, checkShowColumn, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, { ALL_METHODS } from '@/api/mock/MockRequestApi'
@@ -75,7 +75,7 @@ const columns = computed(() => {
         <MockUrlCopyLink urlPath={path}/>
       </>
     },
-    minWidth: '200px'
+    minWidth: '150px'
   }, {
     label: '请求方法',
     property: 'method',
@@ -107,7 +107,13 @@ const columns = computed(() => {
   }, {
     labelKey: 'common.label.description',
     property: 'description',
-    enabled: checkShowColumn(tableData.value, 'description')
+    enabled: checkShowColumn(tableData.value, 'description'),
+    formatter (data) {
+      return <ElText line-clamp="2">
+        {data.description}
+      </ElText>
+    },
+    minWidth: '150px'
   }, {
     labelKey: 'common.label.status',
     formatter (data) {
