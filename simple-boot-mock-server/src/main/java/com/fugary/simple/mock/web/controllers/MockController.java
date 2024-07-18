@@ -7,6 +7,7 @@ import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.push.MockPushProcessor;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.utils.JsonUtils;
@@ -22,24 +23,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URI;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -56,10 +49,10 @@ public class MockController {
     private MockGroupService mockGroupService;
 
     @Autowired
-    private RestTemplate restTemplate;
+    private ScriptEngineProvider scriptEngineProvider;
 
     @Autowired
-    private ScriptEngineProvider scriptEngineProvider;
+    private MockPushProcessor mockPushProcessor;
 
     @RequestMapping("/**")
     public ResponseEntity<?> doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -85,75 +78,9 @@ public class MockController {
                     .body(data.getResponseBody());
         } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(mockGroup.getProxyUrl())) {
             // 所有request没有匹配上,但是有proxy地址
-            responseEntity = proxy(mockGroup.getProxyUrl(), request, response);
+            responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, request));
         }
         mockGroupService.delayTime(start, mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight()));
-        return responseEntity;
-    }
-
-    @RequestMapping("/proxy/**")
-    public ResponseEntity<byte[]> proxy(@RequestParam(value = "_url", required = false) String proxyUrl, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        if (SimpleMockUtils.isValidProxyUrl(proxyUrl)) {
-            String pathPrefix = request.getContextPath() + "/mock/\\w+(/.*)";
-            String requestUrl = request.getRequestURI();
-            Matcher matcher = Pattern.compile(pathPrefix).matcher(requestUrl);
-            if (matcher.matches()) {
-                requestUrl = matcher.group(1);
-            }
-            URI targetUri = UriComponentsBuilder.fromUriString(proxyUrl)
-                    .path(requestUrl)
-                    .query(request.getQueryString())
-                    .replaceQueryParam("_url")
-                    .build(true).toUri();
-            HttpHeaders headers = new HttpHeaders();
-            Enumeration<String> headerNames = request.getHeaderNames();
-            while (headerNames.hasMoreElements()) {
-                String headerName = headerNames.nextElement();
-                String headerValue = request.getHeader(headerName);
-                boolean excludeHeader = SimpleMockUtils.getExcludeHeaders().contains(headerName.toLowerCase());
-                if (SimpleMockUtils.isMockPreview(request)) {
-                    excludeHeader = SimpleMockUtils.isExcludeHeaders(headerName.toLowerCase());
-                }
-                if (!excludeHeader && StringUtils.isNotBlank(headerValue)) {
-                    headers.add(headerName, headerValue);
-                }
-            }
-            headers.add(MockConstants.SIMPLE_BOOT_MOCK_HEADER, "1");
-            Resource bodyResource = HttpRequestUtils.getBodyResource(request);
-            HttpEntity<?> entity = new HttpEntity<>(bodyResource, headers);
-            try {
-                ResponseEntity<byte[]> responseEntity = restTemplate.exchange(targetUri, Optional.ofNullable(HttpMethod.resolve(request.getMethod())).orElse(HttpMethod.GET),
-                        entity, byte[].class);
-                responseEntity = processRedirect(responseEntity, request, entity);
-                return SimpleMockUtils.removeCorsHeaders(responseEntity);
-            } catch (HttpClientErrorException e) {
-                return ResponseEntity.status(e.getStatusCode())
-                        .headers(e.getResponseHeaders())
-                        .body(e.getResponseBodyAsByteArray());
-            } catch (Exception e) {
-                log.error("获取数据错误", e);
-            }
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    // 处理重定向请求
-    private ResponseEntity<byte[]> processRedirect(ResponseEntity<byte[]> responseEntity,
-                                                   HttpServletRequest request,
-                                                   HttpEntity<?> entity) {
-        HttpStatus httpStatus = responseEntity.getStatusCode();
-        if (httpStatus.is3xxRedirection()) {
-            URI location = responseEntity.getHeaders().getLocation();
-            if (location != null) {
-                URI targetUri = UriComponentsBuilder.fromUri(location)
-                        .query(request.getQueryString())
-                        .replaceQueryParam("_url")
-                        .build(true).toUri();
-                responseEntity = restTemplate.exchange(targetUri,
-                        Optional.ofNullable(HttpMethod.resolve(request.getMethod())).orElse(HttpMethod.GET),
-                        entity, byte[].class);
-            }
-        }
         return responseEntity;
     }
 

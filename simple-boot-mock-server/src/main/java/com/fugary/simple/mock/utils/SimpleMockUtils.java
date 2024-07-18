@@ -1,10 +1,10 @@
 package com.fugary.simple.mock.utils;
 
 import com.fugary.simple.mock.contants.MockConstants;
-import com.fugary.simple.mock.entity.mock.MockBase;
-import com.fugary.simple.mock.entity.mock.MockData;
-import com.fugary.simple.mock.entity.mock.MockUser;
+import com.fugary.simple.mock.entity.mock.*;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
+import com.fugary.simple.mock.web.vo.NameValue;
+import com.fugary.simple.mock.web.vo.query.MockParamsVo;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +13,18 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.fugary.simple.mock.utils.servlet.HttpRequestUtils.getBodyResource;
 
 /**
  * Created on 2020/5/6 9:06 .<br>
@@ -153,6 +160,74 @@ public class SimpleMockUtils {
             return new ResponseEntity<>(response.getBody(), headers, response.getStatusCode());
         }
         return response;
+    }
+
+    /**
+     * 解析成MockParamsVo
+     *
+     * @param mockGroup
+     * @param mockRequest
+     * @return
+     */
+    public static MockParamsVo toMockParams(MockGroup mockGroup, MockRequest mockRequest) {
+        MockParamsVo mockParams = new MockParamsVo();
+        if (StringUtils.isNotBlank(mockRequest.getMockParams())) {
+            mockParams = JsonUtils.fromJson(mockRequest.getMockParams(), MockParamsVo.class);
+        }
+        mockParams.setTargetUrl(mockGroup.getProxyUrl());
+        mockParams.setRequestPath(mockRequest.getRequestPath());
+        mockParams.setMethod(mockRequest.getMethod());
+        return mockParams;
+    }
+
+    /**
+     * 解析成MockParamsVo
+     *
+     * @param mockGroup
+     * @param request
+     * @return
+     */
+    public static MockParamsVo toMockParams(MockGroup mockGroup, HttpServletRequest request) {
+        MockParamsVo mockParams = new MockParamsVo();
+        String pathPrefix = request.getContextPath() + "/mock/\\w+(/.*)";
+        String requestPath = request.getRequestURI();
+        Matcher matcher = Pattern.compile(pathPrefix).matcher(requestPath);
+        if (matcher.matches()) {
+            requestPath = matcher.group(1);
+        }
+        mockParams.setTargetUrl(mockGroup.getProxyUrl());
+        mockParams.setRequestPath(requestPath);
+        mockParams.setMethod(request.getMethod());
+        Enumeration<String> headerNames = request.getHeaderNames();
+        List<NameValue> headers = mockParams.getHeaderParams();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            String headerValue = request.getHeader(headerName);
+            boolean excludeHeader = SimpleMockUtils.getExcludeHeaders().contains(headerName.toLowerCase());
+            if (SimpleMockUtils.isMockPreview(request)) {
+                excludeHeader = SimpleMockUtils.isExcludeHeaders(headerName.toLowerCase());
+            }
+            if (!excludeHeader && StringUtils.isNotBlank(headerValue)) {
+                headers.add(new NameValue(headerName, headerValue));
+            }
+        }
+        headers.add(new NameValue(MockConstants.SIMPLE_BOOT_MOCK_HEADER, "1"));
+        Enumeration<String> parameterNames = request.getParameterNames();
+        List<NameValue> parameters = mockParams.getRequestParams();
+        while (parameterNames.hasMoreElements()) {
+            String parameterName = parameterNames.nextElement();
+            String parameterValue = request.getParameter(parameterName);
+            if (StringUtils.isNotBlank(parameterValue)) {
+                parameters.add(new NameValue(parameterName, parameterValue));
+            }
+        }
+        mockParams.setContentType(request.getContentType());
+        try {
+            mockParams.setRequestBody(StreamUtils.copyToString(getBodyResource(request).getInputStream(), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            log.error("Body解析错误", e);
+        }
+        return mockParams;
     }
 
     /**

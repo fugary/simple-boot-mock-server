@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 使用简单拦截器控制链接安全<br>
@@ -56,6 +57,7 @@ public class UserSecurityInterceptor implements HandlerInterceptor {
     protected void responseJson(HttpServletResponse response, SimpleResult<MockUser> userResult) throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         try (PrintWriter out = response.getWriter()) {
             out.write(JsonUtils.toJson(userResult));
             out.flush();
