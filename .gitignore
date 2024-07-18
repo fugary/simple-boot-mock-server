@@ -27,6 +27,8 @@ hs_err_pid*
 *.iml
 .idea/
 node_modules/
+target/
+logs/
 dist/
 .DS_Store
 simple-boot-mock-server/src/main/resources/static/
