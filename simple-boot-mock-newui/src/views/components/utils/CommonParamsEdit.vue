@@ -43,8 +43,12 @@ const params = defineModel('modelValue', {
   default: () => []
 })
 
+params.value.forEach(param => (param.enabled = param.enabled ?? true))
+
 const addRequestParam = () => {
-  params.value.push({})
+  params.value.push({
+    enabled: true
+  })
 }
 
 const calcPasteParams = value => {
@@ -56,6 +60,7 @@ const calcPasteParams = value => {
         objValue = toFlatKeyValue(objValue)
         calcParams = Object.keys(objValue).map(key => {
           return {
+            enabled: true,
             [props.nameKey]: key,
             [props.valueKey]: objValue[key]
           }
@@ -70,6 +75,7 @@ const calcPasteParams = value => {
     }
     calcParams = new URLSearchParams(value).entries().map(entry => {
       return {
+        enabled: true,
         [props.nameKey]: entry[0],
         [props.valueKey]: entry[1]
       }
@@ -111,6 +117,11 @@ const defaultHeaders = ['Accept',
 
 const paramOptions = computed(() => {
   return defineFormOptions([{
+    labelWidth: '30px',
+    prop: 'enabled',
+    disabled: props.nameReadOnly,
+    type: 'switch'
+  }, {
     label: 'Key',
     prop: props.nameKey,
     required: true,
@@ -143,10 +154,10 @@ const paramOptions = computed(() => {
       <el-col
         v-for="option in paramOptions"
         :key="`${index}_${option.prop}`"
-        :span="10"
+        :span="option.prop==='enabled'?2:9"
       >
         <common-form-control
-          label-width="100px"
+          label-width="80px"
           :model="item"
           :option="option"
           :prop="`${formProp}.${index}.${option.prop}`"
