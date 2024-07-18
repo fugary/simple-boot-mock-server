@@ -3,7 +3,7 @@ import { useRoute } from 'vue-router'
 import { ElTag, ElText } from 'element-plus'
 import { $coreConfirm, checkShowColumn, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
-import MockRequestApi, { ALL_METHODS } from '@/api/mock/MockRequestApi'
+import MockRequestApi, { ALL_METHODS, copyMockRequest } from '@/api/mock/MockRequestApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons, defineTableColumns } from '@/components/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
@@ -151,6 +151,14 @@ const requestButtons = computed(() => {
     type: 'success',
     click: item => {
       previewMockRequest(groupItem.value, item)
+    }
+  }, {
+    labelKey: 'common.label.copy',
+    type: 'warning',
+    click: item => {
+      $coreConfirm($i18nBundle('common.msg.confirmCopy'))
+        .then(() => copyMockRequest(item.id))
+        .then(() => loadMockRequests())
     }
   }, {
     labelKey: 'common.label.delete',

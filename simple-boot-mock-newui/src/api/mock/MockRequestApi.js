@@ -34,6 +34,13 @@ export const getDefaultData = (id, config) => {
   }, config)).then(response => response.data)
 }
 
+export const copyMockRequest = (id, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_REQUEST_URL}/copyMockRequest/${id}`,
+    method: 'POST'
+  }, config)).then(response => response.data)
+}
+
 export const saveMockParams = (data, config) => {
   return $http(Object.assign({
     url: `${MOCK_REQUEST_URL}/saveMockParams`,

@@ -30,6 +30,14 @@ public interface MockRequestService extends IService<MockRequest> {
     boolean existsMockRequest(MockRequest request);
 
     /**
+     * 复制一份数据
+     *
+     * @param requestId
+     * @return
+     */
+    boolean copyMockRequest(Integer requestId);
+
+    /**
      * 根据请求获取对应的响应数据，优先取默认响应或者第一条响应
      *
      * @param requestId

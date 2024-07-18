@@ -51,6 +51,24 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     }
 
     @Override
+    public boolean copyMockRequest(Integer requestId) {
+        MockRequest mockRequest = getById(requestId);
+        if (mockRequest != null) {
+            mockRequest.setId(null);
+            saveOrUpdate(mockRequest);
+            List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query()
+                    .eq("request_id", requestId));
+            dataList.forEach(data -> {
+                data.setId(null);
+                data.setRequestId(mockRequest.getId());
+            });
+            mockDataService.saveOrUpdateBatch(dataList);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     public MockData findMockData(Integer requestId, Integer defaultId) {
         List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)

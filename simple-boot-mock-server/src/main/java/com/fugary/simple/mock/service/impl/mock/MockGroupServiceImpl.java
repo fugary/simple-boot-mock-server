@@ -138,23 +138,25 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     String configRequestPath = StringUtils.prependIfMissing(mockRequest.getRequestPath(), "/");
                     configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant path不支持:var格式，只支持{var}格式
                     String configPath = groupPath + configRequestPath;
-                    try {
-                        HttpRequestVo requestVo = calcRequestVo(request, configPath, requestPath);
-                        MockJsUtils.setCurrentRequestVo(requestVo);
-                        if (pathMatcher.match(configPath, requestPath) && matchRequestPattern(mockRequest.getMatchPattern())) {
-                            List<MockData> mockDataList = mockRequestService.loadDataByRequest(mockRequest.getId());
-                            MockData mockData = mockRequestService.findForceMockData(mockDataList, defaultId);
-                            if (mockData == null) { // request匹配的数据查找
-                                mockData = mockRequestService.findMockDataByRequest(mockDataList, requestVo);
+                    if (pathMatcher.match(configPath, requestPath)) {
+                        try {
+                            HttpRequestVo requestVo = calcRequestVo(request, configPath, requestPath);
+                            MockJsUtils.setCurrentRequestVo(requestVo);
+                            if (matchRequestPattern(mockRequest.getMatchPattern())) {
+                                List<MockData> mockDataList = mockRequestService.loadDataByRequest(mockRequest.getId());
+                                MockData mockData = mockRequestService.findForceMockData(mockDataList, defaultId);
+                                if (mockData == null) { // request匹配的数据查找
+                                    mockData = mockRequestService.findMockDataByRequest(mockDataList, requestVo);
+                                }
+                                if (mockData == null) { // 没有配置参数匹，或者没有匹配，过滤掉配置有参数匹配的数据
+                                    mockData = mockRequestService.findMockData(mockDataList);
+                                }
+                                processMockData(mockData, requestVo);
+                                return Triple.of(mockGroup, mockRequest, mockData);
                             }
-                            if (mockData == null) { // 没有配置参数匹，或者没有匹配，过滤掉配置有参数匹配的数据
-                                mockData = mockRequestService.findMockData(mockDataList);
-                            }
-                            processMockData(mockData, requestVo);
-                            return Triple.of(mockGroup, mockRequest, mockData);
+                        } finally {
+                            MockJsUtils.removeCurrentRequestVo();
                         }
-                    } finally {
-                        MockJsUtils.removeCurrentRequestVo();
                     }
                 }
             }

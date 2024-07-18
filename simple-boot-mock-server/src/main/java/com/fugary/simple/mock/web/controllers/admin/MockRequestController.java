@@ -3,14 +3,13 @@ package com.fugary.simple.mock.web.controllers.admin;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fugary.simple.mock.entity.mock.MockData;
+import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.MockRequestQueryVo;
-import com.fugary.simple.mock.contants.MockErrorConstants;
-import com.fugary.simple.mock.entity.mock.MockData;
-import com.fugary.simple.mock.entity.mock.MockRequest;
-import com.fugary.simple.mock.service.mock.MockRequestService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -62,6 +61,11 @@ public class MockRequestController {
         return SimpleResultUtils.createSimpleResult(mockRequestService.saveMockParams(data));
     }
 
+    @PostMapping("/copyMockRequest/{requestId}")
+    public SimpleResult copyMockRequest(@PathVariable("requestId") Integer id) {
+        return SimpleResultUtils.createSimpleResult(mockRequestService.copyMockRequest(id));
+    }
+
     @DeleteMapping("/{id}")
     public SimpleResult remove(@PathVariable("id") Integer id) {
         return SimpleResultUtils.createSimpleResult(mockRequestService.deleteMockRequest(id));
@@ -74,9 +78,9 @@ public class MockRequestController {
 
     @PostMapping
     public SimpleResult save(@RequestBody MockRequest request) {
-        if (mockRequestService.existsMockRequest(request)) {
-            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
-        }
+//        if (mockRequestService.existsMockRequest(request)) { // 不再校验重复，可以随便添加
+//            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
+//        }
         return SimpleResultUtils.createSimpleResult(mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(request)));
     }
 }
