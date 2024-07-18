@@ -25,13 +25,13 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
 }
 
 const doDataPreview = () => {
-  const params = paramTarget.value?.requestParams?.reduce((results, item) => {
+  const params = paramTarget.value?.requestParams?.filter(param => param.enabled).reduce((results, item) => {
     results[item.name] = item.value
     return results
   }, {})
   const data = paramTarget.value.requestBody
   const headers = Object.assign(data ? { 'content-type': paramTarget.value?.contentType } : {},
-    paramTarget.value?.headerParams?.reduce((results, item) => {
+    paramTarget.value?.headerParams?.filter(param => param.enabled).reduce((results, item) => {
       results[item.name] = item.value
       return results
     }, {}))

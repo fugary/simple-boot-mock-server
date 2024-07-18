@@ -83,7 +83,7 @@ const columns = computed(() => {
   }, {
     label: 'Response',
     property: 'responseBody',
-    minWidth: '250px',
+    minWidth: '220px',
     formatter (data) {
       let showStr = data.responseBody
       if (data.responseBody && data.responseBody.length > 120) {
@@ -98,7 +98,7 @@ const columns = computed(() => {
   }, {
     headerSlot: 'buttonHeader',
     slot: 'buttons',
-    minWidth: '250px'
+    minWidth: '220px'
   }])
 })
 const { tableData, loading, searchMethod: loadMockData } = useTableAndSearchForm({
