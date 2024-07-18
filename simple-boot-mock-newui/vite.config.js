@@ -2,7 +2,6 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig, loadEnv, splitVendorChunkPlugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { viteMockServe } from 'vite-plugin-mock'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import eslint from 'vite-plugin-eslint'
 import { visualizer } from 'rollup-plugin-visualizer'
@@ -10,11 +9,6 @@ import packageJson from './package.json'
 
 const optionalPlugins = [{
   plugin: visualizer({ open: true }),
-  enabled: false
-}, {
-  plugin: viteMockServe({
-    mockPath: './mock'
-  }),
   enabled: false
 }, {
   plugin: splitVendorChunkPlugin(),

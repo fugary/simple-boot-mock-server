@@ -8,8 +8,6 @@
  * @property {string} menuUrl 链接地址
  * @property {[MenuDto]} children 子菜单
  */
-
-import { $httpGet, $httpPost } from '@/vendors/axios'
 import { $i18nMsg } from '@/messages'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 import { GlobalLocales } from '@/consts/GlobalConstants'
@@ -18,51 +16,6 @@ import { I18N_ENABLED, THEME_ENABLED } from '@/config'
 import { $logout } from '@/utils'
 import { ALL_MENUS } from '@/services/menu/MenuData'
 import { cloneDeep } from 'lodash-es'
-
-export const searchMenusResult = (queryParam, config) => {
-  return $httpPost('/api/searchMenus', queryParam, config)
-}
-
-export const loadMenuResult = (id, config) => {
-  return $httpGet(`/api/menus/${id}`, config)
-}
-
-/**
- * @param menus {MenuDto[]}
- * @return {[CommonFormOption]}
- */
-export const useMenuFormOptions = (menus) => {
-  /**
-   * @type {CommonTreeNode[]}
-   */
-  const treeData = menus ? menus.map(menu2TreeMenu) : []
-  const defaultExpandedKeys = treeData.map(node => node.value)
-  return [{
-    labelKey: 'menu.label.menuNameCn',
-    prop: 'nameCn',
-    required: true
-  }, {
-    labelKey: 'menu.label.menuNameEn',
-    prop: 'nameEn',
-    required: true
-  }, {
-    labelKey: 'menu.label.menuParent',
-    prop: 'parentId',
-    type: 'tree-select',
-    attrs: {
-      checkStrictly: true,
-      defaultExpandedKeys,
-      data: treeData
-    }
-  }, {
-    labelKey: 'menu.label.menuIcon',
-    prop: 'iconCls',
-    type: 'common-icon-select'
-  }, {
-    labelKey: 'menu.label.menuUrl',
-    prop: 'menuUrl'
-  }]
-}
 
 /**
  * @param menu {MenuDto}
