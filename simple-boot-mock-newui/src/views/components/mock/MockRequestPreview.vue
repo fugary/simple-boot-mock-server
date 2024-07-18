@@ -63,11 +63,9 @@ const doDataPreview = async () => {
     data,
     headers
   }
-  const dataItemId = previewData.value?.id
-  if (dataItemId) {
-    headers['mock-data-id'] = dataItemId
-  }
-  doSaveMockParams()
+  requestItem.value?.id && (headers['mock-request-id'] = requestItem.value?.id)
+  previewData.value?.id && (headers['mock-data-id'] = previewData.value?.id)
+  await doSaveMockParams()
   if (paramTarget.value?.responseBody !== previewData.value?.responseBody) {
     await doSaveMockResponseBody()
   }
@@ -91,7 +89,7 @@ const doSaveMockParams = () => {
     delete paramTargetVal.responseBody
     delete paramTargetVal.method
     const mockParams = JSON.stringify(paramTargetVal)
-    saveMockParams({
+    return saveMockParams({
       requestId,
       id,
       mockParams

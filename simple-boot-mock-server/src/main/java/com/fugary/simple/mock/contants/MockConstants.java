@@ -25,6 +25,8 @@ public class MockConstants {
 
     public static final String SIMPLE_BOOT_MOCK_HEADER = "simple-boot-mock";
 
+    public static final String MOCK_REQUEST_ID_HEADER = "mock-request-id";
+
     public static final String MOCK_DATA_ID_HEADER = "mock-data-id";
 
     public static final String MOCK_DATA_PREVIEW_HEADER = "mock-data-preview";

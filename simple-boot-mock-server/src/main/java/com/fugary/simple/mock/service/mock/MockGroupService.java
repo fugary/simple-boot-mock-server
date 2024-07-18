@@ -39,10 +39,11 @@ public interface MockGroupService extends IService<MockGroup> {
      * 匹配路径
      *
      * @param request
+     * @param requestId
      * @param defaultId
      * @return
      */
-    Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer defaultId);
+    Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId, Integer defaultId);
 
     /**
      * 计算delay时间

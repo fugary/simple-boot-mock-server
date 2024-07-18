@@ -63,8 +63,9 @@ public class MockController {
 
     @RequestMapping("/**")
     public ResponseEntity<?> doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String requestId = request.getHeader(MockConstants.MOCK_REQUEST_ID_HEADER);
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
-        Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request, NumberUtils.toInt(dataId));
+        Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request, NumberUtils.toInt(requestId), NumberUtils.toInt(dataId));
         MockData data = dataPair.getRight();
         MockGroup mockGroup = dataPair.getLeft();
         long start = System.currentTimeMillis();

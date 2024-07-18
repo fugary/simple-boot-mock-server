@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.service.impl.mock;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.contants.MockConstants;
@@ -117,7 +118,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer defaultId) {
+    public Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId, Integer defaultId) {
         String requestPath = request.getServletPath();
         String method = request.getMethod();
         String requestGroupPath = calcGroupPath(requestPath);
@@ -128,10 +129,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     .eq("status", 1));
             if (mockGroup != null) {
                 // 查询Request
-                List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query()
-                        .eq("group_id", mockGroup.getId())
+                QueryWrapper<MockRequest> requestQuery = Wrappers.<MockRequest>query().eq("group_id", mockGroup.getId())
                         .eq("method", method)
-                        .eq("status", 1));
+                        .eq("status", 1);
+                if (requestId != 0) {
+                    requestQuery.eq("id", requestId);
+                }
+                List<MockRequest> mockRequests = mockRequestService.list(requestQuery);
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
                 // 请求是否匹配上Request，如果匹配上就查询Data
                 for (MockRequest mockRequest : sortMockRequests(mockRequests)) {
