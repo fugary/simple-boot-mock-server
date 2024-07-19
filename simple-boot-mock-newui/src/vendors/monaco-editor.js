@@ -7,6 +7,7 @@ import HtmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import JsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import { isFunction } from 'lodash-es'
+import { initMockJsHints } from '@/vendors/mockjs/MockJsHints'
 
 /**
  * 默认配置
@@ -18,7 +19,8 @@ const defaultConfig = {
   scrollBeyondLastLine: false,
   theme: 'vs-dark',
   wordWrap: 'on',
-  readOnly: true
+  readOnly: true,
+  language: 'javascript'
 }
 
 /**
@@ -140,7 +142,7 @@ export const useMonacoEditorOptions = (config) => {
   }
   watch([contentRef, editorRef], ([content], [oldContent]) => {
     if (!oldContent && content) {
-      languageRef.value = $checkLang(contentRef.value)
+      languageRef.value = $checkLang(contentRef.value) || monacoEditorOptions.language
       if (contentRef.value && editorRef.value && monacoEditorOptions.readOnly) {
         formatDocument()
       }
@@ -179,6 +181,7 @@ export default {
         monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
           diagnosticCodesToIgnore: [1003, 1005, 1128]
         })
+        initMockJsHints()
         loader.config({ monaco })
         return () => h(VueMonacoEditor, props, () => [getLoadingDiv()])
       }
