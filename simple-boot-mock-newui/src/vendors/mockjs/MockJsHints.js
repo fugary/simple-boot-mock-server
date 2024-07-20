@@ -1,6 +1,7 @@
 import * as monaco from 'monaco-editor'
-import MockHintDataCode from '@/vendors/mockjs/MockHintData?raw'
-import { MockRandom } from '@/vendors/mockjs/MockHintData'
+import BetterMockJsCode from '@/vendors/mockjs/BetterMockJs.d.ts?raw'
+import RequestHintDataCode from '@/vendors/mockjs/RequestHintData.d.ts?raw'
+import { MockRandom } from '@/vendors/mockjs/MockJsonHintData'
 
 export const getCompletionItemProvider = (matchReg, getSuggestions) => {
   return function (model, position) {
@@ -45,9 +46,9 @@ const getMockJsPlaceholders = () => {
 export const initMockJsHints = () => {
   if (!monaco.languages.__initedMockJsHints__) {
     monaco.languages.__initedMockJsHints__ = true
-    console.log('==============================initMockJsHints', MockHintDataCode, MockRandom)
-    const pureMockHintDataCode = MockHintDataCode.replace(/export const .+/, '') // 去掉export语句
-    monaco.languages.typescript.javascriptDefaults.addExtraLib(pureMockHintDataCode, 'MockHintData.js')
+    console.log('==============================initMockJsHints', BetterMockJsCode, MockRandom)
+    monaco.languages.typescript.javascriptDefaults.addExtraLib(BetterMockJsCode, 'MockJsonHintData.js')
+    monaco.languages.typescript.javascriptDefaults.addExtraLib(RequestHintDataCode, 'RequestHintData.js')
     monaco.languages.registerCompletionItemProvider('json', {
       provideCompletionItems: getMockJsPlaceholders()
     })

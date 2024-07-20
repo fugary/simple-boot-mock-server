@@ -30,7 +30,11 @@ const { tableData, loading, searchParam, searchMethod: loadMockRequests } = useT
   saveParam: false
 })
 
-loadMockRequests()
+loadMockRequests().then(() => {
+  if (!expandRequestRows.value?.length && tableData.value?.length) {
+    requestTableRef.value?.table?.toggleRowExpansion(tableData.value[0], true)
+  }
+})
 
 const methodOptions = ALL_METHODS.map(method => {
   return {
