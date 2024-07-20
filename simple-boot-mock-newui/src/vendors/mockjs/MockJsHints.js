@@ -3,7 +3,7 @@ import BetterMockJsCode from '@/vendors/mockjs/BetterMockJs.d.ts?raw'
 import RequestHintDataCode from '@/vendors/mockjs/RequestHintData.d.ts?raw'
 import { MockRandom } from '@/vendors/mockjs/MockJsonHintData'
 
-export const getCompletionItemProvider = (matchReg, getSuggestions) => {
+export const getCompletionItemProvider = (checkMatch, getSuggestions) => {
   return function (model, position) {
     const word = model.getWordUntilPosition(position)
     const textUntilPosition = model.getValueInRange({
@@ -12,7 +12,7 @@ export const getCompletionItemProvider = (matchReg, getSuggestions) => {
       endLineNumber: position.lineNumber,
       endColumn: position.column
     })
-    const match = textUntilPosition.match(matchReg)
+    const match = checkMatch(textUntilPosition)
     if (!match) {
       return { suggestions: [] }
     }
@@ -29,15 +29,20 @@ export const getCompletionItemProvider = (matchReg, getSuggestions) => {
   }
 }
 
-const getMockJsPlaceholders = () => {
+const getMockJsPlaceholders = (quote) => {
   const keyArr = Object.keys(MockRandom)
-  return getCompletionItemProvider(/@/, range => keyArr.map(key => {
-    console.log('========================key', key, MockRandom[key].toString())
+  return getCompletionItemProvider(() => true, range => keyArr.map(key => {
+    const config = MockRandom[key]
+    const detail = `——>${key}${config.func.toString()}`.replace(/\s+/g, '').replace('=>{}', '')
     return {
-      label: `"@${key}"`,
+      label: {
+        label: quote ? `"@${key}"` : `@${key}`,
+        detail,
+        description: config.desc
+      },
       kind: monaco.languages.CompletionItemKind.Text,
       insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-      insertText: `"@${key}"\${0}`,
+      insertText: quote ? `"@${key}\${0}"` : `@${key}`,
       range
     }
   }))
@@ -46,10 +51,18 @@ const getMockJsPlaceholders = () => {
 export const initMockJsHints = () => {
   if (!monaco.languages.__initedMockJsHints__) {
     monaco.languages.__initedMockJsHints__ = true
-    console.log('==============================initMockJsHints', BetterMockJsCode, MockRandom)
-    monaco.languages.typescript.javascriptDefaults.addExtraLib(BetterMockJsCode, 'MockJsonHintData.js')
+    monaco.languages.typescript.javascriptDefaults.addExtraLib(BetterMockJsCode, 'BetterMockJs.js')
     monaco.languages.typescript.javascriptDefaults.addExtraLib(RequestHintDataCode, 'RequestHintData.js')
     monaco.languages.registerCompletionItemProvider('json', {
+      triggerCharacters: ['"'],
+      provideCompletionItems: getMockJsPlaceholders()
+    })
+    monaco.languages.registerCompletionItemProvider('json', {
+      triggerCharacters: ['@'],
+      provideCompletionItems: getMockJsPlaceholders(true)
+    })
+    monaco.languages.registerCompletionItemProvider('javascript', {
+      triggerCharacters: ['"', "'", '`'],
       provideCompletionItems: getMockJsPlaceholders()
     })
   }
