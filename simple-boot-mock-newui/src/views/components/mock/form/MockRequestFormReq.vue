@@ -4,8 +4,14 @@ import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import { computed, ref, watch } from 'vue'
 import { checkParamsFilled } from '@/api/mock/MockRequestApi'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
+import { AUTH_TYPE } from '@/consts/MockConstants'
+import MockRequestFormAuthorization from '@/views/components/mock/form/MockRequestFormAuthorization.vue'
 
 const props = defineProps({
+  showAuthorization: {
+    type: Boolean,
+    default: false
+  },
   responseTarget: {
     type: Object,
     default: undefined
@@ -35,6 +41,9 @@ watch(languageRef, lang => {
 })
 
 const currentTabName = ref('requestParamsTab')
+const authContentModel = ref({
+  authType: AUTH_TYPE.NONE
+})
 const paramList = ['pathParams', 'requestParams', 'headerParams', 'requestBody']
 if (paramTarget.value) {
   currentTabName.value = paramTarget.value.method !== 'GET' ? 'requestBodyTab' : 'requestParamsTab'
@@ -43,6 +52,11 @@ if (paramTarget.value) {
       currentTabName.value = `${key}Tab`
       break
     }
+  }
+  if (paramTarget.value.authContent) {
+    authContentModel.value = paramTarget.value.authContent
+  } else {
+    paramTarget.value.authContent = authContentModel.value
   }
 }
 </script>
@@ -167,6 +181,21 @@ if (paramTarget.value) {
           @change="paramTarget.requestBody=$event"
         />
       </el-container>
+    </el-tab-pane>
+    <el-tab-pane
+      v-if="showAuthorization"
+      name="authorizationTab"
+    >
+      <template #label>
+        <el-badge
+          type="primary"
+          :hidden="authContentModel.authType === AUTH_TYPE.NONE"
+          is-dot
+        >
+          Authorization
+        </el-badge>
+      </template>
+      <mock-request-form-authorization v-model="authContentModel" />
     </el-tab-pane>
   </el-tabs>
 </template>

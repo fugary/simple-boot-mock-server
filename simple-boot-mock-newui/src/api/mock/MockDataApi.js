@@ -61,7 +61,7 @@ export const processResponse = function (response) {
     status,
     duration: config.__startTime ? new Date().getTime() - config.__startTime : 0
   }
-  const requestHeaders = JSON.parse(headers['mock-meta-req'] || '[]')
+  const requestHeaders = JSON.parse(headers['mock-meta-req'] || '[]').sort((a, b) => a.name.localeCompare(b.name))
   const responseHeaders = []
   for (const name in headers) {
     if (name !== 'mock-meta-req') {

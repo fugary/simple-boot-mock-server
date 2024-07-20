@@ -5,6 +5,7 @@ import MockDataApi, { calcParamTarget, previewRequest, processResponse } from '@
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { ElMessage } from 'element-plus'
 import { $i18nBundle } from '@/messages'
+import { AUTH_OPTION_CONFIG } from '@/consts/MockConstants'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -68,6 +69,10 @@ const doDataPreview = async () => {
   await doSaveMockParams()
   if (paramTarget.value?.responseBody !== previewData.value?.responseBody) {
     await doSaveMockResponseBody()
+  }
+  const authContent = paramTarget.value.authContent
+  if (authContent) {
+    await AUTH_OPTION_CONFIG[authContent.authType]?.parseAuthInfo(authContent, headers, params)
   }
   previewRequest({
     url: requestUrl,

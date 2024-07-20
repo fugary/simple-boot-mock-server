@@ -108,6 +108,7 @@ const sendRequest = (form) => {
         </el-row>
         <mock-request-form-req
           v-model="paramTarget"
+          :show-authorization="!matchPatternMode"
           :response-target="responseTarget"
         />
       </template>
