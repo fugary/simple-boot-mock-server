@@ -94,7 +94,7 @@ const sendRequest = (form) => {
               type="primary"
               @click="sendRequest(form)"
             >
-              发送请求
+              {{ $t('mock.label.sendRequest') }}
             </el-button>
           </el-col>
         </el-row>

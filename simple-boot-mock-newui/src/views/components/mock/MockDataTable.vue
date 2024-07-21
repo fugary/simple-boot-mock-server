@@ -34,13 +34,13 @@ const columns = computed(() => {
       type: 'selection'
     }
   }, {
-    label: '默认',
-    width: '60px',
+    labelKey: 'mock.label.default',
+    width: '80px',
     formatter (data) {
       return data.defaultFlag ? <CommonIcon color="#2d8cf0" icon="Flag"/> : ''
     }
   }, {
-    label: '状态码',
+    labelKey: 'mock.label.statusCode',
     property: 'statusCode',
     minWidth: '80px',
     formatter (data) {
@@ -63,12 +63,12 @@ const columns = computed(() => {
     property: 'delay',
     enabled: checkShowColumn(tableData.value, 'delay')
   }, {
-    label: '匹配规则',
+    labelKey: 'mock.label.matchPattern',
     enabled: checkShowColumn(tableData.value, 'matchPattern'),
     minWidth: '150px',
     formatter (data) {
       if (data.matchPattern) {
-        return <ViewDataLink data={data.matchPattern} tooltip="测试匹配规则"
+        return <ViewDataLink data={data.matchPattern} tooltip={$i18nBundle('mock.msg.matchPatternTest')}
                              onViewDataDetails={() => toTestMatchPattern(props.groupItem, props.requestItem, data)
                                .then(() => loadMockData())}/>
       }
@@ -81,7 +81,7 @@ const columns = computed(() => {
                          onToggleValue={(status) => saveMockData({ ...data, status })}/>
     }
   }, {
-    label: 'Response',
+    labelKey: 'mock.label.responseBody',
     property: 'responseBody',
     minWidth: '220px',
     formatter (data) {
@@ -136,7 +136,7 @@ const buttons = defineTableButtons([{
       })
   }
 }, {
-  label: '设为默认',
+  labelKey: 'mock.label.setDefault',
   type: 'primary',
   icon: 'Flag',
   buttonIf (item) {
@@ -189,7 +189,7 @@ const { contentRef: patternContentRef, languageRef: patternLanguageRef, monacoEd
 
 const editFormOptions = computed(() => {
   return defineFormOptions([{
-    label: '状态码',
+    labelKey: 'mock.label.statusCode',
     prop: 'statusCode',
     type: 'select',
     children: getSingleSelectOptions(...ALL_STATUS_CODES),
@@ -205,7 +205,7 @@ const editFormOptions = computed(() => {
       clearable: false
     }
   }, {
-    label: '默认请求',
+    labelKey: 'mock.label.default',
     prop: 'defaultFlag',
     type: 'switch',
     attrs: {
@@ -215,16 +215,10 @@ const editFormOptions = computed(() => {
       inactiveText: $i18nBundle('common.label.no')
     }
   }, useFormStatus(), useFormDelay(), {
-    label: '匹配规则',
+    labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
-    tooltip: `匹配规则支持javascript表达式，可以使用request请求数据: <br>
-        request.body——body内容对象（仅json）<br>
-        request.bodyStr——body内容字符串<br>
-        request.headers——头信息对象<br>
-        request.parameters——请求参数对象<br>
-        request.pathParameters——路径参数对象
-    `,
+    tooltip: $i18nBundle('mock.msg.matchPatternTooltip'),
     attrs: {
       value: currentDataItem.value?.matchPattern,
       'onUpdate:value': (value) => {
@@ -237,10 +231,10 @@ const editFormOptions = computed(() => {
       options: patternMonacoEditorOptions
     }
   }, {
-    label: '响应头',
+    labelKey: 'mock.label.responseHeaders',
     slot: 'headerParams'
   }, languageSelectOption.value, {
-    label: '响应体',
+    labelKey: 'mock.label.responseBody',
     type: 'vue-monaco-editor',
     prop: 'responseBody',
     attrs: {
@@ -337,8 +331,8 @@ const saveDataResponse = (mockData) => {
       v-model="currentDataItem"
       v-model:show-edit-window="showEditWindow"
       :form-options="editFormOptions"
-      name="Mock数据"
-      label-width="120px"
+      :name="$t('mock.label.mockData')"
+      label-width="140px"
       :save-current-item="saveMockData"
       show-fullscreen
     >

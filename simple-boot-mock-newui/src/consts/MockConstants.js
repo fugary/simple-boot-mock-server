@@ -2,6 +2,7 @@ import { defineFormOptions } from '@/components/utils'
 import { generateJWT, SUPPORTED_ALGORITHMS } from '@/utils/JwtUtils'
 import { getSingleSelectOptions } from '@/utils'
 import { ElMessage } from 'element-plus'
+import { $i18nKey } from '@/messages'
 
 export const MOCK_DEFAULT_PROJECT = 'default'
 
@@ -9,12 +10,28 @@ export const AUTHORIZATION_KEY = 'Authorization'
 
 export const BEARER_KEY = 'Bearer'
 
+export const DEFAULT_HEADERS = ['Accept',
+  'Accept-Charset',
+  'Accept-Encoding',
+  'Accept-Language',
+  'Authorization',
+  'Cookie',
+  'Connection',
+  'Content-Type',
+  'Origin',
+  'Pragma',
+  'User-Agent'
+]
+
 export const AUTH_TYPE = {
   NONE: 'none',
   BASIC: 'basic',
   TOKEN: 'token',
   JWT: 'jwt'
 }
+
+export const AUTH_PARAM_NAMES = [AUTHORIZATION_KEY, 'accessToken', 'access_token', 'token', 'jwt_token', 'api_key', 'X-API-Key']
+export const AUTH_PREFIX_NAMES = [BEARER_KEY, 'Basic']
 
 const baseOptions = defineFormOptions([{
   label: 'Add Token to',
@@ -29,16 +46,34 @@ const baseOptions = defineFormOptions([{
     label: 'Query Param'
   }]
 }, {
-  label: '认证参数名',
+  labelKey: 'mock.label.authParamName',
   prop: 'headerName',
   value: AUTHORIZATION_KEY,
   required: true,
-  tooltip: `认证默认值为：${AUTHORIZATION_KEY}，不能为空`
+  tooltip: $i18nKey('mock.msg.authParamNameTooltip', AUTHORIZATION_KEY),
+  type: 'autocomplete',
+  attrs: {
+    fetchSuggestions: (queryString, cb) => {
+      const dataList = AUTH_PARAM_NAMES.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
+        .map(value => ({ value }))
+      cb(dataList)
+    },
+    triggerOnFocus: false
+  }
 }, {
-  label: '前缀',
+  labelKey: 'mock.label.authPrefix',
   prop: 'tokenPrefix',
   value: BEARER_KEY,
-  tooltip: `前缀默认值为：${BEARER_KEY}，可以为空`
+  tooltip: $i18nKey('mock.msg.authPrefixTooltip', BEARER_KEY),
+  type: 'autocomplete',
+  attrs: {
+    fetchSuggestions: (queryString, cb) => {
+      const dataList = AUTH_PREFIX_NAMES.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
+        .map(value => ({ value }))
+      cb(dataList)
+    },
+    triggerOnFocus: false
+  }
 }])
 
 const addTokenToParams = (model, token, headers, params) => {
@@ -130,14 +165,14 @@ export const AUTH_OPTION_CONFIG = {
 
 export const AUTH_OPTIONS = [{
   value: AUTH_TYPE.NONE,
-  label: '无认证'
+  labelKey: 'mock.label.authTypeNone'
 }, {
   value: AUTH_TYPE.BASIC,
-  label: 'Basic认证'
+  labelKey: 'mock.label.authTypeBasic'
 }, {
   value: AUTH_TYPE.TOKEN,
-  label: 'TOKEN认证'
+  labelKey: 'mock.label.authTypeToken'
 }, {
   value: AUTH_TYPE.JWT,
-  label: 'JWT认证'
+  labelKey: 'mock.label.authTypeJWT'
 }]

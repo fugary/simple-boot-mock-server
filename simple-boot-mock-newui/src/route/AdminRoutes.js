@@ -13,7 +13,7 @@ export default [{
     component: () => import('@/views/admin/UserEdit.vue'),
     meta: {
       replaceTabHistory: 'Users',
-      label: '用户编辑',
+      labelKey: ['common.label.commonEdit', 'common.label.user'],
       icon: 'UserFilled'
     }
   }, {
@@ -22,7 +22,7 @@ export default [{
     component: () => import('@/views/admin/UserEdit.vue'),
     meta: {
       replaceTabHistory: 'Users',
-      label: '用户新增',
+      labelKey: ['common.label.commonAdd', 'common.label.user'],
       icon: 'UserFilled'
     }
   }]

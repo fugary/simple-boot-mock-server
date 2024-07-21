@@ -130,7 +130,7 @@ defineExpose({
   >
     <template #header>
       <span class="el-dialog__title">
-        请求测试
+        {{ $t('mock.msg.requestTest') }}
       </span>
     </template>
     <el-container class="flex-column">

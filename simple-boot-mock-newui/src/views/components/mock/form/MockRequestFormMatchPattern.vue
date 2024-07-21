@@ -1,5 +1,5 @@
 <script setup>
-
+import { $i18nBundle } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 
 const paramTarget = defineModel('modelValue', {
@@ -10,16 +10,10 @@ const paramTarget = defineModel('modelValue', {
 const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({ readOnly: false })
 
 const matchPatternOption = {
-  label: '匹配规则',
+  labelKey: 'mock.label.matchPattern',
   type: 'vue-monaco-editor',
   prop: 'matchPattern',
-  tooltip: `匹配规则支持javascript表达式，可以使用request请求数据: <br>
-        request.body——body内容对象（仅json）<br>
-        request.bodyStr——body内容字符串<br>
-        request.headers——头信息对象<br>
-        request.parameters——请求参数对象<br>
-        request.pathParameters——路径参数对象
-    `,
+  tooltip: $i18nBundle('mock.msg.matchPatternTooltip'),
   required: true,
   attrs: {
     value: paramTarget.value.matchPattern,

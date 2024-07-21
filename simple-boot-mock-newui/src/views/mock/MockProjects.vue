@@ -35,13 +35,13 @@ onActivated(async () => {
  */
 const columns = computed(() => {
   return [{
-    label: '项目代码',
+    labelKey: 'mock.label.projectCode',
     property: 'projectCode',
     click: item => {
       $goto(`/mock/groups/project/${item.projectCode}`)
     }
   }, {
-    label: '项目名称',
+    labelKey: 'mock.label.projectName',
     property: 'projectName',
     click: item => {
       $goto(`/mock/groups/project/${item.projectCode}`)
@@ -71,7 +71,7 @@ const buttons = defineTableButtons([{
     newOrEdit(item.id)
   }
 }, {
-  label: '管理分组',
+  labelKey: 'mock.label.mockGroups',
   type: 'success',
   click: item => {
     $goto(`/mock/groups/project/${item.projectCode}`)
@@ -133,19 +133,19 @@ const editFormOptions = computed(() => defineFormOptions([{
     clearable: false
   }
 }, {
-  label: '项目代码',
+  labelKey: 'mock.label.projectCode',
   prop: 'projectCode',
-  tooltip: '字母、数字、_-组成，唯一标识',
+  tooltip: $i18nBundle('mock.msg.projectCodeTooltip'),
   required: true,
   upperCase: true,
   rules: [{
     validator (val) {
       return /[A-Za-z0-9_-]+/.test(val)
     },
-    message: '字母、数字、_-组成，唯一标识'
+    message: $i18nBundle('mock.msg.projectCodeTooltip')
   }]
 }, {
-  label: '项目名称',
+  labelKey: 'mock.label.projectName',
   prop: 'projectName',
   required: true
 }, useFormStatus(), {
@@ -185,7 +185,7 @@ const saveProjectItem = (item) => {
       :data="tableData"
       :columns="columns"
       :buttons="buttons"
-      :buttons-column-attrs="{width:'230px'}"
+      :buttons-column-attrs="{minWidth:'250px'}"
       :loading="loading"
       @page-size-change="loadMockProjects()"
       @current-page-change="loadMockProjects()"
@@ -195,8 +195,9 @@ const saveProjectItem = (item) => {
       v-model="currentProject"
       v-model:show-edit-window="showEditWindow"
       :form-options="editFormOptions"
-      name="Mock项目"
+      :name="$t('mock.label.mockProjects')"
       :save-current-item="saveProjectItem"
+      label-width="130px"
     />
   </el-container>
 </template>

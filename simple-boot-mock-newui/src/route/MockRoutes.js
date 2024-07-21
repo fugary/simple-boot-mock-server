@@ -13,7 +13,7 @@ export default [{
     component: () => import('@/views/mock/MockGroups.vue'),
     meta: {
       replaceTabHistory: 'MockGroups',
-      label: 'Mock请求列表',
+      labelKey: 'mock.label.mockGroups',
       icon: 'List'
     }
   }, {
@@ -22,7 +22,7 @@ export default [{
     component: () => import('@/views/mock/MockRequests.vue'),
     meta: {
       replaceTabHistory: 'MockGroups',
-      label: 'Mock请求列表',
+      labelKey: 'mock.label.mockRequests',
       icon: 'List'
     }
   }]
@@ -32,7 +32,7 @@ export default [{
   component: () => import('@/views/mock/MockProjects.vue'),
   meta: {
     replaceTabHistory: 'MockProjects',
-    label: 'Mock项目列表',
+    labelKey: 'mock.label.mockProjects',
     icon: 'MessageBox'
   }
 }]

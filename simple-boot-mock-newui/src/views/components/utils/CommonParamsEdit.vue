@@ -2,6 +2,9 @@
 import { defineFormOptions } from '@/components/utils'
 import { computed, ref } from 'vue'
 import { toFlatKeyValue } from '@/utils'
+import { $i18nBundle } from '@/messages'
+import { ElMessage } from 'element-plus'
+import { DEFAULT_HEADERS } from '@/consts/MockConstants'
 
 const props = defineProps({
   formProp: {
@@ -67,7 +70,7 @@ const calcPasteParams = value => {
         })
       }
     } catch (e) {
-      console.log('========================error', e)
+      ElMessage.error(e.message)
     }
   } else {
     if (value.indexOf('?') > -1) {
@@ -89,10 +92,9 @@ const inputTextModel = ref({
   text: ''
 })
 const inputTextOption = {
-  label: '粘贴自动计算',
-  tooltip: '支持浏览器GET字符串或者JSON',
+  tooltip: $i18nBundle('mock.msg.pasteToProcess'),
   prop: 'text',
-  labelWidth: '120px',
+  labelWidth: '40px',
   change (value) {
     if (value) {
       const calcParams = calcPasteParams(value)
@@ -101,19 +103,6 @@ const inputTextOption = {
     }
   }
 }
-
-const defaultHeaders = ['Accept',
-  'Accept-Charset',
-  'Accept-Encoding',
-  'Accept-Language',
-  'Authorization',
-  'Cookie',
-  'Connection',
-  'Content-Type',
-  'Origin',
-  'Pragma',
-  'User-Agent'
-]
 
 const paramOptions = computed(() => {
   return defineFormOptions([{
@@ -129,7 +118,7 @@ const paramOptions = computed(() => {
     type: props.headerFlag ? 'autocomplete' : 'input',
     attrs: {
       fetchSuggestions: (queryString, cb) => {
-        const dataList = defaultHeaders.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
+        const dataList = DEFAULT_HEADERS.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
           .map(value => ({ value }))
         cb(dataList)
       },
@@ -187,7 +176,7 @@ const paramOptions = computed(() => {
           @click="addRequestParam()"
         >
           <common-icon icon="Plus" />
-          添加
+          {{ $t('common.label.add') }}
         </el-button>
         <el-button
           v-if="showPasteButton"
@@ -196,7 +185,7 @@ const paramOptions = computed(() => {
           @click="showTextModel=!showTextModel"
         >
           <common-icon icon="ContentPasteGoFilled" />
-          粘贴
+          {{ $t('common.label.paste') }}
         </el-button>
         <common-form-control
           v-if="showTextModel"

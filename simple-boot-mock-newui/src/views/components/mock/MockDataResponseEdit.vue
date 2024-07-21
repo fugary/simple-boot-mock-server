@@ -3,6 +3,7 @@ import { $checkLang, useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { computed, ref } from 'vue'
 import { cloneDeep } from 'lodash-es'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import { $i18nKey, $i18nBundle } from '@/messages'
 
 const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption, formatDocument } = useMonacoEditorOptions({ readOnly: false })
 const showWindow = ref(false)
@@ -29,13 +30,7 @@ const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 195px)' : '4
 
 defineExpose({ toEditDataResponse })
 
-const responseBodyTooltip = `响应内容支持根据请求参数替换，使用{{request.parameters.xxx}}格式替换数据: <br>
-        如果是Mock.js数据，不需要用{{}}包裹，直接可以用request对象<br>
-        request.body——body内容对象（仅json）<br>
-        request.bodyStr——body内容字符串<br>
-        request.headers——头信息对象<br>
-        request.parameters——请求参数对象<br>
-        request.pathParameters——路径参数对象`
+const responseBodyTooltip = $i18nBundle('mock.msg.responseBodyTooltip', ['{{request.params.xxx}}'])
 
 </script>
 
@@ -50,7 +45,7 @@ const responseBodyTooltip = `响应内容支持根据请求参数替换，使用
     :ok-click="saveDataResponse"
   >
     <template #header>
-      编辑数据响应内容
+      {{ $i18nKey('common.label.commonEdit', 'mock.label.responseBody1') }}
       <el-link
         v-common-tooltip="responseBodyTooltip"
         :underline="false"
@@ -66,10 +61,10 @@ const responseBodyTooltip = `响应内容支持根据请求参数替换，使用
         <template #childAfter>
           <mock-url-copy-link
             :content="contentRef"
-            tooltip="复制数据响应内容"
+            :tooltip="$i18nKey('common.label.commonCopy', 'mock.label.responseBody1')"
           />
           <el-link
-            v-common-tooltip="'格式化数据响应内容'"
+            v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.responseBody1')"
             type="primary"
             :underline="false"
             class="margin-left3"

@@ -6,6 +6,7 @@ import { defineFormOptions } from '@/components/utils'
 import { ElButton } from 'element-plus'
 import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, uploadFiles } from '@/api/mock/MockGroupApi'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
+import { $i18nBundle } from '@/messages'
 
 const props = defineProps({
   defaultUser: {
@@ -51,7 +52,7 @@ const formOptions = computed(() => {
       clearable: false
     }
   }, {
-    label: '项目',
+    labelKey: 'mock.label.project',
     prop: 'projectCode',
     type: 'select',
     enabled: props.projectOptions.length > 1,
@@ -60,7 +61,7 @@ const formOptions = computed(() => {
       clearable: false
     }
   }, {
-    label: '数据来源',
+    labelKey: 'mock.label.source',
     prop: 'type',
     type: 'select',
     children: IMPORT_TYPES,
@@ -68,16 +69,16 @@ const formOptions = computed(() => {
       clearable: false
     }
   }, {
-    label: '重复路径处理',
+    labelKey: 'mock.label.duplicateStrategy',
     prop: 'duplicateStrategy',
     type: 'select',
     children: IMPORT_DUPLICATE_STRATEGY,
-    tooltip: '路径是全局唯一的，所有用户共享，因此通常为自动生成的uuid',
+    tooltip: $i18nBundle('mock.msg.duplicateStrategy'),
     attrs: {
       clearable: false
     }
   }, {
-    label: '导入文件',
+    labelKey: 'mock.label.importFile',
     type: 'upload',
     attrs: {
       fileList: importFiles.value,
@@ -99,11 +100,11 @@ const formOptions = computed(() => {
     slots: {
       trigger () {
         return <>
-          <ElButton type="primary">选择文件</ElButton>
+          <ElButton type="primary">{$i18nBundle('mock.label.selectFile')}</ElButton>
           <span style="display: inline-block; margin-left: 10px;">{importFiles.value?.[0]?.name}</span>
         </>
       },
-      tip: () => <div className="el-upload__tip">文件大小最大限制为5MB</div>
+      tip: () => <div className="el-upload__tip">{$i18nBundle('mock.msg.importFileLimit')}</div>
     }
   }])
 })
@@ -114,13 +115,13 @@ const doImportGroups = () => {
       loading: true
     }).then(data => {
       if (data.success) {
-        $coreAlert(`导入成功，共${data.resultData}条`)
+        $coreAlert($i18nBundle('mock.msg.importFileSuccess', [data.resultData]))
         showWindow.value = false
         emit('import-success', data)
       }
     })
   } else {
-    $coreError('请选择导入文件')
+    $coreError($i18nBundle('mock.msg.importFileNoFile'))
   }
   return false
 }
@@ -130,7 +131,7 @@ const doImportGroups = () => {
 <template>
   <common-window
     v-model="showWindow"
-    title="导入mock数据"
+    :title="$t('mock.msg.importFileTitle')"
     append-to-body
     destroy-on-close
     width="800px"

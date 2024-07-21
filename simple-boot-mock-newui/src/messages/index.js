@@ -17,6 +17,7 @@ const i18n = createI18n({
   locale: DEFAULT_LOCALE, // set locale
   legacy: false, // you must set `false`, to use Composition API
   fallbackLocale: DEFAULT_LOCALE, // set fallback locale
+  warnHtmlMessage: false,
   messages: {
     'zh-CN': messagesCn,
     'en-US': messagesEn

@@ -9,7 +9,7 @@ const vModel = defineModel('modelValue', {
 })
 
 const authTypeSelectOption = ref({
-  label: '认证类型',
+  labelKey: 'mock.label.authType',
   type: 'radio-group',
   prop: 'authType',
   children: AUTH_OPTIONS,
@@ -39,7 +39,6 @@ const authOptions = computed(() => {
       label-width="130px"
       :prop="`authContent.${option.prop}`"
     />
-    {{ vModel }}
   </el-container>
 </template>
 

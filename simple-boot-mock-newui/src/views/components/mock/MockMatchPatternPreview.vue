@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import MockDataApi, { calcParamTarget, previewRequest, processResponse } from '@/api/mock/MockDataApi'
 import MockRequestApi from '@/api/mock/MockRequestApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
+import { $i18nKey } from '@/messages'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -82,14 +83,14 @@ defineExpose({
   <common-window
     v-model="showWindow"
     width="1000px"
-    ok-label="保存匹配规则"
+    :ok-label="$i18nKey('common.label.commonSave', 'mock.label.matchPattern')"
     show-fullscreen
     :ok-click="saveMatchPattern"
     destroy-on-close
   >
     <template #header>
       <span class="el-dialog__title">
-        匹配规则测试
+        {{ $t('mock.msg.matchPatternTest') }}
       </span>
     </template>
     <el-container class="flex-column">

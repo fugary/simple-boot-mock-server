@@ -52,7 +52,7 @@ const searchFormOptions = computed(() => {
       labelKey: 'common.label.keywords',
       prop: 'keyword'
     }, {
-      label: '请求方法',
+      labelKey: 'mock.label.method',
       prop: 'method',
       type: 'select',
       children: methodOptions,
@@ -70,7 +70,7 @@ const columns = computed(() => {
       type: 'selection'
     }
   }, {
-    label: '请求路径',
+    labelKey: 'mock.label.requestPath',
     property: 'requestPath',
     formatter (data) {
       const path = `/mock/${groupItem.value?.groupPath}${data.requestPath}`
@@ -81,7 +81,7 @@ const columns = computed(() => {
     },
     minWidth: '150px'
   }, {
-    label: '请求方法',
+    labelKey: 'mock.label.method',
     property: 'method',
     minWidth: '60px',
     formatter (data) {
@@ -94,18 +94,18 @@ const columns = computed(() => {
     minWidth: '60px',
     enabled: checkShowColumn(tableData.value, 'delay')
   }, {
-    label: '匹配规则',
+    labelKey: 'mock.label.matchPattern',
     enabled: checkShowColumn(tableData.value, 'matchPattern'),
     minWidth: '150px',
     formatter (data) {
       if (data.matchPattern) {
-        return <ViewDataLink data={data.matchPattern} tooltip="测试匹配规则"
+        return <ViewDataLink data={data.matchPattern} tooltip={$i18nBundle('mock.msg.testMatchPattern')}
                              onViewDataDetails={() => toTestMatchPattern(groupItem, data)
                                .then(() => loadMockRequests())}/>
       }
     }
   }, {
-    label: '请求名称',
+    labelKey: 'mock.label.requestName',
     property: 'requestName',
     enabled: checkShowColumn(tableData.value, 'requestName')
   }, {
@@ -137,7 +137,7 @@ const requestButtons = computed(() => {
       newOrEdit(item.id)
     }
   }, {
-    label: '展开响应',
+    labelKey: 'common.label.expand',
     type: 'primary',
     click: item => {
       requestTableRef.value?.table?.toggleRowExpansion(item)
@@ -146,7 +146,7 @@ const requestButtons = computed(() => {
     dynamicButton (item) {
       const expanded = expandRequestRows.value.map(req => req.id).includes(item.id)
       return {
-        label: expanded ? '收起响应' : '展开响应',
+        labelKey: expanded ? 'common.label.collapse' : 'common.label.expand',
         type: expanded ? 'info' : 'primary'
       }
     }
@@ -205,7 +205,7 @@ const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions(
 })
 const editFormOptions = computed(() => {
   return defineFormOptions([{
-    label: '请求路径',
+    labelKey: 'mock.label.requestPath',
     prop: 'requestPath',
     required: true,
     change (val) {
@@ -214,7 +214,7 @@ const editFormOptions = computed(() => {
       }
     }
   }, {
-    label: '请求方法',
+    labelKey: 'mock.label.method',
     prop: 'method',
     required: true,
     type: 'select',
@@ -224,16 +224,10 @@ const editFormOptions = computed(() => {
     }
   }, useFormStatus(), useFormDelay(),
   {
-    label: '匹配规则',
+    labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
-    tooltip: `匹配规则支持javascript表达式，可以使用request请求数据: <br>
-        request.body——body内容对象（仅json）<br>
-        request.bodyStr——body内容字符串<br>
-        request.headers——头信息对象<br>
-        request.parameters——请求参数对象<br>
-        request.pathParameters——路径参数对象
-    `,
+    tooltip: $i18nBundle('mock.msg.matchPatternTooltip'),
     attrs: {
       value: currentRequest.value?.matchPattern,
       'onUpdate:value': (value) => {
@@ -246,9 +240,9 @@ const editFormOptions = computed(() => {
       options: monacoEditorOptions
     }
   }, {
-    label: '请求名称',
+    labelKey: 'mock.label.requestName',
     prop: 'requestName',
-    tooltip: '简单接口名称，可不填写'
+    tooltip: $i18nBundle('mock.msg.requestNameTooltip')
   }, {
     labelKey: 'common.label.description',
     prop: 'description',
@@ -334,8 +328,9 @@ const saveMockRequest = item => {
       v-model="currentRequest"
       v-model:show-edit-window="showEditWindow"
       :form-options="editFormOptions"
-      name="Mock请求"
+      :name="$t('mock.label.mockRequests')"
       :save-current-item="saveMockRequest"
+      label-width="130px"
     />
   </el-container>
 </template>

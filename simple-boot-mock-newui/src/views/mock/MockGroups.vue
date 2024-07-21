@@ -56,13 +56,13 @@ const columns = computed(() => {
       type: 'selection'
     }
   }, {
-    label: '分组名称',
+    labelKey: 'mock.label.groupName',
     property: 'groupName',
     click: item => {
       $goto(`/mock/groups/${item.id}?backUrl=${route.fullPath}`)
     }
   }, {
-    label: '路径ID',
+    labelKey: 'mock.label.pathId',
     property: 'groupPath',
     minWidth: '180px',
     formatter (data) {
@@ -75,7 +75,7 @@ const columns = computed(() => {
       </>
     }
   }, {
-    label: '代理地址',
+    labelKey: 'mock.label.proxyUrl',
     property: 'proxyUrl',
     minWidth: '130px'
   }, {
@@ -133,7 +133,7 @@ const searchFormOptions = computed(() => {
       loadMockGroups(1)
     }
   }, {
-    label: '项目',
+    labelKey: 'mock.label.project',
     prop: 'projectCode',
     type: 'select',
     enabled: projectOptions.value.length > 1,
@@ -189,7 +189,7 @@ const editFormOptions = computed(() => defineFormOptions([{
     clearable: false
   }
 }, {
-  label: '项目',
+  labelKey: 'mock.label.project',
   prop: 'projectCode',
   type: 'select',
   enabled: projectOptions.value.length > 1,
@@ -198,19 +198,19 @@ const editFormOptions = computed(() => defineFormOptions([{
     clearable: false
   }
 }, {
-  label: '分组名称',
+  labelKey: 'mock.label.groupName',
   prop: 'groupName',
   required: true
 }, {
-  label: '路径ID',
+  labelKey: 'mock.label.pathId',
   prop: 'groupPath',
-  placeholder: '建议不要填写，自动生成'
+  placeholder: $i18nBundle('mock.msg.pathIdMsg')
 }, {
-  label: '代理地址',
+  labelKey: 'mock.label.proxyUrl',
   prop: 'proxyUrl',
-  tooltip: '配置的请求之外的地址将发送到代理地址获取数据，支持http和https',
+  tooltip: $i18nBundle('mock.msg.proxyUrlTooltip'),
   rules: [{
-    message: '代理地址必须是正常的http或者https地址',
+    message: $i18nBundle('mock.msg.proxyUrlMsg'),
     validator: () => {
       return !currentGroup.value?.proxyUrl || /^https?:\/\//.test(currentGroup.value?.proxyUrl)
     }
@@ -227,7 +227,7 @@ const saveGroupItem = (item) => {
 }
 const selectedRows = ref([])
 const exportGroups = (groupIds) => {
-  $coreConfirm('确认导出Mock数据？').then(() => {
+  $coreConfirm($i18nBundle('mock.msg.exportConfirm')).then(() => {
     const exportConfig = {
       exportAll: !groupIds,
       projectCode: searchParam.value.projectCode || MOCK_DEFAULT_PROJECT,
@@ -240,14 +240,14 @@ const exportGroups = (groupIds) => {
         const downloadUrl = `${getMockUrl(`${MOCK_GROUP_URL}/export`)}?${toGetParams(exportConfig)}`
         downloadByLink(downloadUrl)
       } else {
-        $coreError('没有需要导出的数据')
+        $coreError($i18nBundle('mock.msg.noExportData'))
       }
     })
   })
 }
 const exportSelected = () => {
   if (!selectedRows.value?.length) {
-    $coreError('没有需要导出的数据')
+    $coreError($i18nBundle('mock.msg.noExportData'))
     return
   }
   exportGroups(selectedRows.value.map(group => group.id))
@@ -275,19 +275,19 @@ const showImportWindow = ref(false)
         </el-button>
         <el-dropdown style="margin-left: 12px;">
           <el-button type="success">
-            导出
+            {{ $t('mock.label.export') }}
             <common-icon icon="ArrowDown" />
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="exportGroups()">
-                全部导出
+                {{ $t('mock.label.exportAll') }}
               </el-dropdown-item>
               <el-dropdown-item
                 :disabled="!selectedRows?.length"
                 @click="exportSelected"
               >
-                导出选中部分
+                {{ $t('mock.label.exportSelected') }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -296,7 +296,7 @@ const showImportWindow = ref(false)
           type="success"
           @click="showImportWindow = true"
         >
-          导入
+          {{ $t('mock.label.import') }}
         </el-button>
         <el-button
           v-if="selectedRows?.length"

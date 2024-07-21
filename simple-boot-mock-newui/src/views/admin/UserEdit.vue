@@ -38,29 +38,29 @@ loadUserAccount(userId)
 
 const formOptions = computed(() => {
   return defineFormOptions([{
-    label: '用户名',
+    labelKey: 'common.label.username',
     prop: 'userName',
     required: true,
     disabled: !!userAccount.value?.id
   }, {
-    label: '昵称',
+    labelKey: 'common.label.nickName',
     prop: 'nickName',
     required: true
   }, {
     ...useFormStatus(),
     enabled: isAdminUser() && !isUserAdmin(userAccount.value?.userName)
   }, {
-    label: '邮箱',
+    labelKey: 'common.label.email',
     prop: 'userEmail',
     rules: [{
       validator (_, value) {
         console.log('==================', value, '===========')
         return !value || /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(value)
       },
-      message: '请输入正确的邮箱地址'
+      message: $i18nBundle('common.msg.emailMsg')
     }]
   }, {
-    label: '密码',
+    labelKey: 'common.label.password',
     prop: 'userPassword',
     required: true,
     attrs: {

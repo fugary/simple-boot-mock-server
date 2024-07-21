@@ -6,6 +6,7 @@ import { checkParamsFilled } from '@/api/mock/MockRequestApi'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { AUTH_TYPE } from '@/consts/MockConstants'
 import MockRequestFormAuthorization from '@/views/components/mock/form/MockRequestFormAuthorization.vue'
+import { $i18nKey } from '@/messages'
 
 const props = defineProps({
   showAuthorization: {
@@ -77,7 +78,7 @@ if (paramTarget.value) {
           :value="paramTarget.pathParams?.length"
           :show-zero="false"
         >
-          路径参数
+          {{ $t('mock.label.pathParams') }}
         </el-badge>
       </template>
       <common-params-edit
@@ -96,7 +97,7 @@ if (paramTarget.value) {
           :value="paramTarget.requestParams?.length"
           :show-zero="false"
         >
-          请求参数
+          {{ $t('mock.label.queryParams') }}
         </el-badge>
       </template>
       <common-params-edit
@@ -111,7 +112,7 @@ if (paramTarget.value) {
           :value="requestHeaderLength"
           :show-zero="false"
         >
-          请求头
+          {{ $t('mock.label.requestHeaders') }}
         </el-badge>
       </template>
       <common-params-edit
@@ -145,7 +146,7 @@ if (paramTarget.value) {
           :hidden="!paramTarget.requestBody?.length"
           is-dot
         >
-          请求体
+          {{ $t('mock.label.requestBody') }}
         </el-badge>
       </template>
       <el-container class="flex-column">
@@ -156,10 +157,10 @@ if (paramTarget.value) {
           <template #childAfter>
             <mock-url-copy-link
               :content="contentRef"
-              tooltip="复制请求体内容"
+              :tooltip="$i18nKey('common.label.commonCopy', 'mock.label.requestBody')"
             />
             <el-link
-              v-common-tooltip="'格式化请求体'"
+              v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.requestBody')"
               type="primary"
               :underline="false"
               class="margin-left3"
@@ -192,7 +193,7 @@ if (paramTarget.value) {
           :hidden="authContentModel.authType === AUTH_TYPE.NONE"
           is-dot
         >
-          Authorization
+          {{ $t('mock.label.authorization') }}
         </el-badge>
       </template>
       <mock-request-form-authorization v-model="authContentModel" />

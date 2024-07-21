@@ -24,13 +24,13 @@ onMounted(() => {
  * @type {[CommonTableColumn]}
  */
 const columns = [{
-  label: '用户名',
+  labelKey: 'common.label.username',
   property: 'userName'
 }, {
-  label: '呢称',
+  labelKey: 'common.label.nickName',
   property: 'nickName'
 }, {
-  label: '邮箱',
+  labelKey: 'common.label.email',
   property: 'userEmail'
 }]
 const buttons = computed(() => {
@@ -62,7 +62,7 @@ const buttons = computed(() => {
 const searchFormOptions = computed(() => {
   return [
     {
-      label: '关键字',
+      labelKey: 'common.label.keywords',
       prop: 'keyword'
     }
   ]

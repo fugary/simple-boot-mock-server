@@ -121,7 +121,7 @@ export const useMonacoEditorOptions = (config) => {
     language: languageRef
   })
   const languageSelectOption = ref({
-    label: '文本格式',
+    labelKey: 'mock.label.dataFormat',
     type: 'radio-group',
     prop: 'language',
     model: languageModel,

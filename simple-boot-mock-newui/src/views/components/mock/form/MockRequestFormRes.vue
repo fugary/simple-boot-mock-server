@@ -92,7 +92,7 @@ const emit = defineEmits(['saveMockResponseBody'])
             :hidden="!responseTarget?.data?.length"
             is-dot
           >
-            响应体
+            {{ $t('mock.label.responseBody') }}
           </el-badge>
         </template>
         <el-container class="flex-column">
@@ -104,10 +104,10 @@ const emit = defineEmits(['saveMockResponseBody'])
             <template #childAfter>
               <mock-url-copy-link
                 :content="contentRef"
-                tooltip="复制响应体内容"
+                :tooltip="$i18nKey('common.label.commonCopy', 'mock.label.responseBody')"
               />
               <el-link
-                v-common-tooltip="'格式化响应体'"
+                v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.responseBody')"
                 type="primary"
                 :underline="false"
                 class="margin-left3"
@@ -119,7 +119,7 @@ const emit = defineEmits(['saveMockResponseBody'])
                 />
               </el-link>
               <el-link
-                v-common-tooltip="'显示未格式化原始数据'"
+                v-common-tooltip="$t('mock.msg.showRawData')"
                 type="primary"
                 :underline="false"
                 class="margin-left3"
@@ -151,7 +151,7 @@ const emit = defineEmits(['saveMockResponseBody'])
             :value="responseTarget.responseHeaders?.length"
             :show-zero="false"
           >
-            响应头
+            {{ $t('mock.label.responseHeaders') }}
           </el-badge>
         </template>
         <el-descriptions
@@ -179,7 +179,7 @@ const emit = defineEmits(['saveMockResponseBody'])
             :hidden="!paramTarget.responseBody?.length"
             is-dot
           >
-            Mock响应体
+            {{ $t('mock.label.mockResponseBody') }}
           </el-badge>
         </template>
         <el-container class="flex-column">
@@ -191,10 +191,10 @@ const emit = defineEmits(['saveMockResponseBody'])
             <template #childAfter>
               <mock-url-copy-link
                 :content="contentRef2"
-                tooltip="复制响应体内容"
+                :tooltip="$i18nKey('common.label.commonCopy', 'mock.label.mockResponseBody')"
               />
               <el-link
-                v-common-tooltip="'格式化响应体'"
+                v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.mockResponseBody')"
                 type="primary"
                 :underline="false"
                 class="margin-left3"
@@ -206,7 +206,7 @@ const emit = defineEmits(['saveMockResponseBody'])
                 />
               </el-link>
               <el-link
-                v-common-tooltip="'保存响应数据，【发送请求】测试将自动保存'"
+                v-common-tooltip="$t('mock.msg.saveMockResponse')"
                 type="primary"
                 :underline="false"
                 class="margin-left3"

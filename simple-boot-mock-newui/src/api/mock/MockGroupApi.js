@@ -21,24 +21,24 @@ export const checkExport = (data, config) => {
 
 export const IMPORT_DUPLICATE_STRATEGY = [{
   value: 1,
-  label: '中止导入'
+  labelKey: 'mock.label.importDuplicateStrategyAbort'
 }, {
   value: 2,
-  label: '跳过重复路径'
+  labelKey: 'mock.label.importDuplicateStrategySkip'
 }, {
   value: 3,
-  label: '自动生成新路径'
+  labelKey: 'mock.label.importDuplicateStrategyGenerate'
 }]
 
 export const IMPORT_TYPES = [{
   value: 'simple',
-  label: '当前简单Mock服务'
+  labelKey: 'mock.label.importTypeSimple'
 }, {
   value: 'fastmock',
-  label: '老fastmock服务（测试）'
+  labelKey: 'mock.label.importTypeFastMock'
 }, {
   value: 'swagger',
-  label: 'Swagger2/OpenAPI3.0（测试）'
+  labelKey: 'mock.label.importTypeSwagger'
 }]
 
 export const uploadFiles = (files, params = {}, config = {}) => {
