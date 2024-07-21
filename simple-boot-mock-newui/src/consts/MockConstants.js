@@ -85,9 +85,6 @@ const addTokenToParams = (model, token, headers, params) => {
 }
 
 export const AUTH_OPTION_CONFIG = {
-  none: {
-    parseAuthInfo () {}
-  },
   basic: {
     options: defineFormOptions([{
       labelKey: 'common.label.username',
@@ -129,6 +126,7 @@ export const AUTH_OPTION_CONFIG = {
     }, {
       label: 'Secret',
       prop: 'secret',
+      required: true,
       attrs: {
         showPassword: true
       }
@@ -136,21 +134,13 @@ export const AUTH_OPTION_CONFIG = {
       label: 'base64 encoded',
       prop: 'base64',
       type: 'switch'
-    }, {
-      label: 'Payload',
-      prop: 'payload',
-      value: '{}',
-      required: true,
-      attrs: {
-        type: 'textarea'
-      }
     }]),
     async parseAuthInfo (model, headers, params) {
       let payload = {}
-      if (model.payload) {
-        payload = JSON.parse(model.payload)
-      }
       try {
+        if (model.payload) {
+          payload = JSON.parse(model.payload)
+        }
         const secret = model.base64 ? atob(model.secret) : model.secret
         // 计算jwtToken，使用jose库
         const token = await generateJWT(payload, secret, model.algorithm)
