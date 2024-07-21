@@ -44,9 +44,9 @@ public class DefaultMockPushProcessorImpl implements MockPushProcessor {
             responseEntity = processRedirect(responseEntity, mockParams, entity);
             return SimpleMockUtils.removeCorsHeaders(responseEntity);
         } catch (HttpClientErrorException e) {
-            return ResponseEntity.status(e.getStatusCode())
+            return SimpleMockUtils.removeCorsHeaders(ResponseEntity.status(e.getStatusCode())
                     .headers(e.getResponseHeaders())
-                    .body(e.getResponseBodyAsByteArray());
+                    .body(e.getResponseBodyAsByteArray()));
         } catch (Exception e) {
             log.error("获取数据错误", e);
         }

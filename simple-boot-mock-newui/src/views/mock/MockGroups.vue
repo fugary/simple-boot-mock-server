@@ -42,7 +42,7 @@ onMounted(() => {
 
 onActivated(async () => {
   await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
-  loadMockGroups(1)
+  loadMockGroups()
 })
 
 /**
