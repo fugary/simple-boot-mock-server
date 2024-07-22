@@ -1,12 +1,25 @@
 <script setup>
 
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { AUTH_OPTION_CONFIG, AUTH_OPTIONS, AUTH_TYPE } from '@/consts/MockConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
+import { useFormItem } from 'element-plus'
+
+const props = defineProps({
+  formProp: {
+    type: String,
+    default: 'authContent'
+  }
+})
 
 const vModel = defineModel('modelValue', {
   type: Object,
   required: true
+})
+
+const authValid = defineModel('authValid', {
+  type: Boolean,
+  default: true
 })
 
 const authTypeSelectOption = ref({
@@ -51,6 +64,16 @@ const jwtPayloadOption = {
   }
 }
 
+const { form } = useFormItem()
+watch([vModel, authOptions], () => {
+  nextTick(async () => {
+    if (form?.validateField) {
+      authValid.value = await form?.validateField(authOptions.value.map(option => `${props.formProp}.${option.prop}`))
+        .then(() => true).catch(() => false)
+    }
+  })
+}, { immediate: true, deep: true })
+
 </script>
 
 <template>
@@ -66,7 +89,7 @@ const jwtPayloadOption = {
       :model="vModel"
       :option="option"
       label-width="130px"
-      :prop="`authContent.${option.prop}`"
+      :prop="`${formProp}.${option.prop}`"
     />
   </el-container>
 </template>

@@ -28,7 +28,7 @@ defineExpose({
     v-model="showWindow"
     :show-cancel="false"
     :ok-label="$t('common.label.close')"
-    title="用户详情"
+    :title="$t('common.label.userDetails')"
     destroy-on-close
     width="600px"
   >

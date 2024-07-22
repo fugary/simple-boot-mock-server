@@ -60,6 +60,7 @@ if (paramTarget.value) {
     paramTarget.value.authContent = authContentModel.value
   }
 }
+const authValid = ref(true)
 </script>
 
 <template>
@@ -189,14 +190,17 @@ if (paramTarget.value) {
     >
       <template #label>
         <el-badge
-          type="primary"
+          :type="authValid ? 'primary' : 'danger'"
           :hidden="authContentModel.authType === AUTH_TYPE.NONE"
           is-dot
         >
           {{ $t('mock.label.authorization') }}
         </el-badge>
       </template>
-      <mock-request-form-authorization v-model="authContentModel" />
+      <mock-request-form-authorization
+        v-model="authContentModel"
+        v-model:auth-valid="authValid"
+      />
     </el-tab-pane>
   </el-tabs>
 </template>
