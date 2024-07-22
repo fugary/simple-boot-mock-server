@@ -53,6 +53,12 @@ public interface MockRequestService extends IService<MockRequest> {
     List<MockData> loadDataByRequest(Integer requestId);
 
     /**
+     * 加载请求下面的数据
+     * @param requestId
+     */
+    List<MockData> loadAllDataByRequest(Integer requestId);
+
+    /**
      * 查询默认可用MockData
      *
      * @param mockDataList

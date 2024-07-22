@@ -87,6 +87,12 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
                 .eq("status", 1));
     }
 
+    @Override
+    public List<MockData> loadAllDataByRequest(Integer requestId) {
+        return mockDataService.list(Wrappers.<MockData>query()
+                .eq("request_id", requestId));
+    }
+
     /**
      * 查询默认可用MockData
      *

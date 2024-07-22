@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
+import com.fugary.simple.mock.entity.mock.MockBase;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
@@ -122,19 +123,18 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         String requestPath = request.getServletPath();
         String method = request.getMethod();
         String requestGroupPath = calcGroupPath(requestPath);
+        boolean testRequest = requestId != 0;
         MockGroup mockGroup = null;
         if (StringUtils.isNotBlank(requestGroupPath)) {
             mockGroup = getOne(Wrappers.<MockGroup>query()
                     .eq("group_path", requestGroupPath)
-                    .eq("status", 1));
+                    .eq(!testRequest,"status", 1));
             if (mockGroup != null) {
                 // 查询Request
                 QueryWrapper<MockRequest> requestQuery = Wrappers.<MockRequest>query().eq("group_id", mockGroup.getId())
                         .eq("method", method)
-                        .eq("status", 1);
-                if (requestId != 0) {
-                    requestQuery.eq("id", requestId);
-                }
+                        .eq(!testRequest, "status", 1)
+                        .eq(testRequest, "id", requestId);
                 List<MockRequest> mockRequests = mockRequestService.list(requestQuery);
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
                 // 请求是否匹配上Request，如果匹配上就查询Data
@@ -146,9 +146,10 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         try {
                             HttpRequestVo requestVo = calcRequestVo(request, configPath, requestPath);
                             MockJsUtils.setCurrentRequestVo(requestVo);
-                            if (matchRequestPattern(mockRequest.getMatchPattern())) {
-                                List<MockData> mockDataList = mockRequestService.loadDataByRequest(mockRequest.getId());
+                            if (matchRequestPattern(mockRequest.getMatchPattern()) || testRequest) {
+                                List<MockData> mockDataList = mockRequestService.loadAllDataByRequest(mockRequest.getId());
                                 MockData mockData = mockRequestService.findForceMockData(mockDataList, defaultId);
+                                mockDataList = mockDataList.stream().filter(MockBase::isEnabled).collect(Collectors.toList());
                                 if (mockData == null) { // request匹配的数据查找
                                     mockData = mockRequestService.findMockDataByRequest(mockDataList, requestVo);
                                 }

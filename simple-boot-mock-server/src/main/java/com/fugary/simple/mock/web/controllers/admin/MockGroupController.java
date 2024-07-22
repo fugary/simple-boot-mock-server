@@ -58,12 +58,10 @@ public class MockGroupController {
     @GetMapping
     public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
-        QueryWrapper<MockGroup> queryWrapper = Wrappers.query();
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
-        if (StringUtils.isNotBlank(keyword)) {
-            queryWrapper.and(wrapper -> wrapper.like("group_name", keyword)
+        QueryWrapper<MockGroup> queryWrapper = Wrappers.query();
+        queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("group_name", keyword)
                     .or().like("group_path", keyword));
-        }
         String userName = SecurityUtils.getUserName(queryVo.getUserName());
         queryWrapper.eq("user_name", userName);
         queryWrapper.eq("project_code", StringUtils.defaultIfBlank(queryVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));

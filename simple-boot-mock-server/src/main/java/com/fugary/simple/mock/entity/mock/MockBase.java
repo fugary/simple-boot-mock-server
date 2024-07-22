@@ -23,4 +23,7 @@ public class MockBase implements Serializable {
     private Date modifyDate;
     private Integer status;
 
+    public boolean isEnabled() {
+        return Integer.valueOf(1).equals(status);
+    }
 }
