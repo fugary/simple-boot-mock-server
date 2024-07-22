@@ -1,7 +1,8 @@
 <script setup>
 
 import { ref, computed, watch, nextTick } from 'vue'
-import { AUTH_OPTION_CONFIG, AUTH_OPTIONS, AUTH_TYPE } from '@/consts/MockConstants'
+import { AUTH_OPTIONS, AUTH_TYPE } from '@/consts/MockConstants'
+import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { useFormItem } from 'element-plus'
 

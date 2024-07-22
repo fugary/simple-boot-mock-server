@@ -5,7 +5,7 @@ import MockDataApi, { calcParamTarget, previewRequest, processResponse } from '@
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { ElMessage } from 'element-plus'
 import { $i18nBundle } from '@/messages'
-import { AUTH_OPTION_CONFIG } from '@/consts/MockConstants'
+import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 
 const showWindow = ref(false)
 const groupItem = ref()

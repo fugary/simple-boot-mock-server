@@ -96,7 +96,7 @@ const columns = computed(() => {
   }, {
     labelKey: 'mock.label.matchPattern',
     enabled: checkShowColumn(tableData.value, 'matchPattern'),
-    minWidth: '150px',
+    minWidth: '120px',
     formatter (data) {
       if (data.matchPattern) {
         return <ViewDataLink data={data.matchPattern} tooltip={$i18nBundle('mock.msg.testMatchPattern')}
@@ -304,7 +304,7 @@ const saveMockRequest = item => {
         :data="tableData"
         :columns="columns"
         :buttons="requestButtons"
-        :buttons-column-attrs="{minWidth:'200px'}"
+        :buttons-column-attrs="{minWidth:'240px'}"
         :loading="loading"
         expand-table
         row-key="id"
