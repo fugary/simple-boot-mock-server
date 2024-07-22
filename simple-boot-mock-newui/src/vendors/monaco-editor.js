@@ -60,14 +60,14 @@ self.MonacoEnvironment = {
 }
 
 const langCheckConfig = [{
+  type: 'html',
+  checkReg: /(<[\s\S]*>)/
+}, {
   type: 'javascript',
-  checkReg: /function|var\s+|let\s+|const\s+|return\s+|=>|Mock\.mock|request\./
+  checkReg: /function|var\s+|let\s+|const\s+|return\s+|=>|Mock\.mock/
 }, {
   type: 'json',
   checkReg: /(^\{[\s\S]*})|(^\[[\s\S]*])/
-}, {
-  type: 'html',
-  checkReg: /(<[\s\S]*>)/
 }, {
   type: 'sql',
   checkReg: /(SELECT\s.*?\bFROM\b)|(INSERT\s.*?\bINTO\b)|(UPDATE\s.*?\bSET\b)|(DELETE\s.*?\bFROM\b)/i

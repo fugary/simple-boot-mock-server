@@ -90,7 +90,8 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
     headerParams: [],
     contentType: previewData?.contentType || 'application/json',
     method: requestItem?.method || 'GET',
-    responseBody: previewData?.responseBody
+    responseBody: previewData?.responseBody,
+    responseFormat: previewData?.responseFormat
   }
   if (value) {
     const pathParams = target.pathParams

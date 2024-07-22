@@ -1,5 +1,5 @@
 <script setup>
-import { $checkLang, useMonacoEditorOptions } from '@/vendors/monaco-editor'
+import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { computed, ref } from 'vue'
 import { cloneDeep } from 'lodash-es'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
@@ -12,14 +12,15 @@ const currentMockData = ref()
 const toEditDataResponse = (mockData) => {
   currentMockData.value = cloneDeep(mockData)
   contentRef.value = mockData.responseBody
+  languageRef.value = mockData.responseFormat
   showWindow.value = true
-  languageRef.value = $checkLang(mockData.responseBody)
 }
 
 const emit = defineEmits(['saveDataResponse'])
 
 const saveDataResponse = () => {
   currentMockData.value.responseBody = contentRef.value
+  currentMockData.value.responseFormat = languageRef.value
   showWindow.value = false
   emit('saveDataResponse', currentMockData.value)
 }

@@ -233,7 +233,14 @@ const editFormOptions = computed(() => {
   }, {
     labelKey: 'mock.label.responseHeaders',
     slot: 'headerParams'
-  }, languageSelectOption.value, {
+  }, {
+    ...languageSelectOption.value,
+    change (val) {
+      if (currentDataItem.value) {
+        currentDataItem.value.responseFormat = val
+      }
+    }
+  }, {
     labelKey: 'mock.label.responseBody',
     type: 'vue-monaco-editor',
     prop: 'responseBody',
@@ -262,7 +269,6 @@ const saveMockData = (data) => {
     dataItem.headers = JSON.stringify(dataItem.headerParams)
     delete dataItem.headerParams
   }
-  dataItem.responseFormat = languageRef.value
   return MockDataApi.saveOrUpdate(dataItem)
     .then(() => loadMockData())
 }

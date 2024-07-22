@@ -38,7 +38,11 @@ const requestInfo = computed(() => {
 const {
   contentRef: contentRef2, languageRef: languageRef2, editorRef: editorRef2, monacoEditorOptions: monacoEditorOptions2,
   languageModel: languageModel2, languageSelectOption: languageSelectOption2, formatDocument: formatDocument2
-} = useMonacoEditorOptions({ readOnly: false })
+} = useMonacoEditorOptions({ readOnly: false, language: paramTarget.value.responseFormat })
+
+watch(languageRef2, language => {
+  paramTarget.value.responseFormat = language
+})
 
 contentRef2.value = paramTarget.value?.responseBody
 

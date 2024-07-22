@@ -106,6 +106,7 @@ const doSaveMockParams = () => {
 const doSaveMockResponseBody = () => {
   if (previewData.value) {
     previewData.value.responseBody = paramTarget.value.responseBody
+    previewData.value.responseFormat = paramTarget.value.responseFormat
     return MockDataApi.saveOrUpdate(previewData.value)
       .then(() => {
         ElMessage.success($i18nBundle('common.msg.saveSuccess'))
