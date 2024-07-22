@@ -3,6 +3,7 @@ import { $http, hasLoading } from '@/vendors/axios'
 import axios from 'axios'
 import { $coreHideLoading, $coreShowLoading } from '@/utils'
 import { isString } from 'lodash-es'
+import { MOCK_DATA_PREVIEW_HEADER, MOCK_META_DATA_REQ } from '@/consts/MockConstants'
 
 const MOCK_DATA_URL = '/admin/data'
 
@@ -32,7 +33,7 @@ export const previewRequest = function (reqData, config) {
     timeout: 60000 // request timeout,
   })
   const headers = Object.assign({
-    'mock-data-preview': true
+    [MOCK_DATA_PREVIEW_HEADER]: true
   }, config.headers || {})// 预览的时候强制指定一个ID
   config.__startTime = new Date().getTime()
   if (hasLoading(config)) {
@@ -61,10 +62,10 @@ export const processResponse = function (response) {
     status,
     duration: config.__startTime ? new Date().getTime() - config.__startTime : 0
   }
-  const requestHeaders = JSON.parse(headers['mock-meta-req'] || '[]').sort((a, b) => a.name.localeCompare(b.name))
+  const requestHeaders = JSON.parse(headers[MOCK_META_DATA_REQ] || '[]').sort((a, b) => a.name.localeCompare(b.name))
   const responseHeaders = []
   for (const name in headers) {
-    if (name !== 'mock-meta-req') {
+    if (name !== MOCK_META_DATA_REQ) {
       responseHeaders.push({
         name,
         value: headers[name]

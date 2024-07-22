@@ -4,6 +4,7 @@ import MockDataApi, { calcParamTarget, previewRequest, processResponse } from '@
 import MockRequestApi from '@/api/mock/MockRequestApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { $i18nKey } from '@/messages'
+import { MOCK_DATA_MATCH_PATTERN_HEADER, MOCK_DATA_PATH_PARAMS_HEADER } from '@/consts/MockConstants'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -43,10 +44,10 @@ const doDataPreview = () => {
     headers
   }
   if (paramTarget.value.pathParams?.length) {
-    headers['mock-data-path-params'] = JSON.stringify(paramTarget.value.pathParams)
+    headers[MOCK_DATA_PATH_PARAMS_HEADER] = JSON.stringify(paramTarget.value.pathParams)
   }
   if (paramTarget.value.matchPattern) {
-    headers['mock-data-match-pattern'] = paramTarget.value.matchPattern
+    headers[MOCK_DATA_MATCH_PATTERN_HEADER] = paramTarget.value.matchPattern
   }
   previewRequest({
     url: paramTarget.value.requestPath,

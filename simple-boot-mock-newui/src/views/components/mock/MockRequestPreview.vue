@@ -6,6 +6,7 @@ import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { ElMessage } from 'element-plus'
 import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
+import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -64,8 +65,8 @@ const doDataPreview = async () => {
     data,
     headers
   }
-  requestItem.value?.id && (headers['mock-request-id'] = requestItem.value?.id)
-  previewData.value?.id && (headers['mock-data-id'] = previewData.value?.id)
+  requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)
+  previewData.value?.id && (headers[MOCK_DATA_ID_HEADER] = previewData.value?.id)
   await doSaveMockParams()
   if (paramTarget.value?.responseBody !== previewData.value?.responseBody) {
     await doSaveMockResponseBody()
