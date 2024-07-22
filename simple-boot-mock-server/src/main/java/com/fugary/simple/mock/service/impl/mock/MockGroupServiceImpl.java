@@ -246,7 +246,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     protected void processMockData(MockData mockData, HttpRequestVo requestVo) {
         if (mockData != null) {
             String responseBody = StringUtils.trimToEmpty(mockData.getResponseBody());
-            responseBody = MockJsUtils.processResponseBody(responseBody, requestVo);
+            responseBody = MockJsUtils.processResponseBody(responseBody, requestVo, paramKey -> scriptEngineProvider.eval(paramKey));
             mockData.setResponseBody(scriptEngineProvider.mock(responseBody)); // 使用Mockjs来处理响应数据
         }
     }

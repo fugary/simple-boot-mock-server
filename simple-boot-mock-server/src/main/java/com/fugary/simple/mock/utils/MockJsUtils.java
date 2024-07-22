@@ -1,6 +1,9 @@
 package com.fugary.simple.mock.utils;
 
+import com.fugary.simple.mock.config.script.ScriptEngineConfig;
+import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -12,6 +15,7 @@ import javax.script.Bindings;
 import javax.servlet.http.HttpServletRequest;
 import java.text.MessageFormat;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,19 +87,27 @@ public class MockJsUtils {
      * @param requestVo
      * @return
      */
-    public static String processResponseBody(String responseBody, HttpRequestVo requestVo) {
+    public static String processResponseBody(String responseBody, HttpRequestVo requestVo, Function<String, Object> processor) {
         Matcher matcher = Pattern.compile("\\{\\{(.+?)}}").matcher(responseBody);
         String result = responseBody;
         // 从responseBody中解析出{{xxx.xx}}格式的参数，从requestVo中取出值替换上去
         while (matcher.find()) {
             String paramKey = matcher.group(1); // 完整参数
             String beanParamKey = paramKey;
-            if (paramKey.startsWith(REQUEST_PREFIX_KEY)) {
-                beanParamKey = paramKey.substring(REQUEST_PREFIX_KEY.length());
-            }
             Object paramValue = null;
             try {
-                paramValue = BeanUtils.getProperty(requestVo, beanParamKey);
+                if (processor == null) {
+                    if (paramKey.startsWith(REQUEST_PREFIX_KEY)) {
+                        beanParamKey = paramKey.substring(REQUEST_PREFIX_KEY.length());
+                    }
+                    paramValue = BeanUtils.getProperty(requestVo, beanParamKey);
+                } else {
+                    paramValue = processor.apply(beanParamKey);
+                    if (paramValue instanceof SimpleResult) {
+                        log.error("处理表达式{}错误: {}", beanParamKey, ((SimpleResult) paramValue).getResultData());
+                        paramValue = null;
+                    }
+                }
             } catch (Exception e) {
                 log.error(MessageFormat.format("处理属性{0}错误", paramKey), e);
             }
@@ -107,10 +119,13 @@ public class MockJsUtils {
     }
 
     public static void main(String[] args) {
-        String responseBody = "<abc>{{request.parameters.a}}</abc><bcd>{{request.parameters.b}}</bcd>";
+        String responseBody = "<abc>{{request.parameters.a.split(' ')[0]}}</abc><bcd>{{request.parameters.a.split(' ')[1]}}</bcd>";
+        ScriptEngineProvider scriptEngineProvider = new ScriptEngineConfig().scriptEngineProvider();
         HttpRequestVo requestVo = new HttpRequestVo();
-        requestVo.getParameters().put("a", "test");
-        String result = processResponseBody(responseBody, requestVo);
+        requestVo.getParameters().put("a", "hello world");
+        MockJsUtils.setCurrentRequestVo(requestVo);
+        String result = processResponseBody(responseBody, requestVo, scriptEngineProvider::eval);
+        MockJsUtils.removeCurrentRequestVo();
         log.info("result={}", result);
     }
 }

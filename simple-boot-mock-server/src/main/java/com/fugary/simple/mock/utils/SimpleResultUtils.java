@@ -123,7 +123,11 @@ public class SimpleResultUtils {
     }
 
     public static String getErrorMsg(Integer code, Locale locale) {
-        return messageSource.getMessage("simple.error.code." + code, null, locale);
+        String messageKey = "simple.error.code." + code;
+        if (messageSource != null) {
+            return messageSource.getMessage(messageKey, null, locale);
+        }
+        return messageKey;
     }
 
     public static String getErrorMsg(Integer code) {

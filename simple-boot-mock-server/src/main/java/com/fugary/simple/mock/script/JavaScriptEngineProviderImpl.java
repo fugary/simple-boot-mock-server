@@ -22,6 +22,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 
 /**
  * Create date 2024/7/4<br>
@@ -89,7 +90,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
             addRequestVo(scriptEngine);
             return scriptEngine.eval(script);
         } catch (Exception e) {
-            log.error("执行MockJs错误", e);
+            log.error(MessageFormat.format("执行MockJs错误：{0}", script), e);
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, ExceptionUtils.getStackTrace(e));
         } finally {
             if (scriptEngine != null) {
