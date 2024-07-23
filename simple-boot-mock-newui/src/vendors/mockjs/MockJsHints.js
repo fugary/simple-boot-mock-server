@@ -91,6 +91,19 @@ export const initMockJsHints = () => {
       })
     })
     monaco.languages.registerCompletionItemProvider('html', {
+      provideCompletionItems: getCompletionItemProvider((text) => /\{\{/.test(text), range => {
+        return [{
+          label: 'request',
+          detail: 'request请求对象',
+          desc: '包含params，body，bodyStr，headers，parameters，pathParameters'
+        }, {
+          label: 'Mock',
+          detail: 'MockJS对象',
+          desc: '生成假数据工具'
+        }].map(config => configToSuggestion(config, range))
+      })
+    })
+    monaco.languages.registerCompletionItemProvider('html', {
       triggerCharacters: ['.'],
       provideCompletionItems: getCompletionItemProvider((text) => /request\./.test(text), range => {
         return [{
