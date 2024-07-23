@@ -2,6 +2,7 @@ import * as monaco from 'monaco-editor'
 import BetterMockJsCode from '@/vendors/mockjs/BetterMockJs.d.ts?raw'
 import RequestHintDataCode from '@/vendors/mockjs/RequestHintData.d.ts?raw'
 import { MockRandom } from '@/vendors/mockjs/MockJsonHintData'
+import { initXmlWithJs, XML_WITH_JS_ID } from '@/vendors/mockjs/XmlWithJs'
 
 export const configToSuggestion = (config, range) => {
   let insertText = config.label
@@ -21,16 +22,19 @@ export const configToSuggestion = (config, range) => {
   }
 }
 
-export const getCompletionItemProvider = (checkMatch, getSuggestions) => {
+export const getCompletionItemProvider = (getSuggestions, checkMatch, textRangeFun) => {
   return function (model, position) {
     const word = model.getWordUntilPosition(position)
-    const textUntilPosition = model.getValueInRange({
-      startLineNumber: position.lineNumber,
-      startColumn: 1,
-      endLineNumber: position.lineNumber,
-      endColumn: position.column
+    textRangeFun = textRangeFun || ((model, position) => {
+      return model.getValueInRange({
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column
+      })
     })
-    const match = checkMatch(textUntilPosition)
+    const textUntilPosition = textRangeFun(model, position)
+    const match = checkMatch?.(textUntilPosition) ?? true
     if (!match) {
       return { suggestions: [] }
     }
@@ -47,10 +51,10 @@ export const getCompletionItemProvider = (checkMatch, getSuggestions) => {
   }
 }
 
-const getMockJsPlaceholders = ({ quote, prefix = '@', matcher = () => true, labelFun } = {}) => {
+const getMockJsPlaceholders = ({ quote, prefix = '@', matcher, labelFun } = {}) => {
   const keyArr = Object.keys(MockRandom)
   labelFun = labelFun || (key => quote ? `"${prefix}${key}"` : `${prefix}${key}`)
-  return getCompletionItemProvider(matcher, range => keyArr.map(key => {
+  return getCompletionItemProvider(range => keyArr.map(key => {
     const config = MockRandom[key]
     const detail = `——>${key}${config.func.toString()}`.replace(/\s+/g, '').replace('=>{}', '')
     return configToSuggestion({
@@ -58,7 +62,7 @@ const getMockJsPlaceholders = ({ quote, prefix = '@', matcher = () => true, labe
       detail,
       desc: config.desc
     }, range)
-  }))
+  }), matcher)
 }
 
 export const initMockJsHints = () => {
@@ -78,20 +82,26 @@ export const initMockJsHints = () => {
       triggerCharacters: ['"', "'", '`'],
       provideCompletionItems: getMockJsPlaceholders()
     })
-    monaco.languages.registerCompletionItemProvider('html', {
-      triggerCharacters: ['@'],
-      provideCompletionItems: getMockJsPlaceholders({ prefix: '' })
+    initXmlWithJs(monaco)
+    const baseXmlWithJsMatcher = (text) => {
+      const left = text.match(/\{\{/g)
+      const right = text.match(/}}/g)
+      return !!left && left.length > (right?.length || 0)
+    }
+    monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
+      triggerCharacters: [''],
+      provideCompletionItems: getMockJsPlaceholders({ prefix: '', matcher: baseXmlWithJsMatcher })
     })
-    monaco.languages.registerCompletionItemProvider('html', {
+    monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
       triggerCharacters: ['.'],
       provideCompletionItems: getMockJsPlaceholders({
         prefix: '',
-        matcher: text => /Mock.Random\./.test(text),
+        matcher: text => baseXmlWithJsMatcher(text) && /Mock.Random\./.test(text),
         labelFun: key => `${key}()`
       })
     })
-    monaco.languages.registerCompletionItemProvider('html', {
-      provideCompletionItems: getCompletionItemProvider((text) => /\{\{/.test(text), range => {
+    monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
+      provideCompletionItems: getCompletionItemProvider(range => {
         return [{
           label: 'request',
           detail: 'request请求对象',
@@ -101,11 +111,11 @@ export const initMockJsHints = () => {
           detail: 'MockJS对象',
           desc: '生成假数据工具'
         }].map(config => configToSuggestion(config, range))
-      })
+      }, baseXmlWithJsMatcher)
     })
-    monaco.languages.registerCompletionItemProvider('html', {
+    monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
       triggerCharacters: ['.'],
-      provideCompletionItems: getCompletionItemProvider((text) => /request\./.test(text), range => {
+      provideCompletionItems: getCompletionItemProvider(range => {
         return [{
           label: 'body',
           detail: 'request.body',
@@ -131,11 +141,11 @@ export const initMockJsHints = () => {
           detail: 'request.params',
           desc: '请求参数和路径参数合并'
         }].map(config => configToSuggestion(config, range))
-      })
+      }, (text) => baseXmlWithJsMatcher(text) && /request\./.test(text))
     })
-    monaco.languages.registerCompletionItemProvider('html', {
+    monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
       triggerCharacters: ['.'],
-      provideCompletionItems: getCompletionItemProvider((text) => /Mock\./.test(text), range => {
+      provideCompletionItems: getCompletionItemProvider(range => {
         return [{
           label: 'mock()',
           detail: 'Mock.mock',
@@ -145,7 +155,7 @@ export const initMockJsHints = () => {
           detail: 'Mock.Random',
           desc: 'Mock.Random生成随机数据'
         }].map(config => configToSuggestion(config, range))
-      })
+      }, (text) => baseXmlWithJsMatcher(text) && /Mock\./.test(text))
     })
   }
 }

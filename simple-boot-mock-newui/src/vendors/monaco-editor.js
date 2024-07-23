@@ -60,6 +60,9 @@ self.MonacoEnvironment = {
 }
 
 const langCheckConfig = [{
+  type: 'xmlWithJs',
+  checkReg: /(<[\s\S]*>)\s*(\{\{[\s\S]*}})/m
+}, {
   type: 'html',
   checkReg: /(<[\s\S]*>)/
 }, {
@@ -129,6 +132,7 @@ export const useMonacoEditorOptions = (config) => {
       { label: 'JSON', value: 'json' },
       { label: 'JavaScript', value: 'javascript' },
       { label: 'XML/HTML', value: 'html' },
+      { label: 'XML+JS', value: 'xmlWithJs' },
       { label: 'PlainText', value: 'text' }
     ],
     attrs: {
