@@ -125,9 +125,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     public MockData findMockDataByRequest(List<MockData> mockDataList, HttpRequestVo requestVo) {
         for (MockData mockData : mockDataList) {
             if (StringUtils.isNotBlank(mockData.getMatchPattern())) {
-                Object result = scriptEngineProvider.eval("Boolean(" + mockData.getMatchPattern() + ")"); // 转Boolean值
-                log.info("计算数据匹配：{}={}", mockData.getMatchPattern(), result);
-                if (Boolean.TRUE.equals(result)) {
+                if (matchRequestPattern(mockData.getMatchPattern())) {
                     return mockData;
                 }
             }
@@ -153,6 +151,16 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
                 SimpleMockUtils.addAuditInfo(savedMockRequest);
                 updateById(savedMockRequest);
             }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean matchRequestPattern(String matchPattern) {
+        if (StringUtils.isNotBlank(matchPattern)) {
+            Object result = scriptEngineProvider.eval("Boolean(" + matchPattern + ")"); // 转Boolean值
+            log.info("计算匹配：{}={}", matchPattern, result);
+            return Boolean.TRUE.equals(result); // 必须等于true才执行
         }
         return true;
     }

@@ -146,7 +146,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         try {
                             HttpRequestVo requestVo = calcRequestVo(request, configPath, requestPath);
                             MockJsUtils.setCurrentRequestVo(requestVo);
-                            if (matchRequestPattern(mockRequest.getMatchPattern()) || testRequest) {
+                            if (mockRequestService.matchRequestPattern(mockRequest.getMatchPattern()) || testRequest) {
                                 List<MockData> mockDataList = mockRequestService.loadAllDataByRequest(mockRequest.getId());
                                 MockData mockData = mockRequestService.findForceMockData(mockDataList, defaultId);
                                 mockDataList = mockDataList.stream().filter(MockBase::isEnabled).collect(Collectors.toList());
@@ -204,15 +204,6 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             return StringUtils.length(o2.getMatchPattern()) - StringUtils.length(o1.getMatchPattern());
         });
         return mockRequests;
-    }
-
-    protected boolean matchRequestPattern(String matchPattern) {
-        if (StringUtils.isNotBlank(matchPattern)) {
-            Object result = scriptEngineProvider.eval("Boolean(" + matchPattern + ")"); // 转Boolean值
-            log.info("计算匹配：{}={}", matchPattern, result);
-            return Boolean.TRUE.equals(result); // 必须等于true才执行
-        }
-        return true;
     }
 
     /**

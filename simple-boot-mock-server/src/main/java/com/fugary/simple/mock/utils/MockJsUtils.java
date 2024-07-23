@@ -88,7 +88,7 @@ public class MockJsUtils {
      * @return
      */
     public static String processResponseBody(String responseBody, HttpRequestVo requestVo, Function<String, Object> processor) {
-        Matcher matcher = Pattern.compile("\\{\\{(.+?)}}").matcher(responseBody);
+        Matcher matcher = Pattern.compile("\\{\\{(.+?)}}", Pattern.DOTALL).matcher(responseBody);
         String result = responseBody;
         // 从responseBody中解析出{{xxx.xx}}格式的参数，从requestVo中取出值替换上去
         while (matcher.find()) {

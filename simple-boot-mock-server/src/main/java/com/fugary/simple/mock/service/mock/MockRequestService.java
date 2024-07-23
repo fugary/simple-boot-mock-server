@@ -91,4 +91,11 @@ public interface MockRequestService extends IService<MockRequest> {
      * @return
      */
     boolean saveMockParams(MockData mockData);
+
+    /**
+     * 检查是否匹配，可能需要TheadLocal中有RequestVo数据
+     * @param matchPattern
+     * @return
+     */
+    boolean matchRequestPattern(String matchPattern);
 }
