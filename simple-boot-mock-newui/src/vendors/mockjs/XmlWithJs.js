@@ -1,8 +1,13 @@
 /* eslint-disable no-useless-escape */
+import { configToSuggestion, getCompletionItemProvider, getMockJsPlaceholders } from '@/vendors/mockjs/MockJsonHintData'
+
 export const XML_WITH_JS_ID = 'xmlWithJs'
 export const initXmlWithJs = (monaco) => {
   // 自定义语言
   monaco.languages.register({ id: XML_WITH_JS_ID })
+  const LANG_KEYWORDS = [
+    'break', 'case', 'catch', 'class', 'continue', 'const', 'constructor', 'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield', 'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 'public', 'await', 'abstract', 'boolean', 'byte', 'char', 'double', 'final', 'float', 'goto', 'int', 'long', 'native', 'short', 'synchronized', 'throws', 'transient', 'volatile'
+  ]
   // 定义嵌套规则
   monaco.languages.setMonarchTokensProvider(XML_WITH_JS_ID, {
     defaultToken: '',
@@ -58,9 +63,87 @@ export const initXmlWithJs = (monaco) => {
         { include: 'javascript' }
       ]
     },
-    keywords: [
-      'break', 'case', 'catch', 'class', 'continue', 'const', 'constructor', 'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield', 'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 'public', 'await', 'abstract', 'boolean', 'byte', 'char', 'double', 'final', 'float', 'goto', 'int', 'long', 'native', 'short', 'synchronized', 'throws', 'transient', 'volatile'
-    ],
+    keywords: LANG_KEYWORDS,
     symbols: /[=><!~?:&|+\-*\/\^%]+/
+  })
+
+  const baseXmlWithJsMatcher = (text) => {
+    const left = text.match(/\{\{/g)
+    const right = text.match(/}}/g)
+    return !!left && left.length > (right?.length || 0)
+  }
+  monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
+    triggerCharacters: [''],
+    provideCompletionItems: getMockJsPlaceholders({ prefix: '', matcher: baseXmlWithJsMatcher })
+  })
+  monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
+    triggerCharacters: ['.'],
+    provideCompletionItems: getMockJsPlaceholders({
+      prefix: '',
+      matcher: text => baseXmlWithJsMatcher(text) && /Mock.Random\./.test(text),
+      labelFun: key => `${key}()`
+    })
+  })
+  monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
+    provideCompletionItems: getCompletionItemProvider(range => {
+      return LANG_KEYWORDS.map(keyword => configToSuggestion({ label: keyword }, range))
+    }, baseXmlWithJsMatcher)
+  })
+  monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
+    provideCompletionItems: getCompletionItemProvider(range => {
+      return [{
+        label: 'request',
+        detail: 'request请求对象',
+        desc: '包含params，body，bodyStr，headers，parameters，pathParameters'
+      }, {
+        label: 'Mock',
+        detail: 'MockJS对象',
+        desc: '生成假数据工具'
+      }].map(config => configToSuggestion(config, range))
+    }, baseXmlWithJsMatcher)
+  })
+  monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
+    triggerCharacters: ['.'],
+    provideCompletionItems: getCompletionItemProvider(range => {
+      return [{
+        label: 'body',
+        detail: 'request.body',
+        desc: 'body内容对象（仅json）'
+      }, {
+        label: 'bodyStr',
+        detail: 'request.bodyStr',
+        desc: 'body内容字符串'
+      }, {
+        label: 'headers',
+        detail: 'request.headers',
+        desc: '头信息对象'
+      }, {
+        label: 'parameters',
+        detail: 'request.parameters',
+        desc: '请求参数对象'
+      }, {
+        label: 'pathParameters',
+        detail: 'request.pathParameters',
+        desc: '路径参数对象'
+      }, {
+        label: 'params',
+        detail: 'request.params',
+        desc: '请求参数和路径参数合并'
+      }].map(config => configToSuggestion(config, range))
+    }, (text) => baseXmlWithJsMatcher(text) && /request\./.test(text))
+  })
+  monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
+    triggerCharacters: ['.'],
+    provideCompletionItems: getCompletionItemProvider(range => {
+      return [{
+        label: 'mock()',
+        detail: 'Mock.mock',
+        desc: 'MockJS生成数据方法'
+      }, {
+        label: 'Random',
+        detail: 'Mock.Random',
+        desc: 'Mock.Random生成随机数据'
+      }].map(config => configToSuggestion(config, range))
+    }, (text) => baseXmlWithJsMatcher(text) && /Mock\./.test(text))
   })
 }

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // 与Mock.Random属性对应的数据
+import * as monaco from 'monaco-editor'
+
 export const MockRandom = {
   boolean: {
     func: (min, max, current) => {},
@@ -168,5 +170,66 @@ export const MockRandom = {
   id: {
     func: () => {},
     desc: '返回一个 18 位身份证号'
+  }
+}
+
+export const getMockJsPlaceholders = ({ quote, prefix = '@', matcher, labelFun } = {}) => {
+  const keyArr = Object.keys(MockRandom)
+  labelFun = labelFun || (key => quote ? `"${prefix}${key}"` : `${prefix}${key}`)
+  return getCompletionItemProvider(range => keyArr.map(key => {
+    const config = MockRandom[key]
+    const detail = `——>${key}${config.func.toString()}`.replace(/\s+/g, '').replace('=>{}', '')
+    return configToSuggestion({
+      label: labelFun(key),
+      detail,
+      desc: config.desc
+    }, range)
+  }), matcher)
+}
+
+export const configToSuggestion = (config, range) => {
+  let insertText = config.label
+  if (/[)"]$/.test(insertText)) {
+    insertText = `${insertText.substring(0, insertText.length - 1)}\${0}${insertText.charAt(insertText.length - 1)}`
+  }
+  return {
+    label: {
+      label: config.label,
+      detail: config.detail ? ('——>' + config.detail) : undefined,
+      description: config.desc
+    },
+    kind: monaco.languages.CompletionItemKind.Text,
+    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+    insertText,
+    range
+  }
+}
+
+export const getCompletionItemProvider = (getSuggestions, checkMatch, textRangeFun) => {
+  return function (model, position) {
+    const word = model.getWordUntilPosition(position)
+    textRangeFun = textRangeFun || ((model, position) => {
+      return model.getValueInRange({
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column
+      })
+    })
+    const textUntilPosition = textRangeFun(model, position)
+    const match = checkMatch?.(textUntilPosition) ?? true
+    if (!match) {
+      return { suggestions: [] }
+    }
+    const range = {
+      startLineNumber: position.lineNumber,
+      endLineNumber: position.lineNumber,
+      startColumn: word.startColumn,
+      endColumn: word.endColumn
+    }
+    return {
+      incomplete: true,
+      suggestions: getSuggestions(range)
+    }
   }
 }
