@@ -14,7 +14,10 @@ export const initXmlWithJs = (monaco) => {
     tokenPostfix: '',
     brackets: [
       { open: '<', close: '>', token: 'delimiter.angle' },
-      { open: '{{', close: '}}', token: 'delimiter.curly' }
+      { open: '{{', close: '}}', token: 'delimiter.curly' },
+      { open: '{', close: '}', token: 'delimiter.curly' },
+      { open: '[', close: ']', token: 'delimiter.square' },
+      { open: '(', close: ')', token: 'delimiter.parenthesis' }
     ],
     tokenizer: {
       root: [
@@ -67,6 +70,32 @@ export const initXmlWithJs = (monaco) => {
     symbols: /[=><!~?:&|+\-*\/\^%]+/
   })
 
+  // 注册语言配置，添加自动补全括号和中括号功能
+  monaco.languages.setLanguageConfiguration(XML_WITH_JS_ID, {
+    brackets: [
+      ['<', '>'],
+      ['{{', '}}'],
+      ['{', '}'],
+      ['[', ']'],
+      ['(', ')']
+    ],
+    autoClosingPairs: [
+      { open: '<', close: '>' },
+      { open: '{{', close: '}}' },
+      { open: '{', close: '}' },
+      { open: '[', close: ']' },
+      { open: '(', close: ')' }
+    ],
+    surroundingPairs: [
+      { open: '<', close: '>' },
+      { open: '{{', close: '}}' },
+      { open: '{', close: '}' },
+      { open: '[', close: ']' },
+      { open: '(', close: ')' },
+      { open: '"', close: '"' },
+      { open: "'", close: "'" }
+    ]
+  })
   const baseXmlWithJsMatcher = (text) => {
     const left = text.match(/\{\{/g)
     const right = text.match(/}}/g)
