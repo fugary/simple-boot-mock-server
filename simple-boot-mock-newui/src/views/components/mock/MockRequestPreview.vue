@@ -1,7 +1,13 @@
 <script setup>
 import { computed, ref } from 'vue'
 import MockRequestApi, { saveMockParams } from '@/api/mock/MockRequestApi'
-import MockDataApi, { calcParamTarget, calcRequestBody, previewRequest, processResponse } from '@/api/mock/MockDataApi'
+import MockDataApi, {
+  calcParamTarget,
+  calcRequestBody,
+  preProcessParams,
+  previewRequest,
+  processResponse
+} from '@/api/mock/MockDataApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { ElMessage } from 'element-plus'
 import { $i18nBundle } from '@/messages'
@@ -49,13 +55,13 @@ const doDataPreview = async () => {
         .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), pathParam.value)
     }
   })
-  const params = paramTarget.value?.requestParams?.filter(param => param.enabled).reduce((results, item) => {
+  const params = preProcessParams(paramTarget.value?.requestParams).reduce((results, item) => {
     results[item.name] = item.value
     return results
   }, {})
   const { data, hasBody } = calcRequestBody(paramTarget)
   const headers = Object.assign(hasBody ? { 'content-type': paramTarget.value?.contentType } : {},
-    paramTarget.value?.headerParams?.filter(param => param.enabled).reduce((results, item) => {
+    preProcessParams(paramTarget.value?.headerParams).reduce((results, item) => {
       results[item.name] = item.value
       return results
     }, {}))

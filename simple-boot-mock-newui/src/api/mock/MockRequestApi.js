@@ -50,7 +50,7 @@ export const saveMockParams = (data, config) => {
 }
 
 export const checkParamsFilled = (params) => {
-  return !params?.length || params.every(param => param.name && param.value)
+  return !params?.length || params.filter(param => param.enabled).every(param => param.name && param.value)
 }
 
 export default useResourceApi(MOCK_REQUEST_URL)

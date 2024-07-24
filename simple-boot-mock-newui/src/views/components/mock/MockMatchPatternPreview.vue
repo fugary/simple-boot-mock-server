@@ -1,6 +1,12 @@
 <script setup>
 import { ref } from 'vue'
-import MockDataApi, { calcParamTarget, calcRequestBody, previewRequest, processResponse } from '@/api/mock/MockDataApi'
+import MockDataApi, {
+  calcParamTarget,
+  calcRequestBody,
+  preProcessParams,
+  previewRequest,
+  processResponse
+} from '@/api/mock/MockDataApi'
 import MockRequestApi from '@/api/mock/MockRequestApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { $i18nKey } from '@/messages'
@@ -27,13 +33,13 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
 }
 
 const doDataPreview = () => {
-  const params = paramTarget.value?.requestParams?.filter(param => param.enabled).reduce((results, item) => {
+  const params = preProcessParams(paramTarget.value?.requestParams).reduce((results, item) => {
     results[item.name] = item.value
     return results
   }, {})
   const { data, hasBody } = calcRequestBody(paramTarget)
   const headers = Object.assign(hasBody ? { 'content-type': paramTarget.value?.contentType } : {},
-    paramTarget.value?.headerParams?.filter(param => param.enabled).reduce((results, item) => {
+    preProcessParams(paramTarget.value?.headerParams).reduce((results, item) => {
       results[item.name] = item.value
       return results
     }, {}))

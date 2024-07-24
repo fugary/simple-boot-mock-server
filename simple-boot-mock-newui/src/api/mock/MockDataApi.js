@@ -126,6 +126,11 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
   }
   return target
 }
+
+export const preProcessParams = (params = []) => {
+  return params.filter(param => param.enabled && !!param.name)
+}
+
 /**
  * 各种类型的body解析
  *
@@ -141,11 +146,11 @@ export const calcRequestBody = (paramTarget) => {
     hasBody = false
   } else if (contentType === LANG_TO_CONTENT_TYPES[FORM_DATA]) {
     data = new FormData()
-    paramTarget.value.bodyParams[FORM_DATA]?.filter(param => param.enabled).forEach(item => {
+    preProcessParams(paramTarget.value.bodyParams[FORM_DATA]).forEach(item => {
       data.append(item.name, item.value)
     })
   } else if (contentType === LANG_TO_CONTENT_TYPES[FORM_URL_ENCODED]) {
-    const params = (paramTarget.value.bodyParams[FORM_URL_ENCODED] || []).filter(param => param.enabled)
+    const params = preProcessParams(paramTarget.value.bodyParams[FORM_URL_ENCODED])
     data = Object.fromEntries(params.map(item => [item.name, item.value]))
   }
   return {

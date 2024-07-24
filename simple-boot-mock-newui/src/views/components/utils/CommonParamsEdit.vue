@@ -113,7 +113,7 @@ const paramOptions = computed(() => {
   }, {
     label: 'Key',
     prop: props.nameKey,
-    required: true,
+    required: props.nameReadOnly,
     disabled: props.nameReadOnly,
     type: props.headerFlag ? 'autocomplete' : 'input',
     attrs: {
@@ -127,7 +127,7 @@ const paramOptions = computed(() => {
   }, {
     label: 'Value',
     prop: props.valueKey,
-    required: true
+    required: props.nameReadOnly
   }])
 })
 
