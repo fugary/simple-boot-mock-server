@@ -18,21 +18,6 @@ export const AUTHORIZATION_KEY = 'Authorization'
 
 export const BEARER_KEY = 'Bearer'
 
-export const LANG_TO_CONTENT_TYPES = {
-  json: 'application/json',
-  javascript: 'application/json',
-  html: 'application/xml',
-  xmlWithJs: 'application/xml',
-  text: 'text/plain'
-}
-
-export const calcContentType = (lang, body) => {
-  if (lang === 'html' && body?.includes('<!DOCTYPE html>')) {
-    return 'text/html'
-  }
-  return LANG_TO_CONTENT_TYPES[lang]
-}
-
 export const DEFAULT_HEADERS = ['Accept',
   'Accept-Charset',
   'Accept-Encoding',
@@ -45,9 +30,30 @@ export const DEFAULT_HEADERS = ['Accept',
   'Pragma',
   'User-Agent'
 ]
+export const NONE = 'none'
+export const FORM_DATA = 'form-data'
+export const FORM_URL_ENCODED = 'form-urlencoded'
+export const SPECIAL_LANGS = [NONE, FORM_DATA, FORM_URL_ENCODED]
+
+export const LANG_TO_CONTENT_TYPES = {
+  json: 'application/json',
+  javascript: 'application/json',
+  html: 'application/xml',
+  xmlWithJs: 'application/xml',
+  text: 'text/plain',
+  [FORM_DATA]: 'multipart/form-data',
+  [FORM_URL_ENCODED]: 'application/x-www-form-urlencoded'
+}
+
+export const calcContentType = (lang, body) => {
+  if (lang === 'html' && body?.includes('<!DOCTYPE html>')) {
+    return 'text/html'
+  }
+  return LANG_TO_CONTENT_TYPES[lang]
+}
 
 export const AUTH_TYPE = {
-  NONE: 'none',
+  NONE,
   BASIC: 'basic',
   TOKEN: 'token',
   JWT: 'jwt'

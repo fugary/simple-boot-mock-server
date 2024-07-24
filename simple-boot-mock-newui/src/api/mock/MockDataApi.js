@@ -3,7 +3,14 @@ import { $http, hasLoading } from '@/vendors/axios'
 import axios from 'axios'
 import { $coreHideLoading, $coreShowLoading } from '@/utils'
 import { isString } from 'lodash-es'
-import { MOCK_DATA_PREVIEW_HEADER, MOCK_META_DATA_REQ } from '@/consts/MockConstants'
+import {
+  FORM_URL_ENCODED,
+  FORM_DATA,
+  MOCK_DATA_PREVIEW_HEADER,
+  MOCK_META_DATA_REQ,
+  NONE,
+  LANG_TO_CONTENT_TYPES
+} from '@/consts/MockConstants'
 
 const MOCK_DATA_URL = '/admin/data'
 
@@ -88,6 +95,10 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
     pathParams: calcParamTargetByUrl(requestPath),
     requestParams: [],
     headerParams: [],
+    bodyParams: {
+      [FORM_DATA]: [],
+      [FORM_URL_ENCODED]: []
+    },
     contentType: previewData?.contentType || 'application/json',
     method: requestItem?.method || 'GET',
     responseBody: previewData?.responseBody,
@@ -114,6 +125,33 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
     target.pathParams = pathParams
   }
   return target
+}
+/**
+ * 各种类型的body解析
+ *
+ * @param paramTarget
+ * @return {{data: (string|*), hasBody: boolean}}
+ */
+export const calcRequestBody = (paramTarget) => {
+  const contentType = paramTarget.value.contentType
+  let data = paramTarget.value.requestBody
+  let hasBody = true
+  if (contentType === NONE) {
+    data = undefined
+    hasBody = false
+  } else if (contentType === LANG_TO_CONTENT_TYPES[FORM_DATA]) {
+    data = new FormData()
+    paramTarget.value.bodyParams[FORM_DATA]?.filter(param => param.enabled).forEach(item => {
+      data.append(item.name, item.value)
+    })
+  } else if (contentType === LANG_TO_CONTENT_TYPES[FORM_URL_ENCODED]) {
+    const params = (paramTarget.value.bodyParams[FORM_URL_ENCODED] || []).filter(param => param.enabled)
+    data = Object.fromEntries(params.map(item => [item.name, item.value]))
+  }
+  return {
+    hasBody,
+    data
+  }
 }
 
 export const calcParamTargetByUrl = (calcRequestUrl) => {

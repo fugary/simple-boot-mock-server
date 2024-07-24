@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import MockDataApi, { calcParamTarget, previewRequest, processResponse } from '@/api/mock/MockDataApi'
+import MockDataApi, { calcParamTarget, calcRequestBody, previewRequest, processResponse } from '@/api/mock/MockDataApi'
 import MockRequestApi from '@/api/mock/MockRequestApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { $i18nKey } from '@/messages'
@@ -31,8 +31,8 @@ const doDataPreview = () => {
     results[item.name] = item.value
     return results
   }, {})
-  const data = paramTarget.value.requestBody
-  const headers = Object.assign(data ? { 'content-type': paramTarget.value?.contentType } : {},
+  const { data, hasBody } = calcRequestBody(paramTarget)
+  const headers = Object.assign(hasBody ? { 'content-type': paramTarget.value?.contentType } : {},
     paramTarget.value?.headerParams?.filter(param => param.enabled).reduce((results, item) => {
       results[item.name] = item.value
       return results

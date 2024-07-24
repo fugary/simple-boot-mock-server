@@ -4,9 +4,10 @@ import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import { computed, ref, watch } from 'vue'
 import { checkParamsFilled } from '@/api/mock/MockRequestApi'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { AUTH_TYPE, calcContentType } from '@/consts/MockConstants'
+import { AUTH_TYPE, calcContentType, NONE, FORM_DATA, FORM_URL_ENCODED, SPECIAL_LANGS } from '@/consts/MockConstants'
 import MockRequestFormAuthorization from '@/views/components/mock/form/MockRequestFormAuthorization.vue'
 import { $i18nKey } from '@/messages'
+import { getSingleSelectOptions } from '@/utils'
 
 const props = defineProps({
   showAuthorization: {
@@ -29,6 +30,19 @@ const codeHeight = '300px'
 contentRef.value = paramTarget.value?.requestBody
 languageRef.value = paramTarget.value?.requestFormat || languageRef.value
 
+const customLanguageSelectOption = computed(() => {
+  return {
+    ...normalLanguageSelectOption.value,
+    children: [...getSingleSelectOptions(NONE), ...normalLanguageSelectOption.value.children,
+      ...getSingleSelectOptions(FORM_DATA, FORM_URL_ENCODED)]
+  }
+})
+
+const isSpecialLang = computed(() => SPECIAL_LANGS.includes(languageRef.value))
+const isNone = computed(() => NONE === languageRef.value)
+const isFormData = computed(() => FORM_DATA === languageRef.value)
+const isFormUrlEncoded = computed(() => FORM_URL_ENCODED === languageRef.value)
+
 const requestHeaderLength = computed(() => {
   return (paramTarget.value?.headerParams?.length || 0) + (props.responseTarget?.requestHeaders?.length || 0)
 })
@@ -39,7 +53,7 @@ const showRequestBody = computed(() => {
 
 watch(languageRef, lang => {
   paramTarget.value.requestFormat = lang
-  paramTarget.value.contentType = calcContentType(lang, paramTarget.value.requestBody)
+  paramTarget.value.contentType = calcContentType(lang, paramTarget.value.requestBody) || NONE
 }, { immediate: true })
 
 const currentTabName = ref('requestParamsTab')
@@ -145,7 +159,7 @@ const authValid = ref(true)
       <template #label>
         <el-badge
           type="primary"
-          :hidden="!paramTarget.requestBody?.length"
+          :hidden="isNone"
           is-dot
         >
           {{ $t('mock.label.requestBody') }}
@@ -154,7 +168,7 @@ const authValid = ref(true)
       <el-container class="flex-column">
         <common-form-control
           :model="languageModel"
-          :option="normalLanguageSelectOption"
+          :option="customLanguageSelectOption"
         >
           <template #childAfter>
             <mock-url-copy-link
@@ -175,7 +189,15 @@ const authValid = ref(true)
             </el-link>
           </template>
         </common-form-control>
+        <template v-if="isFormData || isFormUrlEncoded">
+          <common-params-edit
+            v-model="paramTarget.bodyParams[languageRef]"
+            :form-prop="`bodyParams.${languageRef}`"
+            header-flag
+          />
+        </template>
         <vue-monaco-editor
+          v-if="!isSpecialLang"
           v-model:value="contentRef"
           :language="languageRef"
           :height="codeHeight"
