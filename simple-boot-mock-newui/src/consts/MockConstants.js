@@ -18,6 +18,21 @@ export const AUTHORIZATION_KEY = 'Authorization'
 
 export const BEARER_KEY = 'Bearer'
 
+export const LANG_TO_CONTENT_TYPES = {
+  json: 'application/json',
+  javascript: 'application/json',
+  html: 'application/xml',
+  xmlWithJs: 'application/xml',
+  text: 'text/plain'
+}
+
+export const calcContentType = (lang, body) => {
+  if (lang === 'html' && body?.includes('<!DOCTYPE html>')) {
+    return 'text/html'
+  }
+  return LANG_TO_CONTENT_TYPES[lang]
+}
+
 export const DEFAULT_HEADERS = ['Accept',
   'Accept-Charset',
   'Accept-Encoding',

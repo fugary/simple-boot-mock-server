@@ -5,6 +5,7 @@ package com.fugary.simple.mock.utils.servlet;
 
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.MockJsUtils;
+import com.fugary.simple.mock.utils.XmlUtils;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -153,12 +154,22 @@ public class HttpRequestUtils {
 		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON)){
 			requestVo.setBody(HttpRequestUtils.getJsonBody(requestVo.getBodyStr()));
 		}
+		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_XML)){
+			requestVo.setBody(HttpRequestUtils.getXmlBody(requestVo.getBodyStr()));
+		}
 		return requestVo;
 	}
 
 	public static Object getJsonBody(String bodyStr) {
 		if (MockJsUtils.isJson(bodyStr)) {
 			return JsonUtils.fromJson(bodyStr, Map.class);
+		}
+		return null;
+	}
+
+	public static Object getXmlBody(String bodyStr) {
+		if (MockJsUtils.isXml(bodyStr)) {
+			return XmlUtils.fromXml(bodyStr, Map.class);
 		}
 		return null;
 	}

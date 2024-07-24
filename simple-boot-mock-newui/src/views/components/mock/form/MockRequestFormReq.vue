@@ -4,7 +4,7 @@ import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import { computed, ref, watch } from 'vue'
 import { checkParamsFilled } from '@/api/mock/MockRequestApi'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { AUTH_TYPE } from '@/consts/MockConstants'
+import { AUTH_TYPE, calcContentType } from '@/consts/MockConstants'
 import MockRequestFormAuthorization from '@/views/components/mock/form/MockRequestFormAuthorization.vue'
 import { $i18nKey } from '@/messages'
 
@@ -24,7 +24,7 @@ const paramTarget = defineModel('modelValue', {
   default: true
 })
 
-const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption, formatDocument } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, normalLanguageSelectOption, formatDocument } = useMonacoEditorOptions({ readOnly: false })
 const codeHeight = '300px'
 contentRef.value = paramTarget.value?.requestBody
 languageRef.value = paramTarget.value?.requestFormat || languageRef.value
@@ -39,7 +39,8 @@ const showRequestBody = computed(() => {
 
 watch(languageRef, lang => {
   paramTarget.value.requestFormat = lang
-})
+  paramTarget.value.contentType = calcContentType(lang, paramTarget.value.requestBody)
+}, { immediate: true })
 
 const currentTabName = ref('requestParamsTab')
 const authContentModel = ref({
@@ -153,7 +154,7 @@ const authValid = ref(true)
       <el-container class="flex-column">
         <common-form-control
           :model="languageModel"
-          :option="languageSelectOption"
+          :option="normalLanguageSelectOption"
         >
           <template #childAfter>
             <mock-url-copy-link

@@ -72,7 +72,7 @@ mock.msg.authPrefixTooltip = '前缀默认值为：{0}，可以为空'
 mock.msg.requestTest = '请求测试'
 mock.msg.matchPatternTest = '匹配规则测试'
 mock.msg.requestNameTooltip = '简单接口名称，可不填写'
-mock.msg.requestIntro = `request.body——body内容对象（仅json）<br>
+mock.msg.requestIntro = `request.body——body内容对象<br>
                         request.bodyStr——body内容字符串<br>
                         request.headers——头信息对象<br>
                         request.parameters——请求参数对象<br>

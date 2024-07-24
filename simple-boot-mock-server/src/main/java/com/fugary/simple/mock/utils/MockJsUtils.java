@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.script.Bindings;
 import javax.servlet.http.HttpServletRequest;
 import java.text.MessageFormat;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -54,7 +55,23 @@ public class MockJsUtils {
      * @return
      */
     public static boolean isJson(String template) {
-        return StringUtils.isNotBlank(template) && StringUtils.startsWithAny(template, "{", "[");
+        template = StringUtils.trimToEmpty(template);
+        return StringUtils.isNotBlank(template)
+                && StringUtils.startsWithAny(template, "{", "[")
+                && StringUtils.endsWithAny(template, "}", "]");
+    }
+
+    /**
+     * xml数据判断
+     *
+     * @param xmlData
+     * @return
+     */
+    public static boolean isXml(String xmlData) {
+        xmlData = StringUtils.trimToEmpty(xmlData);
+        return StringUtils.isNotBlank(xmlData)
+                && StringUtils.startsWith(xmlData, "<")
+                && StringUtils.endsWith(xmlData, ">");
     }
 
     /**
@@ -118,7 +135,7 @@ public class MockJsUtils {
         return result;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         String responseBody = "<abc>{{request.parameters.a.split(' ')[0]}}</abc><bcd>{{request.parameters.a.split(' ')[1]}}</bcd>";
         ScriptEngineProvider scriptEngineProvider = new ScriptEngineConfig().scriptEngineProvider();
         HttpRequestVo requestVo = new HttpRequestVo();
@@ -127,5 +144,11 @@ public class MockJsUtils {
         String result = processResponseBody(responseBody, requestVo, scriptEngineProvider::eval);
         MockJsUtils.removeCurrentRequestVo();
         log.info("result={}", result);
+        String xmlStr = "<book>\n" +
+                "<title> Learning Amazon Web Services </title>\n" +
+                "<author> Mark Wilkins </author>\n" +
+                "</book>";
+        Map map = XmlUtils.fromXml(xmlStr, Map.class);
+        log.info("{}", map);
     }
 }

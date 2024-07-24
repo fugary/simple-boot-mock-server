@@ -137,7 +137,7 @@ export const initXmlWithJs = (monaco) => {
       return [{
         label: 'body',
         detail: 'request.body',
-        desc: 'body内容对象（仅json）'
+        desc: 'body内容对象'
       }, {
         label: 'bodyStr',
         detail: 'request.bodyStr',

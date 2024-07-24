@@ -16,7 +16,7 @@ interface RequestVoType {
     pathParameters: {
         [key:string] :string
     },
-    /** request请求体，仅JSON时有效 */
+    /** request请求体对象 */
     body: {
         [key:string] :any
     },
@@ -26,7 +26,7 @@ interface RequestVoType {
 
 /**
  * request请求封装:
- * request.body——body内容对象（仅json）
+ * request.body——body内容对象
  * request.bodyStr——body内容字符串
  * request.headers——头信息对象
  * request.parameters——请求参数对象

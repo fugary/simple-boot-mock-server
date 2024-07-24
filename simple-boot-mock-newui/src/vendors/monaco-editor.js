@@ -1,5 +1,5 @@
 import VueMonacoEditor, { loader } from '@guolao/vue-monaco-editor'
-import { ref, watch, toRaw, h, withDirectives, resolveDirective } from 'vue'
+import { ref, watch, toRaw, h, withDirectives, resolveDirective, computed } from 'vue'
 import * as monaco from 'monaco-editor'
 import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
@@ -139,6 +139,13 @@ export const useMonacoEditorOptions = (config) => {
       clearable: false
     }
   })
+  const normalLanguageSelectOption = computed(() => {
+    return {
+      ...languageSelectOption.value,
+      children: languageSelectOption.value.children
+        .filter(item => ['json', 'html', 'text'].includes(item.value))
+    }
+  })
   const formatDocument = () => {
     if (editorRef.value) {
       $formatDocument(editorRef.value, monacoEditorOptions.readOnly)
@@ -169,6 +176,7 @@ export const useMonacoEditorOptions = (config) => {
     monacoEditorOptions,
     languageModel,
     languageSelectOption,
+    normalLanguageSelectOption,
     formatDocument
   }
 }

@@ -22,7 +22,7 @@ const currentTabName = ref(props.responseTarget ? 'responseData' : 'mockResponse
 
 const {
   contentRef, languageRef, editorRef, monacoEditorOptions,
-  languageModel, languageSelectOption, formatDocument
+  languageModel, normalLanguageSelectOption, formatDocument
 } = useMonacoEditorOptions()
 
 watch(() => props.responseTarget, (responseTarget) => {
@@ -102,7 +102,7 @@ const emit = defineEmits(['saveMockResponseBody'])
         <el-container class="flex-column">
           <common-form-control
             :model="languageModel"
-            :option="languageSelectOption"
+            :option="normalLanguageSelectOption"
             @change="languageRef=$event"
           >
             <template #childAfter>
