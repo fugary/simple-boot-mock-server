@@ -58,6 +58,7 @@ const columns = computed(() => {
   }, {
     labelKey: 'mock.label.groupName',
     property: 'groupName',
+    minWidth: '130px',
     click: item => {
       $goto(`/mock/groups/${item.id}?backUrl=${route.fullPath}`)
     }
@@ -77,7 +78,8 @@ const columns = computed(() => {
   }, {
     labelKey: 'mock.label.proxyUrl',
     property: 'proxyUrl',
-    minWidth: '130px'
+    minWidth: '130px',
+    enabled: checkShowColumn(tableData.value, 'proxyUrl')
   }, {
     labelKey: 'common.label.delay',
     property: 'delay',

@@ -110,7 +110,11 @@ public class MockGroupController {
         if (files.isEmpty()) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2002, 0);
         }
-        return mockGroupService.doImport(files.get(0), importVo);
+        SimpleResult<List<ExportGroupVo>> importGroupsResult = mockGroupService.toImportGroups(files.get(0), importVo);
+        if (importGroupsResult.isSuccess()) {
+            return mockGroupService.importGroups(importGroupsResult.getResultData(), importVo);
+        }
+        return SimpleResultUtils.createSimpleResult(importGroupsResult.getCode(), 0);
     }
 
     @PostMapping("/checkExport")

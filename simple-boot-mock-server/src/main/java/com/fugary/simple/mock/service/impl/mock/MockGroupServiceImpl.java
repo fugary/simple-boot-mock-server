@@ -277,20 +277,20 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public SimpleResult<Integer> doImport(MultipartFile file, MockGroupImportParamVo importVo) {
+    public SimpleResult<List<ExportGroupVo>> toImportGroups(MultipartFile file, MockGroupImportParamVo importVo) {
         try {
             String fileData = StreamUtils.copyToString(file.getInputStream(), StandardCharsets.UTF_8);
             MockGroupImporter importer = MockGroupImporter.findImporter(mockGroupImporters, importVo.getType());
             ExportMockVo mockVo;
             if (importer == null || (mockVo = importer.doImport(fileData)) == null) {
-                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2003, 0);
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2003);
             }
             List<ExportGroupVo> importGroups = mockVo.getGroups();
             List<MockGroup> existGroups = checkGroupsExists(importGroups);
             if (CollectionUtils.isNotEmpty(existGroups)) {
                 Integer duplicateStrategy = Objects.requireNonNullElse(importVo.getDuplicateStrategy(), MockConstants.IMPORT_STRATEGY_ERROR);
                 if(MockConstants.IMPORT_STRATEGY_ERROR.equals(duplicateStrategy)) {
-                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2004, 0);
+                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2004);
                 } else if(MockConstants.IMPORT_STRATEGY_SKIP.equals(duplicateStrategy)) {
                     Set<String> existGroupPaths = existGroups.stream().map(MockGroup::getGroupPath).collect(Collectors.toSet());
                     importGroups = importGroups.stream().filter(group -> !existGroupPaths.contains(group.getGroupPath())).collect(Collectors.toList());
@@ -303,33 +303,38 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     });
                 }
             }
-            // 保存数据
-            importGroups.forEach(group -> {
-                group.setId(null);
-                group.setUserName(SecurityUtils.getUserName(importVo.getUserName()));
-                group.setGroupPath(StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
-                group.setProjectCode(StringUtils.defaultIfBlank(importVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
-                boolean saved = saveOrUpdate(SimpleMockUtils.addAuditInfo(group));
-                if (saved && group.getRequests() != null) {
-                    group.getRequests().forEach(request -> {
-                        request.setId(null);
-                        request.setGroupId(group.getId());
-                        boolean reqSaved = mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(request));
-                        if (reqSaved && request.getDataList()!=null) {
-                            request.getDataList().forEach(data -> {
-                                data.setId(null);
-                                data.setGroupId(group.getId());
-                                data.setRequestId(request.getId());
-                                mockDataService.saveOrUpdate(SimpleMockUtils.addAuditInfo(data));
-                            });
-                        }
-                    });
-                }
-            });
-            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_0, importGroups.size());
+            return SimpleResultUtils.createSimpleResult(importGroups);
         } catch (IOException e) {
-            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2003,0);
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2003);
         }
+    }
+
+    @Override
+    public SimpleResult<Integer> importGroups(List<ExportGroupVo> importGroups, MockGroupImportParamVo importVo) {
+        // 保存数据
+        importGroups.forEach(group -> {
+            group.setId(null);
+            group.setUserName(SecurityUtils.getUserName(importVo.getUserName()));
+            group.setGroupPath(StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
+            group.setProjectCode(StringUtils.defaultIfBlank(importVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
+            boolean saved = saveOrUpdate(SimpleMockUtils.addAuditInfo(group));
+            if (saved && group.getRequests() != null) {
+                group.getRequests().forEach(request -> {
+                    request.setId(null);
+                    request.setGroupId(group.getId());
+                    boolean reqSaved = mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(request));
+                    if (reqSaved && request.getDataList()!=null) {
+                        request.getDataList().forEach(data -> {
+                            data.setId(null);
+                            data.setGroupId(group.getId());
+                            data.setRequestId(request.getId());
+                            mockDataService.saveOrUpdate(SimpleMockUtils.addAuditInfo(data));
+                        });
+                    }
+                });
+            }
+        });
+        return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_0, importGroups.size());
     }
 
     /**

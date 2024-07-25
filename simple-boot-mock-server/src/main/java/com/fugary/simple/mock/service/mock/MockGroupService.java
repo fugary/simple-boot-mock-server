@@ -68,10 +68,19 @@ public interface MockGroupService extends IService<MockGroup> {
     List<ExportGroupVo> loadExportGroups(List<MockGroup> groups);
 
     /**
-     * 导入数据
+     * 解析成GroupVo对象
+     *
      * @param file
      * @param importVo
      * @return
      */
-    SimpleResult<Integer> doImport(MultipartFile file, MockGroupImportParamVo importVo);
+    SimpleResult<List<ExportGroupVo>> toImportGroups(MultipartFile file, MockGroupImportParamVo importVo);
+
+    /**
+     * 导入数据
+     * @param importGroups
+     * @param importVo
+     * @return
+     */
+    SimpleResult<Integer> importGroups(List<ExportGroupVo> importGroups, MockGroupImportParamVo importVo);
 }
