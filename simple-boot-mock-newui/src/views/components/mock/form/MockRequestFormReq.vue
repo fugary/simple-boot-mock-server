@@ -193,7 +193,7 @@ const authValid = ref(true)
           <common-params-edit
             v-model="paramTarget[languageRef]"
             :form-prop="`${languageRef}`"
-            header-flag
+            :file-flag="isFormData"
           />
         </template>
         <vue-monaco-editor

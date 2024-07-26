@@ -2,7 +2,7 @@ import { useResourceApi } from '@/hooks/ApiHooks'
 import { $http, hasLoading } from '@/vendors/axios'
 import axios from 'axios'
 import { $coreHideLoading, $coreShowLoading } from '@/utils'
-import { isString } from 'lodash-es'
+import { isArray, isString } from 'lodash-es'
 import {
   FORM_URL_ENCODED,
   FORM_DATA,
@@ -145,7 +145,11 @@ export const calcRequestBody = (paramTarget) => {
   } else if (contentType === LANG_TO_CONTENT_TYPES[FORM_DATA]) {
     data = new FormData()
     preProcessParams(paramTarget.value[FORM_DATA]).forEach(item => {
-      data.append(item.name, item.value)
+      if (isArray(item.value)) {
+        item.value.filter(file => !!file?.raw).forEach(file => data.append(item.name, file.raw))
+      } else {
+        data.append(item.name, item.value)
+      }
     })
   } else if (contentType === LANG_TO_CONTENT_TYPES[FORM_URL_ENCODED]) {
     const params = preProcessParams(paramTarget.value[FORM_URL_ENCODED])

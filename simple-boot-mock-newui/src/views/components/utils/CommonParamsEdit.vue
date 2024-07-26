@@ -1,9 +1,9 @@
-<script setup>
+<script setup lang="jsx">
 import { defineFormOptions } from '@/components/utils'
 import { computed, ref } from 'vue'
-import { toFlatKeyValue } from '@/utils'
+import { getSingleSelectOptions, toFlatKeyValue } from '@/utils'
 import { $i18nBundle } from '@/messages'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElButton } from 'element-plus'
 import { DEFAULT_HEADERS } from '@/consts/MockConstants'
 
 const props = defineProps({
@@ -36,6 +36,10 @@ const props = defineProps({
     default: 'value'
   },
   headerFlag: {
+    type: Boolean,
+    default: false
+  },
+  fileFlag: {
     type: Boolean,
     default: false
   }
@@ -104,54 +108,97 @@ const inputTextOption = {
   }
 }
 
-const paramOptions = computed(() => {
-  return defineFormOptions([{
-    labelWidth: '30px',
-    prop: 'enabled',
-    disabled: props.nameReadOnly,
-    type: 'switch'
-  }, {
-    label: 'Key',
-    prop: props.nameKey,
-    required: props.nameReadOnly,
-    disabled: props.nameReadOnly,
-    type: props.headerFlag ? 'autocomplete' : 'input',
-    attrs: {
-      fetchSuggestions: (queryString, cb) => {
-        const dataList = DEFAULT_HEADERS.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
-          .map(value => ({ value }))
-        cb(dataList)
+const paramsOptions = computed(() => {
+  return params.value.map((param) => {
+    const nvSpan = props.fileFlag ? 7 : 9
+    return defineFormOptions([{
+      labelWidth: '30px',
+      prop: 'enabled',
+      disabled: props.nameReadOnly,
+      type: 'switch',
+      colSpan: 2
+    }, {
+      label: 'Key',
+      prop: props.nameKey,
+      required: props.nameReadOnly,
+      disabled: props.nameReadOnly,
+      type: props.headerFlag ? 'autocomplete' : 'input',
+      attrs: {
+        fetchSuggestions: (queryString, cb) => {
+          const dataList = DEFAULT_HEADERS.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
+            .map(value => ({ value }))
+          cb(dataList)
+        },
+        triggerOnFocus: false
       },
-      triggerOnFocus: false
-    }
-  }, {
-    label: 'Value',
-    prop: props.valueKey,
-    required: props.nameReadOnly
-  }])
+      colSpan: nvSpan
+    }, {
+      labelWidth: '1px',
+      prop: 'type',
+      type: 'select',
+      value: 'text',
+      children: getSingleSelectOptions('text', 'file'),
+      attrs: {
+        clearable: false
+      },
+      enabled: props.fileFlag,
+      colSpan: 3,
+      change () {
+        param[props.valueKey] = param.type === 'text' ? '' : []
+      }
+    }, {
+      label: 'Value',
+      prop: props.valueKey,
+      required: props.nameReadOnly,
+      colSpan: nvSpan,
+      enabled: param.type === 'text'
+    }, {
+      label: 'Files',
+      type: 'upload',
+      enabled: props.fileFlag && param.type === 'file',
+      attrs: {
+        fileList: param[props.valueKey],
+        'onUpdate:fileList': (files) => {
+          param[props.valueKey] = files
+        },
+        showFileList: true,
+        autoUpload: false
+      },
+      slots: {
+        trigger () {
+          return <ElButton type="primary" size="small">{$i18nBundle('mock.label.selectFile')}</ElButton>
+        }
+      },
+      colSpan: nvSpan + 1
+    }])
+  })
 })
 
 </script>
 
 <template>
-  <el-container class="flex-column">
+  <el-container class="flex-column common-params-edit">
     <el-row
       v-for="(item, index) in params"
       :key="index"
       class="padding-bottom2"
     >
-      <el-col
-        v-for="option in paramOptions"
+      <template
+        v-for="option in paramsOptions[index]"
         :key="`${index}_${option.prop}`"
-        :span="option.prop==='enabled'?2:9"
       >
-        <common-form-control
-          label-width="80px"
-          :model="item"
-          :option="option"
-          :prop="`${formProp}.${index}.${option.prop}`"
-        />
-      </el-col>
+        <el-col
+          v-if="option.enabled!==false"
+          :span="option.colSpan"
+        >
+          <common-form-control
+            label-width="80px"
+            :model="item"
+            :option="option"
+            :prop="`${formProp}.${index}.${option.prop}`"
+          />
+        </el-col>
+      </template>
       <el-col
         :span="4"
         class="padding-left2"
@@ -199,8 +246,5 @@ const paramOptions = computed(() => {
 </template>
 
 <style scoped>
-.text-model-cls {
-  float: right;
-  width: calc(100% - 140px) !important;
-}
+
 </style>

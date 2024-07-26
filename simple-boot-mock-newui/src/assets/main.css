@@ -432,3 +432,12 @@ html, body, #app, .index-container {
 .flex-grow {
     flex-grow: 1;
 }
+
+.common-params-edit .text-model-cls {
+    float: right;
+    width: calc(100% - 140px) !important;
+}
+.common-params-edit .el-upload-list {
+    margin-left: -435px;
+    width: 700px;
+}

@@ -13,6 +13,7 @@ import { ElMessage } from 'element-plus'
 import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
+import { cloneDeep, isArray } from 'lodash-es'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -97,9 +98,14 @@ const doSaveMockParams = () => {
   if (paramTarget.value) {
     const requestId = requestItem.value?.id
     const id = previewData.value?.id
-    const paramTargetVal = { ...paramTarget.value }
+    const paramTargetVal = cloneDeep(paramTarget.value)
     delete paramTargetVal.responseBody
     delete paramTargetVal.method
+    paramTargetVal.formData?.forEach(nv => {
+      if (isArray(nv.value)) {
+        nv.value = []
+      }
+    })
     const mockParams = JSON.stringify(paramTargetVal)
     return saveMockParams({
       requestId,
