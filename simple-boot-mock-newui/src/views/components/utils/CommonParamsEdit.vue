@@ -110,7 +110,7 @@ const inputTextOption = {
 
 const paramsOptions = computed(() => {
   return params.value.map((param) => {
-    const nvSpan = props.fileFlag ? 7 : 9
+    const nvSpan = 9
     return defineFormOptions([{
       labelWidth: '30px',
       prop: 'enabled',
@@ -144,14 +144,14 @@ const paramsOptions = computed(() => {
       enabled: props.fileFlag,
       colSpan: 3,
       change () {
-        param[props.valueKey] = param.type === 'text' ? '' : []
+        param[props.valueKey] = param.type === 'file' ? [] : ''
       }
     }, {
       label: 'Value',
       prop: props.valueKey,
       required: props.nameReadOnly,
       colSpan: nvSpan,
-      enabled: param.type === 'text'
+      enabled: param.type !== 'file'
     }, {
       label: 'Files',
       type: 'upload',
@@ -169,7 +169,7 @@ const paramsOptions = computed(() => {
           return <ElButton type="primary" size="small">{$i18nBundle('mock.label.selectFile')}</ElButton>
         }
       },
-      colSpan: nvSpan + 1
+      colSpan: 6
     }])
   })
 })
