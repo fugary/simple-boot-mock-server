@@ -84,7 +84,10 @@ export const initXmlWithJs = (monaco) => {
       { open: '{{', close: '}}' },
       { open: '{', close: '}' },
       { open: '[', close: ']' },
-      { open: '(', close: ')' }
+      { open: '(', close: ')' },
+      { open: '"', close: '"' },
+      { open: "'", close: "'" },
+      { open: '`', close: '`' }
     ],
     surroundingPairs: [
       { open: '<', close: '>' },
@@ -93,7 +96,8 @@ export const initXmlWithJs = (monaco) => {
       { open: '[', close: ']' },
       { open: '(', close: ')' },
       { open: '"', close: '"' },
-      { open: "'", close: "'" }
+      { open: "'", close: "'" },
+      { open: '`', close: '`' }
     ]
   })
   const baseXmlWithJsMatcher = (text) => {
@@ -102,7 +106,7 @@ export const initXmlWithJs = (monaco) => {
     return !!left && left.length > (right?.length || 0)
   }
   monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
-    triggerCharacters: [''],
+    triggerCharacters: ['', '@'],
     provideCompletionItems: getMockJsPlaceholders({ prefix: '', matcher: baseXmlWithJsMatcher })
   })
   monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {

@@ -404,7 +404,7 @@ declare namespace Mock {
          * 随机生成一个（中国）县
          * @param prefix 否生成所属的省、市
          */
-        country(prefix?: boolean): string;
+        county(prefix?: boolean): string;
 
         /**
          * 随机生成一个邮政编码（六位数字）

@@ -47,101 +47,137 @@ export const MockRandom = {
     func: (util, format) => {},
     desc: '返回当前的日期和时间字符串'
   },
+  timestamp: {
+    func: () => {},
+    desc: '随机生成一个时间戳'
+  },
   image: {
     func: (size, background, foreground, format, text) => {},
-    desc: '返回一个随机的图片地址'
+    desc: '随机生成一个随机的图片地址'
   },
   dataImage: {
     func: (size, text) => {},
-    desc: '返回一段随机的 Base64 图片编码'
+    desc: '随机生成一段随机的 Base64 图片编码'
   },
   color: {
     func: () => {},
-    desc: '返回一个有吸引力的颜色'
+    desc: '随机生成一个有吸引力的颜色'
+  },
+  hex: {
+    func: () => {},
+    desc: '随机生成一个有吸引力的颜色'
+  },
+  rgb: {
+    func: () => {},
+    desc: '随机生成一个有吸引力的颜色'
+  },
+  rgba: {
+    func: () => {},
+    desc: '随机生成一个有吸引力的颜色'
+  },
+  hsl: {
+    func: () => {},
+    desc: '随机生成一个有吸引力的颜色'
   },
   paragraph: {
     func: (min, max) => {},
-    desc: '返回一段文本'
-  },
-  sentence: {
-    func: (min, max) => {},
-    desc: '返回一个句子'
-  },
-  word: {
-    func: (min, max) => {},
-    desc: '返回一个单词'
-  },
-  title: {
-    func: (min, max) => {},
-    desc: '返回一句标题'
+    desc: '随机生成一段文本'
   },
   cparagraph: {
     func: (min, max) => {},
-    desc: '返回一段中文文本'
+    desc: '随机生成一段中文文本'
+  },
+  sentence: {
+    func: (min, max) => {},
+    desc: '随机生成一个句子'
   },
   csentence: {
     func: (min, max) => {},
-    desc: '返回一个中文句子'
+    desc: '随机生成一段中文句子'
+  },
+  word: {
+    func: (min, max) => {},
+    desc: '随机生成一个单词'
   },
   cword: {
     func: (pool, min, max) => {},
-    desc: '返回一个随机汉字字符串'
+    desc: '随机生成一个汉字'
+  },
+  title: {
+    func: (min, max) => {},
+    desc: '随机生成一句标题'
   },
   ctitle: {
     func: (min, max) => {},
-    desc: '返回一句中文标题'
+    desc: '随机生成一句中文标题'
   },
   first: {
     func: () => {},
-    desc: '返回一个常见的英文名'
+    desc: '随机生成一个常见的英文名'
   },
   last: {
     func: () => {},
-    desc: '返回一个常见的英文姓'
+    desc: '随机生成一个常见的英文姓'
   },
   name: {
     func: (middle) => {},
-    desc: '返回一个常见的英文姓名'
+    desc: '随机生成一个常见的英文姓名'
   },
   cfirst: {
     func: () => {},
-    desc: '返回一个常见的中文名'
+    desc: '随机生成一个常见的中文名'
   },
   clast: {
     func: () => {},
-    desc: '返回一个常见的中文姓'
+    desc: '随机生成一个常见的中文姓'
   },
   cname: {
     func: () => {},
-    desc: '返回一个常见的中文姓名'
+    desc: '随机生成一个常见的中文姓名'
   },
   url: {
     func: (protocol, host) => {},
-    desc: '返回一个随机的 URL'
+    desc: '随机生成一个 URL'
+  },
+  protocol: {
+    func: () => {},
+    desc: '随机生成一个 URL 协议'
   },
   domain: {
     func: () => {},
-    desc: '返回一个随机的域名'
+    desc: '随机生成一个域名'
+  },
+  dtl: {
+    func: () => {},
+    desc: '随机生成一个顶级域名'
   },
   email: {
     func: (domain) => {},
-    desc: '返回一个随机的邮件地址'
+    desc: '随机生成一个邮件地址'
   },
   ip: {
     func: () => {},
-    desc: '返回一个随机的 IP 地址'
-  },
-  tld: {
-    func: () => {},
-    desc: '返回一个顶级域名'
-  },
-  area: {
-    func: () => {},
-    desc: '返回一个（中国）大区'
+    desc: '随机生成一个 IP 地址'
   },
   region: {
     func: () => {},
-    desc: '返回一个（中国）省（或直辖市、自治区、特别行政区）'
+    desc: '随机生成一个（中国）大区'
+  },
+  province: {
+    func: () => {},
+    desc: '随机生成一个（中国）省'
+  },
+  city: {
+    func: (prefix) => {},
+    desc: '随机生成一个（中国）市'
+  },
+  county: {
+    func: (prefix) => {},
+    desc: '随机生成一个（中国）县'
+  },
+  zip: {
+    func: () => {},
+    desc: '随机生成一个邮政编码'
   },
   capitalize: {
     func: (word) => {},
@@ -161,15 +197,27 @@ export const MockRandom = {
   },
   shuffle: {
     func: (arr, min, max) => {},
-    desc: '打乱数组中元素的顺序，并返回'
+    desc: '打乱数组中元素的顺序'
   },
   guid: {
     func: () => {},
-    desc: '返回一个随机的 GUID'
+    desc: '随机生成一个 GUID'
   },
   id: {
     func: () => {},
-    desc: '返回一个 18 位身份证号'
+    desc: '随机生成一个 18 位身份证'
+  },
+  increment: {
+    func: (step) => {},
+    desc: '生成一个全局的自增整数'
+  },
+  version: {
+    func: (depth) => {},
+    desc: '随机生成一个版本号'
+  },
+  phone: {
+    func: () => {},
+    desc: '生成一个中国的手机号'
   }
 }
 
