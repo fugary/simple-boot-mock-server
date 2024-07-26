@@ -191,8 +191,8 @@ const authValid = ref(true)
         </common-form-control>
         <template v-if="isFormData || isFormUrlEncoded">
           <common-params-edit
-            v-model="paramTarget.bodyParams[languageRef]"
-            :form-prop="`bodyParams.${languageRef}`"
+            v-model="paramTarget[languageRef]"
+            :form-prop="`${languageRef}`"
             header-flag
           />
         </template>

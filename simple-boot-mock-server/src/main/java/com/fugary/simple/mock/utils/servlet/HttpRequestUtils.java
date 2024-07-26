@@ -7,6 +7,7 @@ import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.utils.XmlUtils;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
+import com.fugary.simple.mock.web.vo.query.MockParamsVo;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -183,6 +184,28 @@ public class HttpRequestUtils {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * 判断MediaType
+	 * @param request
+	 * @param matchTypes
+	 * @return
+	 */
+	public static boolean isCompatibleWith(HttpServletRequest request, MediaType...matchTypes) {
+		List<MediaType> mediaTypes = MediaType.parseMediaTypes(request.getContentType());
+		return isCompatibleWith(mediaTypes, matchTypes);
+	}
+
+	/**
+	 * 判断MediaType
+	 * @param paramsVo
+	 * @param matchTypes
+	 * @return
+	 */
+	public static boolean isCompatibleWith(MockParamsVo paramsVo, MediaType...matchTypes) {
+		List<MediaType> mediaTypes = MediaType.parseMediaTypes(paramsVo.getContentType());
+		return isCompatibleWith(mediaTypes, matchTypes);
 	}
 
 	public static Resource getBodyResource(HttpServletRequest request) throws IOException {

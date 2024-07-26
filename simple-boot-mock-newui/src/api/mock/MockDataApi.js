@@ -95,10 +95,8 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
     pathParams: calcParamTargetByUrl(requestPath),
     requestParams: [],
     headerParams: [],
-    bodyParams: {
-      [FORM_DATA]: [],
-      [FORM_URL_ENCODED]: []
-    },
+    [FORM_DATA]: [],
+    [FORM_URL_ENCODED]: [],
     contentType: previewData?.contentType || 'application/json',
     method: requestItem?.method || 'GET',
     responseBody: previewData?.responseBody,
@@ -146,11 +144,11 @@ export const calcRequestBody = (paramTarget) => {
     hasBody = false
   } else if (contentType === LANG_TO_CONTENT_TYPES[FORM_DATA]) {
     data = new FormData()
-    preProcessParams(paramTarget.value.bodyParams[FORM_DATA]).forEach(item => {
+    preProcessParams(paramTarget.value[FORM_DATA]).forEach(item => {
       data.append(item.name, item.value)
     })
   } else if (contentType === LANG_TO_CONTENT_TYPES[FORM_URL_ENCODED]) {
-    const params = preProcessParams(paramTarget.value.bodyParams[FORM_URL_ENCODED])
+    const params = preProcessParams(paramTarget.value[FORM_URL_ENCODED])
     data = Object.fromEntries(params.map(item => [item.name, item.value]))
   }
   return {

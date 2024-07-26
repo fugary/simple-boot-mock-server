@@ -3,7 +3,9 @@ package com.fugary.simple.mock.utils;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.entity.mock.*;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
+import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
+import com.fugary.simple.mock.web.vo.NameValueObj;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -12,6 +14,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -214,11 +217,27 @@ public class SimpleMockUtils {
         headers.add(new NameValue(MockConstants.SIMPLE_BOOT_MOCK_HEADER, "1"));
         Enumeration<String> parameterNames = request.getParameterNames();
         List<NameValue> parameters = mockParams.getRequestParams();
-        while (parameterNames.hasMoreElements()) {
-            String parameterName = parameterNames.nextElement();
-            String parameterValue = request.getParameter(parameterName);
-            if (StringUtils.isNotBlank(parameterValue)) {
-                parameters.add(new NameValue(parameterName, parameterValue));
+        List<NameValueObj> formData = mockParams.getFormData();
+        boolean isUrlencoded = HttpRequestUtils.isCompatibleWith(request, MediaType.APPLICATION_FORM_URLENCODED);
+        boolean isFormData = HttpRequestUtils.isCompatibleWith(request, MediaType.MULTIPART_FORM_DATA);
+        if (isFormData) {
+            MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+            multipartRequest.getFileNames().forEachRemaining(fieldName -> {
+                formData.add(new NameValueObj(fieldName, multipartRequest.getFiles(fieldName)));
+            });
+            multipartRequest.getParameterMap().keySet().forEach(paramName -> {
+                String paramValue = multipartRequest.getParameter(paramName);
+                if (StringUtils.isNotBlank(paramValue)) {
+                    formData.add(new NameValueObj(paramName, paramValue));
+                }
+            });
+        } else if (!isUrlencoded) {
+            while (parameterNames.hasMoreElements()) {
+                String parameterName = parameterNames.nextElement();
+                String parameterValue = request.getParameter(parameterName);
+                if (StringUtils.isNotBlank(parameterValue)) {
+                    parameters.add(new NameValue(parameterName, parameterValue));
+                }
             }
         }
         mockParams.setContentType(request.getContentType());

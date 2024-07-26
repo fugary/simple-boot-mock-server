@@ -31,8 +31,8 @@ export const DEFAULT_HEADERS = ['Accept',
   'User-Agent'
 ]
 export const NONE = 'none'
-export const FORM_DATA = 'form-data'
-export const FORM_URL_ENCODED = 'form-urlencoded'
+export const FORM_DATA = 'formData'
+export const FORM_URL_ENCODED = 'formUrlencoded'
 export const SPECIAL_LANGS = [NONE, FORM_DATA, FORM_URL_ENCODED]
 
 export const LANG_TO_CONTENT_TYPES = {
