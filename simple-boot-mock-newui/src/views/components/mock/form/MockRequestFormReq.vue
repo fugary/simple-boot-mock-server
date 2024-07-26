@@ -33,8 +33,13 @@ languageRef.value = paramTarget.value?.requestFormat || languageRef.value
 const customLanguageSelectOption = computed(() => {
   return {
     ...normalLanguageSelectOption.value,
-    children: [...getSingleSelectOptions(NONE), ...normalLanguageSelectOption.value.children,
-      ...getSingleSelectOptions(FORM_DATA, FORM_URL_ENCODED)]
+    children: [...getSingleSelectOptions(NONE), ...normalLanguageSelectOption.value.children, {
+      value: FORM_DATA,
+      label: 'form-data'
+    }, {
+      value: FORM_URL_ENCODED,
+      label: 'form-urlencoded'
+    }]
   }
 })
 

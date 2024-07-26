@@ -201,7 +201,7 @@ const paramsOptions = computed(() => {
       </template>
       <el-col
         :span="4"
-        class="padding-left2"
+        class="padding-left2 padding-top1"
       >
         <el-button
           v-if="showRemoveButton"
