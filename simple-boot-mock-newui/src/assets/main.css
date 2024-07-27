@@ -441,3 +441,19 @@ html, body, #app, .index-container {
     margin-left: -515px;
     width: 700px;
 }
+
+.float-right {
+    float: right;
+}
+
+.request-table {
+    height: calc(100vh - 200px);
+    overflow: auto;
+    margin-top: 10px;
+}
+.request-table .el-table__row {
+    cursor: pointer;
+}
+.request-table .current-row td:first-child{
+    border-left: 4px solid var(--el-color-primary);
+}

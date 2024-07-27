@@ -1,5 +1,5 @@
 <script setup lang="jsx">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 import { defineTableColumns, defineFormOptions, defineTableButtons } from '@/components/utils'
 import { $coreConfirm, checkShowColumn, getSingleSelectOptions } from '@/utils'
 import MockDataApi, { ALL_STATUS_CODES, ALL_CONTENT_TYPES, markDefault } from '@/api/mock/MockDataApi'
@@ -101,12 +101,16 @@ const columns = computed(() => {
     minWidth: '220px'
   }])
 })
-const { tableData, loading, searchMethod: loadMockData } = useTableAndSearchForm({
+const { searchParam, tableData, loading, searchMethod: loadMockData } = useTableAndSearchForm({
   defaultParam: { requestId: props.requestItem.id },
   searchMethod: MockDataApi.search,
   saveParam: false
 })
 onMounted(() => {
+  loadMockData()
+})
+watch(() => props.requestItem?.id, requestId => {
+  searchParam.value.requestId = requestId
   loadMockData()
 })
 const buttons = defineTableButtons([{
@@ -324,8 +328,8 @@ const saveDataResponse = (mockData) => {
             :type="button.type"
             :size="button.size||'small'"
             :disabled="button.disabled"
-            :round="button.round??true"
-            :circle="button.circle"
+            :round="button.round"
+            :circle="button.circle??true"
             @click="button.click?.(item)"
           >
             <common-icon :icon="button.icon" />

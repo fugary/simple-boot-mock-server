@@ -17,9 +17,18 @@ export default [{
       icon: 'List'
     }
   }, {
-    path: ':groupId',
+    path: 'old/:groupId',
     name: 'MockRequests',
     component: () => import('@/views/mock/MockRequests.vue'),
+    meta: {
+      replaceTabHistory: 'MockRequests',
+      labelKey: 'mock.label.mockRequests',
+      icon: 'List'
+    }
+  }, {
+    path: ':groupId',
+    name: 'MockRequestsNew',
+    component: () => import('@/views/mock/MockRequestsNew.vue'),
     meta: {
       replaceTabHistory: 'MockGroups',
       labelKey: 'mock.label.mockRequests',
