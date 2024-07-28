@@ -223,10 +223,7 @@ const selectedRows = computed(() => tableProjectItems.value.map(item => item.pro
             @click="gotoMockGroups(project)"
           >
             <template #header>
-              <div
-                class="card-header"
-                @click="$event => {$event.stopPropagation();project.selected = !project.selected}"
-              >
+              <div class="card-header">
                 <el-checkbox
                   v-model="project.selected"
                   style="margin-right: auto;"
