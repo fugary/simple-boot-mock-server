@@ -15,6 +15,8 @@ import { ElLink, ElMessage, ElTag } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
+import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import { ALL_METHODS } from '@/api/mock/MockRequestApi'
 
 const props = defineProps({
   groupItem: {
@@ -304,68 +306,94 @@ const changeBatchMode = () => {
     selectedRows.value = []
   }
 }
+const methodsConfig = Object.fromEntries(ALL_METHODS.map(method => [method.method, method]))
+const fullPath = computed(() => {
+  const groupItem = props.groupItem
+  const requestItem = props.requestItem
+  return `/mock/${groupItem?.groupPath}${requestItem?.requestPath}`
+})
 
 </script>
 
 <template>
   <el-container class="flex-column padding-10">
-    <common-table
-      :key="batchMode"
-      :data="tableData"
-      :columns="columns"
-      :loading="loading"
-      @selection-change="selectedRows=$event"
+    <el-card
+      shadow="never"
+      class="small-card operation-card"
     >
-      <template #buttonHeader>
-        {{ $t('common.label.operation') }}
-        <el-button
-          v-common-tooltip="$t('common.label.batchMode')"
-          class="margin-left1"
-          round
-          :type="batchMode?'success':'default'"
-          size="small"
-          @click="changeBatchMode"
-        >
-          <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
-        </el-button>
-        <el-button
-          v-common-tooltip="$t('common.label.new')"
-          type="primary"
-          size="small"
-          round
-          @click="newOrEdit()"
-        >
-          <common-icon icon="Plus" />
-        </el-button>
-        <el-button
-          v-if="selectedRows.length"
-          v-common-tooltip="$t('common.label.delete')"
-          type="danger"
-          size="small"
-          round
-          @click="deleteDataList()"
-        >
-          <common-icon icon="DeleteFilled" />
-        </el-button>
+      <template #header>
+        <div class="card-header">
+          <span>
+            <el-tag
+              :type="methodsConfig[requestItem.method].type"
+              size="small"
+              class="margin-right1"
+            >
+              {{ requestItem.method }}
+            </el-tag>
+            {{ requestItem.requestPath }}
+            <mock-url-copy-link :url-path="fullPath" />
+          </span>
+        </div>
       </template>
-      <template #buttons="{item}">
-        <template v-for="(button, index) in buttons">
+      <common-table
+        :key="batchMode"
+        :data="tableData"
+        :columns="columns"
+        :loading="loading"
+        @selection-change="selectedRows=$event"
+      >
+        <template #buttonHeader>
+          {{ $t('common.label.operation') }}
           <el-button
-            v-if="button.enabled!==false&&(!button.buttonIf||button.buttonIf(item))"
-            :key="index"
-            v-common-tooltip="button.label || $t(button.labelKey)"
-            :type="button.type"
-            :size="button.size||'small'"
-            :disabled="button.disabled"
-            :round="button.round"
-            :circle="button.circle??true"
-            @click="button.click?.(item)"
+            v-common-tooltip="$t('common.label.batchMode')"
+            class="margin-left1"
+            round
+            :type="batchMode?'success':'default'"
+            size="small"
+            @click="changeBatchMode"
           >
-            <common-icon :icon="button.icon" />
+            <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
+          </el-button>
+          <el-button
+            v-common-tooltip="$t('common.label.new')"
+            type="primary"
+            size="small"
+            round
+            @click="newOrEdit()"
+          >
+            <common-icon icon="Plus" />
+          </el-button>
+          <el-button
+            v-if="selectedRows.length"
+            v-common-tooltip="$t('common.label.delete')"
+            type="danger"
+            size="small"
+            round
+            @click="deleteDataList()"
+          >
+            <common-icon icon="DeleteFilled" />
           </el-button>
         </template>
-      </template>
-    </common-table>
+        <template #buttons="{item}">
+          <template v-for="(button, index) in buttons">
+            <el-button
+              v-if="button.enabled!==false&&(!button.buttonIf||button.buttonIf(item))"
+              :key="index"
+              v-common-tooltip="button.label || $t(button.labelKey)"
+              :type="button.type"
+              :size="button.size||'small'"
+              :disabled="button.disabled"
+              :round="button.round"
+              :circle="button.circle??true"
+              @click="button.click?.(item)"
+            >
+              <common-icon :icon="button.icon" />
+            </el-button>
+          </template>
+        </template>
+      </common-table>
+    </el-card>
     <simple-edit-window
       v-model="currentDataItem"
       v-model:show-edit-window="showEditWindow"
