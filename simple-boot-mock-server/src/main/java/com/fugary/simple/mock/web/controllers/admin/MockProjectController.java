@@ -38,12 +38,11 @@ public class MockProjectController {
         Page<MockProject> page = SimpleResultUtils.toPage(queryVo);
         QueryWrapper<MockProject> queryWrapper = Wrappers.<MockProject>query();
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
-        if (StringUtils.isNotBlank(keyword)) {
-            queryWrapper.and(wrapper -> wrapper.like("project_name", keyword)
-                    .or().like("project_code", keyword));
-        }
+        queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("project_name", keyword)
+                .or().like("project_code", keyword));
         String userName = SecurityUtils.getUserName(queryVo.getUserName());
-        queryWrapper.eq("user_name", userName);
+        queryWrapper.and(wrapper -> wrapper.and(wrapper1 -> wrapper1.eq("user_name", userName)
+                .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)));
         return SimpleResultUtils.createSimpleResult(mockProjectService.page(page, queryWrapper));
     }
 

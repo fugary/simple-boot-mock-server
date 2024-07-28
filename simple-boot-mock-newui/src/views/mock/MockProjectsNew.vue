@@ -13,6 +13,7 @@ import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { chunk } from 'lodash-es'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { useRoute } from 'vue-router'
+import { isDefaultProject } from '@/consts/MockConstants'
 
 const route = useRoute()
 
@@ -124,14 +125,16 @@ const minWidth = '110px'
 
 const tableProjectItems = computed(() => {
   return tableData.value.map(project => {
+    const defaultProject = isDefaultProject(project.projectCode)
     return {
+      defaultProject,
       project,
       projectItems: [{
         labelKey: 'mock.label.projectCode',
         formatter () {
           return <>
             <span class="margin-right2">{project.projectCode}</span>
-            <DelFlagTag v-model={project.status} clickToToggle={true}
+            <DelFlagTag v-model={project.status} clickToToggle={!defaultProject}
                         onToggleValue={(status) => saveProjectItem({ ...project, status })} />
           </>
         }
@@ -194,8 +197,8 @@ const dataRows = computed(() => {
         :class="{'margin-top2': index>0}"
       >
         <el-col
-          v-for="{project, projectItems} in dataRow"
-          :key="project.projectCode"
+          v-for="{project, projectItems, defaultProject} in dataRow"
+          :key="project.id"
           :span="6"
         >
           <el-card
@@ -211,9 +214,15 @@ const dataRows = computed(() => {
                   style="margin-right: auto;"
                   :type="project.status===1?'':'danger'"
                 >
+                  <common-icon
+                    v-if="defaultProject"
+                    icon="LockFilled"
+                    :size="16"
+                  />
                   {{ project.projectName }}
                 </el-text>
                 <el-button
+                  v-if="!defaultProject"
                   v-common-tooltip="$t('common.label.edit')"
                   type="primary"
                   size="small"
@@ -223,6 +232,7 @@ const dataRows = computed(() => {
                   <common-icon icon="Edit" />
                 </el-button>
                 <el-button
+                  v-if="!defaultProject"
                   v-common-tooltip="$t('common.label.delete')"
                   type="danger"
                   size="small"

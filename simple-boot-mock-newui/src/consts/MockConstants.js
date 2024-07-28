@@ -18,6 +18,8 @@ export const AUTHORIZATION_KEY = 'Authorization'
 
 export const BEARER_KEY = 'Bearer'
 
+export const isDefaultProject = projectCode => MOCK_DEFAULT_PROJECT === projectCode
+
 export const DEFAULT_HEADERS = ['Accept',
   'Accept-Charset',
   'Accept-Encoding',
