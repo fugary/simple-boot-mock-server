@@ -23,20 +23,25 @@ const groupId = route.params.groupId
 const { goBack } = useBackUrl('/mock/groups')
 const { groupItem, groupUrl, loadSuccess } = useMockGroupItem(groupId)
 
-const { tableData, loading, searchParam, searchMethod: loadMockRequests } = useTableAndSearchForm({
-  defaultParam: { groupId, page: useDefaultPage() },
+const { tableData, loading, searchParam, searchMethod: searchMockRequests } = useTableAndSearchForm({
+  defaultParam: { groupId, page: useDefaultPage(50) },
   searchMethod: (param) => MockRequestApi.search(param, { loading: true }),
   saveParam: false
 })
 
-loadMockRequests().then(() => {
-  if (tableData.value?.length) {
+const loadMockRequests = (...args) => {
+  return searchMockRequests(...args).then((result) => {
     nextTick(() => {
-      requestTableRef.value?.table?.setCurrentRow(tableData.value[0], true)
-      selectRequest.value = tableData.value[0]
+      if (tableData.value?.length) {
+        requestTableRef.value?.table?.setCurrentRow(tableData.value[0], true)
+        selectRequest.value = tableData.value[0]
+      }
     })
-  }
-})
+    return result
+  })
+}
+
+loadMockRequests()
 
 const methodOptions = ALL_METHODS.map(method => {
   return {

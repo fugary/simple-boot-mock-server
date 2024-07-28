@@ -102,6 +102,7 @@ const changeStatus = (status) => {
         <el-tag
           :type="methodsConfig[requestItem.method].type"
           size="small"
+          effect="dark"
         >
           {{ requestItem.method }}
         </el-tag>
