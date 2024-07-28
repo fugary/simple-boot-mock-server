@@ -5,7 +5,16 @@ import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
 import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
 import { useAllUsers } from '@/api/mock/MockUserApi'
-import { $coreConfirm, $goto, checkShowColumn, isAdminUser, $coreError, toGetParams, useCurrentUserName } from '@/utils'
+import {
+  $coreConfirm,
+  $goto,
+  checkShowColumn,
+  isAdminUser,
+  $coreError,
+  toGetParams,
+  useCurrentUserName,
+  useBackUrl
+} from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
@@ -28,6 +37,7 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
 })
 const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
 
+const { backUrl, goBack } = useBackUrl()
 if (route.params.projectCode) {
   searchParam.value.projectCode = useRoute().params.projectCode
 }
@@ -306,6 +316,12 @@ const showImportWindow = ref(false)
           @click="deleteGroups()"
         >
           {{ $t('common.label.delete') }}
+        </el-button>
+        <el-button
+          v-if="backUrl"
+          @click="goBack()"
+        >
+          {{ $t('common.label.back') }}
         </el-button>
       </template>
     </common-form>

@@ -75,13 +75,20 @@ const tooltip = computed(() => {
   }
 })
 
+const handleClick = $event => {
+  $event.stopPropagation()
+  if (props.clickToToggle) {
+    emit('toggleValue', reversedValue.value)
+  }
+}
+
 </script>
 
 <template>
   <el-link
     v-common-tooltip="tooltip"
     :underline="false"
-    @click="clickToToggle&&emit('toggleValue', reversedValue)"
+    @click="handleClick"
   >
     <el-tag
       v-if="valueConf[modelValue]"

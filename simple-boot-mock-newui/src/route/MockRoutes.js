@@ -36,11 +36,20 @@ export default [{
     }
   }]
 }, {
-  path: `${BASE_PATH}/projects`,
+  path: `${BASE_PATH}/old/projects`,
   name: 'MockProjects',
   component: () => import('@/views/mock/MockProjects.vue'),
   meta: {
     replaceTabHistory: 'MockProjects',
+    labelKey: 'mock.label.mockProjects',
+    icon: 'MessageBox'
+  }
+}, {
+  path: `${BASE_PATH}/projects`,
+  name: 'MockProjectsNew',
+  component: () => import('@/views/mock/MockProjectsNew.vue'),
+  meta: {
+    replaceTabHistory: 'MockProjectsNew',
     labelKey: 'mock.label.mockProjects',
     icon: 'MessageBox'
   }

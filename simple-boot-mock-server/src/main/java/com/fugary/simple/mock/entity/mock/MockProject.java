@@ -14,4 +14,5 @@ public class MockProject extends MockBase {
     private String userName;
     private String projectCode;
     private String projectName;
+    private String description;
 }
