@@ -68,6 +68,12 @@ const deleteProject = (project, $event) => {
     .then(() => loadMockProjects())
 }
 
+const deleteProjects = () => {
+  $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
+    .then(() => MockProjectApi.removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
+    .then(() => loadMockProjects())
+}
+
 const showEditWindow = ref(false)
 const currentProject = ref()
 const newOrEdit = async (id, $event) => {
@@ -159,6 +165,8 @@ const dataRows = computed(() => {
   return chunk(tableProjectItems.value, colSize.value)
 })
 
+const selectedRows = computed(() => tableProjectItems.value.map(item => item.project).filter(project => project?.selected))
+
 </script>
 
 <template>
@@ -178,6 +186,13 @@ const dataRows = computed(() => {
           @click="newOrEdit()"
         >
           {{ $t('common.label.new') }}
+        </el-button>
+        <el-button
+          v-if="selectedRows?.length"
+          type="danger"
+          @click="deleteProjects()"
+        >
+          {{ $t('common.label.delete') }}
         </el-button>
       </template>
     </common-form>
@@ -204,23 +219,32 @@ const dataRows = computed(() => {
           <el-card
             shadow="hover"
             class="small-card operation-card"
-            :class="{pointer: project.status===1}"
+            :class="{pointer: project.status===1, 'project-selected': project.selected}"
             @click="gotoMockGroups(project)"
           >
             <template #header>
-              <div class="card-header">
-                <el-text
-                  tag="b"
+              <div
+                class="card-header"
+                @click="$event => {$event.stopPropagation();project.selected = !project.selected}"
+              >
+                <el-checkbox
+                  v-model="project.selected"
                   style="margin-right: auto;"
-                  :type="project.status===1?'':'danger'"
+                  :disabled="defaultProject"
+                  @click="$event.stopPropagation()"
                 >
-                  <common-icon
-                    v-if="defaultProject"
-                    icon="LockFilled"
-                    :size="16"
-                  />
-                  {{ project.projectName }}
-                </el-text>
+                  <el-text
+                    tag="b"
+                    :type="project.status===1?'':'danger'"
+                  >
+                    <common-icon
+                      v-if="defaultProject"
+                      icon="LockFilled"
+                      :size="16"
+                    />
+                    {{ project.projectName }}
+                  </el-text>
+                </el-checkbox>
                 <el-button
                   v-if="!defaultProject"
                   v-common-tooltip="$t('common.label.edit')"
@@ -264,5 +288,7 @@ const dataRows = computed(() => {
 </template>
 
 <style scoped>
-
+.project-selected {
+  border-color: var(--el-color-primary);
+}
 </style>
