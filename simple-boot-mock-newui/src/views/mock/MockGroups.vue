@@ -45,9 +45,9 @@ if (route.params.projectCode) {
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam)
 
-onMounted(() => {
+onMounted(async () => {
+  await loadProjectsAndRefreshOptions()
   loadMockGroups()
-  loadProjectsAndRefreshOptions()
 })
 
 onActivated(async () => {
