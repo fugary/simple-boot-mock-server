@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { formatDate } from '@/utils'
+const props = defineProps({
   user: {
     type: Object,
     default: () => ({})
@@ -9,32 +11,25 @@ defineProps({
     default: '200px'
   }
 })
+const descriptionItems = computed(() => {
+  const user = props.user
+  return [
+    { labelKey: 'common.label.username', value: user.userName },
+    { labelKey: 'common.label.nickName', value: user.nickName },
+    { labelKey: 'common.label.email', value: user.userEmail },
+    { labelKey: 'common.label.createDate', value: formatDate(user.createDate) },
+    { labelKey: 'common.label.modifyDate', value: formatDate(user.modifyDate) }
+  ]
+})
 </script>
 
 <template>
-  <el-descriptions
+  <common-descriptions
+    :items="descriptionItems"
     :column="1"
     border
-  >
-    <el-descriptions-item
-      :label="$t('common.label.username')"
-      :min-width="minWidth"
-    >
-      {{ user.userName }}
-    </el-descriptions-item>
-    <el-descriptions-item :label="$t('common.label.nickName')">
-      {{ user.nickName }}
-    </el-descriptions-item>
-    <el-descriptions-item :label="$t('common.label.email')">
-      {{ user.userEmail }}
-    </el-descriptions-item>
-    <el-descriptions-item :label="$t('common.label.createDate')">
-      {{ $date(user.createDate) }}
-    </el-descriptions-item>
-    <el-descriptions-item :label="$t('common.label.modifyDate')">
-      {{ $date(user.modifyDate) }}
-    </el-descriptions-item>
-  </el-descriptions>
+    :min-width="minWidth"
+  />
 </template>
 
 <style scoped>

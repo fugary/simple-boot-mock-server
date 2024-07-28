@@ -15,6 +15,7 @@ import CommonBreadcrumb from '@/components/common-breadcrumb/index.vue'
 import CommonWindow from '@/components/common-window/index.vue'
 import CommonAutocomplete from '@/components/common-autocomplete/index.vue'
 import CommonSort from '@/components/common-sort/index.vue'
+import CommonDescriptions from '@/components/common-descriptions/index.vue'
 import CommonDirectives from '@/components/directives'
 
 /**
@@ -42,6 +43,7 @@ export default {
     Vue.component('CommonWindow', CommonWindow)
     Vue.component('CommonAutocomplete', CommonAutocomplete)
     Vue.component('CommonSort', CommonSort)
+    Vue.component('CommonDescriptions', CommonDescriptions)
     Vue.use(CommonDirectives)
   }
 }
