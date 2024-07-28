@@ -17,15 +17,6 @@ export default [{
       icon: 'List'
     }
   }, {
-    path: 'old/:groupId',
-    name: 'MockRequests',
-    component: () => import('@/views/mock/MockRequests.vue'),
-    meta: {
-      replaceTabHistory: 'MockRequests',
-      labelKey: 'mock.label.mockRequests',
-      icon: 'List'
-    }
-  }, {
     path: ':groupId',
     name: 'MockRequestsNew',
     component: () => import('@/views/mock/MockRequestsNew.vue'),
@@ -35,15 +26,6 @@ export default [{
       icon: 'List'
     }
   }]
-}, {
-  path: `${BASE_PATH}/old/projects`,
-  name: 'MockProjects',
-  component: () => import('@/views/mock/MockProjects.vue'),
-  meta: {
-    replaceTabHistory: 'MockProjects',
-    labelKey: 'mock.label.mockProjects',
-    icon: 'MessageBox'
-  }
 }, {
   path: `${BASE_PATH}/projects`,
   name: 'MockProjectsNew',
