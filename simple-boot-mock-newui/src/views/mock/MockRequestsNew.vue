@@ -148,8 +148,16 @@ const saveMockRequest = item => {
     .then(() => loadMockRequests())
 }
 
+const batchMode = ref(false)
+
 const newColumns = computed(() => {
   return [{
+    width: '50px',
+    enabled: batchMode.value,
+    attrs: {
+      type: 'selection'
+    }
+  }, {
     headerSlot: 'buttonHeader',
     property: 'requestPath',
     formatter (data) {
@@ -165,6 +173,13 @@ const newColumns = computed(() => {
     minWidth: '150px'
   }]
 })
+
+const changeBatchMode = () => {
+  batchMode.value = !batchMode.value
+  if (!batchMode.value) {
+    selectedRows.value = []
+  }
+}
 
 </script>
 
@@ -188,13 +203,6 @@ const newColumns = computed(() => {
     >
       <template #buttons>
         <el-button
-          v-if="selectedRows?.length"
-          type="danger"
-          @click="deleteRequests()"
-        >
-          {{ $t('common.label.delete') }}
-        </el-button>
-        <el-button
           @click="goBack()"
         >
           {{ $t('common.label.back') }}
@@ -208,17 +216,28 @@ const newColumns = computed(() => {
           style="min-width: 250px;"
         >
           <common-table
+            :key="batchMode"
             ref="requestTableRef"
             class="request-table"
             :data="tableData"
             :columns="newColumns"
             :loading="loading"
             row-key="id"
+            @selection-change="selectedRows=$event"
             @current-change="selectRequest=$event"
           >
             <template #buttonHeader>
               {{ $t('mock.label.mockRequests') }}
               <div class="float-right">
+                <el-button
+                  v-common-tooltip="$t('common.label.batchMode')"
+                  round
+                  :type="batchMode?'success':'default'"
+                  size="small"
+                  @click="changeBatchMode"
+                >
+                  <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
+                </el-button>
                 <el-button
                   v-common-tooltip="$t('common.label.new')"
                   round

@@ -80,6 +80,7 @@ common.label.add = 'Add'
 common.label.paste = 'Paste'
 common.label.expand = 'Expand'
 common.label.collapse = 'Collapse'
+common.label.batchMode = 'Batch Mode'
 
 //= ============通用============
 common.label.commonConfig = 'Config {0}'

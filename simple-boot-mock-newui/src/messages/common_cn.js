@@ -80,6 +80,7 @@ common.label.add = '添加'
 common.label.paste = '粘贴'
 common.label.expand = '展开'
 common.label.collapse = '收起'
+common.label.batchMode = '批量操作'
 
 //= ============通用============
 common.label.commonCode = '{0}代码'

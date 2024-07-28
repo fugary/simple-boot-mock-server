@@ -27,17 +27,22 @@ const props = defineProps({
   }
 })
 const selectedRows = ref([])
+const batchMode = ref(false)
 const columns = computed(() => {
   return defineTableColumns([{
     width: '50px',
     attrs: {
       type: 'selection'
-    }
+    },
+    enabled: batchMode.value
   }, {
     labelKey: 'mock.label.default',
     width: '80px',
     formatter (data) {
       return data.defaultFlag ? <CommonIcon color="#2d8cf0" icon="Flag"/> : ''
+    },
+    attrs: {
+      align: 'center'
     }
   }, {
     labelKey: 'mock.label.statusCode',
@@ -53,6 +58,9 @@ const columns = computed(() => {
         type = 'warning'
       }
       return <ElTag type={type}>{data.statusCode}</ElTag>
+    },
+    attrs: {
+      align: 'center'
     }
   }, {
     label: 'Content Type',
@@ -79,6 +87,9 @@ const columns = computed(() => {
     formatter (data) {
       return <DelFlagTag v-model={data.status} clickToToggle={true}
                          onToggleValue={(status) => saveMockData({ ...data, status })}/>
+    },
+    attrs: {
+      align: 'center'
     }
   }, {
     labelKey: 'mock.label.responseBody',
@@ -287,11 +298,19 @@ const saveDataResponse = (mockData) => {
   return saveMockData(mockData).then(() => ElMessage.success($i18nBundle('common.msg.saveSuccess')))
 }
 
+const changeBatchMode = () => {
+  batchMode.value = !batchMode.value
+  if (!batchMode.value) {
+    selectedRows.value = []
+  }
+}
+
 </script>
 
 <template>
   <el-container class="flex-column padding-10">
     <common-table
+      :key="batchMode"
       :data="tableData"
       :columns="columns"
       :loading="loading"
@@ -299,6 +318,16 @@ const saveDataResponse = (mockData) => {
     >
       <template #buttonHeader>
         {{ $t('common.label.operation') }}
+        <el-button
+          v-common-tooltip="$t('common.label.batchMode')"
+          class="margin-left1"
+          round
+          :type="batchMode?'success':'default'"
+          size="small"
+          @click="changeBatchMode"
+        >
+          <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
+        </el-button>
         <el-button
           v-common-tooltip="$t('common.label.new')"
           type="primary"

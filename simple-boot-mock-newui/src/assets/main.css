@@ -447,7 +447,6 @@ html, body, #app, .index-container {
 }
 
 .request-table {
-    height: calc(100vh - 200px);
     overflow: auto;
     margin-top: 10px;
 }
