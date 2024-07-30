@@ -127,7 +127,7 @@ const loadMockData = (...args) => {
     .then(() => {
       const exists = tableData.value.some(data => data.id === selectDataItem.value?.id)
       if (!exists && tableData.value[0]) {
-        onSelectDataItem(tableData.value[0])
+        dataTableRef.value?.table?.setCurrentRow(tableData.value[0], true)
       }
     })
 }
@@ -327,6 +327,7 @@ const fullPath = computed(() => {
   return `/mock/${groupItem?.groupPath}${requestItem?.requestPath}`
 })
 
+const dataTableRef = ref()
 const mockPreviewRef = ref()
 
 const onSelectDataItem = (dataItem) => {
