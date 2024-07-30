@@ -9,7 +9,7 @@ import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { previewMockRequest, toTestMatchPattern } from '@/utils/DynamicUtils'
+import { toTestMatchPattern } from '@/utils/DynamicUtils'
 import { $i18nBundle } from '@/messages'
 import { ElLink, ElMessage, ElTag } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
@@ -146,15 +146,6 @@ const buttons = defineTableButtons([{
   icon: 'Edit',
   click: item => {
     newOrEdit(item.id)
-  }
-}, {
-  labelKey: 'common.label.test',
-  type: 'success',
-  icon: 'RemoveRedEyeFilled',
-  click: item => {
-    previewMockRequest(props.groupItem, props.requestItem, item, (newItem) => {
-      Object.assign(item, newItem)
-    })
   }
 }, {
   labelKey: 'common.label.copy',
@@ -328,7 +319,9 @@ const mockPreviewRef = ref()
 const onSelectDataItem = (dataItem) => {
   selectDataItem.value = dataItem
   if (dataItem) {
-    mockPreviewRef.value?.toPreviewRequest(props.groupItem, props.requestItem, selectDataItem.value)
+    mockPreviewRef.value?.toPreviewRequest(props.groupItem, props.requestItem, selectDataItem.value, (newItem) => {
+      Object.assign(dataItem, newItem)
+    })
   }
 }
 
