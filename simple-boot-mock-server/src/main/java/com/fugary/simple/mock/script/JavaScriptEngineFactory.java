@@ -8,6 +8,7 @@ import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.HostAccess;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
@@ -65,15 +66,18 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
         System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
         ScriptEngine scriptEngine = GraalJSScriptEngine.create(null,
                 Context.newBuilder("js") // 安全选项考虑不启用用
-//                        .allowHostAccess(HostAccess.ALL)
+                        .allowHostAccess(HostAccess.ALL)
 //                        .allowExperimentalOptions(true)
-//                        .allowNativeAccess(true)
+                        .allowNativeAccess(true)
 //                        .allowHostClassLookup(s -> true)
                         .option("js.ecmascript-version", "2022"));
         try {
             Bindings bindings = scriptEngine.createBindings();
             scriptEngine.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
+            JsHelper jsHelper = new JsHelper();
+            bindings.put("JsHelper", jsHelper);
             scriptEngine.eval(MOCK_JS_CONTENT, bindings);
+            scriptEngine.eval(jsHelper.getInitStr(), bindings);
         } catch (ScriptException e) {
             log.error("执行MockJs错误", e);
         }
