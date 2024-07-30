@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.config;
 
+import com.fugary.simple.mock.security.MockScriptInterceptor;
 import com.fugary.simple.mock.security.UserSecurityInterceptor;
 import com.fugary.simple.mock.utils.http.SimpleHttpClientUtils;
 import com.fugary.simple.mock.web.filters.MockMetaDataFilter;
@@ -101,8 +102,14 @@ public class ApplicationConfig implements WebMvcConfigurer {
         return new UserSecurityInterceptor();
     }
 
+    @Bean
+    public MockScriptInterceptor mockScriptInterceptor() {
+        return new MockScriptInterceptor();
+    }
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(userSecurityInterceptor()).addPathPatterns("/admin/**");
+        registry.addInterceptor(mockScriptInterceptor()).addPathPatterns("/mock/**");
     }
 }

@@ -83,9 +83,12 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
 
     @Override
     public Object eval(String script) {
-        ScriptEngine scriptEngine = null;
+        ScriptEngine scriptEngine = MockJsUtils.getCurrentScriptEngine(); // 优先从线程中获取
+        boolean isThreadEngine = scriptEngine != null;
         try {
-            scriptEngine = scriptEnginePool.borrowObject();
+            if (!isThreadEngine) {
+                scriptEngine = scriptEnginePool.borrowObject();
+            }
 //            addAdditionalBindings(scriptEngine);
             addRequestVo(scriptEngine);
             return scriptEngine.eval(script);
@@ -93,7 +96,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
             log.error(MessageFormat.format("执行MockJs错误：{0}", script), e);
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, ExceptionUtils.getStackTrace(e));
         } finally {
-            if (scriptEngine != null) {
+            if (scriptEngine != null && !isThreadEngine) {
                 scriptEnginePool.returnObject(scriptEngine);
             }
         }

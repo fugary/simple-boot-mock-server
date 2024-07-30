@@ -12,6 +12,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.script.Bindings;
+import javax.script.ScriptEngine;
 import javax.servlet.http.HttpServletRequest;
 import java.text.MessageFormat;
 import java.util.Map;
@@ -36,6 +37,8 @@ public class MockJsUtils {
 
     private static final ThreadLocal<HttpRequestVo> CURRENT_REQUEST_VO = new ThreadLocal<>();
 
+    private static final ThreadLocal<ScriptEngine> CURRENT_SCRIPT_ENGINE = new ThreadLocal<>();
+
     public static void setCurrentRequestVo(HttpRequestVo requestVo) {
         CURRENT_REQUEST_VO.set(requestVo);
     }
@@ -46,6 +49,18 @@ public class MockJsUtils {
 
     public static void removeCurrentRequestVo() {
         CURRENT_REQUEST_VO.remove();
+    }
+
+    public static void setCurrentScriptEngine(ScriptEngine scriptEngine) {
+        CURRENT_SCRIPT_ENGINE.set(scriptEngine);
+    }
+
+    public static ScriptEngine getCurrentScriptEngine() {
+        return CURRENT_SCRIPT_ENGINE.get();
+    }
+
+    public static void removeCurrentScriptEngine() {
+        CURRENT_SCRIPT_ENGINE.remove();
     }
 
     /**
