@@ -38,18 +38,9 @@ const columns = computed(() => {
     },
     enabled: batchMode.value
   }, {
-    labelKey: 'mock.label.default',
-    width: '80px',
-    formatter (data) {
-      return data.defaultFlag ? <CommonIcon color="#2d8cf0" icon="Flag"/> : ''
-    },
-    attrs: {
-      align: 'center'
-    }
-  }, {
     labelKey: 'mock.label.statusCode',
     property: 'statusCode',
-    minWidth: '80px',
+    minWidth: '100px',
     formatter (data) {
       let type = 'danger'
       if (data.statusCode < 300) {
@@ -59,7 +50,14 @@ const columns = computed(() => {
       } else if (data.statusCode < 500) {
         type = 'warning'
       }
-      return <ElTag type={type}>{data.statusCode}</ElTag>
+      return <>
+          {data.defaultFlag
+            ? <CommonIcon color="#2d8cf0"
+                          v-common-tooltip={$i18nBundle('mock.label.default')}
+                          icon="Flag"/>
+            : ''}
+          <ElTag type={type} class="margin-left1">{data.statusCode}</ElTag>
+        </>
     },
     attrs: {
       align: 'center'
@@ -85,7 +83,7 @@ const columns = computed(() => {
     }
   }, {
     labelKey: 'common.label.status',
-    minWidth: '80px',
+    minWidth: '100px',
     formatter (data) {
       return <DelFlagTag v-model={data.status} clickToToggle={true}
                          onToggleValue={(status) => saveMockData({ ...data, status })}/>
@@ -111,7 +109,10 @@ const columns = computed(() => {
   }, {
     headerSlot: 'buttonHeader',
     slot: 'buttons',
-    minWidth: '220px'
+    minWidth: '200px',
+    attrs: {
+      fixed: 'right'
+    }
   }])
 })
 const { searchParam, tableData, loading, searchMethod: loadMockData } = useTableAndSearchForm({
@@ -319,7 +320,7 @@ const fullPath = computed(() => {
   <el-container class="flex-column padding-10">
     <el-card
       shadow="never"
-      class="small-card operation-card"
+      class="small-card operation-card data-card"
     >
       <template #header>
         <div class="card-header">

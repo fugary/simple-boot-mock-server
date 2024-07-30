@@ -339,7 +339,7 @@ html, body, #app, .index-container {
     padding: 0;
 }
 
-.product-book-card .el-card__body {
+.data-card .el-card__body {
     padding: 10px;
 }
 
