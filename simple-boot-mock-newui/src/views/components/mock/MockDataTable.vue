@@ -15,8 +15,6 @@ import { ElLink, ElMessage, ElTag } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
-import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { ALL_METHODS } from '@/api/mock/MockRequestApi'
 import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
 
 const props = defineProps({
@@ -320,12 +318,6 @@ const changeBatchMode = () => {
     selectedRows.value = []
   }
 }
-const methodsConfig = Object.fromEntries(ALL_METHODS.map(method => [method.method, method]))
-const fullPath = computed(() => {
-  const groupItem = props.groupItem
-  const requestItem = props.requestItem
-  return `/mock/${groupItem?.groupPath}${requestItem?.requestPath}`
-})
 
 const dataTableRef = ref()
 const mockPreviewRef = ref()
@@ -338,87 +330,67 @@ const onSelectDataItem = (dataItem) => {
 </script>
 
 <template>
-  <el-container class="flex-column padding-10">
-    <el-card
-      shadow="never"
-      class="small-card operation-card data-card"
+  <el-container class="flex-column padding-left2 padding-right2">
+    <common-table
+      ref="dataTableRef"
+      :key="batchMode"
+      :data="tableData"
+      :columns="columns"
+      :loading="loading"
+      class="request-table margin-bottom3"
+      @selection-change="selectedRows=$event"
+      @current-change="onSelectDataItem"
     >
-      <template #header>
-        <div class="card-header">
-          <span>
-            <el-tag
-              :type="methodsConfig[requestItem.method].type"
-              size="small"
-              class="margin-right1"
-            >
-              {{ requestItem.method }}
-            </el-tag>
-            {{ requestItem.requestPath }}
-            <mock-url-copy-link :url-path="fullPath" />
-          </span>
-        </div>
+      <template #buttonHeader>
+        {{ $t('common.label.operation') }}
+        <el-button
+          v-common-tooltip="$t('common.label.batchMode')"
+          class="margin-left1"
+          round
+          :type="batchMode?'success':'default'"
+          size="small"
+          @click="changeBatchMode"
+        >
+          <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
+        </el-button>
+        <el-button
+          v-common-tooltip="$t('common.label.new')"
+          type="primary"
+          size="small"
+          round
+          @click="newOrEdit()"
+        >
+          <common-icon icon="Plus" />
+        </el-button>
+        <el-button
+          v-if="selectedRows.length"
+          v-common-tooltip="$t('common.label.delete')"
+          type="danger"
+          size="small"
+          round
+          @click="deleteDataList()"
+        >
+          <common-icon icon="DeleteFilled" />
+        </el-button>
       </template>
-      <common-table
-        ref="dataTableRef"
-        :key="batchMode"
-        :data="tableData"
-        :columns="columns"
-        :loading="loading"
-        class="request-table"
-        @selection-change="selectedRows=$event"
-        @current-change="onSelectDataItem"
-      >
-        <template #buttonHeader>
-          {{ $t('common.label.operation') }}
+      <template #buttons="{item}">
+        <template v-for="(button, index) in buttons">
           <el-button
-            v-common-tooltip="$t('common.label.batchMode')"
-            class="margin-left1"
-            round
-            :type="batchMode?'success':'default'"
-            size="small"
-            @click="changeBatchMode"
+            v-if="button.enabled!==false&&(!button.buttonIf||button.buttonIf(item))"
+            :key="index"
+            v-common-tooltip="button.label || $t(button.labelKey)"
+            :type="button.type"
+            :size="button.size||'small'"
+            :disabled="button.disabled"
+            :round="button.round"
+            :circle="button.circle??true"
+            @click="button.click?.(item)"
           >
-            <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
-          </el-button>
-          <el-button
-            v-common-tooltip="$t('common.label.new')"
-            type="primary"
-            size="small"
-            round
-            @click="newOrEdit()"
-          >
-            <common-icon icon="Plus" />
-          </el-button>
-          <el-button
-            v-if="selectedRows.length"
-            v-common-tooltip="$t('common.label.delete')"
-            type="danger"
-            size="small"
-            round
-            @click="deleteDataList()"
-          >
-            <common-icon icon="DeleteFilled" />
+            <common-icon :icon="button.icon" />
           </el-button>
         </template>
-        <template #buttons="{item}">
-          <template v-for="(button, index) in buttons">
-            <el-button
-              v-if="button.enabled!==false&&(!button.buttonIf||button.buttonIf(item))"
-              :key="index"
-              v-common-tooltip="button.label || $t(button.labelKey)"
-              :type="button.type"
-              :size="button.size||'small'"
-              :disabled="button.disabled"
-              :round="button.round"
-              :circle="button.circle??true"
-              @click="button.click?.(item)"
-            >
-              <common-icon :icon="button.icon" />
-            </el-button>
-          </template>
-        </template>
-      </common-table>
-    </el-card>
+      </template>
+    </common-table>
     <simple-edit-window
       v-model="currentDataItem"
       v-model:show-edit-window="showEditWindow"
