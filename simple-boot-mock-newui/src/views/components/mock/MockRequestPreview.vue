@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, nextTick } from 'vue'
 import MockRequestApi, { saveMockParams } from '@/api/mock/MockRequestApi'
 import MockDataApi, {
   calcParamTarget,
@@ -34,8 +34,11 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
   }
   const requestData = await requestDataPromise
   requestItem.value = requestData.resultData
-  paramTarget.value = calcParamTarget(groupItem.value, requestItem.value, previewData.value)
   saveCallback = callback
+  clearParamsAndResponse()
+  return nextTick(() => {
+    paramTarget.value = calcParamTarget(groupItem.value, requestItem.value, previewData.value)
+  })
 }
 
 const requestPath = computed(() => {
@@ -125,8 +128,14 @@ const doSaveMockResponseBody = () => {
   }
 }
 
+const clearParamsAndResponse = () => {
+  responseTarget.value = undefined
+  paramTarget.value = undefined
+}
+
 defineExpose({
-  toPreviewRequest
+  toPreviewRequest,
+  clearParamsAndResponse
 })
 
 </script>

@@ -123,9 +123,12 @@ const { searchParam, tableData, loading, searchMethod: searchMockData } = useTab
 const loadMockData = (...args) => {
   searchMockData(...args)
     .then(() => {
-      const exists = tableData.value.some(data => data.id === selectDataItem.value?.id)
-      if (!exists && tableData.value[0]) {
-        dataTableRef.value?.table?.setCurrentRow(tableData.value[0], true)
+      if (!tableData.value.some(data => data.id === selectDataItem.value?.id)) {
+        if (tableData.value[0]) {
+          dataTableRef.value?.table?.setCurrentRow(tableData.value[0], true)
+        } else {
+          mockPreviewRef.value?.clearParamsAndResponse()
+        }
       }
     })
 }
@@ -324,7 +327,9 @@ const mockPreviewRef = ref()
 
 const onSelectDataItem = (dataItem) => {
   selectDataItem.value = dataItem
-  mockPreviewRef.value?.toPreviewRequest(props.groupItem, props.requestItem, selectDataItem.value)
+  if (dataItem) {
+    mockPreviewRef.value?.toPreviewRequest(props.groupItem, props.requestItem, selectDataItem.value)
+  }
 }
 
 </script>
