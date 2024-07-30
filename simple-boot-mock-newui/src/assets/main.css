@@ -235,7 +235,7 @@ html, body, #app, .index-container {
 }
 
 .common-tabs .el-tabs__new-tab {
-    width: 50%;
+    width: auto;
     border: none;
     margin: 10px 10px 0 10px;
     justify-content: right;

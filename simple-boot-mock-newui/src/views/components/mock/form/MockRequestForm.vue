@@ -59,7 +59,7 @@ const sendRequest = (form) => {
     >
       <template #default="{form}">
         <el-row>
-          <el-col :span="21">
+          <el-col :span="20">
             <mock-request-form-url
               v-if="matchPatternMode"
               v-model="paramTarget"
@@ -81,13 +81,14 @@ const sendRequest = (form) => {
                   {{ requestUrl }}
                 </el-text>
                 <mock-url-copy-link
+                  style="vertical-align: unset;"
                   :url-path="requestUrl"
                 />
               </el-descriptions-item>
             </el-descriptions>
           </el-col>
           <el-col
-            :span="3"
+            :span="4"
             class="padding-top1 padding-left2"
           >
             <el-button

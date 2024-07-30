@@ -15,7 +15,6 @@ import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
 import { cloneDeep, isArray } from 'lodash-es'
 
-const showWindow = ref(false)
 const groupItem = ref()
 const requestItem = ref()
 const previewData = ref()
@@ -35,7 +34,6 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
   }
   const requestData = await requestDataPromise
   requestItem.value = requestData.resultData
-  showWindow.value = true
   paramTarget.value = calcParamTarget(groupItem.value, requestItem.value, previewData.value)
   saveCallback = callback
 }
@@ -134,31 +132,17 @@ defineExpose({
 </script>
 
 <template>
-  <common-window
-    v-model="showWindow"
-    width="1000px"
-    :show-cancel="false"
-    :ok-label="$t('common.label.close')"
-    show-fullscreen
-    destroy-on-close
-  >
-    <template #header>
-      <span class="el-dialog__title">
-        {{ $t('mock.msg.requestTest') }}
-      </span>
-    </template>
-    <el-container class="flex-column">
-      <mock-request-form
-        v-if="requestItem"
-        v-model="paramTarget"
-        :request-path="requestPath"
-        :response-target="responseTarget"
-        :mock-response-editable="!!previewData"
-        @send-request="doDataPreview"
-        @save-mock-response-body="doSaveMockResponseBody"
-      />
-    </el-container>
-  </common-window>
+  <el-container class="flex-column">
+    <mock-request-form
+      v-if="requestItem && paramTarget"
+      v-model="paramTarget"
+      :request-path="requestPath"
+      :response-target="responseTarget"
+      :mock-response-editable="!!previewData"
+      @send-request="doDataPreview"
+      @save-mock-response-body="doSaveMockResponseBody"
+    />
+  </el-container>
 </template>
 
 <style scoped>

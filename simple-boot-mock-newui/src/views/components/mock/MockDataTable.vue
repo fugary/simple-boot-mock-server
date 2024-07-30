@@ -17,6 +17,7 @@ import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.v
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { ALL_METHODS } from '@/api/mock/MockRequestApi'
+import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
 
 const props = defineProps({
   groupItem: {
@@ -115,11 +116,22 @@ const columns = computed(() => {
     }
   }])
 })
-const { searchParam, tableData, loading, searchMethod: loadMockData } = useTableAndSearchForm({
+const { searchParam, tableData, loading, searchMethod: searchMockData } = useTableAndSearchForm({
   defaultParam: { requestId: props.requestItem.id },
   searchMethod: MockDataApi.search,
   saveParam: false
 })
+
+const loadMockData = (...args) => {
+  searchMockData(...args)
+    .then(() => {
+      const exists = tableData.value.some(data => data.id === selectDataItem.value?.id)
+      if (!exists && tableData.value[0]) {
+        onSelectDataItem(tableData.value[0])
+      }
+    })
+}
+
 onMounted(() => {
   loadMockData()
 })
@@ -181,6 +193,7 @@ const deleteDataList = () => {
 }
 const showEditWindow = ref(false)
 const currentDataItem = ref()
+const selectDataItem = ref()
 const newDataItem = () => ({
   requestId: props.requestItem.id,
   groupId: props.requestItem.groupId,
@@ -314,6 +327,13 @@ const fullPath = computed(() => {
   return `/mock/${groupItem?.groupPath}${requestItem?.requestPath}`
 })
 
+const mockPreviewRef = ref()
+
+const onSelectDataItem = (dataItem) => {
+  selectDataItem.value = dataItem
+  mockPreviewRef.value?.toPreviewRequest(props.groupItem, props.requestItem, selectDataItem.value)
+}
+
 </script>
 
 <template>
@@ -338,11 +358,14 @@ const fullPath = computed(() => {
         </div>
       </template>
       <common-table
+        ref="dataTableRef"
         :key="batchMode"
         :data="tableData"
         :columns="columns"
         :loading="loading"
+        class="request-table"
         @selection-change="selectedRows=$event"
+        @current-change="onSelectDataItem"
       >
         <template #buttonHeader>
           {{ $t('common.label.operation') }}
@@ -421,6 +444,7 @@ const fullPath = computed(() => {
       ref="dataResponseEditRef"
       @save-data-response="saveDataResponse"
     />
+    <mock-request-preview ref="mockPreviewRef" />
   </el-container>
 </template>
 
