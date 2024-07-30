@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
-import java.util.stream.IntStream;
-
 /**
  * Create date 2024/7/8<br>
  *
@@ -34,15 +32,8 @@ public class ScriptGenericObjectPool<T> extends GenericObjectPool<T> implements 
     @Override
     public void afterPropertiesSet() throws Exception {
         if (getMinIdle() > 0) {
-//                super.addObjects(getMinIdle()); // 提前创建对象
-            IntStream.range(0, getMinIdle())
-                    .parallel().forEach(i -> {
-                        try {
-                            super.addObject();
-                        } catch (Exception e) {
-                            log.error("创建脚本对象失败", e);
-                        }
-                    });
+            // 提前创建对象
+            preparePool();
         }
     }
 }
