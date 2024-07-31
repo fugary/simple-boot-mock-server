@@ -47,17 +47,22 @@ public class MockDataController {
 
     @DeleteMapping("/{id}")
     public SimpleResult remove(@PathVariable("id") Integer id) {
-        return SimpleResultUtils.createSimpleResult(mockDataService.removeById(id));
+        return SimpleResultUtils.createSimpleResult(mockDataService.deleteMockData(id));
     }
 
     @DeleteMapping("/removeByIds/{ids}")
     public SimpleResult removeByIds(@PathVariable("ids") List<Integer> ids) {
-        return SimpleResultUtils.createSimpleResult(mockDataService.removeByIds(ids));
+        return SimpleResultUtils.createSimpleResult(mockDataService.deleteMockDatas(ids));
     }
 
     @PostMapping
     public SimpleResult save(@RequestBody MockData data) {
         return SimpleResultUtils.createSimpleResult(mockDataService.saveOrUpdate(SimpleMockUtils.addAuditInfo(data)));
+    }
+
+    @PostMapping("/copyMockData/{dataId}")
+    public SimpleResult copyMockData(@PathVariable("dataId") Integer id) {
+        return SimpleResultUtils.createSimpleResult(mockDataService.copyMockData(id));
     }
 
     @PostMapping("/preview")

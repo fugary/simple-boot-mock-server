@@ -80,7 +80,7 @@ public class MockGroupController {
 
     @DeleteMapping("/removeByIds/{ids}")
     public SimpleResult removeByIds(@PathVariable("ids") List<Integer> ids) {
-        return SimpleResultUtils.createSimpleResult(mockGroupService.removeByIds(ids));
+        return SimpleResultUtils.createSimpleResult(mockGroupService.deleteMockGroups(ids));
     }
 
     @PostMapping

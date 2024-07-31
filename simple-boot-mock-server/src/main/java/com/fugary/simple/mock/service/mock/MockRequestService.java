@@ -20,6 +20,13 @@ public interface MockRequestService extends IService<MockRequest> {
      * @return
      */
     boolean deleteMockRequest(Integer requestId);
+    /**
+     * 删除配置的请求
+     *
+     * @param requestIds
+     * @return
+     */
+    boolean deleteMockRequests(List<Integer> requestIds);
 
     /**
      * 判断是否已经存在改Request

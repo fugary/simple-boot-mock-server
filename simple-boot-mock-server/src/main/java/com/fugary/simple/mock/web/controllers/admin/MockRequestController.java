@@ -73,7 +73,7 @@ public class MockRequestController {
 
     @DeleteMapping("/removeByIds/{ids}")
     public SimpleResult removeByIds(@PathVariable("ids") List<Integer> ids) {
-        return SimpleResultUtils.createSimpleResult(mockRequestService.removeByIds(ids));
+        return SimpleResultUtils.createSimpleResult(mockRequestService.deleteMockRequests(ids));
     }
 
     @PostMapping

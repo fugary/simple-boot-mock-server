@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Create date 2024/7/15<br>
@@ -31,9 +32,17 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
             List<MockGroup> mockGroups = mockGroupService.list(Wrappers.<MockGroup>query()
                     .eq("project_code", mockProject.getProjectCode())
                     .eq("user_name", mockProject.getUserName()));
-            mockGroups.forEach(mockGroup -> mockGroupService.deleteMockGroup(mockGroup.getId()));
+            mockGroupService.deleteMockGroups(mockGroups.stream().map(MockGroup::getId).collect(Collectors.toList()));
         }
         return removeById(id);
+    }
+
+    @Override
+    public boolean deleteMockProjects(List<Integer> ids) {
+        for (Integer id : ids) {
+            deleteMockProject(id);
+        }
+        return false;
     }
 
     @Override

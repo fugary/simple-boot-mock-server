@@ -58,7 +58,7 @@ public class MockProjectController {
 
     @DeleteMapping("/removeByIds/{ids}")
     public SimpleResult removeByIds(@PathVariable("ids") List<Integer> ids) {
-        return SimpleResultUtils.createSimpleResult(mockProjectService.removeByIds(ids));
+        return SimpleResultUtils.createSimpleResult(mockProjectService.deleteMockProjects(ids));
     }
 
     @PostMapping

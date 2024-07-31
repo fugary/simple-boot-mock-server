@@ -2,10 +2,7 @@ package com.fugary.simple.mock.imports.swagger;
 
 import com.fugary.simple.mock.imports.MockGroupImporter;
 import com.fugary.simple.mock.utils.JsonUtils;
-import com.fugary.simple.mock.web.vo.export.ExportDataVo;
-import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
-import com.fugary.simple.mock.web.vo.export.ExportMockVo;
-import com.fugary.simple.mock.web.vo.export.ExportRequestVo;
+import com.fugary.simple.mock.web.vo.export.*;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -14,8 +11,10 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.tags.Tag;
+import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +40,11 @@ public class SwaggerImporterImpl implements MockGroupImporter {
 
     @Override
     public ExportMockVo doImport(String data) {
-        SwaggerParseResult result = new OpenAPIParser().readContents(data, null, null);
+        ParseOptions parseOptions = new ParseOptions();
+        parseOptions.setResolve(true);
+        parseOptions.setResolveRequestBody(true);
+        parseOptions.setResolveFully(true);
+        SwaggerParseResult result = new OpenAPIParser().readContents(data, null, parseOptions);
         OpenAPI openAPI = result.getOpenAPI();
         if (openAPI != null && openAPI.getTags() != null) {
             Map<String, List<Triple<String, PathItem, List<Pair<String, Operation>>>>> pathMap = openAPI.getPaths().entrySet().stream().map(entry -> {
@@ -94,9 +98,74 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                 requestVo.setDescription(operation.getDescription());
                 requestVo.setStatus(1);
                 requestVo.setDataList(toMockDataList(operation));
+                requestVo.setSchemas(getRequestSchemaVo(operation));
                 return requestVo;
             });
         }).collect(Collectors.toList());
+    }
+
+    protected String getParametersSchema(Operation operation) {
+        if (operation.getParameters() != null) {
+            return JsonUtils.toJson(operation.getParameters());
+        }
+        return null;
+    }
+
+    protected List<ExportSchemaVo> getRequestSchemaVo(Operation operation) {
+        String parametersSchema = getParametersSchema(operation);
+        List<ExportSchemaVo> requestSchemas = new ArrayList<>();
+        if (operation.getRequestBody() != null && operation.getRequestBody().getContent() != null) {
+            for (Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry : operation.getRequestBody().getContent().entrySet()) {
+                String mediaType = entry.getKey();
+                if (entry.getValue() != null && entry.getValue().getSchema() != null) {
+                    ExportSchemaVo exportSchemaVo = new ExportSchemaVo();
+                    exportSchemaVo.setParametersSchema(parametersSchema);
+                    exportSchemaVo.setRequestMediaType(mediaType);
+                    exportSchemaVo.setRequestBodySchema(JsonUtils.toJson(entry.getValue().getSchema()));
+                    requestSchemas.add(exportSchemaVo);
+                }
+            }
+        }
+        return requestSchemas;
+    }
+
+    protected List<ExportSchemaVo> getResponseSchemaVo(ExportRequestVo requestVo, Content content) {
+        List<ExportSchemaVo> responseSchemas = new ArrayList<>();
+        if (content != null) {
+            if (requestVo.getSchemas().isEmpty()) {
+                responseSchemas = calcResponseSchemaVo(content, null);
+            } else {
+                for (ExportSchemaVo requestSchema : requestVo.getSchemas()) {
+                    responseSchemas.addAll(calcResponseSchemaVo(content, requestSchema));
+                }
+            }
+        }
+        return responseSchemas;
+    }
+
+    protected List<ExportSchemaVo> calcResponseSchemaVo(Content content, ExportSchemaVo requestSchema) {
+        List<ExportSchemaVo> dataSchemas = new ArrayList<>();
+        for (Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry : content.entrySet()) {
+            String mediaType = entry.getKey();
+            if (entry.getValue() != null && entry.getValue().getSchema() != null) {
+                ExportSchemaVo exportSchemaVo = new ExportSchemaVo();
+                if (requestSchema != null) {
+                    copyProperties(exportSchemaVo, requestSchema);
+                }
+                exportSchemaVo.setResponseMediaType(mediaType);
+                exportSchemaVo.setResponseBodySchema(JsonUtils.toJson(entry.getValue().getSchema()));
+                dataSchemas.add(exportSchemaVo);
+            }
+        }
+        return dataSchemas;
+    }
+
+    protected void copyProperties(Object target, Object source) {
+        try {
+            BeanUtils.copyProperties(target, source);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            log.error("复制属性错误", e);
+        }
     }
 
     protected List<ExportDataVo> toMockDataList(Operation operation) {
@@ -117,10 +186,14 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                         if (CollectionUtils.isNotEmpty(keys)) {
                             dataVo.setContentType(keys.get(0));
                             io.swagger.v3.oas.models.media.MediaType mediaType = content.get(keys.get(0));
+                            if (mediaType != null) {
+
+                            }
                             if (mediaType != null && mediaType.getSchema() != null && mediaType.getSchema().getExample() != null) {
                                 dataVo.setResponseBody(JsonUtils.toJson(mediaType.getSchema().getExample()));
                             }
                         }
+
                     }
                 }
                 return dataVo;

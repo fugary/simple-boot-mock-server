@@ -34,6 +34,13 @@ export const markDefault = function (data, config) {
   }, config))
 }
 
+export const copyMockData = (id, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_DATA_URL}/copyMockData/${id}`,
+    method: 'POST'
+  }, config)).then(response => response.data)
+}
+
 export const previewRequest = function (reqData, config) {
   const req = axios.create({
     baseURL: import.meta.env.VITE_APP_API_BASE_URL, // url = base url + request url

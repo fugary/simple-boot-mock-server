@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.entity.mock.MockSchema;
 import com.fugary.simple.mock.mapper.mock.MockRequestMapper;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
+import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -31,12 +34,25 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     private MockDataService mockDataService;
 
     @Autowired
+    private MockSchemaService mockSchemaService;
+
+    @Autowired
     private ScriptEngineProvider scriptEngineProvider;
 
     @Override
     public boolean deleteMockRequest(Integer requestId) {
-        mockDataService.remove(Wrappers.<MockData>query().eq("request_id", requestId));
+        List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query().eq("request_id", requestId));
+        mockDataService.deleteMockDatas(dataList.stream().map(MockData::getId).collect(Collectors.toList()));
+        mockSchemaService.remove(Wrappers.<MockSchema>query().eq("request_id", requestId));
         return removeById(requestId);
+    }
+
+    @Override
+    public boolean deleteMockRequests(List<Integer> ids) {
+        List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query().in("request_id", ids));
+        mockDataService.deleteMockDatas(dataList.stream().map(MockData::getId).collect(Collectors.toList()));
+        mockSchemaService.remove(Wrappers.<MockSchema>query().in("request_id", ids));
+        return removeByIds(ids);
     }
 
     @Override
@@ -58,11 +74,19 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             saveOrUpdate(mockRequest);
             List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query()
                     .eq("request_id", requestId));
+            List<MockSchema> schemaList = mockSchemaService.list(Wrappers.<MockSchema>query().eq("request_id", requestId));
+            Map<String, List<MockSchema>> schemaMap = schemaList.stream().collect(Collectors
+                    .groupingBy(schema -> StringUtils.join(schema.getRequestId(), "-", schema.getDataId())));
+            mockSchemaService.saveCopySchemas(schemaMap, requestId, null, mockRequest.getId(), null);
             dataList.forEach(data -> {
+                Integer oldDataId = data.getId();
                 data.setId(null);
                 data.setRequestId(mockRequest.getId());
+                boolean saved = mockDataService.saveOrUpdate(data);
+                if (saved) {
+                    mockSchemaService.saveCopySchemas(schemaMap, requestId, oldDataId, mockRequest.getId(), data.getId());
+                }
             });
-            mockDataService.saveOrUpdateBatch(dataList);
             return true;
         }
         return false;

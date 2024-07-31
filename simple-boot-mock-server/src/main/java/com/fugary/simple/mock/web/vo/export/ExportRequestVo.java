@@ -4,6 +4,7 @@ import com.fugary.simple.mock.entity.mock.MockRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,4 +17,6 @@ import java.util.List;
 public class ExportRequestVo extends MockRequest {
 
     private List<ExportDataVo> dataList;
+
+    private List<ExportSchemaVo> schemas;
 }

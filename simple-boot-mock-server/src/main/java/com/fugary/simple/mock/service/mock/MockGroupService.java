@@ -26,6 +26,13 @@ public interface MockGroupService extends IService<MockGroup> {
      * @return
      */
     boolean deleteMockGroup(Integer id);
+    /**
+     * 级联删除请求和数据
+     *
+     * @param ids
+     * @return
+     */
+    boolean deleteMockGroups(List<Integer> ids);
 
     /**
      * 检查是否有重复

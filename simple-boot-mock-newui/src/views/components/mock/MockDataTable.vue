@@ -2,7 +2,7 @@
 import { onMounted, ref, computed, watch } from 'vue'
 import { defineTableColumns, defineFormOptions, defineTableButtons } from '@/components/utils'
 import { $coreConfirm, checkShowColumn, getSingleSelectOptions } from '@/utils'
-import MockDataApi, { ALL_STATUS_CODES, ALL_CONTENT_TYPES, markDefault } from '@/api/mock/MockDataApi'
+import MockDataApi, { ALL_STATUS_CODES, ALL_CONTENT_TYPES, markDefault, copyMockData } from '@/api/mock/MockDataApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import CommonIcon from '@/components/common-icon/index.vue'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
@@ -153,9 +153,8 @@ const buttons = defineTableButtons([{
   icon: 'FileCopyFilled',
   click: item => {
     $coreConfirm($i18nBundle('common.msg.confirmCopy'))
-      .then(() => {
-        saveMockData({ ...item, id: undefined })
-      })
+      .then(() => copyMockData(item.id))
+      .then(() => loadMockData())
   }
 }, {
   labelKey: 'mock.label.setDefault',
