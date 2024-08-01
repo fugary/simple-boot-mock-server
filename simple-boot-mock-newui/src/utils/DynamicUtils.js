@@ -1,4 +1,7 @@
+import { isFunction } from 'lodash-es'
 import { DynamicHelper } from '@/components/directives'
+import { h, defineComponent, defineAsyncComponent } from 'vue'
+
 import MockRequestPreviewWindow from '@/views/components/mock/MockRequestPreviewWindow.vue'
 import MockMatchPatternPreview from '@/views/components/mock/MockMatchPatternPreview.vue'
 
@@ -44,6 +47,23 @@ export const showCodeWindow = async (code, config = {}) => {
     onClosed: () => dynamicHelper.destroy()
   })
   vnode.component?.exposed?.showCodeWindow(code, config)
+}
+
+/**
+ * 构建新名字的组件，用于keepalive缓存
+ *
+ * @param {String} name 组件自定义名称
+ * @param {Component | Promise<Component>} component 组件或者()=>import(组件)
+ * @return {Component}
+ */
+export function createNewComponent (name, component) {
+  return defineComponent({
+    name,
+    setup () {
+      const oldComponent = isFunction(component) ? defineAsyncComponent(component) : component
+      return () => h(oldComponent)
+    }
+  })
 }
 
 export default {

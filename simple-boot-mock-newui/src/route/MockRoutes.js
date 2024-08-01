@@ -1,3 +1,5 @@
+import { createNewComponent } from '@/utils/DynamicUtils'
+
 const BASE_PATH = '/mock'
 
 export default [{
@@ -10,7 +12,7 @@ export default [{
   }, {
     path: 'project/:projectCode',
     name: 'MockProjectGroups',
-    component: () => import('@/views/mock/MockGroups.vue'),
+    component: createNewComponent('MockProjectGroups', () => import('@/views/mock/MockGroups.vue')),
     meta: {
       replaceTabHistory: 'MockGroups',
       labelKey: 'mock.label.mockGroups',
