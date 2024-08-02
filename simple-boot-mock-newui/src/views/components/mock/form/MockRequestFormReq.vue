@@ -7,8 +7,9 @@ import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { AUTH_TYPE, calcContentType, NONE, FORM_DATA, FORM_URL_ENCODED, SPECIAL_LANGS } from '@/consts/MockConstants'
 import MockRequestFormAuthorization from '@/views/components/mock/form/MockRequestFormAuthorization.vue'
 import { $i18nKey } from '@/messages'
-import { getSingleSelectOptions } from '@/utils'
+import { getSingleSelectOptions, $coreConfirm } from '@/utils'
 import { showCodeWindow } from '@/utils/DynamicUtils'
+import { sample } from 'openapi-sampler'
 
 const props = defineProps({
   showAuthorization: {
@@ -90,6 +91,15 @@ if (paramTarget.value) {
   }
 }
 const authValid = ref(true)
+
+const generateSample = () => {
+  $coreConfirm($i18nKey('common.msg.commonConfirm', 'common.label.generateData'))
+    .then(() => {
+      const schema = JSON.parse(props.schemaBody)
+      contentRef.value = JSON.stringify(sample(schema))
+      setTimeout(() => formatDocument())
+    })
+}
 </script>
 
 <template>
@@ -208,6 +218,19 @@ const authValid = ref(true)
               :underline="false"
               class="margin-left3"
               @click="showCodeWindow(schemaBody)"
+            >
+              <common-icon
+                :size="18"
+                icon="ContentPasteSearchFilled"
+              />
+            </el-link>
+            <el-link
+              v-if="schemaBody"
+              v-common-tooltip="$t('common.label.generateData')"
+              type="primary"
+              :underline="false"
+              class="margin-left3"
+              @click="generateSample()"
             >
               <common-icon
                 :size="18"

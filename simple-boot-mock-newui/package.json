@@ -28,6 +28,7 @@
     "monaco-editor": "^0.47.0",
     "nprogress": "^0.2.0",
     "numeral": "^2.0.6",
+    "openapi-sampler": "^1.5.1",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
     "ua-parser-js": "^1.0.38",

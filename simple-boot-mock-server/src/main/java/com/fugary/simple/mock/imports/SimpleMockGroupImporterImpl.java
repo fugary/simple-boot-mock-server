@@ -19,6 +19,10 @@ public class SimpleMockGroupImporterImpl implements MockGroupImporter {
 
     @Override
     public ExportMockVo doImport(String data) {
-        return JsonUtils.fromJson(data, ExportMockVo.class);
+        ExportMockVo mockVo = JsonUtils.fromJson(data, ExportMockVo.class);
+        if (mockVo != null && mockVo.getGroups() != null) {
+            return mockVo;
+        }
+        return null;
     }
 }

@@ -4,6 +4,8 @@ import { computed, watch, ref } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nKey } from '@/messages'
+import { $coreConfirm } from '@/utils'
+import { sample } from 'openapi-sampler'
 
 const props = defineProps({
   responseTarget: {
@@ -60,6 +62,14 @@ const codeHeight = '300px'
 
 const emit = defineEmits(['saveMockResponseBody'])
 
+const generateSample = () => {
+  $coreConfirm($i18nKey('common.msg.commonConfirm', 'common.label.generateData'))
+    .then(() => {
+      const schema = JSON.parse(props.schemaBody)
+      contentRef2.value = JSON.stringify(sample(schema))
+      setTimeout(() => formatDocument())
+    })
+}
 </script>
 
 <template>
@@ -238,6 +248,19 @@ const emit = defineEmits(['saveMockResponseBody'])
                 :underline="false"
                 class="margin-left3"
                 @click="showCodeWindow(schemaBody)"
+              >
+                <common-icon
+                  :size="18"
+                  icon="ContentPasteSearchFilled"
+                />
+              </el-link>
+              <el-link
+                v-if="schemaBody"
+                v-common-tooltip="$t('common.label.generateData')"
+                type="primary"
+                :underline="false"
+                class="margin-left3"
+                @click="generateSample()"
               >
                 <common-icon
                   :size="18"

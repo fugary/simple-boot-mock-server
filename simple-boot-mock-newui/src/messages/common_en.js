@@ -84,6 +84,7 @@ common.label.collapse = 'Collapse'
 common.label.batchMode = 'Batch Mode'
 common.label.schema = 'Schema'
 common.label.code = 'Code'
+common.label.generateData = 'Generate fake data'
 
 //= ============通用============
 common.label.commonConfig = 'Config {0}'
