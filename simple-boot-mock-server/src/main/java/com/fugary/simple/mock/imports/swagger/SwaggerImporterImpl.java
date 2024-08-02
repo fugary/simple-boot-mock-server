@@ -16,7 +16,6 @@ import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -28,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -133,13 +133,10 @@ public class SwaggerImporterImpl implements MockGroupImporter {
     protected List<ExportSchemaVo> getResponseSchemaVo(ExportRequestVo requestVo, Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry) {
         List<ExportSchemaVo> responseSchemas = new ArrayList<>();
         if (entry != null) {
-            if (requestVo.getSchemas().isEmpty()) {
-                responseSchemas = calcResponseSchemaVo(entry, null);
-            } else {
-                for (ExportSchemaVo requestSchema : requestVo.getSchemas()) {
-                    responseSchemas.addAll(calcResponseSchemaVo(entry, requestSchema));
-                }
-            }
+            Optional<ExportSchemaVo> requestOptional = requestVo.getSchemas().stream()
+                    .filter(schema -> StringUtils.equalsIgnoreCase(schema.getRequestMediaType(), entry.getKey()))
+                    .findFirst();
+            responseSchemas.addAll(calcResponseSchemaVo(entry, requestOptional.orElse(null)));
         }
         return responseSchemas;
     }
