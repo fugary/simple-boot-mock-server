@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
@@ -97,8 +98,8 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                 requestVo.setMethod(StringUtils.upperCase(method));
                 requestVo.setDescription(operation.getDescription());
                 requestVo.setStatus(1);
-                requestVo.setDataList(toMockDataList(operation));
                 requestVo.setSchemas(getRequestSchemaVo(operation));
+                requestVo.setDataList(toMockDataList(operation, requestVo));
                 return requestVo;
             });
         }).collect(Collectors.toList());
@@ -129,33 +130,31 @@ public class SwaggerImporterImpl implements MockGroupImporter {
         return requestSchemas;
     }
 
-    protected List<ExportSchemaVo> getResponseSchemaVo(ExportRequestVo requestVo, Content content) {
+    protected List<ExportSchemaVo> getResponseSchemaVo(ExportRequestVo requestVo, Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry) {
         List<ExportSchemaVo> responseSchemas = new ArrayList<>();
-        if (content != null) {
+        if (entry != null) {
             if (requestVo.getSchemas().isEmpty()) {
-                responseSchemas = calcResponseSchemaVo(content, null);
+                responseSchemas = calcResponseSchemaVo(entry, null);
             } else {
                 for (ExportSchemaVo requestSchema : requestVo.getSchemas()) {
-                    responseSchemas.addAll(calcResponseSchemaVo(content, requestSchema));
+                    responseSchemas.addAll(calcResponseSchemaVo(entry, requestSchema));
                 }
             }
         }
         return responseSchemas;
     }
 
-    protected List<ExportSchemaVo> calcResponseSchemaVo(Content content, ExportSchemaVo requestSchema) {
+    protected List<ExportSchemaVo> calcResponseSchemaVo(Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry, ExportSchemaVo requestSchema) {
         List<ExportSchemaVo> dataSchemas = new ArrayList<>();
-        for (Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry : content.entrySet()) {
-            String mediaType = entry.getKey();
-            if (entry.getValue() != null && entry.getValue().getSchema() != null) {
-                ExportSchemaVo exportSchemaVo = new ExportSchemaVo();
-                if (requestSchema != null) {
-                    copyProperties(exportSchemaVo, requestSchema);
-                }
-                exportSchemaVo.setResponseMediaType(mediaType);
-                exportSchemaVo.setResponseBodySchema(JsonUtils.toJson(entry.getValue().getSchema()));
-                dataSchemas.add(exportSchemaVo);
+        String mediaType = entry.getKey();
+        if (entry.getValue() != null && entry.getValue().getSchema() != null) {
+            ExportSchemaVo exportSchemaVo = new ExportSchemaVo();
+            if (requestSchema != null) {
+                copyProperties(exportSchemaVo, requestSchema);
             }
+            exportSchemaVo.setResponseMediaType(mediaType);
+            exportSchemaVo.setResponseBodySchema(JsonUtils.toJson(entry.getValue().getSchema()));
+            dataSchemas.add(exportSchemaVo);
         }
         return dataSchemas;
     }
@@ -168,35 +167,35 @@ public class SwaggerImporterImpl implements MockGroupImporter {
         }
     }
 
-    protected List<ExportDataVo> toMockDataList(Operation operation) {
+    protected List<ExportDataVo> toMockDataList(Operation operation, ExportRequestVo requestVo) {
         if (operation.getResponses() != null) {
-            return operation.getResponses().entrySet().stream().map(entry -> {
+            return operation.getResponses().entrySet().stream().flatMap(entry -> {
                 String statusCode = entry.getKey();
                 ExportDataVo dataVo = new ExportDataVo();
                 dataVo.setStatus(1);
                 dataVo.setStatusCode(Integer.parseInt(statusCode));
                 dataVo.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                ApiResponse apiResponse = entry.getValue();
                 dataVo.setDescription(operation.getDescription());
+                ApiResponse apiResponse = entry.getValue();
                 if (apiResponse != null) {
                     dataVo.setDescription(StringUtils.defaultIfBlank(apiResponse.getDescription(), operation.getDescription()));
                     Content content = apiResponse.getContent();
                     if (content != null) {
-                        List<String> keys = new ArrayList<>(content.keySet());
-                        if (CollectionUtils.isNotEmpty(keys)) {
-                            dataVo.setContentType(keys.get(0));
-                            io.swagger.v3.oas.models.media.MediaType mediaType = content.get(keys.get(0));
-                            if (mediaType != null) {
-
-                            }
+                        return content.entrySet().stream().map(contentEntry -> {
+                            ExportDataVo resData = new ExportDataVo();
+                            copyProperties(resData, dataVo);
+                            String contentType = contentEntry.getKey();
+                            resData.setContentType(contentType);
+                            io.swagger.v3.oas.models.media.MediaType mediaType = contentEntry.getValue();
                             if (mediaType != null && mediaType.getSchema() != null && mediaType.getSchema().getExample() != null) {
-                                dataVo.setResponseBody(JsonUtils.toJson(mediaType.getSchema().getExample()));
+                                resData.setResponseBody(JsonUtils.toJson(mediaType.getSchema().getExample()));
                             }
-                        }
-
+                            resData.setSchemas(getResponseSchemaVo(requestVo, contentEntry));
+                            return resData;
+                        });
                     }
                 }
-                return dataVo;
+                return Stream.of(dataVo);
             }).collect(Collectors.toList());
         } else {
             ExportDataVo dataVo = new ExportDataVo();

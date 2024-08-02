@@ -34,4 +34,11 @@ public interface MockSchemaService extends IService<MockSchema> {
      */
     void saveCopySchemas(List<MockSchema> schemas, Integer requestId, Integer dataId);
 
+    /**
+     * 查询Schema列表
+     * @param requestId
+     * @param dataId
+     * @return
+     */
+    List<MockSchema> querySchemas(Integer requestId, Integer dataId);
 }

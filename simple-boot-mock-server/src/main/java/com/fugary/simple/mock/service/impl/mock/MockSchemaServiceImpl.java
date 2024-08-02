@@ -35,4 +35,15 @@ public class MockSchemaServiceImpl extends ServiceImpl<MockSchemaMapper, MockSch
             this.saveOrUpdateBatch(schemas);
         }
     }
+
+    @Override
+    public List<MockSchema> querySchemas(Integer requestId, Integer dataId) {
+        if (requestId != null) {
+            return this.lambdaQuery().eq(MockSchema::getRequestId, requestId)
+                    .eq(dataId != null, MockSchema::getDataId, dataId)
+                    .isNull(dataId == null, MockSchema::getDataId)
+                    .list();
+        }
+        return List.of();
+    }
 }

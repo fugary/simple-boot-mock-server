@@ -5,11 +5,14 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.entity.mock.MockSchema;
 import com.fugary.simple.mock.service.mock.MockRequestService;
+import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.MockRequestQueryVo;
+import com.fugary.simple.mock.web.vo.query.MockSchemaQueryVo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +30,9 @@ public class MockRequestController {
 
     @Autowired
     private MockRequestService mockRequestService;
+
+    @Autowired
+    private MockSchemaService mockSchemaService;
 
     @GetMapping
     public SimpleResult<List<MockRequest>> search(@ModelAttribute MockRequestQueryVo queryVo) {
@@ -82,5 +88,15 @@ public class MockRequestController {
 //            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
 //        }
         return SimpleResultUtils.createSimpleResult(mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(request)));
+    }
+
+    /**
+     * 获取Schema列表
+     * @param queryVo
+     * @return
+     */
+    @PostMapping("/loadSchemas")
+    public SimpleResult<List<MockSchema>> loadSchemas(@RequestBody MockSchemaQueryVo queryVo) {
+        return SimpleResultUtils.createSimpleResult(mockSchemaService.querySchemas(queryVo.getRequestId(), queryVo.getDataId()));
     }
 }
