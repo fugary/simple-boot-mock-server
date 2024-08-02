@@ -7,7 +7,7 @@ import MockDataApi, {
   previewRequest,
   processResponse
 } from '@/api/mock/MockDataApi'
-import MockRequestApi from '@/api/mock/MockRequestApi'
+import MockRequestApi, { loadSchemas } from '@/api/mock/MockRequestApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { $i18nKey } from '@/messages'
 import { MOCK_DATA_MATCH_PATTERN_HEADER, MOCK_DATA_PATH_PARAMS_HEADER } from '@/consts/MockConstants'
@@ -17,6 +17,7 @@ const groupItem = ref()
 const currentItem = ref()
 const paramTarget = ref()
 const responseTarget = ref()
+const schemas = ref([])
 
 let saveResolve
 const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
@@ -29,6 +30,12 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
   if (matchPattern) {
     paramTarget.value.matchPattern = matchPattern
   }
+  loadSchemas({
+    requestId: mockRequest.id,
+    dataId: viewData?.id
+  }).then(schemasData => {
+    schemas.value = schemasData?.resultData || []
+  })
   return new Promise(resolve => (saveResolve = resolve))
 }
 
@@ -106,6 +113,7 @@ defineExpose({
         :request-path="paramTarget.requestPath"
         :response-target="responseTarget"
         match-pattern-mode
+        :schemas="schemas"
         @send-request="doDataPreview"
       />
     </el-container>

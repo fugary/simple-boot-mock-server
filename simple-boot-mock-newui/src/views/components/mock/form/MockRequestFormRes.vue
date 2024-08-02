@@ -2,6 +2,8 @@
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { computed, watch, ref } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
+import { showCodeWindow } from '@/utils/DynamicUtils'
+import { $i18nKey } from '@/messages'
 
 const props = defineProps({
   responseTarget: {
@@ -11,6 +13,14 @@ const props = defineProps({
   mockResponseEditable: {
     type: Boolean,
     default: false
+  },
+  schemaType: {
+    type: String,
+    default: 'json'
+  },
+  schemaBody: {
+    type: String,
+    default: ''
   }
 })
 
@@ -219,6 +229,19 @@ const emit = defineEmits(['saveMockResponseBody'])
                 <common-icon
                   :size="18"
                   icon="SaveFilled"
+                />
+              </el-link>
+              <el-link
+                v-if="schemaBody"
+                v-common-tooltip="$i18nKey('common.label.commonView', 'common.label.schema')"
+                type="primary"
+                :underline="false"
+                class="margin-left3"
+                @click="showCodeWindow(schemaBody)"
+              >
+                <common-icon
+                  :size="18"
+                  icon="DataObjectFilled"
                 />
               </el-link>
             </template>

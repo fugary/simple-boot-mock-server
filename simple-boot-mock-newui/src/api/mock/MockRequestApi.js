@@ -46,7 +46,15 @@ export const saveMockParams = (data, config) => {
     url: `${MOCK_REQUEST_URL}/saveMockParams`,
     method: 'post',
     data
-  }, config))
+  }, config)).then(response => response.data)
+}
+
+export const loadSchemas = (data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_REQUEST_URL}/loadSchemas`,
+    method: 'post',
+    data
+  }, config)).then(response => response.data)
 }
 
 export const checkParamsFilled = (params) => {

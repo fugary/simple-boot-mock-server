@@ -8,6 +8,7 @@ import { AUTH_TYPE, calcContentType, NONE, FORM_DATA, FORM_URL_ENCODED, SPECIAL_
 import MockRequestFormAuthorization from '@/views/components/mock/form/MockRequestFormAuthorization.vue'
 import { $i18nKey } from '@/messages'
 import { getSingleSelectOptions } from '@/utils'
+import { showCodeWindow } from '@/utils/DynamicUtils'
 
 const props = defineProps({
   showAuthorization: {
@@ -17,6 +18,14 @@ const props = defineProps({
   responseTarget: {
     type: Object,
     default: undefined
+  },
+  schemaType: {
+    type: String,
+    default: 'json'
+  },
+  schemaBody: {
+    type: String,
+    default: ''
   }
 })
 
@@ -190,6 +199,19 @@ const authValid = ref(true)
               <common-icon
                 :size="18"
                 icon="FormatIndentIncreaseFilled"
+              />
+            </el-link>
+            <el-link
+              v-if="schemaBody"
+              v-common-tooltip="$i18nKey('common.label.commonView', 'common.label.schema')"
+              type="primary"
+              :underline="false"
+              class="margin-left3"
+              @click="showCodeWindow(schemaBody)"
+            >
+              <common-icon
+                :size="18"
+                icon="DataObjectFilled"
               />
             </el-link>
           </template>

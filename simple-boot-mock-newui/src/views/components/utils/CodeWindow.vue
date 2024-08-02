@@ -1,35 +1,20 @@
 <script setup>
-import { defineTableButtons } from '@/components/utils'
-import { $copyText } from '@/utils'
 import { reactive, ref, computed } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { $i18nBundle } from '@/messages'
+import { $i18nBundle, $i18nKey } from '@/messages'
+import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 
 const showWindow = ref(false)
-const { contentRef: codeText, languageRef, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
+const { contentRef: codeText, languageRef, languageModel, normalLanguageSelectOption, formatDocument, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
 
 /**
  * @typedef {{copyAndClose?: boolean, showCopy?: boolean, width?: string, title?: string, height?: string}} CodeWindowConfig
  */
 const codeConfig = reactive({
   title: $i18nBundle('common.label.info'),
-  width: '600px',
-  height: '300px',
-  showCopy: true,
-  copyAndClose: false
+  width: '800px',
+  height: '350px'
 })
-
-const buttons = computed(() => defineTableButtons([{
-  labelKey: 'common.label.copy',
-  type: 'success',
-  enabled: codeConfig.showCopy,
-  click () {
-    $copyText(codeText.value)
-    if (codeConfig.copyAndClose) {
-      showWindow.value = false
-    }
-  }
-}]))
 
 /**
  * @param code {String} 代码数据
@@ -39,6 +24,9 @@ const showCodeWindow = (code, config = {}) => {
   codeText.value = code
   Object.assign(codeConfig, config)
   showWindow.value = true
+  setTimeout(() => {
+    formatDocument()
+  })
 }
 
 defineExpose({
@@ -47,7 +35,7 @@ defineExpose({
 
 const fullscreen = ref(false)
 
-const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 96px)' : codeConfig.height)
+const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 180px)' : codeConfig.height)
 
 </script>
 
@@ -60,19 +48,42 @@ const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 96px)' : cod
     :ok-label="$t('common.label.close')"
     destroy-on-close
     :title="codeConfig.title"
-    class="flex-column"
     append-to-body
-    :buttons="buttons"
     show-fullscreen
   >
-    <vue-monaco-editor
-      v-if="codeText"
-      v-model:value="codeText"
-      :language="languageRef"
-      :height="codeHeight"
-      :options="monacoEditorOptions"
-      @mount="editorRef=$event"
-    />
+    <el-container class="flex-column">
+      <common-form-control
+        :model="languageModel"
+        :option="normalLanguageSelectOption"
+      >
+        <template #childAfter>
+          <mock-url-copy-link
+            :content="contentRef"
+            :tooltip="$i18nKey('common.label.commonCopy', 'common.label.code')"
+          />
+          <el-link
+            v-common-tooltip="$i18nKey('common.label.commonFormat', 'common.label.code')"
+            type="primary"
+            :underline="false"
+            class="margin-left3"
+            @click="formatDocument"
+          >
+            <common-icon
+              :size="18"
+              icon="FormatIndentIncreaseFilled"
+            />
+          </el-link>
+        </template>
+      </common-form-control>
+      <vue-monaco-editor
+        v-if="codeText"
+        v-model:value="codeText"
+        :language="languageRef"
+        :height="codeHeight"
+        :options="monacoEditorOptions"
+        @mount="editorRef=$event"
+      />
+    </el-container>
   </common-window>
 </template>
 

@@ -22,6 +22,10 @@ const props = defineProps({
   mockResponseEditable: {
     type: Boolean,
     default: false
+  },
+  schemas: {
+    type: Array,
+    default: () => []
   }
 })
 const paramTarget = defineModel('modelValue', {
@@ -48,6 +52,10 @@ const sendRequest = (form) => {
     }
   })
 }
+
+const schema = computed(() => {
+  return props.schemas[0]
+})
 
 </script>
 
@@ -111,6 +119,8 @@ const sendRequest = (form) => {
           v-model="paramTarget"
           :show-authorization="!matchPatternMode"
           :response-target="responseTarget"
+          :schema-type="schema?.requestMediaType"
+          :schema-body="schema?.requestBodySchema"
         />
       </template>
     </common-form>
@@ -119,6 +129,8 @@ const sendRequest = (form) => {
       v-model="paramTarget"
       :mock-response-editable="mockResponseEditable"
       :response-target="responseTarget"
+      :schema-type="schema?.responseMediaType"
+      :schema-body="schema?.responseBodySchema"
       @save-mock-response-body="emit('saveMockResponseBody', $event)"
     />
   </el-container>

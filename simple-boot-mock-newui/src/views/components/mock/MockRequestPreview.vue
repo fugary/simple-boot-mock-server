@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, nextTick } from 'vue'
-import MockRequestApi, { saveMockParams } from '@/api/mock/MockRequestApi'
+import MockRequestApi, { loadSchemas, saveMockParams } from '@/api/mock/MockRequestApi'
 import MockDataApi, {
   calcParamTarget,
   calcRequestBody,
@@ -20,6 +20,7 @@ const requestItem = ref()
 const previewData = ref()
 const paramTarget = ref()
 const responseTarget = ref()
+const schemas = ref([])
 
 let saveCallback
 const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
@@ -27,6 +28,12 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
   requestItem.value = mockRequest
   previewData.value = viewData
   const requestDataPromise = MockRequestApi.getById(mockRequest.id)
+  loadSchemas({
+    requestId: mockRequest.id,
+    dataId: viewData?.id
+  }).then(schemasData => {
+    schemas.value = schemasData?.resultData || []
+  })
   if (viewData?.id) {
     const viewDataPromise = MockDataApi.getById(viewData.id)
     const requestViewData = await viewDataPromise
@@ -148,6 +155,7 @@ defineExpose({
       :request-path="requestPath"
       :response-target="responseTarget"
       :mock-response-editable="!!previewData"
+      :schemas="schemas"
       @send-request="doDataPreview"
       @save-mock-response-body="doSaveMockResponseBody"
     />
