@@ -4,8 +4,8 @@ import { computed, watch, ref } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nKey } from '@/messages'
-import { $coreConfirm } from '@/utils'
-import { sample } from 'openapi-sampler'
+import { generateSchemaSample } from '@/services/mock/MockCommonService'
+import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 
 const props = defineProps({
   responseTarget: {
@@ -49,7 +49,7 @@ const requestInfo = computed(() => {
 
 const {
   contentRef: contentRef2, languageRef: languageRef2, editorRef: editorRef2, monacoEditorOptions: monacoEditorOptions2,
-  languageModel: languageModel2, languageSelectOption: languageSelectOption2, formatDocument: formatDocument2
+  languageModel: languageModel2, languageSelectOption: languageSelectOption2, formatDocument: formatDocument2, checkEditorLang
 } = useMonacoEditorOptions({ readOnly: false, language: paramTarget.value.responseFormat })
 
 watch(languageRef2, language => {
@@ -62,13 +62,9 @@ const codeHeight = '300px'
 
 const emit = defineEmits(['saveMockResponseBody'])
 
-const generateSample = () => {
-  $coreConfirm($i18nKey('common.msg.commonConfirm', 'common.label.generateData'))
-    .then(() => {
-      const schema = JSON.parse(props.schemaBody)
-      contentRef2.value = JSON.stringify(sample(schema))
-      setTimeout(() => formatDocument())
-    })
+const generateSample = async (type) => {
+  contentRef2.value = await generateSchemaSample(props.schemaBody, type)
+  setTimeout(() => checkEditorLang())
 }
 </script>
 
@@ -254,19 +250,10 @@ const generateSample = () => {
                   icon="ContentPasteSearchFilled"
                 />
               </el-link>
-              <el-link
+              <mock-generate-sample
                 v-if="schemaBody"
-                v-common-tooltip="$t('common.label.generateData')"
-                type="primary"
-                :underline="false"
-                class="margin-left3"
-                @click="generateSample()"
-              >
-                <common-icon
-                  :size="18"
-                  icon="DataObjectFilled"
-                />
-              </el-link>
+                @generate-sample="generateSample"
+              />
             </template>
           </common-form-control>
           <vue-monaco-editor

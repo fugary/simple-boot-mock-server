@@ -85,6 +85,8 @@ common.label.batchMode = 'Batch Mode'
 common.label.schema = 'Schema'
 common.label.code = 'Code'
 common.label.generateData = 'Generate fake data'
+common.label.generateXmlData = 'Generate XML'
+common.label.generateJsonData = 'Generate JSON'
 
 //= ============通用============
 common.label.commonConfig = 'Config {0}'

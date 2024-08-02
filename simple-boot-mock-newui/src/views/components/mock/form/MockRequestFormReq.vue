@@ -7,9 +7,10 @@ import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { AUTH_TYPE, calcContentType, NONE, FORM_DATA, FORM_URL_ENCODED, SPECIAL_LANGS } from '@/consts/MockConstants'
 import MockRequestFormAuthorization from '@/views/components/mock/form/MockRequestFormAuthorization.vue'
 import { $i18nKey } from '@/messages'
-import { getSingleSelectOptions, $coreConfirm } from '@/utils'
+import { getSingleSelectOptions } from '@/utils'
 import { showCodeWindow } from '@/utils/DynamicUtils'
-import { sample } from 'openapi-sampler'
+import { generateSchemaSample } from '@/services/mock/MockCommonService'
+import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 
 const props = defineProps({
   showAuthorization: {
@@ -35,7 +36,7 @@ const paramTarget = defineModel('modelValue', {
   default: true
 })
 
-const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, normalLanguageSelectOption, formatDocument } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, normalLanguageSelectOption, formatDocument, checkEditorLang } = useMonacoEditorOptions({ readOnly: false })
 const codeHeight = '300px'
 contentRef.value = paramTarget.value?.requestBody
 languageRef.value = paramTarget.value?.requestFormat || languageRef.value
@@ -92,13 +93,9 @@ if (paramTarget.value) {
 }
 const authValid = ref(true)
 
-const generateSample = () => {
-  $coreConfirm($i18nKey('common.msg.commonConfirm', 'common.label.generateData'))
-    .then(() => {
-      const schema = JSON.parse(props.schemaBody)
-      contentRef.value = JSON.stringify(sample(schema))
-      setTimeout(() => formatDocument())
-    })
+const generateSample = async (type) => {
+  contentRef.value = await generateSchemaSample(props.schemaBody, type)
+  setTimeout(() => checkEditorLang())
 }
 </script>
 
@@ -224,19 +221,10 @@ const generateSample = () => {
                 icon="ContentPasteSearchFilled"
               />
             </el-link>
-            <el-link
+            <mock-generate-sample
               v-if="schemaBody"
-              v-common-tooltip="$t('common.label.generateData')"
-              type="primary"
-              :underline="false"
-              class="margin-left3"
-              @click="generateSample()"
-            >
-              <common-icon
-                :size="18"
-                icon="DataObjectFilled"
-              />
-            </el-link>
+              @generate-sample="generateSample"
+            />
           </template>
         </common-form-control>
         <template v-if="isFormData || isFormUrlEncoded">

@@ -58,7 +58,7 @@ const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 180px)' : co
       >
         <template #childAfter>
           <mock-url-copy-link
-            :content="contentRef"
+            :content="codeText"
             :tooltip="$i18nKey('common.label.commonCopy', 'common.label.code')"
           />
           <el-link

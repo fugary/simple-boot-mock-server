@@ -23,6 +23,7 @@
     "axios": "^1.7.2",
     "dayjs": "^1.11.11",
     "element-plus": "^2.7.5",
+    "fast-xml-parser": "^4.4.1",
     "jose": "^5.6.3",
     "lodash-es": "^4.17.21",
     "monaco-editor": "^0.47.0",

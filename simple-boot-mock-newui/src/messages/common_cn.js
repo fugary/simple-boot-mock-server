@@ -85,6 +85,8 @@ common.label.batchMode = '批量操作'
 common.label.schema = 'Schema'
 common.label.code = '代码'
 common.label.generateData = '生成假数据'
+common.label.generateXmlData = '生成XML'
+common.label.generateJsonData = '生成JSON'
 
 //= ============通用============
 common.label.commonCode = '{0}代码'

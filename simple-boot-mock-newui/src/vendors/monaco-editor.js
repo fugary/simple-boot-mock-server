@@ -151,12 +151,15 @@ export const useMonacoEditorOptions = (config) => {
       $formatDocument(editorRef.value, monacoEditorOptions.readOnly)
     }
   }
+  const checkEditorLang = () => {
+    languageRef.value = $checkLang(contentRef.value) || monacoEditorOptions.language
+    if (contentRef.value && editorRef.value && monacoEditorOptions.readOnly) {
+      formatDocument()
+    }
+  }
   watch([contentRef, editorRef], ([content], [oldContent]) => {
     if (!oldContent && content) {
-      languageRef.value = $checkLang(contentRef.value) || monacoEditorOptions.language
-      if (contentRef.value && editorRef.value && monacoEditorOptions.readOnly) {
-        formatDocument()
-      }
+      checkEditorLang()
     }
     if (editorRef.value && !editorRef.value.__internalPasteFunc__) {
       const editor = toRaw(editorRef.value)
@@ -177,7 +180,8 @@ export const useMonacoEditorOptions = (config) => {
     languageModel,
     languageSelectOption,
     normalLanguageSelectOption,
-    formatDocument
+    formatDocument,
+    checkEditorLang
   }
 }
 
