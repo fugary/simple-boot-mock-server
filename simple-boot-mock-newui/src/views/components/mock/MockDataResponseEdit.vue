@@ -1,19 +1,32 @@
 <script setup>
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { computed, ref } from 'vue'
-import { cloneDeep } from 'lodash-es'
+import { cloneDeep, isString } from 'lodash-es'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { $i18nKey, $i18nBundle } from '@/messages'
+import { showCodeWindow } from '@/utils/DynamicUtils'
+import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
+import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
+import { generateSchemaSample } from '@/services/mock/MockCommonService'
+import { loadSchemas } from '@/api/mock/MockRequestApi'
 
-const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption, formatDocument } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption, formatDocument, checkEditorLang } = useMonacoEditorOptions({ readOnly: false })
 const showWindow = ref(false)
 const currentMockData = ref()
+const schemas = ref([])
 
 const toEditDataResponse = (mockData) => {
   currentMockData.value = cloneDeep(mockData)
   contentRef.value = mockData.responseBody
   languageRef.value = mockData.responseFormat
   showWindow.value = true
+  loadSchemas({
+    requestId: mockData.requestId,
+    dataId: mockData?.id
+  }).then(schemasData => {
+    schemas.value = schemasData?.resultData || []
+  })
+  checkEditorLang()
 }
 
 const emit = defineEmits(['saveDataResponse'])
@@ -32,6 +45,21 @@ const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 195px)' : '4
 defineExpose({ toEditDataResponse })
 
 const responseBodyTooltip = $i18nBundle('mock.msg.responseBodyTooltip', ['{{request.params.xxx}}'])
+
+const schema = computed(() => schemas.value?.[0])
+const schemaBody = computed(() => schema.value?.responseBodySchema)
+const responseExamples = computed(() => {
+  const examples = schema.value?.responseExamples
+  return examples ? JSON.parse(examples) : []
+})
+const generateSample = async (type) => {
+  contentRef.value = await generateSchemaSample(schemaBody.value, type)
+  setTimeout(() => checkEditorLang())
+}
+const selectExample = (example) => {
+  contentRef.value = isString(example.value) ? example.value : JSON.stringify(example.value)
+  setTimeout(() => checkEditorLang())
+}
 
 </script>
 
@@ -76,6 +104,28 @@ const responseBodyTooltip = $i18nBundle('mock.msg.responseBodyTooltip', ['{{requ
               icon="FormatIndentIncreaseFilled"
             />
           </el-link>
+          <el-link
+            v-if="schemaBody"
+            v-common-tooltip="$i18nKey('common.label.commonView', 'common.label.schema')"
+            type="primary"
+            :underline="false"
+            class="margin-left3"
+            @click="showCodeWindow(schemaBody)"
+          >
+            <common-icon
+              :size="18"
+              icon="ContentPasteSearchFilled"
+            />
+          </el-link>
+          <mock-generate-sample
+            v-if="schemaBody"
+            @generate-sample="generateSample"
+          />
+          <mock-data-example
+            v-if="responseExamples.length"
+            :examples="responseExamples"
+            @select-example="selectExample"
+          />
         </template>
       </common-form-control>
       <vue-monaco-editor

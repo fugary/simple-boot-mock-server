@@ -9,8 +9,10 @@ import MockRequestFormAuthorization from '@/views/components/mock/form/MockReque
 import { $i18nKey } from '@/messages'
 import { getSingleSelectOptions } from '@/utils'
 import { showCodeWindow } from '@/utils/DynamicUtils'
+import { isString } from 'lodash-es'
 import { generateSchemaSample } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
+import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 
 const props = defineProps({
   showAuthorization: {
@@ -28,6 +30,10 @@ const props = defineProps({
   schemaBody: {
     type: String,
     default: ''
+  },
+  examples: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -95,6 +101,10 @@ const authValid = ref(true)
 
 const generateSample = async (type) => {
   contentRef.value = await generateSchemaSample(props.schemaBody, type)
+  setTimeout(() => checkEditorLang())
+}
+const selectExample = (example) => {
+  contentRef.value = isString(example.value) ? example.value : JSON.stringify(example.value)
   setTimeout(() => checkEditorLang())
 }
 </script>
@@ -224,6 +234,11 @@ const generateSample = async (type) => {
             <mock-generate-sample
               v-if="schemaBody"
               @generate-sample="generateSample"
+            />
+            <mock-data-example
+              v-if="examples.length"
+              :examples="examples"
+              @select-example="selectExample"
             />
           </template>
         </common-form-control>

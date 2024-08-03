@@ -3,6 +3,7 @@ package com.fugary.simple.mock.utils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,9 @@ public class JsonUtils {
         MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL); // 不解析null的值
         MAPPER.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         MAPPER.disable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME);
+        // 注册JavaTimeModule
+        JavaTimeModule module = new JavaTimeModule();
+        MAPPER.registerModule(module);
     }
 
     public static ObjectMapper getMapper(){

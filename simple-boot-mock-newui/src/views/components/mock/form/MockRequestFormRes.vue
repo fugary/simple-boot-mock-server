@@ -6,6 +6,8 @@ import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nKey } from '@/messages'
 import { generateSchemaSample } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
+import { isString } from 'lodash-es'
+import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 
 const props = defineProps({
   responseTarget: {
@@ -23,6 +25,10 @@ const props = defineProps({
   schemaBody: {
     type: String,
     default: ''
+  },
+  examples: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -64,6 +70,10 @@ const emit = defineEmits(['saveMockResponseBody'])
 
 const generateSample = async (type) => {
   contentRef2.value = await generateSchemaSample(props.schemaBody, type)
+  setTimeout(() => checkEditorLang())
+}
+const selectExample = (example) => {
+  contentRef2.value = isString(example.value) ? example.value : JSON.stringify(example.value)
   setTimeout(() => checkEditorLang())
 }
 </script>
@@ -234,7 +244,7 @@ const generateSample = async (type) => {
               >
                 <common-icon
                   :size="18"
-                  icon="SaveFilled"
+                  icon="SaveOutlined"
                 />
               </el-link>
               <el-link
@@ -253,6 +263,11 @@ const generateSample = async (type) => {
               <mock-generate-sample
                 v-if="schemaBody"
                 @generate-sample="generateSample"
+              />
+              <mock-data-example
+                v-if="examples.length"
+                :examples="examples"
+                @select-example="selectExample"
               />
             </template>
           </common-form-control>

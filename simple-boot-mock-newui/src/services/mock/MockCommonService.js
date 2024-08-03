@@ -16,7 +16,11 @@ export const generateSchemaSample = (schemaBody, type) => {
           format: true,
           indentBy: '\t'
         })
-        resStr = builder.build(json)
+        const rootName = schema.title && schema.title.match(/[a-zA-Z0-9_-]+/) ? schema.title : 'root'
+        const xml = {
+          [rootName]: json
+        }
+        resStr = builder.build(xml)
       } else {
         resStr = JSON.stringify(json)
       }

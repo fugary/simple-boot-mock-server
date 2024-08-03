@@ -57,6 +57,16 @@ const schema = computed(() => {
   return props.schemas[0]
 })
 
+const requestExamples = computed(() => {
+  const examples = schema.value?.requestExamples
+  return examples ? JSON.parse(examples) : []
+})
+
+const responseExamples = computed(() => {
+  const examples = schema.value?.responseExamples
+  return examples ? JSON.parse(examples) : []
+})
+
 </script>
 
 <template>
@@ -121,6 +131,7 @@ const schema = computed(() => {
           :response-target="responseTarget"
           :schema-type="schema?.requestMediaType"
           :schema-body="schema?.requestBodySchema"
+          :examples="requestExamples"
         />
       </template>
     </common-form>
@@ -131,6 +142,7 @@ const schema = computed(() => {
       :response-target="responseTarget"
       :schema-type="schema?.responseMediaType"
       :schema-body="schema?.responseBodySchema"
+      :examples="responseExamples"
       @save-mock-response-body="emit('saveMockResponseBody', $event)"
     />
   </el-container>
