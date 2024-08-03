@@ -18,7 +18,9 @@ public class MockSchema extends MockBase {
     private String parametersSchema;
     private String requestMediaType;
     private String requestBodySchema;
+    private String requestExamples;
     private String responseMediaType;
     private String responseBodySchema;
+    private String responseExamples;
 
 }

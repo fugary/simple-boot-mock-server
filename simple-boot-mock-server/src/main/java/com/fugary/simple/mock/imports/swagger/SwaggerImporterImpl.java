@@ -7,6 +7,7 @@ import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.examples.Example;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.responses.ApiResponse;
@@ -117,12 +118,17 @@ public class SwaggerImporterImpl implements MockGroupImporter {
         List<ExportSchemaVo> requestSchemas = new ArrayList<>();
         if (operation.getRequestBody() != null && operation.getRequestBody().getContent() != null) {
             for (Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry : operation.getRequestBody().getContent().entrySet()) {
-                String mediaType = entry.getKey();
-                if (entry.getValue() != null && entry.getValue().getSchema() != null) {
+                String contentType = entry.getKey();
+                io.swagger.v3.oas.models.media.MediaType mediaType = entry.getValue();
+                if (mediaType != null && mediaType.getSchema() != null) {
                     ExportSchemaVo exportSchemaVo = new ExportSchemaVo();
                     exportSchemaVo.setParametersSchema(parametersSchema);
-                    exportSchemaVo.setRequestMediaType(mediaType);
-                    exportSchemaVo.setRequestBodySchema(JsonUtils.toJson(entry.getValue().getSchema()));
+                    exportSchemaVo.setRequestMediaType(contentType);
+                    exportSchemaVo.setRequestBodySchema(JsonUtils.toJson(mediaType.getSchema()));
+                    List<Example> requestExamples = getExamples(mediaType);
+                    if (!requestExamples.isEmpty()) {
+                        exportSchemaVo.setRequestExamples(JsonUtils.toJson(requestExamples));
+                    }
                     requestSchemas.add(exportSchemaVo);
                 }
             }
@@ -143,17 +149,35 @@ public class SwaggerImporterImpl implements MockGroupImporter {
 
     protected List<ExportSchemaVo> calcResponseSchemaVo(Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry, ExportSchemaVo requestSchema) {
         List<ExportSchemaVo> dataSchemas = new ArrayList<>();
-        String mediaType = entry.getKey();
-        if (entry.getValue() != null && entry.getValue().getSchema() != null) {
+        String contentType = entry.getKey();
+        io.swagger.v3.oas.models.media.MediaType mediaType = entry.getValue();
+        if (mediaType != null && mediaType.getSchema() != null) {
             ExportSchemaVo exportSchemaVo = new ExportSchemaVo();
             if (requestSchema != null) {
                 copyProperties(exportSchemaVo, requestSchema);
             }
-            exportSchemaVo.setResponseMediaType(mediaType);
-            exportSchemaVo.setResponseBodySchema(JsonUtils.toJson(entry.getValue().getSchema()));
+            exportSchemaVo.setResponseMediaType(contentType);
+            exportSchemaVo.setResponseBodySchema(JsonUtils.toJson(mediaType.getSchema()));
+            List<Example> responseExamples = getExamples(mediaType);
+            if (!responseExamples.isEmpty()) {
+                exportSchemaVo.setResponseExamples(JsonUtils.toJson(responseExamples));
+            }
             dataSchemas.add(exportSchemaVo);
         }
         return dataSchemas;
+    }
+
+    protected List<Example> getExamples(io.swagger.v3.oas.models.media.MediaType mediaType){
+        List<Example> examples = new ArrayList<>();
+        if (mediaType != null) {
+            if (mediaType.getExamples() != null) {
+                examples.addAll(mediaType.getExamples().values());
+            }
+            if (mediaType.getExample() != null) {
+                examples.add(new Example().summary("Example").value(mediaType.getExample()));
+            }
+        }
+        return examples;
     }
 
     protected void copyProperties(Object target, Object source) {
@@ -184,8 +208,13 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                             String contentType = contentEntry.getKey();
                             resData.setContentType(contentType);
                             io.swagger.v3.oas.models.media.MediaType mediaType = contentEntry.getValue();
-                            if (mediaType != null && mediaType.getSchema() != null && mediaType.getSchema().getExample() != null) {
-                                resData.setResponseBody(JsonUtils.toJson(mediaType.getSchema().getExample()));
+                            List<Example> responseExamples = getExamples(mediaType);
+                            if (!responseExamples.isEmpty()) {
+                                Object exampleValue = responseExamples.get(0).getValue();
+                                if(!(exampleValue instanceof String)){
+                                    exampleValue = JsonUtils.toJson(exampleValue);
+                                }
+                                resData.setResponseBody((String) exampleValue);
                             }
                             resData.setSchemas(getResponseSchemaVo(requestVo, contentEntry));
                             return resData;
