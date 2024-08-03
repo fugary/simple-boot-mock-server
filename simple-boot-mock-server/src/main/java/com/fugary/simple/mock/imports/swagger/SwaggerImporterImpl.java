@@ -201,7 +201,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                 if (apiResponse != null) {
                     dataVo.setDescription(StringUtils.defaultIfBlank(apiResponse.getDescription(), operation.getDescription()));
                     Content content = apiResponse.getContent();
-                    if (content != null) {
+                    if (content != null && !content.isEmpty()) {
                         return content.entrySet().stream().map(contentEntry -> {
                             ExportDataVo resData = new ExportDataVo();
                             copyProperties(resData, dataVo);
