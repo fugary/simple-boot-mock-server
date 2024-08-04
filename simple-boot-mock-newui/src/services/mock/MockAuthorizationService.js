@@ -4,6 +4,7 @@ import { getSingleSelectOptions } from '@/utils'
 import { ElMessage } from 'element-plus'
 import { AUTH_PARAM_NAMES, AUTH_PREFIX_NAMES, AUTHORIZATION_KEY, BEARER_KEY } from '@/consts/MockConstants'
 import { $i18nKey } from '@/messages'
+import { processEvnParams } from '@/services/mock/MockCommonService'
 
 const baseOptions = defineFormOptions([{
   label: 'Add Token to',
@@ -67,9 +68,11 @@ export const AUTH_OPTION_CONFIG = {
       prop: 'userPassword',
       required: true
     }]),
-    parseAuthInfo (model, headers) {
+    parseAuthInfo (model, headers, params, paramTarget) {
       // token等于model的属性userName:userPassword的格式后用base64编码
-      const token = btoa(`${model.userName}:${model.userPassword}`)
+      const userName = processEvnParams(paramTarget?.value?.groupConfig, model.userName)
+      const userPassword = processEvnParams(paramTarget?.value?.groupConfig, model.userPassword)
+      const token = btoa(`${userName}:${userPassword}`)
       headers[AUTHORIZATION_KEY] = `Basic ${token}`
     }
   },
@@ -79,9 +82,9 @@ export const AUTH_OPTION_CONFIG = {
       prop: 'token',
       required: true
     }]),
-    parseAuthInfo (model, headers, params) {
+    parseAuthInfo (model, headers, params, paramTarget) {
       // token和前缀已经存在model中，直接使用，根据tokenToType判断是否是header还是query
-      addTokenToParams(model, model.token, headers, params)
+      addTokenToParams(model, processEvnParams(paramTarget?.value?.groupConfig, model.token), headers, params)
     }
   },
   jwt: {
@@ -107,13 +110,15 @@ export const AUTH_OPTION_CONFIG = {
       prop: 'base64',
       type: 'switch'
     }]),
-    async parseAuthInfo (model, headers, params) {
+    async parseAuthInfo (model, headers, params, paramTarget) {
       let payload = {}
       try {
-        if (model.payload) {
-          payload = JSON.parse(model.payload)
+        const payloadStr = processEvnParams(paramTarget?.value?.groupConfig, model.payload)
+        if (payloadStr) {
+          payload = JSON.parse(payloadStr)
         }
-        const secret = model.base64 ? atob(model.secret) : model.secret
+        const secretStr = processEvnParams(paramTarget?.value?.groupConfig, model.secret)
+        const secret = model.base64 ? atob(secretStr) : secretStr
         // 计算jwtToken，使用jose库
         const token = await generateJWT(payload, secret, model.algorithm)
         addTokenToParams(model, token, headers, params)

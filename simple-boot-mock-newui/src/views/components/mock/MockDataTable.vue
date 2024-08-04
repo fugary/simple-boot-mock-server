@@ -16,6 +16,7 @@ import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
 import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
+import { DEFAULT_HEADERS } from '@/consts/MockConstants'
 
 const props = defineProps({
   groupItem: {
@@ -405,7 +406,7 @@ const onSelectDataItem = (dataItem) => {
           <common-params-edit
             v-model="currentDataItem.headerParams"
             form-prop="headerParams"
-            header-flag
+            :name-suggestions="DEFAULT_HEADERS"
           />
         </common-form-control>
       </template>

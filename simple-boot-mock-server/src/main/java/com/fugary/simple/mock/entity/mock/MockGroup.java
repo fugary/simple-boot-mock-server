@@ -18,5 +18,6 @@ public class MockGroup extends MockBase {
     private String projectCode;
     private Integer delay;
     private String description;
+    private String groupConfig;
 
 }

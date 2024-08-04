@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import { getSingleSelectOptions, toFlatKeyValue } from '@/utils'
 import { $i18nBundle } from '@/messages'
 import { ElMessage, ElButton } from 'element-plus'
-import { DEFAULT_HEADERS } from '@/consts/MockConstants'
+import { isFunction, isArray } from 'lodash-es'
 
 const props = defineProps({
   formProp: {
@@ -12,6 +12,14 @@ const props = defineProps({
     default: 'requestParams'
   },
   nameReadOnly: {
+    type: Boolean,
+    default: false
+  },
+  nameRequired: {
+    type: Boolean,
+    default: false
+  },
+  valueRequired: {
     type: Boolean,
     default: false
   },
@@ -35,9 +43,13 @@ const props = defineProps({
     type: String,
     default: 'value'
   },
-  headerFlag: {
-    type: Boolean,
-    default: false
+  nameSuggestions: {
+    type: [Array, Function],
+    default: () => []
+  },
+  valueSuggestions: {
+    type: [Array, Function],
+    default: () => []
   },
   fileFlag: {
     type: Boolean,
@@ -108,7 +120,22 @@ const inputTextOption = {
   }
 }
 
+const calcSuggestions = (key = 'name') => {
+  const keySuggestions = props[`${key}Suggestions`]
+  if (isFunction(keySuggestions)) {
+    return keySuggestions
+  } else if (isArray(keySuggestions)) {
+    return (queryString, cb) => {
+      const dataList = keySuggestions.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
+        .map(value => ({ value }))
+      cb(dataList)
+    }
+  }
+}
+
 const paramsOptions = computed(() => {
+  const nameSuggestions = calcSuggestions('name')
+  const valueSuggestions = calcSuggestions('value')
   return params.value.map((param) => {
     const nvSpan = 9
     return defineFormOptions([{
@@ -120,15 +147,11 @@ const paramsOptions = computed(() => {
     }, {
       label: 'Key',
       prop: props.nameKey,
-      required: props.nameReadOnly,
+      required: props.nameReadOnly || props.nameRequired,
       disabled: props.nameReadOnly,
-      type: props.headerFlag ? 'autocomplete' : 'input',
+      type: nameSuggestions ? 'autocomplete' : 'input',
       attrs: {
-        fetchSuggestions: (queryString, cb) => {
-          const dataList = DEFAULT_HEADERS.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
-            .map(value => ({ value }))
-          cb(dataList)
-        },
+        fetchSuggestions: nameSuggestions,
         triggerOnFocus: false
       },
       colSpan: nvSpan
@@ -149,9 +172,14 @@ const paramsOptions = computed(() => {
     }, {
       label: 'Value',
       prop: props.valueKey,
-      required: props.nameReadOnly,
+      required: props.nameReadOnly || props.valueRequired,
       colSpan: nvSpan,
-      enabled: param.type !== 'file'
+      enabled: param.type !== 'file',
+      type: valueSuggestions ? 'autocomplete' : 'input',
+      attrs: {
+        fetchSuggestions: valueSuggestions,
+        triggerOnFocus: false
+      }
     }, {
       label: 'Files',
       type: 'upload',

@@ -1,6 +1,6 @@
 <script setup lang="jsx">
 import { useRoute } from 'vue-router'
-import { $coreConfirm, useBackUrl } from '@/utils'
+import { $coreConfirm, $reload, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, { ALL_METHODS } from '@/api/mock/MockRequestApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
@@ -12,7 +12,7 @@ import { useDefaultPage } from '@/config'
 import { $i18nBundle } from '@/messages'
 import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { previewMockRequest, toTestMatchPattern } from '@/utils/DynamicUtils'
+import { previewMockRequest, toEditGroupEnvParams, toTestMatchPattern } from '@/utils/DynamicUtils'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import MockRequestMenuItem from '@/views/components/mock/MockRequestMenuItem.vue'
 import CommonIcon from '@/components/common-icon/index.vue'
@@ -186,6 +186,11 @@ const changeBatchMode = () => {
   }
 }
 
+const editGroupEnvParams = () => {
+  toEditGroupEnvParams(groupItem.value?.id)
+    .then(() => $reload(route))
+}
+
 </script>
 
 <template>
@@ -207,6 +212,12 @@ const changeBatchMode = () => {
       @submit-form="loadMockRequests()"
     >
       <template #buttons>
+        <el-button
+          type="success"
+          @click="editGroupEnvParams"
+        >
+          {{ $t('mock.label.mockEnv') }}
+        </el-button>
         <el-button
           @click="goBack()"
         >

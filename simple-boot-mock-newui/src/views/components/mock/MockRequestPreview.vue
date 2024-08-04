@@ -14,6 +14,7 @@ import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
 import { cloneDeep, isArray } from 'lodash-es'
+import { processEvnParams } from '@/services/mock/MockCommonService'
 
 const groupItem = ref()
 const requestItem = ref()
@@ -59,19 +60,20 @@ const doDataPreview = async () => {
   console.log('========================paramTarget1', paramTarget.value)
   let requestUrl = requestPath.value
   paramTarget.value?.pathParams?.forEach(pathParam => {
-    if (pathParam.value) {
-      requestUrl = requestUrl.replace(new RegExp(`:${pathParam.name}`, 'g'), pathParam.value)
-        .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), pathParam.value)
+    const pathValue = processEvnParams(paramTarget.value.groupConfig, pathParam.value)
+    if (pathValue) {
+      requestUrl = requestUrl.replace(new RegExp(`:${pathParam.name}`, 'g'), pathValue)
+        .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), pathValue)
     }
   })
   const params = preProcessParams(paramTarget.value?.requestParams).reduce((results, item) => {
-    results[item.name] = item.value
+    results[item.name] = processEvnParams(paramTarget.value.groupConfig, item.value)
     return results
   }, {})
   const { data, hasBody } = calcRequestBody(paramTarget)
   const headers = Object.assign(hasBody ? { 'content-type': paramTarget.value?.contentType } : {},
     preProcessParams(paramTarget.value?.headerParams).reduce((results, item) => {
-      results[item.name] = item.value
+      results[item.name] = processEvnParams(paramTarget.value.groupConfig, item.value)
       return results
     }, {}))
   const config = {
@@ -88,7 +90,7 @@ const doDataPreview = async () => {
   }
   const authContent = paramTarget.value.authContent
   if (authContent) {
-    await AUTH_OPTION_CONFIG[authContent.authType]?.parseAuthInfo(authContent, headers, params)
+    await AUTH_OPTION_CONFIG[authContent.authType]?.parseAuthInfo(authContent, headers, params, paramTarget)
   }
   previewRequest({
     url: requestUrl,
@@ -109,6 +111,7 @@ const doSaveMockParams = () => {
     const paramTargetVal = cloneDeep(paramTarget.value)
     delete paramTargetVal.responseBody
     delete paramTargetVal.method
+    delete paramTargetVal.groupConfig
     paramTargetVal.formData?.forEach(nv => {
       if (isArray(nv.value)) {
         nv.value = []

@@ -2,9 +2,9 @@ import { isFunction } from 'lodash-es'
 import { DynamicHelper } from '@/components/directives'
 import { h, defineComponent, defineAsyncComponent } from 'vue'
 
-import MockRequestPreviewWindow from '@/views/components/mock/MockRequestPreviewWindow.vue'
-import MockMatchPatternPreview from '@/views/components/mock/MockMatchPatternPreview.vue'
-
+const MockRequestPreviewWindow = () => import('@/views/components/mock/MockRequestPreviewWindow.vue')
+const MockMatchPatternPreview = () => import('@/views/components/mock/MockMatchPatternPreview.vue')
+const MockEnvParams = () => import('@/views/components/mock/MockEnvParams.vue')
 const ShowUserInfo = () => import('@/views/components/user/ShowUserInfo.vue')
 const CodeWindow = () => import('@/views/components/utils/CodeWindow.vue')
 
@@ -35,6 +35,14 @@ export const toTestMatchPattern = async (...args) => {
     onClosed: () => dynamicHelper.destroy()
   })
   return vnode.component?.exposed?.toTestMatchPattern(...args)
+}
+
+export const toEditGroupEnvParams = async (...args) => {
+  const dynamicHelper = new DynamicHelper()
+  const vnode = await dynamicHelper.createAndRender(MockEnvParams, {
+    onClosed: () => dynamicHelper.destroy()
+  })
+  return vnode.component?.exposed?.toEditGroupEnvParams(...args)
 }
 
 /**

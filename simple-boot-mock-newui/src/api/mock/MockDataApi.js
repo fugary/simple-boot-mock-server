@@ -11,6 +11,7 @@ import {
   NONE,
   LANG_TO_CONTENT_TYPES
 } from '@/consts/MockConstants'
+import { processEvnParams } from '@/services/mock/MockCommonService'
 
 const MOCK_DATA_URL = '/admin/data'
 
@@ -129,6 +130,9 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
     }
     target.pathParams = pathParams
   }
+  if (groupItem.groupConfig) {
+    target.groupConfig = JSON.parse(groupItem.groupConfig)
+  }
   return target
 }
 
@@ -160,7 +164,10 @@ export const calcRequestBody = (paramTarget) => {
     })
   } else if (contentType === LANG_TO_CONTENT_TYPES[FORM_URL_ENCODED]) {
     const params = preProcessParams(paramTarget.value[FORM_URL_ENCODED])
-    data = Object.fromEntries(params.map(item => [item.name, item.value]))
+    data = Object.fromEntries(params.map(item => [item.name, processEvnParams(paramTarget.value.groupConfig, item.value)]))
+  }
+  if (isString(data)) {
+    data = processEvnParams(paramTarget.value.groupConfig, data)
   }
   return {
     hasBody,

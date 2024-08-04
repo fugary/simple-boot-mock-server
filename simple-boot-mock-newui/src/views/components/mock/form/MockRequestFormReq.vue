@@ -4,13 +4,21 @@ import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import { computed, ref, watch } from 'vue'
 import { checkParamsFilled } from '@/api/mock/MockRequestApi'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { AUTH_TYPE, calcContentType, NONE, FORM_DATA, FORM_URL_ENCODED, SPECIAL_LANGS } from '@/consts/MockConstants'
+import {
+  AUTH_TYPE,
+  calcContentType,
+  NONE,
+  FORM_DATA,
+  FORM_URL_ENCODED,
+  SPECIAL_LANGS,
+  DEFAULT_HEADERS
+} from '@/consts/MockConstants'
 import MockRequestFormAuthorization from '@/views/components/mock/form/MockRequestFormAuthorization.vue'
 import { $i18nKey } from '@/messages'
 import { getSingleSelectOptions } from '@/utils'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { isString } from 'lodash-es'
-import { generateSchemaSample } from '@/services/mock/MockCommonService'
+import { calcEnvSuggestions, generateSchemaSample } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 
@@ -107,6 +115,8 @@ const selectExample = (example) => {
   contentRef.value = isString(example.value) ? example.value : JSON.stringify(example.value)
   setTimeout(() => checkEditorLang())
 }
+
+const envSuggestions = computed(() => calcEnvSuggestions(paramTarget.value?.groupConfig))
 </script>
 
 <template>
@@ -135,6 +145,7 @@ const selectExample = (example) => {
         form-prop="pathParams"
         :show-add-button="false"
         :show-paste-button="false"
+        :value-suggestions="envSuggestions"
       />
     </el-tab-pane>
     <el-tab-pane name="requestParamsTab">
@@ -150,6 +161,7 @@ const selectExample = (example) => {
       <common-params-edit
         v-model="paramTarget.requestParams"
         form-prop="requestParams"
+        :value-suggestions="envSuggestions"
       />
     </el-tab-pane>
     <el-tab-pane name="headerParamsTab">
@@ -165,7 +177,8 @@ const selectExample = (example) => {
       <common-params-edit
         v-model="paramTarget.headerParams"
         form-prop="headerParams"
-        header-flag
+        :name-suggestions="DEFAULT_HEADERS"
+        :value-suggestions="envSuggestions"
       />
       <el-descriptions
         v-if="responseTarget"
@@ -247,6 +260,7 @@ const selectExample = (example) => {
             v-model="paramTarget[languageRef]"
             :form-prop="`${languageRef}`"
             :file-flag="isFormData"
+            :value-suggestions="!isFormData?envSuggestions:null"
           />
         </template>
         <vue-monaco-editor
