@@ -10,7 +10,7 @@ export default [{
     name: 'MockGroups',
     component: () => import('@/views/mock/MockGroups.vue')
   }, {
-    path: 'project/:projectCode',
+    path: 'project/:projectCode/:userName?',
     name: 'MockProjectGroups',
     component: createNewComponent('MockProjectGroups', () => import('@/views/mock/MockGroups.vue')),
     meta: {

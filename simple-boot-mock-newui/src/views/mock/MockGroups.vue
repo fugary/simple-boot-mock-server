@@ -38,9 +38,8 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
 const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
 
 const { backUrl, goBack } = useBackUrl()
-if (route.params.projectCode) {
-  searchParam.value.projectCode = useRoute().params.projectCode
-}
+searchParam.value.projectCode = route.params.projectCode || searchParam.value.projectCode
+searchParam.value.userName = route.params.userName || searchParam.value.userName
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam)

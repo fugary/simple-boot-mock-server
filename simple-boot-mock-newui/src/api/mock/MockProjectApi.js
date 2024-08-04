@@ -1,7 +1,7 @@
 import { useResourceApi } from '@/hooks/ApiHooks'
 import { ref } from 'vue'
 import { $http } from '@/vendors/axios'
-import { useCurrentUserName } from '@/utils'
+import { isAdminUser, useCurrentUserName } from '@/utils'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 
 const MOCK_PROJECT_URL = '/admin/projects'
@@ -32,8 +32,11 @@ export const useSelectProjects = (searchParam) => {
     await loadSelectProjects({
       userName: searchParam.value?.userName || useCurrentUserName()
     })
-    const projectOpt = projectOptions.value.find(option => option.value === searchParam.value.projectCode)
-    searchParam.value.projectCode = projectOpt?.value || MOCK_DEFAULT_PROJECT
+    const currentProj = projects.value.find(proj => proj.projectCode === searchParam.value.projectCode)
+    searchParam.value.projectCode = currentProj?.projectCode || MOCK_DEFAULT_PROJECT
+    if (isAdminUser() && currentProj?.userName) {
+      searchParam.value.userName = currentProj.userName
+    }
   }
   return {
     projects,

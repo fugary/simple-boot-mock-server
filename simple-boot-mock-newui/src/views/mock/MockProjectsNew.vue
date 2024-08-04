@@ -36,7 +36,7 @@ onActivated(async () => {
 })
 const gotoMockGroups = (project) => {
   if (project.status === 1) {
-    $goto(`/mock/groups/project/${project.projectCode}?backUrl=${route.fullPath}`)
+    $goto(`/mock/groups/project/${project.projectCode}/${project.userName}?backUrl=${route.fullPath}`)
   }
 }
 
