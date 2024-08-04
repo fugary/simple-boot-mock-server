@@ -50,7 +50,6 @@ const saveGroupConfig = ({ form }) => {
     v-model="showWindow"
     width="1000px"
     :ok-label="$t('common.label.save')"
-    show-fullscreen
     destroy-on-close
     :ok-click="saveGroupConfig"
   >

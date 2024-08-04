@@ -11,6 +11,7 @@ import MockRequestApi, { loadSchemas } from '@/api/mock/MockRequestApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { $i18nKey } from '@/messages'
 import { MOCK_DATA_MATCH_PATTERN_HEADER, MOCK_DATA_PATH_PARAMS_HEADER } from '@/consts/MockConstants'
+import { processEvnParams } from '@/services/mock/MockCommonService'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -41,13 +42,13 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
 
 const doDataPreview = () => {
   const params = preProcessParams(paramTarget.value?.requestParams).reduce((results, item) => {
-    results[item.name] = item.value
+    results[item.name] = processEvnParams(paramTarget.value.groupConfig, item.value)
     return results
   }, {})
   const { data, hasBody } = calcRequestBody(paramTarget)
   const headers = Object.assign(hasBody ? { 'content-type': paramTarget.value?.contentType } : {},
     preProcessParams(paramTarget.value?.headerParams).reduce((results, item) => {
-      results[item.name] = item.value
+      results[item.name] = processEvnParams(paramTarget.value.groupConfig, item.value)
       return results
     }, {}))
   const config = {
@@ -57,7 +58,13 @@ const doDataPreview = () => {
     headers
   }
   if (paramTarget.value.pathParams?.length) {
-    headers[MOCK_DATA_PATH_PARAMS_HEADER] = JSON.stringify(paramTarget.value.pathParams)
+    const pathParams = paramTarget.value.pathParams.map(param => {
+      return {
+        ...param,
+        value: processEvnParams(paramTarget.value.groupConfig, param.value)
+      }
+    })
+    headers[MOCK_DATA_PATH_PARAMS_HEADER] = JSON.stringify(pathParams)
   }
   if (paramTarget.value.matchPattern) {
     headers[MOCK_DATA_MATCH_PATTERN_HEADER] = paramTarget.value.matchPattern
@@ -96,7 +103,7 @@ defineExpose({
 <template>
   <common-window
     v-model="showWindow"
-    width="1000px"
+    width="1100px"
     :ok-label="$i18nKey('common.label.commonSave', 'mock.label.matchPattern')"
     show-fullscreen
     :ok-click="saveMatchPattern"

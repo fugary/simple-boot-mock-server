@@ -24,6 +24,7 @@ defineExpose({
     v-model="showWindow"
     width="1000px"
     :show-cancel="false"
+    :close-on-click-modal="false"
     :ok-label="$t('common.label.close')"
     show-fullscreen
     destroy-on-close
