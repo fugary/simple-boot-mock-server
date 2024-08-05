@@ -133,10 +133,6 @@ export const initXmlWithJs = (monaco) => {
         detail: 'MockJS对象',
         desc: '生成假数据工具'
       }, {
-        label: 'Mock',
-        detail: 'MockJS对象',
-        desc: '生成假数据工具'
-      }, {
         label: 'decodeHex()',
         detail: '将十六进制字符串解码为普通字符串'
       }, {
