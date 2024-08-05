@@ -152,10 +152,12 @@ public class HttpRequestUtils {
                 log.error("parse RequestVo body error", e);
             }
         }
-		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON)){
+		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON)
+				|| MockJsUtils.isJson(requestVo.getBodyStr())){
 			requestVo.setBody(HttpRequestUtils.getJsonBody(requestVo.getBodyStr()));
 		}
-		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_XML)){
+		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_XML)
+				|| MockJsUtils.isXml(requestVo.getBodyStr())){
 			requestVo.setBody(HttpRequestUtils.getXmlBody(requestVo.getBodyStr()));
 		}
 		return requestVo;
