@@ -9,6 +9,8 @@ const paramTarget = defineModel('modelValue', {
 
 const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({ readOnly: false })
 
+languageRef.value = 'javascript'
+
 const matchPatternOption = {
   labelKey: 'mock.label.matchPattern',
   type: 'vue-monaco-editor',
