@@ -21,8 +21,6 @@ import com.fugary.simple.mock.web.vo.query.MockGroupQueryVo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -49,8 +47,6 @@ import static com.fugary.simple.mock.utils.security.SecurityUtils.getLoginUser;
 @RestController
 @RequestMapping("/admin/groups")
 public class MockGroupController {
-
-    private static final Logger log = LoggerFactory.getLogger(MockGroupController.class);
 
     @Autowired
     private MockGroupService mockGroupService;

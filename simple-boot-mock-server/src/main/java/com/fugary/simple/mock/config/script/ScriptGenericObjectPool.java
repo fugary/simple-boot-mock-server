@@ -4,8 +4,6 @@ import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.AbandonedConfig;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
@@ -14,8 +12,6 @@ import org.springframework.beans.factory.InitializingBean;
  * @author gary.fu
  */
 public class ScriptGenericObjectPool<T> extends GenericObjectPool<T> implements InitializingBean {
-
-    private static final Logger log = LoggerFactory.getLogger(ScriptGenericObjectPool.class);
 
     public ScriptGenericObjectPool(PooledObjectFactory<T> factory) {
         super(factory);

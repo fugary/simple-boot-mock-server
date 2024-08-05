@@ -48,7 +48,6 @@ const saveGroupConfig = ({ form }) => {
 <template>
   <common-window
     v-model="showWindow"
-    width="1000px"
     :ok-label="$t('common.label.save')"
     destroy-on-close
     :ok-click="saveGroupConfig"
