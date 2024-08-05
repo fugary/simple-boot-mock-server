@@ -132,6 +132,34 @@ export const initXmlWithJs = (monaco) => {
         label: 'Mock',
         detail: 'MockJS对象',
         desc: '生成假数据工具'
+      }, {
+        label: 'Mock',
+        detail: 'MockJS对象',
+        desc: '生成假数据工具'
+      }, {
+        label: 'decodeHex()',
+        detail: '将十六进制字符串解码为普通字符串'
+      }, {
+        label: 'encodeHex()',
+        detail: '将普通字符串编码为十六进制格式'
+      }, {
+        label: 'md5Hex()',
+        detail: '数据MD5加密，并输出十六进制数据格式'
+      }, {
+        label: 'md5Base64()',
+        detail: '数据MD5加密，并输出Base64数据格式'
+      }, {
+        label: 'sha1Hex()',
+        detail: '数据SHA1加密，并输出十六进制数据格式'
+      }, {
+        label: 'sha1Base64()',
+        detail: '数据SHA1加密，并输出Base64数据格式'
+      }, {
+        label: 'sha256Hex()',
+        detail: '数据SHA256加密，并输出十六进制数据格式'
+      }, {
+        label: 'sha256Base64()',
+        detail: '数据SHA256加密，并输出Base64数据格式'
       }].map(config => configToSuggestion(config, range))
     }, baseXmlWithJsMatcher)
   })
