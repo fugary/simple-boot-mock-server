@@ -144,7 +144,7 @@ public class HttpRequestUtils {
 		requestVo.setMethod(request.getMethod());
 		requestVo.setContentType(request.getContentType());
 		List<MediaType> mediaTypes = MediaType.parseMediaTypes(request.getContentType());
-		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML,
+		if(mediaTypes.isEmpty() || isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML,
 				MediaType.TEXT_HTML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML)){
             try {
                 requestVo.setBodyStr(StreamUtils.copyToString(getBodyResource(request).getInputStream(), StandardCharsets.UTF_8));
