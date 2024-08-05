@@ -64,7 +64,7 @@ const langCheckConfig = [{
   checkReg: /(<[\s\S]*>)\s*(\{\{[\s\S]*}})/m
 }, {
   type: 'html',
-  checkReg: /(<[\s\S]*>)/
+  checkReg: /^(<[\s\S]*>)/
 }, {
   type: 'javascript',
   checkReg: /function|var\s+|let\s+|const\s+|return\s+|=>|Mock\.mock/
