@@ -22,8 +22,16 @@ export const initXmlWithJs = (monaco) => {
     tokenizer: {
       root: [
         [/{{/, { token: 'delimiter.curly', next: '@jsInBraces' }],
-        [/<\/?[\w\s="/.':;#-\/\?]+>/, 'tag'],
+        [/<[^>\/]+/, { token: 'tag', next: '@tag' }],
+        [/<\/[^>]+>/, 'tag'],
         [/[^{<]+/, 'text']
+      ],
+      tag: [
+        [/[^>\/]+/, 'attribute.name'],
+        [/="[^"]*"/, 'attribute.value'],
+        [/='[^']*'/, 'attribute.value'],
+        [/[\s\S]*>/, { token: 'tag', next: '@pop' }],
+        [/\/>/, { token: 'tag', next: '@pop' }]
       ],
       jsInBraces: [
         [/}}/, { token: 'delimiter.curly', next: '@pop' }],
