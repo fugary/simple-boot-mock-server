@@ -11,6 +11,8 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.util.StreamUtils;
 
 import javax.script.*;
@@ -30,14 +32,21 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
     /**
      * mockjs的资源路径
      */
-    private static final String MOCK_JS_PATH = "js/mock-min.js";
+    private static final String MOCK_JS_PATH = "classpath*:META-INF/resources/webjars/mockjs/**/mock-min.js";
 
     private static final String MOCK_JS_CONTENT;
 
+    private static final String DAY_JS_PATH = "classpath*:META-INF/resources/webjars/dayjs/**/dayjs.min.js";
+
+    private static final String DAY_JS_CONTENT;
+
     static {
-        Resource mockJs = new ClassPathResource(MOCK_JS_PATH);
+        ResourcePatternResolver patternResolver = new PathMatchingResourcePatternResolver();
         try {
+            Resource mockJs = patternResolver.getResources(MOCK_JS_PATH)[0];
+            Resource dayJs = patternResolver.getResources(DAY_JS_PATH)[0];
             MOCK_JS_CONTENT = StreamUtils.copyToString(mockJs.getInputStream(), StandardCharsets.UTF_8);
+            DAY_JS_CONTENT = StreamUtils.copyToString(dayJs.getInputStream(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -77,6 +86,7 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
             JsHelper jsHelper = new JsHelper();
             bindings.put("JsHelper", jsHelper);
             scriptEngine.eval(MOCK_JS_CONTENT, bindings);
+            scriptEngine.eval(DAY_JS_CONTENT, bindings);
             scriptEngine.eval(jsHelper.getInitStr(), bindings);
         } catch (ScriptException e) {
             log.error("执行MockJs错误", e);

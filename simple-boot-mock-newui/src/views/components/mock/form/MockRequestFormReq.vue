@@ -83,7 +83,7 @@ const showRequestBody = computed(() => {
 
 watch(languageRef, lang => {
   paramTarget.value.requestFormat = lang
-  paramTarget.value.contentType = calcContentType(lang, paramTarget.value.requestBody) || NONE
+  paramTarget.value.requestContentType = calcContentType(lang, paramTarget.value.requestBody) || NONE
 }, { immediate: true })
 
 const currentTabName = ref('requestParamsTab')

@@ -105,7 +105,6 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
     headerParams: [],
     [FORM_DATA]: [],
     [FORM_URL_ENCODED]: [],
-    contentType: previewData?.contentType || 'application/json',
     method: requestItem?.method || 'GET',
     responseBody: previewData?.responseBody,
     responseFormat: previewData?.responseFormat
@@ -133,6 +132,7 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
   if (groupItem.groupConfig) {
     target.groupConfig = JSON.parse(groupItem.groupConfig)
   }
+  target.contentType = previewData?.contentType || target.contentType || 'application/json'
   return target
 }
 
@@ -147,7 +147,7 @@ export const preProcessParams = (params = []) => {
  * @return {{data: (string|*), hasBody: boolean}}
  */
 export const calcRequestBody = (paramTarget) => {
-  const contentType = paramTarget.value.contentType
+  const contentType = paramTarget.value.requestContentType
   let data = paramTarget.value.requestBody
   let hasBody = true
   if (contentType === NONE) {

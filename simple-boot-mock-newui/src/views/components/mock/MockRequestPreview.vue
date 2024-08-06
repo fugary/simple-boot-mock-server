@@ -71,7 +71,7 @@ const doDataPreview = async () => {
     return results
   }, {})
   const { data, hasBody } = calcRequestBody(paramTarget)
-  const headers = Object.assign(hasBody ? { 'content-type': paramTarget.value?.contentType } : {},
+  const headers = Object.assign(hasBody ? { 'content-type': paramTarget.value?.requestContentType } : {},
     preProcessParams(paramTarget.value?.headerParams).reduce((results, item) => {
       results[item.name] = processEvnParams(paramTarget.value.groupConfig, item.value)
       return results
