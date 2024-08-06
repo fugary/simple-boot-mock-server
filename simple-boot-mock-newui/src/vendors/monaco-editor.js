@@ -61,10 +61,14 @@ self.MonacoEnvironment = {
 
 const langCheckConfig = [{
   type: 'xmlWithJs',
-  checkReg: /(<[\s\S]*>)\s*(\{\{[\s\S]*}})/m
+  checkReg: (val) => {
+    return /^(<[\s\S]*>)/.test(val) && /\{\{[\s\S]*}}/m.test(val)
+  }
 }, {
   type: 'html',
-  checkReg: /^(<[\s\S]*>)/
+  checkReg: (val) => {
+    return /^(<[\s\S]*>)/.test(val) && !/(^\{[\s\S]*})|(^\[[\s\S]*])/.test(val)
+  }
 }, {
   type: 'javascript',
   checkReg: /function|var\s+|let\s+|const\s+|return\s+|=>|Mock\.mock/
