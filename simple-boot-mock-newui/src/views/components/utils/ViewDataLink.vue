@@ -6,7 +6,11 @@ defineProps({
   },
   icon: {
     type: String,
-    default: 'RemoveRedEyeFilled'
+    default: 'PostAddOutlined'
+  },
+  iconSize: {
+    type: String,
+    default: '18px'
   },
   tooltip: {
     type: String,
@@ -18,16 +22,26 @@ defineEmits(['viewDataDetails'])
 
 <template>
   <div>
-    <el-text v-bind="$attrs">
-      {{ data }}
-    </el-text>&nbsp;
     <el-link
+      v-if="data"
+      v-common-tooltip="tooltip"
+      type="primary"
+      v-bind="$attrs"
+      @click="$emit('viewDataDetails')"
+    >
+      {{ data }}
+    </el-link>&nbsp;
+    <el-link
+      v-else
       v-common-tooltip="tooltip"
       type="primary"
       :underline="false"
       @click="$emit('viewDataDetails')"
     >
-      <common-icon :icon="icon" />
+      <common-icon
+        :size="iconSize"
+        :icon="icon"
+      />
     </el-link>
   </div>
 </template>

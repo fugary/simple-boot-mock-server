@@ -10,8 +10,8 @@ import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { toTestMatchPattern } from '@/utils/DynamicUtils'
-import { $i18nBundle } from '@/messages'
-import { ElLink, ElMessage, ElTag } from 'element-plus'
+import { $i18nBundle, $i18nKey } from '@/messages'
+import { ElMessage, ElTag } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
@@ -72,14 +72,12 @@ const columns = computed(() => {
     enabled: checkShowColumn(tableData.value, 'delay')
   }, {
     labelKey: 'mock.label.matchPattern',
-    enabled: checkShowColumn(tableData.value, 'matchPattern'),
     minWidth: '150px',
     formatter (data) {
-      if (data.matchPattern) {
-        return <ViewDataLink data={data.matchPattern} tooltip={$i18nBundle('mock.msg.matchPatternTest')}
+      return <ViewDataLink data={data.matchPattern} icon="AddTaskFilled"
+                             tooltip={$i18nKey('common.label.commonConfig', 'mock.label.matchPattern')}
                              onViewDataDetails={() => toTestMatchPattern(props.groupItem, props.requestItem, data)
                                .then(() => loadMockData())}/>
-      }
     }
   }, {
     labelKey: 'common.label.status',
@@ -100,11 +98,9 @@ const columns = computed(() => {
       if (data.responseBody && data.responseBody.length > 120) {
         showStr = data.responseBody.substring(0, 120) + '...'
       }
-      return <>
-        <ElLink type="primary" onClick={() => toEditDataResponse(data)}>
-          {showStr}
-        </ElLink>
-      </>
+      return <ViewDataLink data={showStr}
+                           tooltip={$i18nKey('common.label.commonConfig', 'mock.label.responseBody')}
+                           onViewDataDetails={() => toEditDataResponse(data)}/>
     }
   }, {
     headerSlot: 'buttonHeader',

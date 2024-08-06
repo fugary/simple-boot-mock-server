@@ -90,7 +90,7 @@ const currentTabName = ref('requestParamsTab')
 const authContentModel = ref({
   authType: AUTH_TYPE.NONE
 })
-const paramList = ['pathParams', 'requestParams', 'headerParams', 'requestBody']
+const paramList = ['requestBody', 'pathParams', 'requestParams', 'headerParams']
 if (paramTarget.value) {
   currentTabName.value = paramTarget.value.method !== 'GET' ? 'requestBodyTab' : 'requestParamsTab'
   for (const key of paramList) {
