@@ -1,8 +1,9 @@
-import { $coreConfirm } from '@/utils'
+import { $coreConfirm, getSingleSelectOptions } from '@/utils'
 import { $i18nKey } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
 import { isString } from 'lodash-es'
+import { ALL_CONTENT_TYPES } from '@/api/mock/MockDataApi'
 
 export const generateSchemaSample = (schemaBody, type) => {
   return $coreConfirm($i18nKey('common.msg.commonConfirm', 'common.label.generateData'))
@@ -48,4 +49,16 @@ export const processEvnParams = (groupConfig, dataValue) => {
     }
   }
   return dataValue
+}
+
+export const useContentTypeOption = (prop = 'contentType') => {
+  return {
+    label: 'Content Type',
+    prop,
+    type: 'select',
+    children: getSingleSelectOptions(...ALL_CONTENT_TYPES),
+    attrs: {
+      clearable: false
+    }
+  }
 }

@@ -85,7 +85,9 @@ const doDataPreview = async () => {
   requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)
   previewData.value?.id && (headers[MOCK_DATA_ID_HEADER] = previewData.value?.id)
   await doSaveMockParams()
-  if (paramTarget.value?.responseBody !== previewData.value?.responseBody) {
+  if (paramTarget.value?.responseBody !== previewData.value?.responseBody ||
+      paramTarget.value?.responseFormat !== previewData.value?.responseFormat ||
+      paramTarget.value?.contentType !== previewData.value?.contentType) {
     await doSaveMockResponseBody()
   }
   const authContent = paramTarget.value.authContent
@@ -130,6 +132,7 @@ const doSaveMockResponseBody = () => {
   if (previewData.value) {
     previewData.value.responseBody = paramTarget.value.responseBody
     previewData.value.responseFormat = paramTarget.value.responseFormat
+    previewData.value.contentType = paramTarget.value.contentType
     return MockDataApi.saveOrUpdate(previewData.value)
       .then(() => {
         ElMessage.success($i18nBundle('common.msg.saveSuccess'))

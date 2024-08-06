@@ -4,10 +4,11 @@ import { computed, watch, ref } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nKey } from '@/messages'
-import { generateSchemaSample } from '@/services/mock/MockCommonService'
+import { generateSchemaSample, useContentTypeOption } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import { isString } from 'lodash-es'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
+import { calcContentType } from '@/consts/MockConstants'
 
 const props = defineProps({
   responseTarget: {
@@ -75,6 +76,17 @@ const generateSample = async (type) => {
 const selectExample = (example) => {
   contentRef2.value = isString(example.value) ? example.value : JSON.stringify(example.value)
   setTimeout(() => checkEditorLang())
+}
+
+const contentTypeOption = useContentTypeOption('contentType')
+const langOption = {
+  ...languageSelectOption2.value,
+  change (language) {
+    if (paramTarget.value) {
+      paramTarget.value.responseFormat = language
+      paramTarget.value.contentType = calcContentType(language, paramTarget.value?.responseBody)
+    }
+  }
 }
 </script>
 
@@ -214,8 +226,12 @@ const selectExample = (example) => {
         </template>
         <el-container class="flex-column">
           <common-form-control
+            :model="paramTarget"
+            :option="contentTypeOption"
+          />
+          <common-form-control
             :model="languageModel2"
-            :option="languageSelectOption2"
+            :option="langOption"
             @change="languageRef2=$event"
           >
             <template #childAfter>
@@ -240,7 +256,7 @@ const selectExample = (example) => {
                 type="primary"
                 :underline="false"
                 class="margin-left3"
-                @click="emit('saveMockResponseBody', paramTarget.responseBody)"
+                @click="emit('saveMockResponseBody', paramTarget)"
               >
                 <common-icon
                   :size="18"

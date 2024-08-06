@@ -7,8 +7,9 @@ import { $i18nKey, $i18nBundle } from '@/messages'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
-import { generateSchemaSample } from '@/services/mock/MockCommonService'
+import { generateSchemaSample, useContentTypeOption } from '@/services/mock/MockCommonService'
 import { loadSchemas } from '@/api/mock/MockRequestApi'
+import { calcContentType } from '@/consts/MockConstants'
 
 const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption, formatDocument, checkEditorLang } = useMonacoEditorOptions({ readOnly: false })
 const showWindow = ref(false)
@@ -26,14 +27,13 @@ const toEditDataResponse = (mockData) => {
   }).then(schemasData => {
     schemas.value = schemasData?.resultData || []
   })
-  checkEditorLang()
+  checkEditorLang(mockData.responseFormat)
 }
 
 const emit = defineEmits(['saveDataResponse'])
 
 const saveDataResponse = () => {
   currentMockData.value.responseBody = contentRef.value
-  currentMockData.value.responseFormat = languageRef.value
   showWindow.value = false
   emit('saveDataResponse', currentMockData.value)
 }
@@ -61,6 +61,16 @@ const selectExample = (example) => {
   setTimeout(() => checkEditorLang())
 }
 
+const contentTypeOption = useContentTypeOption()
+const langOption = {
+  ...languageSelectOption.value,
+  change (val) {
+    if (currentMockData.value) {
+      currentMockData.value.responseFormat = val
+      currentMockData.value.contentType = calcContentType(val, currentMockData.value?.responseBody)
+    }
+  }
+}
 </script>
 
 <template>
@@ -84,8 +94,12 @@ const selectExample = (example) => {
     </template>
     <el-container class="flex-column">
       <common-form-control
+        :model="currentMockData"
+        :option="contentTypeOption"
+      />
+      <common-form-control
         :model="languageModel"
-        :option="languageSelectOption"
+        :option="langOption"
       >
         <template #childAfter>
           <mock-url-copy-link

@@ -151,8 +151,8 @@ export const useMonacoEditorOptions = (config) => {
       $formatDocument(editorRef.value, monacoEditorOptions.readOnly)
     }
   }
-  const checkEditorLang = () => {
-    languageRef.value = $checkLang(contentRef.value) || monacoEditorOptions.language
+  const checkEditorLang = (lang) => {
+    languageRef.value = lang || $checkLang(contentRef.value) || monacoEditorOptions.language
     if (contentRef.value && editorRef.value) {
       formatDocument()
     }

@@ -16,7 +16,8 @@ import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
 import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
-import { DEFAULT_HEADERS } from '@/consts/MockConstants'
+import { calcContentType, DEFAULT_HEADERS } from '@/consts/MockConstants'
+import { useContentTypeOption } from '@/services/mock/MockCommonService'
 
 const props = defineProps({
   groupItem: {
@@ -216,14 +217,6 @@ const editFormOptions = computed(() => {
       clearable: false
     }
   }, {
-    label: 'Content Type',
-    prop: 'contentType',
-    type: 'select',
-    children: getSingleSelectOptions(...ALL_CONTENT_TYPES),
-    attrs: {
-      clearable: false
-    }
-  }, {
     labelKey: 'mock.label.default',
     prop: 'defaultFlag',
     type: 'switch',
@@ -252,11 +245,12 @@ const editFormOptions = computed(() => {
   }, {
     labelKey: 'mock.label.responseHeaders',
     slot: 'headerParams'
-  }, {
+  }, useContentTypeOption(), {
     ...languageSelectOption.value,
     change (val) {
       if (currentDataItem.value) {
         currentDataItem.value.responseFormat = val
+        currentDataItem.value.contentType = calcContentType(val, currentDataItem.value?.responseBody)
       }
     }
   }, {
