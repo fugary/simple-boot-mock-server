@@ -75,7 +75,7 @@ const columns = computed(() => {
     labelKey: 'mock.label.matchPattern',
     minWidth: '150px',
     formatter (data) {
-      return <ViewDataLink data={data.matchPattern} icon="AddTaskFilled"
+      return <ViewDataLink data={data.matchPattern} icon="RuleFilled"
                              tooltip={$i18nKey('common.label.commonConfig', 'mock.label.matchPattern')}
                              onViewDataDetails={() => toTestMatchPattern(props.groupItem, props.requestItem, data)
                                .then(() => loadMockData())}/>
