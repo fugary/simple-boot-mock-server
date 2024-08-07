@@ -49,6 +49,7 @@ watch(contentRef, val => {
       <new-window-edit-link
         v-model="contentRef"
         style="padding:5px"
+        language="javascript"
       />
     </template>
   </common-form-control>

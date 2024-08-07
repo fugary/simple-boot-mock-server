@@ -22,6 +22,10 @@ const props = defineProps({
   fullEditor: {
     type: Boolean,
     default: false
+  },
+  language: {
+    type: String,
+    default: undefined
   }
 })
 
@@ -34,7 +38,8 @@ const newWindowEdit = () => {
     title: $i18nBundle('common.label.codeEdit'),
     readOnly: props.readOnly,
     closeOnClickModal: props.closeOnClickModal,
-    fullEditor: props.fullEditor
+    fullEditor: props.fullEditor,
+    language: props.language
   })
 }
 

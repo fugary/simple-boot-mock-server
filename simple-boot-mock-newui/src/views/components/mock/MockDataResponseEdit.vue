@@ -3,7 +3,7 @@ import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { computed, ref } from 'vue'
 import { cloneDeep, isString } from 'lodash-es'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { $i18nKey } from '@/messages'
+import { $i18nKey, $i18nBundle } from '@/messages'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
@@ -84,7 +84,7 @@ const langOption = {
     <template #header>
       {{ $i18nKey('common.label.commonEdit', 'mock.label.responseBody1') }}
       <el-link
-        v-common-tooltip="$t('mock.msg.responseBodyTooltip')"
+        v-common-tooltip="$i18nBundle('mock.msg.responseBodyTooltip', ['{{ request.params.name }}'])"
         :underline="false"
       >
         <common-icon icon="QuestionFilled" />

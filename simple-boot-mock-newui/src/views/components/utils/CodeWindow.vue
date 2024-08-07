@@ -34,6 +34,9 @@ const showCodeWindow = (code, config = {}) => {
   Object.assign(codeConfig, config)
   showWindow.value = true
   monacoEditorOptions.readOnly = config.readOnly ?? monacoEditorOptions.readOnly
+  if (config.language) {
+    languageRef.value = config.language
+  }
   setTimeout(() => {
     formatDocument()
   })
@@ -47,7 +50,16 @@ const fullscreen = ref(false)
 
 const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 180px)' : codeConfig.height)
 
-const langOption = computed(() => codeConfig.fullEditor ? languageSelectOption.value : normalLanguageSelectOption.value)
+const langOption = computed(() => {
+  if (codeConfig.language) {
+    return {
+      ...languageSelectOption.value,
+      children: languageSelectOption.value.children
+        .filter(item => item.value === codeConfig.language)
+    }
+  }
+  return codeConfig.fullEditor ? languageSelectOption.value : normalLanguageSelectOption.value
+})
 
 </script>
 
