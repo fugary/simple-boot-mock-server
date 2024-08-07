@@ -21,6 +21,7 @@
     "@vueuse/core": "^10.11.0",
     "async-validator": "^4.2.5",
     "axios": "^1.7.2",
+    "better-mock": "^0.3.7",
     "dayjs": "^1.11.11",
     "element-plus": "^2.7.5",
     "fast-xml-parser": "^4.4.1",
