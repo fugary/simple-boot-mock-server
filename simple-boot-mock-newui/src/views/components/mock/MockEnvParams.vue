@@ -58,9 +58,9 @@ const saveGroupConfig = ({ form }) => {
       </span>
     </template>
     <common-form
-      inline
       :model="groupConfig"
       :show-buttons="false"
+      class="form-edit-width-100"
     >
       <common-params-edit
         v-model="groupConfig.envParams"
