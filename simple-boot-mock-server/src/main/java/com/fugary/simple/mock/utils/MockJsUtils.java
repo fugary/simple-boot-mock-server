@@ -162,7 +162,16 @@ public class MockJsUtils {
                 "</book>";
         Map map = XmlUtils.fromXml(xmlStr, Map.class);
         log.info("{}", map);
-        Object execResult = scriptEngineProvider.eval("JSON.stringify(request.parameters)");
-        log.info("result1={}", execResult);
+        requestVo = new HttpRequestVo();
+        requestVo.getParameters().put("b", "test");
+        MockJsUtils.setCurrentRequestVo(requestVo);
+        Object execResult = scriptEngineProvider.eval("JSON.stringify(Mock.mock({a({_req}) {return Mock.mock(request.parameters)}, b: request.parameters}))");
+        requestVo.getParameters().put("c", "test1");
+        Object execResult1 = scriptEngineProvider.eval("JSON.stringify(Mock.mock({a({_req}) {return Mock.mock(request.parameters)}, b: request.parameters}))");
+        MockJsUtils.removeCurrentRequestVo();
+        Object execResult2 = scriptEngineProvider.eval("JSON.stringify(Mock.mock({a({_req}) {return Mock.mock(request.parameters)}, b: request.parameters}))");
+        log.info("result={}", execResult);
+        log.info("result1={}", execResult1);
+        log.info("result1={}", execResult2);
     }
 }
