@@ -107,7 +107,8 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
     [FORM_URL_ENCODED]: [],
     method: requestItem?.method || 'GET',
     responseBody: previewData?.responseBody,
-    responseFormat: previewData?.responseFormat
+    responseFormat: previewData?.responseFormat,
+    contentType: previewData?.contentType || 'application/json'
   }
   if (value) {
     const pathParams = target.pathParams
@@ -132,7 +133,6 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
   if (groupItem.groupConfig) {
     target.groupConfig = JSON.parse(groupItem.groupConfig)
   }
-  target.contentType = previewData?.contentType || target.contentType || 'application/json'
   return target
 }
 

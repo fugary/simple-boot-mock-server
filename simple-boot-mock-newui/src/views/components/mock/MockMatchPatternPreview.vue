@@ -108,6 +108,7 @@ defineExpose({
     show-fullscreen
     :ok-click="saveMatchPattern"
     destroy-on-close
+    :close-on-click-modal="false"
   >
     <template #header>
       <span class="el-dialog__title">

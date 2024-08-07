@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, nextTick } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import MockRequestApi, { loadSchemas, saveMockParams } from '@/api/mock/MockRequestApi'
 import MockDataApi, {
   calcParamTarget,
@@ -84,11 +84,10 @@ const doDataPreview = async () => {
   }
   requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)
   previewData.value?.id && (headers[MOCK_DATA_ID_HEADER] = previewData.value?.id)
-  await doSaveMockParams()
-  if (paramTarget.value?.responseBody !== previewData.value?.responseBody ||
-      paramTarget.value?.responseFormat !== previewData.value?.responseFormat ||
-      paramTarget.value?.contentType !== previewData.value?.contentType) {
-    await doSaveMockResponseBody()
+  if (previewData.value?.id) {
+    await doSaveMockResponseBody()// data保存
+  } else {
+    await doSaveMockParams() // request mockParams保存
   }
   const authContent = paramTarget.value.authContent
   if (authContent) {
@@ -106,19 +105,26 @@ const calcResponse = (response) => {
   console.log('===============================responseTarget', responseTarget.value)
 }
 
+const calcMockParams = () => {
+  const paramTargetVal = cloneDeep(paramTarget.value)
+  delete paramTargetVal.responseBody
+  delete paramTargetVal.responseFormat
+  delete paramTargetVal.method
+  delete paramTargetVal.groupConfig
+  delete paramTargetVal.contentType
+  paramTargetVal.formData?.forEach(nv => {
+    if (isArray(nv.value)) {
+      nv.value = []
+    }
+  })
+  return paramTargetVal
+}
+
 const doSaveMockParams = () => {
   if (paramTarget.value) {
     const requestId = requestItem.value?.id
     const id = previewData.value?.id
-    const paramTargetVal = cloneDeep(paramTarget.value)
-    delete paramTargetVal.responseBody
-    delete paramTargetVal.method
-    delete paramTargetVal.groupConfig
-    paramTargetVal.formData?.forEach(nv => {
-      if (isArray(nv.value)) {
-        nv.value = []
-      }
-    })
+    const paramTargetVal = calcMockParams()
     const mockParams = JSON.stringify(paramTargetVal)
     return saveMockParams({
       requestId,
@@ -133,6 +139,8 @@ const doSaveMockResponseBody = () => {
     previewData.value.responseBody = paramTarget.value.responseBody
     previewData.value.responseFormat = paramTarget.value.responseFormat
     previewData.value.contentType = paramTarget.value.contentType
+    const paramTargetVal = calcMockParams()
+    previewData.value.mockParams = JSON.stringify(paramTargetVal)
     return MockDataApi.saveOrUpdate(previewData.value)
       .then(() => {
         ElMessage.success($i18nBundle('common.msg.saveSuccess'))
