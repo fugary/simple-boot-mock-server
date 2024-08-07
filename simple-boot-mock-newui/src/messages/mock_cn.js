@@ -80,6 +80,6 @@ mock.msg.requestIntro = `request.body——body内容对象<br>
                         request.parameters——请求参数对象<br>
                         request.pathParameters——路径参数对象<br>
                         request.params——请求参数和路径参数合并`
-mock.msg.matchPatternTooltip = `匹配规则支持javascript表达式，可以使用request请求数据: <br>${mock.msg.requestIntro}`
+mock.msg.matchPatternTooltip = `匹配规则支持javascript表达式，支持的request请求数据: <br>${mock.msg.requestIntro}`
 mock.msg.projectCodeTooltip = '字母、数字、_-组成，唯一标识'
-mock.msg.responseBodyTooltip = `响应内容支持根据请求参数替换，使用{0}格式替换数据: <br>${mock.msg.requestIntro}`
+mock.msg.responseBodyTooltip = `响应内容支持请求参数替换，使用{{ js表达式 }}格式替换数据，支持的request请求数据: <br>${mock.msg.requestIntro}`

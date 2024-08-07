@@ -32,6 +32,7 @@ const props = defineProps({
 const selectedRows = ref([])
 const batchMode = ref(false)
 const columns = computed(() => {
+  const hasMatchPattern = checkShowColumn(tableData.value, 'matchPattern')
   return defineTableColumns([{
     width: '50px',
     attrs: {
@@ -41,7 +42,7 @@ const columns = computed(() => {
   }, {
     labelKey: 'mock.label.statusCode',
     property: 'statusCode',
-    minWidth: '100px',
+    minWidth: '80px',
     formatter (data) {
       let type = 'danger'
       if (data.statusCode < 300) {
@@ -73,9 +74,13 @@ const columns = computed(() => {
     enabled: checkShowColumn(tableData.value, 'delay')
   }, {
     labelKey: 'mock.label.matchPattern',
-    minWidth: '150px',
+    minWidth: hasMatchPattern ? '150px' : '80px',
     formatter (data) {
-      return <ViewDataLink data={data.matchPattern} icon="NewLabelOutlined" style="word-break: break-all;"
+      let showStr = data.matchPattern
+      if (data.matchPattern && data.matchPattern.length > 100) {
+        showStr = data.matchPattern.substring(0, 100) + '...'
+      }
+      return <ViewDataLink data={showStr} icon="RuleFilled" style="word-break: break-all;"
                              tooltip={$i18nKey('common.label.commonConfig', 'mock.label.matchPattern')}
                              onViewDataDetails={() => toTestMatchPattern(props.groupItem, props.requestItem, data)
                                .then(() => loadMockData())}/>
@@ -96,10 +101,10 @@ const columns = computed(() => {
     minWidth: '220px',
     formatter (data) {
       let showStr = data.responseBody
-      if (data.responseBody && data.responseBody.length > 120) {
-        showStr = data.responseBody.substring(0, 120) + '...'
+      if (data.responseBody && data.responseBody.length > 100) {
+        showStr = data.responseBody.substring(0, 100) + '...'
       }
-      return <ViewDataLink data={showStr}
+      return <ViewDataLink data={showStr} style="word-break: break-all;"
                            tooltip={$i18nKey('common.label.commonConfig', 'mock.label.responseBody')}
                            onViewDataDetails={() => toEditDataResponse(data)}/>
     }
