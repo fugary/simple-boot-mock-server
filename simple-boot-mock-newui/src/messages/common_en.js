@@ -88,6 +88,7 @@ common.label.code = 'Code'
 common.label.generateData = 'Generate fake data'
 common.label.generateXmlData = 'Generate XML'
 common.label.generateJsonData = 'Generate JSON'
+common.label.codeEdit = 'Code Edit'
 
 //= ============通用============
 common.label.commonConfig = 'Config {0}'

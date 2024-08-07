@@ -1,29 +1,38 @@
 <script setup>
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref, computed, isRef } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 
 const showWindow = ref(false)
-const { contentRef: codeText, languageRef, languageModel, normalLanguageSelectOption, formatDocument, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
+const { contentRef: codeText, languageRef, languageModel, languageSelectOption, formatDocument, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
 
 /**
- * @typedef {{copyAndClose?: boolean, showCopy?: boolean, width?: string, title?: string, height?: string}} CodeWindowConfig
+ * @typedef {{copyAndClose?: boolean, showCopy?: boolean, width?: string, title?: string, height?: string, closeOnClickModal?: boolean, readOnly?: boolean}} CodeWindowConfig
  */
 const codeConfig = reactive({
   title: $i18nBundle('common.label.info'),
   width: '800px',
-  height: '350px'
+  height: '350px',
+  closeOnClickModal: true,
+  readOnly: true
 })
 
+let codeRef = null
 /**
  * @param code {String} 代码数据
  * @param config {CodeWindowConfig} 配置信息
  */
 const showCodeWindow = (code, config = {}) => {
   codeText.value = code
+  codeText.value = code
+  if (isRef(code)) {
+    codeRef = code
+    codeText.value = code.value
+  }
   Object.assign(codeConfig, config)
   showWindow.value = true
+  monacoEditorOptions.readOnly = config.readOnly ?? monacoEditorOptions.readOnly
   setTimeout(() => {
     formatDocument()
   })
@@ -50,11 +59,12 @@ const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 180px)' : co
     :title="codeConfig.title"
     append-to-body
     show-fullscreen
+    :close-on-click-modal="codeConfig.closeOnClickModal"
   >
     <el-container class="flex-column">
       <common-form-control
         :model="languageModel"
-        :option="normalLanguageSelectOption"
+        :option="languageSelectOption"
       >
         <template #childAfter>
           <mock-url-copy-link
@@ -76,12 +86,12 @@ const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 180px)' : co
         </template>
       </common-form-control>
       <vue-monaco-editor
-        v-if="codeText"
         v-model:value="codeText"
         :language="languageRef"
         :height="codeHeight"
         :options="monacoEditorOptions"
         @mount="editorRef=$event"
+        @change="codeRef=$event"
       />
     </el-container>
   </common-window>

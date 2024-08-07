@@ -1,7 +1,11 @@
 import { BASE_URL } from '@/config'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
+import { showCodeWindow } from '@/utils/DynamicUtils'
+import { ref } from 'vue'
+import { $i18nBundle } from '@/messages'
 
 const dbUrl = getMockUrl(`${BASE_URL}${BASE_URL.endsWith('/') ? '' : '/'}h2-console`)
+const editorContent = ref('')
 export const ALL_MENUS = [
   {
     id: 1,
@@ -52,8 +56,22 @@ export const ALL_MENUS = [
     nameCn: '图标管理',
     nameEn: 'Icons',
     menuUrl: '/icons'
+  },
+  {
+    id: 95,
+    parentId: 9,
+    iconCls: 'EditPen',
+    nameCn: '代码编辑器',
+    nameEn: 'Code Editor',
+    click: () => {
+      showCodeWindow(editorContent, {
+        title: $i18nBundle('common.label.codeEdit'),
+        readOnly: false,
+        closeOnClickModal: false
+      })
+    }
   }, {
-    id: 92,
+    id: 99,
     parentId: 9,
     iconCls: 'Coin',
     nameCn: '数据库管理',

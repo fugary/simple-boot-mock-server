@@ -47,7 +47,8 @@ export const menu2CommonMenu = (menu) => {
   const menuItem = {
     icon: menu.iconCls,
     label: $i18nMsg(menu.nameCn, menu.nameEn),
-    index: menu.menuUrl
+    index: menu.menuUrl,
+    click: menu.click
   }
   if (menu.children) {
     menuItem.children = menu.children.map(menu2CommonMenu)
