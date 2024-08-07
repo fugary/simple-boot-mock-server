@@ -21,6 +21,7 @@ import { isString } from 'lodash-es'
 import { calcEnvSuggestions, generateSchemaSample } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
+import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
 
 const props = defineProps({
   showAuthorization: {
@@ -218,6 +219,11 @@ const envSuggestions = computed(() => calcEnvSuggestions(paramTarget.value?.grou
             <mock-url-copy-link
               :content="contentRef"
               :tooltip="$i18nKey('common.label.commonCopy', 'mock.label.requestBody')"
+            />
+            <new-window-edit-link
+              v-if="!isSpecialLang"
+              v-model="contentRef"
+              class="margin-left3"
             />
             <el-link
               v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.requestBody')"

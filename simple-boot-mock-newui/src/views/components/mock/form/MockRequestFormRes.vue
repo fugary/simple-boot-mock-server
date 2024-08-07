@@ -9,6 +9,7 @@ import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.
 import { isString } from 'lodash-es'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import { calcContentType } from '@/consts/MockConstants'
+import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
 
 const props = defineProps({
   responseTarget: {
@@ -238,6 +239,11 @@ const langOption = {
               <mock-url-copy-link
                 :content="contentRef2"
                 :tooltip="$i18nKey('common.label.commonCopy', 'mock.label.mockResponseBody')"
+              />
+              <new-window-edit-link
+                v-model="contentRef2"
+                class="margin-left3"
+                full-editor
               />
               <el-link
                 v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.mockResponseBody')"

@@ -66,6 +66,7 @@ export const ALL_MENUS = [
     click: () => {
       showCodeWindow(editorContent, {
         title: $i18nBundle('common.label.codeEdit'),
+        fullEditor: true,
         readOnly: false,
         closeOnClickModal: false
       })

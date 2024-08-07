@@ -89,6 +89,7 @@ common.label.generateData = '生成假数据'
 common.label.generateXmlData = '生成XML'
 common.label.generateJsonData = '生成JSON'
 common.label.codeEdit = '代码编辑'
+common.label.newWindowEdit = '新窗口编辑'
 
 //= ============通用============
 common.label.commonCode = '{0}代码'

@@ -5,7 +5,7 @@ import { $i18nBundle, $i18nKey } from '@/messages'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 
 const showWindow = ref(false)
-const { contentRef: codeText, languageRef, languageModel, languageSelectOption, formatDocument, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
+const { contentRef: codeText, languageRef, languageModel, languageSelectOption, normalLanguageSelectOption, formatDocument, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
 
 /**
  * @typedef {{copyAndClose?: boolean, showCopy?: boolean, width?: string, title?: string, height?: string, closeOnClickModal?: boolean, readOnly?: boolean}} CodeWindowConfig
@@ -14,6 +14,7 @@ const codeConfig = reactive({
   title: $i18nBundle('common.label.info'),
   width: '800px',
   height: '350px',
+  fullEditor: false,
   closeOnClickModal: true,
   readOnly: true
 })
@@ -46,6 +47,8 @@ const fullscreen = ref(false)
 
 const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 180px)' : codeConfig.height)
 
+const langOption = computed(() => codeConfig.fullEditor ? languageSelectOption.value : normalLanguageSelectOption.value)
+
 </script>
 
 <template>
@@ -64,7 +67,7 @@ const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 180px)' : co
     <el-container class="flex-column">
       <common-form-control
         :model="languageModel"
-        :option="languageSelectOption"
+        :option="langOption"
       >
         <template #childAfter>
           <mock-url-copy-link
