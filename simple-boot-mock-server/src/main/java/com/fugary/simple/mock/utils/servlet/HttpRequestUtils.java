@@ -154,11 +154,17 @@ public class HttpRequestUtils {
         }
 		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON)
 				|| MockJsUtils.isJson(requestVo.getBodyStr())){
-			requestVo.setBody(HttpRequestUtils.getJsonBody(requestVo.getBodyStr()));
+			Object body = HttpRequestUtils.getJsonBody(requestVo.getBodyStr());
+			if (body != null) {
+				requestVo.setBody(body);
+			}
 		}
 		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_XML)
 				|| MockJsUtils.isXml(requestVo.getBodyStr())){
-			requestVo.setBody(HttpRequestUtils.getXmlBody(requestVo.getBodyStr()));
+			Object body = HttpRequestUtils.getXmlBody(requestVo.getBodyStr());
+			if (body != null) {
+				requestVo.setBody(body);
+			}
 		}
 		return requestVo;
 	}
