@@ -8,8 +8,8 @@
                     if (typeof dataVal === 'function') {
                         mockData[argsKey] = function () {
                             const result = dataVal.call(this, {
-                                _req: globalThis.request, // fastMock
-                                request: globalThis.request,
+                                _req: request, // fastMock
+                                request: request,
                                 Mock: Mock
                             })
                             if (typeof result === 'object') {
