@@ -87,6 +87,10 @@ watch(languageRef, lang => {
   paramTarget.value.requestContentType = calcContentType(lang, paramTarget.value.requestBody) || NONE
 }, { immediate: true })
 
+watch(contentRef, val => {
+  paramTarget.value.requestBody = val
+})
+
 const currentTabName = ref('requestParamsTab')
 const authContentModel = ref({
   authType: AUTH_TYPE.NONE
@@ -276,7 +280,6 @@ const envSuggestions = computed(() => calcEnvSuggestions(paramTarget.value?.grou
           :height="codeHeight"
           :options="monacoEditorOptions"
           @mount="editorRef=$event"
-          @change="paramTarget.requestBody=$event"
         />
       </el-container>
     </el-tab-pane>

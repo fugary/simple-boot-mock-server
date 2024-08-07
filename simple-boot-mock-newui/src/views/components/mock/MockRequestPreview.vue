@@ -135,18 +135,29 @@ const doSaveMockParams = () => {
 }
 
 const doSaveMockResponseBody = () => {
-  if (previewData.value) {
-    previewData.value.responseBody = paramTarget.value.responseBody
-    previewData.value.responseFormat = paramTarget.value.responseFormat
-    previewData.value.contentType = paramTarget.value.contentType
-    const paramTargetVal = calcMockParams()
-    previewData.value.mockParams = JSON.stringify(paramTargetVal)
+  if (previewData.value && checkDataChange()) {
     return MockDataApi.saveOrUpdate(previewData.value)
       .then(() => {
         ElMessage.success($i18nBundle('common.msg.saveSuccess'))
         saveCallback?.(previewData.value)
       })
   }
+}
+
+const checkDataChange = () => {
+  let changed = false;
+  ['responseBody', 'responseFormat', 'contentType'].forEach(key => {
+    if (paramTarget.value[key] !== previewData.value[key]) {
+      previewData.value[key] = paramTarget.value[key]
+      changed = true
+    }
+  })
+  const paramTargetVal = calcMockParams()
+  if (JSON.stringify(paramTargetVal) !== previewData.value.mockParams) {
+    previewData.value.mockParams = JSON.stringify(paramTargetVal)
+    changed = true
+  }
+  return changed
 }
 
 const clearParamsAndResponse = () => {

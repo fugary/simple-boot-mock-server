@@ -85,10 +85,13 @@ const langOption = {
   change (language) {
     if (paramTarget.value) {
       paramTarget.value.responseFormat = language
-      paramTarget.value.contentType = calcContentType(language, paramTarget.value?.mockResponseBody)
+      paramTarget.value.contentType = calcContentType(language, paramTarget.value?.responseBody)
     }
   }
 }
+watch(contentRef2, val => {
+  paramTarget.value.responseBody = val
+})
 </script>
 
 <template>
@@ -299,7 +302,6 @@ const langOption = {
             :height="codeHeight"
             :options="monacoEditorOptions2"
             @mount="editorRef2=$event"
-            @change="paramTarget.responseBody=$event"
           />
         </el-container>
       </el-tab-pane>
