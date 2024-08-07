@@ -24,8 +24,6 @@ import java.util.regex.Pattern;
 /**
  * Created on 2020/5/5 12:29 .<br>
  * 利用Jdk中的JavaScript脚本引擎，用mockjs执行虚构数据<br>
- * 目前下载的是refactoring版本：地址：https://github.com/nuysoft/Mock/raw/refactoring/dist/mock-min.js<br>
- * 存放目录resources/js
  *
  * @author gary.fu
  */
