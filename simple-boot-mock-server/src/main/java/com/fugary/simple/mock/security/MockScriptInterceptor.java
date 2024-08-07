@@ -38,8 +38,9 @@ public class MockScriptInterceptor implements HandlerInterceptor {
         ScriptEngine scriptEngine = MockJsUtils.getCurrentScriptEngine();
         MockJsUtils.removeCurrentScriptEngine();
         if (scriptEngine != null) {
-            scriptEnginePool.invalidateObject(scriptEngine);
-            scriptEnginePool.preparePool();
+//            scriptEnginePool.invalidateObject(scriptEngine);
+//            scriptEnginePool.preparePool();
+            scriptEnginePool.returnObject(scriptEngine);
         }
     }
 }

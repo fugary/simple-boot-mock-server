@@ -102,7 +102,6 @@ public class MockJsUtils {
         HttpRequestVo requestVo = getCurrentRequestVo();
         if (requestVo == null) {
             HttpServletRequest request = HttpRequestUtils.getCurrentRequest(); // 从request中获取
-            requestVo = new HttpRequestVo();
             if (request != null) {
                 requestVo = HttpRequestUtils.parseRequestVo(request);
             }
@@ -163,5 +162,7 @@ public class MockJsUtils {
                 "</book>";
         Map map = XmlUtils.fromXml(xmlStr, Map.class);
         log.info("{}", map);
+        Object execResult = scriptEngineProvider.eval("JSON.stringify(request.parameters)");
+        log.info("result1={}", execResult);
     }
 }

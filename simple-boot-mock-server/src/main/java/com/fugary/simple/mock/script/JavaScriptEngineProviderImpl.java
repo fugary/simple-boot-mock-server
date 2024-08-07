@@ -9,6 +9,7 @@ import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
@@ -16,13 +17,12 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
 
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Create date 2024/7/4<br>
@@ -89,9 +89,8 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
             if (!isThreadEngine) {
                 scriptEngine = scriptEnginePool.borrowObject();
             }
-//            addAdditionalBindings(scriptEngine);
-            addRequestVo(scriptEngine);
-            return scriptEngine.eval(script);
+            ScriptContext context = getScriptContext(scriptEngine);
+            return scriptEngine.eval(script, context);
         } catch (Exception e) {
             log.error(MessageFormat.format("执行MockJs错误：{0}", script), e);
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, ExceptionUtils.getStackTrace(e));
@@ -104,22 +103,37 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
 
     /**
      * 添加其他绑定
-     * @deprecated
      * @param scriptEngine
      */
-    protected void addAdditionalBindings(ScriptEngine scriptEngine) {
-        Bindings bindings = scriptEngine.createBindings();
-        MockJsUtils.addRequestInfo(bindings);
-        scriptEngine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+    protected ScriptContext getScriptContext(ScriptEngine scriptEngine) throws ScriptException {
+        HttpRequestVo requestVo = MockJsUtils.getHttpRequestVo();
+        ScriptContext scriptContext = new SimpleScriptContext();
+        scriptContext.setBindings(scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
+        if (requestVo != null) {
+            scriptContext.setAttribute("request", processValue(requestVo), ScriptContext.ENGINE_SCOPE);
+            scriptEngine.eval(FAST_MOCK_JS_CONTENT, scriptContext);
+        }
+        return scriptContext;
     }
 
-    /**
-     * 添加其他绑定
-     * @param scriptEngine
-     */
-    protected void addRequestVo(ScriptEngine scriptEngine) throws ScriptException {
-        HttpRequestVo requestVo = MockJsUtils.getHttpRequestVo();
-        scriptEngine.eval("globalThis.request = " + JsonUtils.toJson(requestVo)  + ";");
-        scriptEngine.eval(FAST_MOCK_JS_CONTENT);
+    protected Object processValue(Object value) {
+        if (value != null && !ClassUtils.isPrimitiveOrWrapper(value.getClass())
+                && (!(value instanceof String))) { // 转json
+            String jsonValue = JsonUtils.toJson(value);
+            if (isJson(jsonValue)) {
+                return JsonUtils.fromJson(jsonValue, Map.class);
+            } else if(isJsonArray(jsonValue)) {
+                return JsonUtils.fromJson(jsonValue, List.class);
+            }
+        }
+        return value;
+    }
+
+    protected boolean isJson(String value) {
+        return StringUtils.isNotBlank(value) && StringUtils.startsWith(value, "{");
+    }
+
+    protected boolean isJsonArray(String value) {
+        return StringUtils.isNotBlank(value) && StringUtils.startsWith(value, "[");
     }
 }
