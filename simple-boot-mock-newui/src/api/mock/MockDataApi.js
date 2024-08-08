@@ -19,12 +19,12 @@ export const ALL_STATUS_CODES = [200, 201, 202, 301, 302, 307, 400, 401, 404, 40
 
 export const ALL_CONTENT_TYPES = ['application/json', 'application/xml', 'text/html', 'text/css', 'application/javascript', 'application/x-www-form-urlencoded']
 
-export const preview = function (data, config) {
+export const generateJWT = function (data, config) {
   return $http(Object.assign({
-    url: `${MOCK_DATA_URL}/preview`,
+    url: `${MOCK_DATA_URL}/generateJwt`,
     method: 'post',
     data
-  }, config))
+  }, config)).then(response => response.data)
 }
 
 export const markDefault = function (data, config) {
