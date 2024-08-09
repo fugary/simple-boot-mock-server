@@ -75,6 +75,7 @@ public class MockController {
             responseEntity = ResponseEntity.status(data.getStatusCode())
                     .headers(httpHeaders)
                     .header(HttpHeaders.CONTENT_TYPE, data.getContentType())
+                    .header(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()))
                     .body(data.getResponseBody());
         } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(mockGroup.getProxyUrl())) {
             // 所有request没有匹配上,但是有proxy地址
