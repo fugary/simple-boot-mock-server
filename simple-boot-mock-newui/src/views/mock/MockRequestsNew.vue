@@ -226,67 +226,70 @@ const editGroupEnvParams = () => {
       </template>
     </common-form>
     <el-container v-if="loadSuccess">
-      <el-row class="form-edit-width-100">
-        <el-col
-          :span="6"
-          style="min-width: 250px;"
+      <div class="form-edit-width-100">
+        <common-split
+          :min-size="150"
+          :max-size="[500, Infinity]"
         >
-          <common-table
-            :key="batchMode"
-            ref="requestTableRef"
-            class="request-table"
-            :data="tableData"
-            :columns="newColumns"
-            :loading="loading"
-            row-key="id"
-            @selection-change="selectedRows=$event"
-            @current-change="selectRequest=$event"
-          >
-            <template #buttonHeader>
-              {{ $t('mock.label.mockRequests') }}
-              <div class="float-right">
-                <el-button
-                  v-common-tooltip="$t('common.label.batchMode')"
-                  round
-                  :type="batchMode?'success':'default'"
-                  size="small"
-                  @click="changeBatchMode"
-                >
-                  <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
-                </el-button>
-                <el-button
-                  v-common-tooltip="$t('common.label.new')"
-                  round
-                  type="primary"
-                  size="small"
-                  @click="newOrEdit()"
-                >
-                  <common-icon icon="Plus" />
-                </el-button>
-                <el-button
-                  v-if="selectedRows.length"
-                  v-common-tooltip="$t('common.label.delete')"
-                  round
-                  type="danger"
-                  size="small"
-                  @click="deleteRequests()"
-                >
-                  <common-icon icon="DeleteFilled" />
-                </el-button>
-              </div>
-            </template>
-          </common-table>
-        </el-col>
-        <el-col
-          :span="18"
-        >
-          <mock-data-table
-            v-if="selectRequest"
-            :group-item="groupItem"
-            :request-item="selectRequest"
-          />
-        </el-col>
-      </el-row>
+          <template #split-0>
+            <div class="padding-right2">
+              <common-table
+                :key="batchMode"
+                ref="requestTableRef"
+                class="request-table"
+                :data="tableData"
+                :columns="newColumns"
+                :loading="loading"
+                row-key="id"
+                @selection-change="selectedRows=$event"
+                @current-change="selectRequest=$event"
+              >
+                <template #buttonHeader>
+                  {{ $t('mock.label.mockRequests') }}
+                  <div class="float-right">
+                    <el-button
+                      v-common-tooltip="$t('common.label.batchMode')"
+                      round
+                      :type="batchMode?'success':'default'"
+                      size="small"
+                      @click="changeBatchMode"
+                    >
+                      <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
+                    </el-button>
+                    <el-button
+                      v-common-tooltip="$t('common.label.new')"
+                      round
+                      type="primary"
+                      size="small"
+                      @click="newOrEdit()"
+                    >
+                      <common-icon icon="Plus" />
+                    </el-button>
+                    <el-button
+                      v-if="selectedRows.length"
+                      v-common-tooltip="$t('common.label.delete')"
+                      round
+                      type="danger"
+                      size="small"
+                      @click="deleteRequests()"
+                    >
+                      <common-icon icon="DeleteFilled" />
+                    </el-button>
+                  </div>
+                </template>
+              </common-table>
+            </div>
+          </template>
+          <template #split-1>
+            <mock-data-table
+              v-if="selectRequest"
+              class="form-edit-width-100"
+              :group-item="groupItem"
+              :request-item="selectRequest"
+            />
+          </template>
+        </common-split>
+      </div>
     </el-container>
     <simple-edit-window
       v-model="currentRequest"
