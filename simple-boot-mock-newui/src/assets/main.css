@@ -481,3 +481,13 @@ html, body, #app, .index-container {
 .dark .common-split .gutter.gutter-vertical {
     background-color: var(--el-color-black);
 }
+
+.common-resize-vertical {
+    resize: vertical;
+    overflow: auto;
+}
+
+.common-resize-horizontal {
+    resize: horizontal;
+    overflow: auto;
+}

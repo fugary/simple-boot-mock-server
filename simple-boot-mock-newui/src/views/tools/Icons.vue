@@ -1,8 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useClipboard } from '@vueuse/core'
-import { ElMessage } from 'element-plus'
 import { filterIconsByKeywords } from '@/services/icon/IconService'
+import { $copyText } from '@/utils'
 
 const colSize = ref(8)
 const keyWords = ref('')
@@ -12,20 +11,8 @@ const filterIcons = computed(() => {
 })
 
 const copyIcon = (icon) => {
-  const { copy, isSupported } = useClipboard()
   const iconStr = `<common-icon icon="${icon}"/>`
-  if (isSupported) {
-    copy(iconStr)
-    ElMessage({
-      message: `Copied: ${iconStr}`,
-      type: 'success'
-    })
-  } else {
-    ElMessage({
-      message: `Copy Not supported: ${iconStr}`,
-      type: 'error'
-    })
-  }
+  $copyText({ text: iconStr, success: `Copied: ${iconStr}` })
 }
 
 </script>
@@ -75,13 +62,22 @@ const copyIcon = (icon) => {
           </el-col>
         </el-row>
       </recycle-scroller>
+      <el-backtop
+        v-common-tooltip="$t('common.label.backtop')"
+        target=".scroller"
+        :right="50"
+        :bottom="50"
+      />
     </el-main>
   </el-container>
 </template>
 
 <style scoped>
-.scroller, .icon-container  {
+.scroller {
   height: 100%;
+}
+.icon-container {
+  height: calc(100% - 42px);
 }
 .icon-container .el-input {
   width: 80%;

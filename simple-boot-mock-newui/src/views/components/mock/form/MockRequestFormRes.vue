@@ -183,6 +183,7 @@ watch(contentRef2, val => {
             :language="languageRef"
             :height="codeHeight"
             :options="monacoEditorOptions"
+            class="common-resize-vertical"
             @mount="editorRef=$event"
           />
         </el-container>
@@ -298,6 +299,7 @@ watch(contentRef2, val => {
           </common-form-control>
           <vue-monaco-editor
             v-model:value="contentRef2"
+            class="common-resize-vertical"
             :language="languageRef2"
             :height="codeHeight"
             :options="monacoEditorOptions2"

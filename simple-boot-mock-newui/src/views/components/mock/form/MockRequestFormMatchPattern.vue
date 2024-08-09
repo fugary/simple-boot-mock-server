@@ -1,7 +1,6 @@
 <script setup>
 import { $i18nBundle } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
 import { watch, computed } from 'vue'
 
 const paramTarget = defineModel('modelValue', {
@@ -21,6 +20,7 @@ const matchPatternOption = computed(() => {
     tooltip: $i18nBundle('mock.msg.matchPatternTooltip'),
     required: true,
     attrs: {
+      class: 'common-resize-vertical',
       value: paramTarget.value.matchPattern,
       'onUpdate:value': (value) => {
         contentRef.value = value
@@ -44,15 +44,7 @@ watch(contentRef, val => {
     :model="paramTarget"
     label-width="180px"
     :option="matchPatternOption"
-  >
-    <template #afterLabel>
-      <new-window-edit-link
-        v-model="contentRef"
-        style="padding:5px"
-        language="javascript"
-      />
-    </template>
-  </common-form-control>
+  />
 </template>
 
 <style scoped>

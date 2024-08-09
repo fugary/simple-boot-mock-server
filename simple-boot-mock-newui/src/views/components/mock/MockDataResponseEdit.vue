@@ -40,7 +40,7 @@ const saveDataResponse = () => {
 
 const fullscreen = ref(false)
 
-const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 195px)' : '400px')
+const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 235px)' : '400px')
 
 defineExpose({ toEditDataResponse })
 

@@ -279,6 +279,7 @@ const envSuggestions = computed(() => calcEnvSuggestions(paramTarget.value?.grou
           :language="languageRef"
           :height="codeHeight"
           :options="monacoEditorOptions"
+          class="common-resize-vertical"
           @mount="editorRef=$event"
         />
       </el-container>

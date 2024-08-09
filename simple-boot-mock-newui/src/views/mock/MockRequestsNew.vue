@@ -125,6 +125,7 @@ const editFormOptions = computed(() => {
     prop: 'matchPattern',
     tooltip: $i18nBundle('mock.msg.matchPatternTooltip'),
     attrs: {
+      class: 'common-resize-vertical',
       value: currentRequest.value?.matchPattern,
       'onUpdate:value': (value) => {
         currentRequest.value.matchPattern = value

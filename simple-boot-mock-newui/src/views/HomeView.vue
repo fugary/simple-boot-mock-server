@@ -82,8 +82,8 @@ useMenuConfigStore().loadBusinessMenus()
         <el-backtop
           v-common-tooltip="$t('common.label.backtop')"
           target=".home-main"
-          :right="50"
-          :bottom="50"
+          :right="70"
+          :bottom="70"
         />
       </el-main>
       <global-settings />
