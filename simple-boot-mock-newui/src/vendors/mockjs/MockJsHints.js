@@ -2,7 +2,7 @@ import * as monaco from 'monaco-editor'
 import BetterMockJsCode from 'better-mock/typings/index.d.ts?raw'
 import RequestHintDataCode from '@/vendors/mockjs/RequestHintData.d.ts?raw'
 import DayjsCode from 'dayjs/index.d.ts?raw'
-import { getMockJsPlaceholders } from '@/vendors/mockjs/MockJsonHintData'
+import { configToHover, getMockJsPlaceholders, hoverMockRandom } from '@/vendors/mockjs/MockJsonHintData'
 import { initXmlWithJs } from '@/vendors/mockjs/XmlWithJs'
 
 export const initMockJsHints = () => {
@@ -24,6 +24,18 @@ export const initMockJsHints = () => {
     monaco.languages.registerCompletionItemProvider('javascript', {
       triggerCharacters: ['"', "'", '`'],
       provideCompletionItems: getMockJsPlaceholders()
+    })
+    monaco.languages.registerHoverProvider(['json', 'javascript'], {
+      provideHover: function (model, position) {
+        const word = model.getWordAtPosition(position)
+        if (word) {
+          const item = hoverMockRandom(model, position, word)
+          if (item) {
+            return configToHover(item, position, word)
+          }
+        }
+        return null
+      }
     })
     initXmlWithJs(monaco)
   }

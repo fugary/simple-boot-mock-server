@@ -1,5 +1,11 @@
 /* eslint-disable no-useless-escape */
-import { configToSuggestion, getCompletionItemProvider, getMockJsPlaceholders } from '@/vendors/mockjs/MockJsonHintData'
+import {
+  configToSuggestion,
+  getCompletionItemProvider,
+  getMockJsPlaceholders,
+  hoverMockRandom,
+  baseHoverHints, configToHover
+} from '@/vendors/mockjs/MockJsonHintData'
 
 export const XML_WITH_JS_ID = 'xmlWithJs'
 export const initXmlWithJs = (monaco) => {
@@ -8,6 +14,77 @@ export const initXmlWithJs = (monaco) => {
   const LANG_KEYWORDS = [
     'break', 'case', 'catch', 'class', 'continue', 'const', 'constructor', 'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield', 'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 'public', 'await', 'abstract', 'boolean', 'byte', 'char', 'double', 'final', 'float', 'goto', 'int', 'long', 'native', 'short', 'synchronized', 'throws', 'transient', 'volatile'
   ]
+
+  const REQUEST_HINTS = [{
+    label: 'body',
+    detail: 'request.body',
+    desc: 'body内容对象'
+  }, {
+    label: 'bodyStr',
+    detail: 'request.bodyStr',
+    desc: 'body内容字符串'
+  }, {
+    label: 'headers',
+    detail: 'request.headers',
+    desc: '头信息对象'
+  }, {
+    label: 'parameters',
+    detail: 'request.parameters',
+    desc: '请求参数对象'
+  }, {
+    label: 'pathParameters',
+    detail: 'request.pathParameters',
+    desc: '路径参数对象'
+  }, {
+    label: 'params',
+    detail: 'request.params',
+    desc: '请求参数和路径参数合并'
+  }]
+
+  const GLOBAL_HINTS = [{
+    label: 'request',
+    detail: 'request请求对象',
+    desc: '包含params，body，bodyStr，headers，parameters，pathParameters'
+  }, {
+    label: 'Mock',
+    detail: 'MockJS对象',
+    desc: '生成假数据工具'
+  }, {
+    label: 'decodeHex()',
+    detail: '将十六进制字符串解码为普通字符串'
+  }, {
+    label: 'encodeHex()',
+    detail: '将普通字符串编码为十六进制格式'
+  }, {
+    label: 'md5Hex()',
+    detail: '数据MD5加密，并输出十六进制数据格式'
+  }, {
+    label: 'md5Base64()',
+    detail: '数据MD5加密，并输出Base64数据格式'
+  }, {
+    label: 'sha1Hex()',
+    detail: '数据SHA1加密，并输出十六进制数据格式'
+  }, {
+    label: 'sha1Base64()',
+    detail: '数据SHA1加密，并输出Base64数据格式'
+  }, {
+    label: 'sha256Hex()',
+    detail: '数据SHA256加密，并输出十六进制数据格式'
+  }, {
+    label: 'sha256Base64()',
+    detail: '数据SHA256加密，并输出Base64数据格式'
+  }]
+
+  const MOCK_HINTS = [{
+    label: 'mock()',
+    detail: 'Mock.mock',
+    desc: 'MockJS生成数据方法'
+  }, {
+    label: 'Random',
+    detail: 'Mock.Random',
+    desc: 'Mock.Random生成随机数据'
+  }]
+
   // 定义嵌套规则
   monaco.languages.setMonarchTokensProvider(XML_WITH_JS_ID, {
     defaultToken: '',
@@ -113,6 +190,53 @@ export const initXmlWithJs = (monaco) => {
     const right = text.match(/}}/g)
     return !!left && left.length > (right?.length || 0)
   }
+
+  const baseHoverHintsAll = (word) => {
+    let item = baseHoverHints(word, GLOBAL_HINTS)
+    if (!item) {
+      item = baseHoverHints(word, REQUEST_HINTS)
+    }
+    if (!item) {
+      item = baseHoverHints(word, MOCK_HINTS)
+    }
+    return item
+  }
+
+  // 添加悬停提示
+  monaco.languages.registerHoverProvider(XML_WITH_JS_ID, {
+    provideHover: function (model, position) {
+      // 获取整个文档的内容
+      const fullContent = model.getValue()
+      const cursorOffset = model.getOffsetAt(position)
+      // 向前查找 '{{' 且不是 '}}'
+      const beforeCursor = fullContent.slice(0, cursorOffset)
+      const hasOpenBrace = beforeCursor.lastIndexOf('{{')
+      const hasCloseBraceBeforeOpen = beforeCursor.lastIndexOf('}}')
+
+      if (hasOpenBrace === -1 || (hasCloseBraceBeforeOpen !== -1 && hasCloseBraceBeforeOpen > hasOpenBrace)) {
+        return null
+      }
+      // 向后查找 '}}' 且不是 '{{'
+      const afterCursor = fullContent.slice(cursorOffset)
+      const hasCloseBrace = afterCursor.indexOf('}}')
+      const hasOpenBraceAfterClose = afterCursor.indexOf('{{')
+      if (hasCloseBrace === -1 || (hasOpenBraceAfterClose !== -1 && hasOpenBraceAfterClose < hasCloseBrace)) {
+        return null
+      }
+      // 光标在 '{{ }}' 内，显示悬停提示
+      const word = model.getWordAtPosition(position)
+      if (word) {
+        let item = baseHoverHintsAll(word)
+        if (!item) {
+          item = hoverMockRandom(model, position, word)
+        }
+        if (item) {
+          return configToHover(item, position, word)
+        }
+      }
+      return null
+    }
+  })
   monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
     triggerCharacters: ['', '@'],
     provideCompletionItems: getMockJsPlaceholders({ prefix: '', matcher: baseXmlWithJsMatcher })
@@ -132,83 +256,19 @@ export const initXmlWithJs = (monaco) => {
   })
   monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
     provideCompletionItems: getCompletionItemProvider(range => {
-      return [{
-        label: 'request',
-        detail: 'request请求对象',
-        desc: '包含params，body，bodyStr，headers，parameters，pathParameters'
-      }, {
-        label: 'Mock',
-        detail: 'MockJS对象',
-        desc: '生成假数据工具'
-      }, {
-        label: 'decodeHex()',
-        detail: '将十六进制字符串解码为普通字符串'
-      }, {
-        label: 'encodeHex()',
-        detail: '将普通字符串编码为十六进制格式'
-      }, {
-        label: 'md5Hex()',
-        detail: '数据MD5加密，并输出十六进制数据格式'
-      }, {
-        label: 'md5Base64()',
-        detail: '数据MD5加密，并输出Base64数据格式'
-      }, {
-        label: 'sha1Hex()',
-        detail: '数据SHA1加密，并输出十六进制数据格式'
-      }, {
-        label: 'sha1Base64()',
-        detail: '数据SHA1加密，并输出Base64数据格式'
-      }, {
-        label: 'sha256Hex()',
-        detail: '数据SHA256加密，并输出十六进制数据格式'
-      }, {
-        label: 'sha256Base64()',
-        detail: '数据SHA256加密，并输出Base64数据格式'
-      }].map(config => configToSuggestion(config, range))
+      return GLOBAL_HINTS.map(config => configToSuggestion(config, range))
     }, baseXmlWithJsMatcher)
   })
   monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
     triggerCharacters: ['.'],
     provideCompletionItems: getCompletionItemProvider(range => {
-      return [{
-        label: 'body',
-        detail: 'request.body',
-        desc: 'body内容对象'
-      }, {
-        label: 'bodyStr',
-        detail: 'request.bodyStr',
-        desc: 'body内容字符串'
-      }, {
-        label: 'headers',
-        detail: 'request.headers',
-        desc: '头信息对象'
-      }, {
-        label: 'parameters',
-        detail: 'request.parameters',
-        desc: '请求参数对象'
-      }, {
-        label: 'pathParameters',
-        detail: 'request.pathParameters',
-        desc: '路径参数对象'
-      }, {
-        label: 'params',
-        detail: 'request.params',
-        desc: '请求参数和路径参数合并'
-      }].map(config => configToSuggestion(config, range))
+      return REQUEST_HINTS.map(config => configToSuggestion(config, range))
     }, (text) => baseXmlWithJsMatcher(text) && /request\./.test(text))
   })
   monaco.languages.registerCompletionItemProvider(XML_WITH_JS_ID, {
     triggerCharacters: ['.'],
     provideCompletionItems: getCompletionItemProvider(range => {
-      return [{
-        label: 'mock()',
-        detail: 'Mock.mock',
-        desc: 'MockJS生成数据方法'
-      }, {
-        label: 'Random',
-        detail: 'Mock.Random',
-        desc: 'Mock.Random生成随机数据'
-      }].map(config => configToSuggestion(config, range))
+      return MOCK_HINTS.map(config => configToSuggestion(config, range))
     }, (text) => baseXmlWithJsMatcher(text) && /Mock\./.test(text))
   })
 }

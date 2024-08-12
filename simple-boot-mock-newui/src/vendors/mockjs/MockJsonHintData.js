@@ -221,18 +221,22 @@ export const MockRandom = {
   }
 }
 
-export const getMockJsPlaceholders = ({ quote, prefix = '@', matcher, labelFun } = {}) => {
+export const getMockRandomItems = ({ quote, prefix = '@', labelFun } = {}) => {
   const keyArr = Object.keys(MockRandom)
   labelFun = labelFun || (key => quote ? `"${prefix}${key}"` : `${prefix}${key}`)
-  return getCompletionItemProvider(range => keyArr.map(key => {
+  return keyArr.map(key => {
     const config = MockRandom[key]
-    const detail = `——>${key}${config.func.toString()}`.replace(/\s+/g, '').replace('=>{}', '')
-    return configToSuggestion({
+    const detail = `${key}${config.func.toString()}`.replace(/\s+/g, '').replace('=>{}', '')
+    return {
       label: labelFun(key),
       detail,
       desc: config.desc
-    }, range)
-  }), matcher)
+    }
+  })
+}
+
+export const getMockJsPlaceholders = ({ quote, prefix = '@', matcher, labelFun } = {}) => {
+  return getCompletionItemProvider(range => getMockRandomItems({ quote, prefix, labelFun }).map(config => configToSuggestion(config, range)), matcher)
 }
 
 export const configToSuggestion = (config, range) => {
@@ -250,6 +254,21 @@ export const configToSuggestion = (config, range) => {
     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
     insertText,
     range
+  }
+}
+
+export const configToHover = (config, position, word) => {
+  let desc = config.desc
+  const hasDesc = !!desc
+  if (!hasDesc) {
+    desc = config.detail
+  }
+  return {
+    range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
+    contents: [
+      { value: config.label + (hasDesc && config.detail ? ('—>' + config.detail) : '') },
+      { value: desc }
+    ]
   }
 }
 
@@ -278,6 +297,19 @@ export const getCompletionItemProvider = (getSuggestions, checkMatch, textRangeF
     return {
       incomplete: true,
       suggestions: getSuggestions(range)
+    }
+  }
+}
+
+export const baseHoverHints = (word, arr) => {
+  return arr.find((item) => item.label.includes(word.word))
+}
+
+export const hoverMockRandom = (model, position, word) => {
+  if (word) {
+    const wordAt = model.getValueInRange(new monaco.Range(position.lineNumber, word.startColumn - 1, position.lineNumber, word.endColumn))
+    if (wordAt.startsWith('@')) {
+      return baseHoverHints({ word: wordAt }, getMockRandomItems().map(config => ({ ...config, detail: `@${config.detail}` })))
     }
   }
 }
