@@ -33,8 +33,8 @@ const loadMockRequests = (...args) => {
   return searchMockRequests(...args).then((result) => {
     nextTick(() => {
       if (tableData.value?.length) {
-        requestTableRef.value?.table?.setCurrentRow(tableData.value[0], true)
-        selectRequest.value = tableData.value[0]
+        selectRequest.value = tableData.value.find(req => req.id === selectRequest.value?.id) || tableData.value[0]
+        requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
       }
     })
     return result

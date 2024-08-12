@@ -124,14 +124,14 @@ const { searchParam, tableData, loading, searchMethod: searchMockData } = useTab
 })
 
 const loadMockData = (...args) => {
+  const lastId = selectDataItem.value?.id
   searchMockData(...args)
     .then(() => {
-      if (!tableData.value.some(data => data.id === selectDataItem.value?.id)) {
-        if (tableData.value[0]) {
-          dataTableRef.value?.table?.setCurrentRow(tableData.value[0], true)
-        } else {
-          mockPreviewRef.value?.clearParamsAndResponse()
-        }
+      if (!tableData.value?.length) {
+        mockPreviewRef.value?.clearParamsAndResponse()
+      } else {
+        const selectData = tableData.value.find(data => data.id === lastId) || tableData.value[0]
+        dataTableRef.value?.table?.setCurrentRow(selectData, true)
       }
     })
 }
