@@ -20,7 +20,8 @@ const defaultConfig = {
   theme: 'vs-dark',
   wordWrap: 'on',
   readOnly: true,
-  language: 'javascript'
+  language: 'javascript',
+  fixedOverflowWidgets: true
 }
 
 /**
