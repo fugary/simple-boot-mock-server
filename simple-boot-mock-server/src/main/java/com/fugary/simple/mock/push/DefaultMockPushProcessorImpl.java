@@ -48,9 +48,9 @@ public class DefaultMockPushProcessorImpl implements MockPushProcessor {
                     Optional.ofNullable(HttpMethod.resolve(mockParams.getMethod())).orElse(HttpMethod.GET),
                     entity, byte[].class);
             responseEntity = processRedirect(responseEntity, mockParams, entity);
-            return SimpleMockUtils.removeCorsHeaders(responseEntity);
+            return SimpleMockUtils.removeProxyHeaders(responseEntity);
         } catch (HttpClientErrorException e) {
-            return SimpleMockUtils.removeCorsHeaders(ResponseEntity.status(e.getStatusCode())
+            return SimpleMockUtils.removeProxyHeaders(ResponseEntity.status(e.getStatusCode())
                     .headers(e.getResponseHeaders())
                     .body(e.getResponseBodyAsByteArray()));
         } catch (Exception e) {

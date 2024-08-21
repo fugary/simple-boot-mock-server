@@ -152,11 +152,12 @@ public class SimpleMockUtils {
      * 清理cors相关的头信息，代理时使用自己的头信息
      * @param response ResponseEntity
      */
-    public static <T> ResponseEntity<T> removeCorsHeaders(ResponseEntity<T> response) {
+    public static <T> ResponseEntity<T> removeProxyHeaders(ResponseEntity<T> response) {
         if (response != null) {
             HttpHeaders headers = new HttpHeaders();
             response.getHeaders().forEach((headerName, value) -> {
-                if (!StringUtils.startsWithIgnoreCase(headerName, "access-control-")) {
+                if (!StringUtils.startsWithIgnoreCase(headerName, "access-control-")
+                        && !StringUtils.equalsIgnoreCase(HttpHeaders.CONNECTION, headerName)) {
                     headers.addAll(headerName, value);
                 }
             });
