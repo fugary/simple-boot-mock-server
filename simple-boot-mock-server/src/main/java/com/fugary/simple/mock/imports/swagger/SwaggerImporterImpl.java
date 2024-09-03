@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.http.HttpStatus;
@@ -194,7 +195,11 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                 String statusCode = entry.getKey();
                 ExportDataVo dataVo = new ExportDataVo();
                 dataVo.setStatus(1);
-                dataVo.setStatusCode(Integer.parseInt(statusCode));
+                if (NumberUtils.isDigits(statusCode)) {
+                    dataVo.setStatusCode(Integer.parseInt(statusCode));
+                } else {
+                    dataVo.setStatusCode(HttpStatus.OK.value());
+                }
                 dataVo.setContentType(MediaType.APPLICATION_JSON_VALUE);
                 dataVo.setDescription(operation.getDescription());
                 ApiResponse apiResponse = entry.getValue();

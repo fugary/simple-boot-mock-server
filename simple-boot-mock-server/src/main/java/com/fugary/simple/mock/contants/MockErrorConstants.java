@@ -23,6 +23,8 @@ public class MockErrorConstants {
 
     public static final int CODE_403 = 403; // 没有权限访问
 
+    public static final int CODE_500 = 500; // 服务器内部错误
+
     public static final int CODE_1001 = 1001; // 数据已经存在
     /**
      * 用户不存在或密码不正确
