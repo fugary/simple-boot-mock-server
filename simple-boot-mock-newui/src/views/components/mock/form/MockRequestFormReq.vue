@@ -48,7 +48,7 @@ const props = defineProps({
 
 const paramTarget = defineModel('modelValue', {
   type: Object,
-  default: true
+  default: () => ({})
 })
 
 const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, normalLanguageSelectOption, formatDocument, checkEditorLang } = useMonacoEditorOptions({ readOnly: false })
@@ -300,6 +300,7 @@ const envSuggestions = computed(() => calcEnvSuggestions(paramTarget.value?.grou
       <mock-request-form-authorization
         v-model="authContentModel"
         v-model:auth-valid="authValid"
+        :group-config="paramTarget.groupConfig"
       />
     </el-tab-pane>
   </el-tabs>

@@ -4,7 +4,7 @@ import { getSingleSelectOptions } from '@/utils'
 import { ElMessage } from 'element-plus'
 import { AUTH_PARAM_NAMES, AUTH_PREFIX_NAMES, AUTHORIZATION_KEY, BEARER_KEY } from '@/consts/MockConstants'
 import { $i18nKey } from '@/messages'
-import { processEvnParams } from '@/services/mock/MockCommonService'
+import { calcEnvSuggestions, calcSuggestionsFunc, processEvnParams } from '@/services/mock/MockCommonService'
 
 export const SUPPORTED_ALGORITHMS = [
   'HS256', // HMAC using SHA-256
@@ -75,15 +75,28 @@ const addTokenToParams = (model, token, headers, params) => {
 
 export const AUTH_OPTION_CONFIG = {
   basic: {
-    options: defineFormOptions([{
-      labelKey: 'common.label.username',
-      prop: 'userName',
-      required: true
-    }, {
-      labelKey: 'common.label.password',
-      prop: 'userPassword',
-      required: true
-    }]),
+    options: (groupConfig) => {
+      const envSuggestions = calcSuggestionsFunc(calcEnvSuggestions(groupConfig))
+      return defineFormOptions([{
+        labelKey: 'common.label.username',
+        prop: 'userName',
+        required: true,
+        type: 'autocomplete',
+        attrs: {
+          fetchSuggestions: envSuggestions,
+          triggerOnFocus: false
+        }
+      }, {
+        labelKey: 'common.label.password',
+        prop: 'userPassword',
+        required: true,
+        type: 'autocomplete',
+        attrs: {
+          fetchSuggestions: envSuggestions,
+          triggerOnFocus: false
+        }
+      }])
+    },
     parseAuthInfo (model, headers, params, paramTarget) {
       // token等于model的属性userName:userPassword的格式后用base64编码
       const userName = processEvnParams(paramTarget?.value?.groupConfig, model.userName)
@@ -93,47 +106,60 @@ export const AUTH_OPTION_CONFIG = {
     }
   },
   token: {
-    options: defineFormOptions([...baseOptions, {
-      label: 'Token',
-      prop: 'token',
-      required: true
-    }]),
+    options: (groupConfig) => {
+      const envSuggestions = calcSuggestionsFunc(calcEnvSuggestions(groupConfig))
+      return defineFormOptions([...baseOptions, {
+        label: 'Token',
+        prop: 'token',
+        required: true,
+        type: 'autocomplete',
+        attrs: {
+          fetchSuggestions: envSuggestions,
+          triggerOnFocus: false
+        }
+      }])
+    },
     parseAuthInfo (model, headers, params, paramTarget) {
       // token和前缀已经存在model中，直接使用，根据tokenToType判断是否是header还是query
       addTokenToParams(model, processEvnParams(paramTarget?.value?.groupConfig, model.token), headers, params)
     }
   },
   jwt: {
-    options: defineFormOptions([...baseOptions, {
-      label: 'Algorithm',
-      prop: 'algorithm',
-      type: 'select',
-      value: SUPPORTED_ALGORITHMS[0],
-      children: getSingleSelectOptions(...SUPPORTED_ALGORITHMS),
-      required: true,
-      attrs: {
-        clearable: false
-      }
-    }, {
-      label: 'Secret',
-      prop: 'secret',
-      required: true,
-      attrs: {
-        showPassword: true
-      }
-    }, {
-      label: 'base64 encoded',
-      prop: 'base64',
-      type: 'switch'
-    }, {
-      label: 'Expire',
-      prop: 'expireTime',
-      type: 'date-picker',
-      minDate: new Date(),
-      attrs: {
-        type: 'datetime'
-      }
-    }]),
+    options: (groupConfig) => {
+      const envSuggestions = calcSuggestionsFunc(calcEnvSuggestions(groupConfig))
+      return defineFormOptions([...baseOptions, {
+        label: 'Algorithm',
+        prop: 'algorithm',
+        type: 'select',
+        value: SUPPORTED_ALGORITHMS[0],
+        children: getSingleSelectOptions(...SUPPORTED_ALGORITHMS),
+        required: true,
+        attrs: {
+          clearable: false
+        }
+      }, {
+        label: 'Secret',
+        prop: 'secret',
+        required: true,
+        type: 'autocomplete',
+        attrs: {
+          fetchSuggestions: envSuggestions,
+          triggerOnFocus: false
+        }
+      }, {
+        label: 'base64 encoded',
+        prop: 'base64',
+        type: 'switch'
+      }, {
+        label: 'Expire',
+        prop: 'expireTime',
+        type: 'date-picker',
+        minDate: new Date(),
+        attrs: {
+          type: 'datetime'
+        }
+      }])
+    },
     async parseAuthInfo (model, headers, params, paramTarget) {
       try {
         const payload = processEvnParams(paramTarget?.value?.groupConfig, model.payload)

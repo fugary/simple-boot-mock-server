@@ -2,7 +2,7 @@ import { $coreConfirm, getSingleSelectOptions } from '@/utils'
 import { $i18nKey } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
-import { isString } from 'lodash-es'
+import { isArray, isFunction, isString } from 'lodash-es'
 import { ALL_CONTENT_TYPES } from '@/api/mock/MockDataApi'
 
 export const generateSchemaSample = (schemaBody, type) => {
@@ -28,6 +28,18 @@ export const generateSchemaSample = (schemaBody, type) => {
       }
       return resStr
     })
+}
+
+export const calcSuggestionsFunc = (keySuggestions) => {
+  if (isFunction(keySuggestions)) {
+    return keySuggestions
+  } else if (isArray(keySuggestions)) {
+    return (queryString, cb) => {
+      const dataList = keySuggestions.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
+        .map(value => ({ value }))
+      cb(dataList)
+    }
+  }
 }
 
 export const calcEnvSuggestions = (groupConfig) => {

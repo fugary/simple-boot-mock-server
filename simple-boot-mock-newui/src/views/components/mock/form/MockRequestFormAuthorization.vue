@@ -5,11 +5,16 @@ import { AUTH_OPTIONS, AUTH_TYPE } from '@/consts/MockConstants'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { useFormItem } from 'element-plus'
+import { isFunction } from 'lodash-es'
 
 const props = defineProps({
   formProp: {
     type: String,
     default: 'authContent'
+  },
+  groupConfig: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -35,6 +40,9 @@ const authTypeSelectOption = ref({
 
 const authOptions = computed(() => {
   let options = AUTH_OPTION_CONFIG[vModel.value.authType]?.options || []
+  if (isFunction(options)) {
+    options = options(props.groupConfig)
+  }
   if (vModel.value.authType === AUTH_TYPE.JWT) {
     options = [...options, jwtPayloadOption]
   }

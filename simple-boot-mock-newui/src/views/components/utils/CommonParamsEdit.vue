@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import { getSingleSelectOptions, toFlatKeyValue } from '@/utils'
 import { $i18nBundle } from '@/messages'
 import { ElMessage, ElButton } from 'element-plus'
-import { isFunction, isArray } from 'lodash-es'
+import { calcSuggestionsFunc } from '@/services/mock/MockCommonService'
 
 const props = defineProps({
   formProp: {
@@ -122,15 +122,7 @@ const inputTextOption = {
 
 const calcSuggestions = (key = 'name') => {
   const keySuggestions = props[`${key}Suggestions`]
-  if (isFunction(keySuggestions)) {
-    return keySuggestions
-  } else if (isArray(keySuggestions)) {
-    return (queryString, cb) => {
-      const dataList = keySuggestions.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
-        .map(value => ({ value }))
-      cb(dataList)
-    }
-  }
+  return calcSuggestionsFunc(keySuggestions)
 }
 
 const paramsOptions = computed(() => {
