@@ -1,5 +1,7 @@
 server:
   port: 9086
+  tomcat:
+    max-swallow-size: 20MB
 spring:
   application:
     name: simple-boot-mock-server
