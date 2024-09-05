@@ -67,7 +67,7 @@ const doDataPreview = () => {
     headers[MOCK_DATA_PATH_PARAMS_HEADER] = JSON.stringify(pathParams)
   }
   if (paramTarget.value.matchPattern) {
-    headers[MOCK_DATA_MATCH_PATTERN_HEADER] = paramTarget.value.matchPattern
+    params[MOCK_DATA_MATCH_PATTERN_HEADER] = paramTarget.value.matchPattern
   }
   previewRequest({
     url: paramTarget.value.requestPath,

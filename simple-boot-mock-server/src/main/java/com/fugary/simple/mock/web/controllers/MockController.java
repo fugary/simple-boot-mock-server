@@ -95,7 +95,7 @@ public class MockController {
         try {
             HttpRequestVo requestVo = calcRequestVo(request);
             MockJsUtils.setCurrentRequestVo(requestVo);
-            String matchPattern = request.getHeader(MockConstants.MOCK_DATA_MATCH_PATTERN_HEADER);
+            String matchPattern = request.getParameter(MockConstants.MOCK_DATA_MATCH_PATTERN_HEADER);
             if (StringUtils.isBlank(matchPattern)) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400);
             }
