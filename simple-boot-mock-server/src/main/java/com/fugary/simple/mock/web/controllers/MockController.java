@@ -32,6 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -99,6 +101,7 @@ public class MockController {
             if (StringUtils.isBlank(matchPattern)) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400);
             }
+            matchPattern = URLDecoder.decode(matchPattern, StandardCharsets.UTF_8);
             Object result = scriptEngineProvider.eval(matchPattern);
             if (result instanceof SimpleResult) {
                 return (SimpleResult) result;
@@ -114,8 +117,9 @@ public class MockController {
 
     private HttpRequestVo calcRequestVo(HttpServletRequest request) {
         HttpRequestVo requestVo = HttpRequestUtils.parseRequestVo(request);
-        String pathParamsHeader = request.getHeader(MockConstants.MOCK_DATA_PATH_PARAMS_HEADER);
+        String pathParamsHeader = request.getParameter(MockConstants.MOCK_DATA_PATH_PARAMS_HEADER);
         if (StringUtils.isNotBlank(pathParamsHeader)) {
+            pathParamsHeader = URLDecoder.decode(pathParamsHeader, StandardCharsets.UTF_8);
             try {
                 List<NameValue> pathParams = JsonUtils.getMapper().readValue(pathParamsHeader, new TypeReference<>() {});
                 if (pathParams != null) {
