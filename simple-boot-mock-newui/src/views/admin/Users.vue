@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { showUserInfo } from '@/utils/DynamicUtils'
@@ -7,10 +7,8 @@ import MockUserApi from '@/api/mock/MockUserApi'
 import { isAdminUser, $goto, $coreConfirm, isUserAdmin } from '@/utils'
 import { $i18nBundle } from '@/messages'
 
-const page = ref(useDefaultPage())
-
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
-  defaultParam: { keyword: '', page: page.value },
+  defaultParam: { keyword: '', page: useDefaultPage() },
   searchMethod: MockUserApi.search
 })
 const loadUsers = (pageNumber) => searchMethod(pageNumber)
@@ -96,7 +94,7 @@ const doSearch = form => {
       </template>
     </common-form>
     <common-table
-      v-model:page="page"
+      v-model:page="searchParam.page"
       :data="tableData"
       :columns="columns"
       :buttons="buttons"
