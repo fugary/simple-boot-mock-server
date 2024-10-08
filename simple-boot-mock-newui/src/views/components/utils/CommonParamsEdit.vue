@@ -129,7 +129,7 @@ const paramsOptions = computed(() => {
   const nameSuggestions = calcSuggestions('name')
   const valueSuggestions = calcSuggestions('value')
   return params.value.map((param) => {
-    const nvSpan = 9
+    const nvSpan = 8
     return defineFormOptions([{
       labelWidth: '30px',
       prop: 'enabled',
@@ -220,7 +220,7 @@ const paramsOptions = computed(() => {
         </el-col>
       </template>
       <el-col
-        :span="4"
+        :span="3"
         class="padding-left2 padding-top1"
       >
         <el-button
