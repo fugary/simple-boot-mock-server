@@ -65,6 +65,10 @@ const columns = computed(() => {
       align: 'center'
     }
   }, {
+    labelKey: 'mock.label.responseName',
+    property: 'dataName',
+    enabled: checkShowColumn(tableData.value, 'dataName')
+  }, {
     label: 'Content Type',
     property: 'contentType',
     minWidth: '150px'
@@ -221,6 +225,9 @@ const editFormOptions = computed(() => {
     attrs: {
       clearable: false
     }
+  }, {
+    labelKey: 'mock.label.responseName',
+    prop: 'dataName'
   }, {
     labelKey: 'mock.label.default',
     prop: 'defaultFlag',

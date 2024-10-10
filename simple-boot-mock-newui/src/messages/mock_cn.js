@@ -55,6 +55,7 @@ mock.label.setDefault = '设为默认'
 mock.label.dataFormat = '数据格式'
 mock.label.projectCode = '项目编码'
 mock.label.projectName = '项目名称'
+mock.label.responseName = '响应名称'
 
 mock.msg.noExportData = '没有需要导出的数据'
 mock.msg.exportConfirm = '确认导出Mock数据？'

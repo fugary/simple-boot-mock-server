@@ -13,6 +13,7 @@ public class MockData extends MockBase {
     private static final long serialVersionUID = 8517817442841283836L;
     private Integer groupId;
     private Integer requestId;
+    private String dataName;
     private Integer statusCode;
     private Integer defaultFlag;
     private String contentType;

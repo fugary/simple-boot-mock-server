@@ -55,6 +55,7 @@ mock.label.setDefault = 'Set default'
 mock.label.dataFormat = 'Data Format'
 mock.label.projectCode = 'Project Code'
 mock.label.projectName = 'Project Name'
+mock.label.responseName = 'Response Name'
 
 mock.msg.noExportData = 'No data to export'
 mock.msg.exportConfirm = 'Confirm to export mock data?'
