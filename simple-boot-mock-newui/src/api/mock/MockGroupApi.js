@@ -34,11 +34,11 @@ export const IMPORT_TYPES = [{
   value: 'simple',
   labelKey: 'mock.label.importTypeSimple'
 }, {
-  value: 'fastmock',
-  labelKey: 'mock.label.importTypeFastMock'
-}, {
   value: 'swagger',
   labelKey: 'mock.label.importTypeSwagger'
+}, {
+  value: 'fastmock',
+  labelKey: 'mock.label.importTypeFastMock'
 }]
 
 export const uploadFiles = (files, params = {}, config = {}) => {
