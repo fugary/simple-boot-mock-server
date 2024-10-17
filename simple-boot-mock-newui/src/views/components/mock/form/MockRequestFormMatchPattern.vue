@@ -21,7 +21,7 @@ const matchPatternOption = computed(() => {
     required: true,
     attrs: {
       class: 'common-resize-vertical',
-      value: paramTarget.value.matchPattern,
+      defaultValue: paramTarget.value.matchPattern,
       'onUpdate:value': (value) => {
         contentRef.value = value
         languageRef.value = 'javascript'

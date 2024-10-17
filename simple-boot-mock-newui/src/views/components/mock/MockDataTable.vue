@@ -245,7 +245,7 @@ const editFormOptions = computed(() => {
     tooltip: $i18nBundle('mock.msg.matchPatternTooltip'),
     attrs: {
       class: 'common-resize-vertical',
-      value: currentDataItem.value?.matchPattern,
+      defaultValue: currentDataItem.value?.matchPattern,
       'onUpdate:value': (value) => {
         currentDataItem.value.matchPattern = value
         patternContentRef.value = value
@@ -271,7 +271,7 @@ const editFormOptions = computed(() => {
     type: 'vue-monaco-editor',
     prop: 'responseBody',
     attrs: {
-      value: currentDataItem.value?.responseBody,
+      defaultValue: currentDataItem.value?.responseBody,
       'onUpdate:value': (value) => {
         currentDataItem.value.responseBody = value
         contentRef.value = value

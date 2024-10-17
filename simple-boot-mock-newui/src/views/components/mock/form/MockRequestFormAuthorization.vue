@@ -62,7 +62,7 @@ const jwtPayloadOption = {
   prop: 'payload',
   required: true,
   attrs: {
-    value: vModel.value.payload,
+    defaultValue: vModel.value.payload,
     'onUpdate:value': (value) => {
       vModel.value.payload = value
       contentRef.value = value
