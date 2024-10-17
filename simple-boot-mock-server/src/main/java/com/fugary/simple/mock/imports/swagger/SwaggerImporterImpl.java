@@ -17,6 +17,7 @@ import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,10 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,7 +47,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
         parseOptions.setResolveFully(true);
         SwaggerParseResult result = new OpenAPIParser().readContents(data, null, parseOptions);
         OpenAPI openAPI = result.getOpenAPI();
-        if (openAPI != null && openAPI.getTags() != null) {
+        if (openAPI != null) {
             Map<String, List<Triple<String, PathItem, List<Pair<String, Operation>>>>> pathMap = openAPI.getPaths().entrySet().stream().map(entry -> {
                 PathItem pathItem = entry.getValue();
                 List<Pair<String, Operation>> operations = getAllOperationsInAPath(pathItem);
@@ -58,8 +56,12 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                 List<Pair<String, Operation>> operations = triple.getRight();
                 Pair<String, Operation> firstOptionPair = operations.get(0);
                 return firstOptionPair.getRight().getTags().get(0);
-            }));
-            List<ExportGroupVo> mockGroups = openAPI.getTags().stream().filter(tag -> pathMap.get(tag.getName()) != null)
+            }, LinkedHashMap::new, Collectors.toList()));
+            List<Tag> tags = openAPI.getTags();
+            if (CollectionUtils.isEmpty(tags)) {
+                tags = pathMap.keySet().stream().map(key -> new Tag().name(key)).collect(Collectors.toList());
+            }
+            List<ExportGroupVo> mockGroups = tags.stream().filter(tag -> pathMap.get(tag.getName()) != null)
                     .map(tag -> toMockGroup(tag, openAPI.getInfo(), pathMap.get(tag.getName()))).collect(Collectors.toList());
             ExportMockVo exportMockVo = new ExportMockVo();
             exportMockVo.setGroups(mockGroups);
