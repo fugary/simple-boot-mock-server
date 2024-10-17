@@ -12,13 +12,12 @@ export const generateSchemaSample = (schemaBody, type) => {
       const json = sample(schema)
       let resStr
       if (type?.includes('xml')) {
-        console.log('===========================schema', schema)
         const builder = new XMLBuilder({
           ignoreAttributes: false,
           format: true,
           indentBy: '\t'
         })
-        const rootName = schema.title && schema.title.match(/[a-zA-Z0-9_-]+/) ? schema.title : 'root'
+        const rootName = schema.xml?.name || 'root'
         const xml = {
           [rootName]: json
         }

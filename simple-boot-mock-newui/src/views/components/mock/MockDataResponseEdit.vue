@@ -69,6 +69,10 @@ const langOption = {
     }
   }
 }
+const supportXml = computed(() => {
+  const schemaBodyObj = isString(schemaBody.value) ? JSON.parse(schemaBody.value) : schemaBody.value
+  return !!schemaBodyObj?.xml
+})
 </script>
 
 <template>
@@ -130,9 +134,22 @@ const langOption = {
             />
           </el-link>
           <mock-generate-sample
-            v-if="schemaBody"
+            v-if="schemaBody&&supportXml"
             @generate-sample="generateSample"
           />
+          <el-link
+            v-if="schemaBody&&!supportXml"
+            v-common-tooltip="$t('common.label.generateJsonData')"
+            type="primary"
+            :underline="false"
+            class="margin-left3"
+            @click="generateSample('json')"
+          >
+            <common-icon
+              :size="18"
+              icon="DataObjectFilled"
+            />
+          </el-link>
           <mock-data-example
             v-if="responseExamples.length"
             :examples="responseExamples"

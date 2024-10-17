@@ -122,6 +122,11 @@ const selectExample = (example) => {
 }
 
 const envSuggestions = computed(() => calcEnvSuggestions(paramTarget.value?.groupConfig))
+
+const supportXml = computed(() => {
+  const schemaBodyObj = isString(props.schemaBody) ? JSON.parse(props.schemaBody) : props.schemaBody
+  return !!schemaBodyObj?.xml
+})
 </script>
 
 <template>
@@ -255,9 +260,22 @@ const envSuggestions = computed(() => calcEnvSuggestions(paramTarget.value?.grou
               />
             </el-link>
             <mock-generate-sample
-              v-if="schemaBody"
+              v-if="schemaBody&&supportXml"
               @generate-sample="generateSample"
             />
+            <el-link
+              v-if="schemaBody&&!supportXml"
+              v-common-tooltip="$t('common.label.generateJsonData')"
+              type="primary"
+              :underline="false"
+              class="margin-left3"
+              @click="generateSample('json')"
+            >
+              <common-icon
+                :size="18"
+                icon="DataObjectFilled"
+              />
+            </el-link>
             <mock-data-example
               v-if="examples.length"
               :examples="examples"
