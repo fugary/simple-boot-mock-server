@@ -1,7 +1,6 @@
 @echo off
 chcp 65001
 if "%1" equ "" goto paramError
-cd ../simple-boot-mock-server
 echo 更新simple-boot-mock-server版本号
 call mvn versions:set -DnewVersion=%1
 cd simple-boot-mock-newui
