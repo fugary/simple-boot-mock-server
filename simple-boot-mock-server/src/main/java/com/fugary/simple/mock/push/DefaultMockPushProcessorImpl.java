@@ -40,7 +40,7 @@ public class DefaultMockPushProcessorImpl implements MockPushProcessor {
     public ResponseEntity<byte[]> doPush(MockParamsVo mockParams) {
         String requestUrl = getRequestUrl(mockParams.getTargetUrl(), mockParams);
         HttpEntity<?> entity = new HttpEntity<>(mockParams.getRequestBody(), getHeaders(mockParams));
-        if (HttpRequestUtils.isCompatibleWith(mockParams, MediaType.MULTIPART_FORM_DATA)) {
+        if (HttpRequestUtils.isCompatibleWith(mockParams, MediaType.MULTIPART_FORM_DATA, MediaType.APPLICATION_FORM_URLENCODED)) {
             entity = new HttpEntity<>(getMultipartBody(mockParams), getHeaders(mockParams));
         }
         try {
@@ -85,6 +85,9 @@ public class DefaultMockPushProcessorImpl implements MockPushProcessor {
             } else {
                 bodyMap.add(nv.getName(), nv.getValue());
             }
+        });
+        mockParams.getFormUrlencoded().forEach(nv -> {
+            bodyMap.add(nv.getName(), nv.getValue());
         });
         return bodyMap;
     }

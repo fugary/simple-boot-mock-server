@@ -218,6 +218,7 @@ public class SimpleMockUtils {
         headers.add(new NameValue(MockConstants.SIMPLE_BOOT_MOCK_HEADER, "1"));
         Enumeration<String> parameterNames = request.getParameterNames();
         List<NameValue> parameters = mockParams.getRequestParams();
+        List<NameValue> formUrlencoded = mockParams.getFormUrlencoded();
         List<NameValueObj> formData = mockParams.getFormData();
         boolean isUrlencoded = HttpRequestUtils.isCompatibleWith(request, MediaType.APPLICATION_FORM_URLENCODED);
         boolean isFormData = HttpRequestUtils.isCompatibleWith(request, MediaType.MULTIPART_FORM_DATA);
@@ -232,7 +233,15 @@ public class SimpleMockUtils {
                     formData.add(new NameValueObj(paramName, paramValue));
                 }
             });
-        } else if (!isUrlencoded) {
+        } else if (isUrlencoded) {
+            while (parameterNames.hasMoreElements()) {
+                String parameterName = parameterNames.nextElement();
+                String parameterValue = request.getParameter(parameterName);
+                if (StringUtils.isNotBlank(parameterValue)) {
+                    formUrlencoded.add(new NameValue(parameterName, parameterValue));
+                }
+            }
+        } else {
             while (parameterNames.hasMoreElements()) {
                 String parameterName = parameterNames.nextElement();
                 String parameterValue = request.getParameter(parameterName);
