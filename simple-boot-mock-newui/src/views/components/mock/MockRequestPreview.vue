@@ -14,7 +14,7 @@ import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
 import { cloneDeep, isArray } from 'lodash-es'
-import { processEvnParams } from '@/services/mock/MockCommonService'
+import { calcPreviewHeaders, processEvnParams } from '@/services/mock/MockCommonService'
 
 const groupItem = ref()
 const requestItem = ref()
@@ -82,6 +82,7 @@ const doDataPreview = async () => {
     data,
     headers
   }
+  calcPreviewHeaders(config)
   requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)
   previewData.value?.id && (headers[MOCK_DATA_ID_HEADER] = previewData.value?.id)
   if (previewData.value?.id) {

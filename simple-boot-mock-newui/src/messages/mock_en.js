@@ -84,3 +84,4 @@ mock.msg.requestIntro = `request.body — The body content object (only JSON)<br
 mock.msg.matchPatternTooltip = `Matching rules support JavaScript expressions. You can use the following to request data:<br>${mock.msg.requestIntro}`
 mock.msg.projectCodeTooltip = 'Only letters, numbers, and underscores are allowed, and it is unique.'
 mock.msg.responseBodyTooltip = `Response content supports replacing by request parameters. Use {0} format to replace with request data:<br>${mock.msg.requestIntro}`
+mock.msg.checkImageAccept = 'To debug image response, set request header "Accept" to image/*'

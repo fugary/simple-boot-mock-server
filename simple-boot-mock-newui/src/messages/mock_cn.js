@@ -84,3 +84,4 @@ mock.msg.requestIntro = `request.body——body内容对象<br>
 mock.msg.matchPatternTooltip = `匹配规则支持javascript表达式，支持的request请求数据: <br>${mock.msg.requestIntro}`
 mock.msg.projectCodeTooltip = '字母、数字、_-组成，唯一标识'
 mock.msg.responseBodyTooltip = `响应内容支持请求参数替换，使用{0}格式替换数据，支持的request请求数据: <br>${mock.msg.requestIntro}`
+mock.msg.checkImageAccept = '要测试图片响应，请设置请求头Accept为image/*'
