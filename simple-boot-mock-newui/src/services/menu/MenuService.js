@@ -121,6 +121,7 @@ export const useThemeAndLocaleMenus = () => {
 export const useBaseTopMenus = () => {
   const globalConfigStore = useGlobalConfigStore()
   const loginConfigStore = useLoginConfigStore()
+  const userName = loginConfigStore.accountInfo?.nickName || loginConfigStore.accountInfo?.userName
   return [
     {
       iconIf: () => globalConfigStore.isCollapseLeft ? 'expand' : 'fold',
@@ -139,7 +140,7 @@ export const useBaseTopMenus = () => {
     {
       icon: 'user',
       isDropdown: true,
-      label: loginConfigStore.accountInfo ? $i18nMsg(loginConfigStore.accountInfo.userNameCN, loginConfigStore.accountInfo.userNameEN) : '',
+      label: userName,
       children: [
         {
           labelKey: 'common.label.personalInfo',
