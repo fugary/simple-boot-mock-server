@@ -3,6 +3,7 @@ import { getMockUrl } from '@/api/mock/MockRequestApi'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { ref } from 'vue'
 import { $i18nBundle } from '@/messages'
+import { isAdminUser } from '@/utils'
 
 const dbUrl = getMockUrl(`${BASE_URL}${BASE_URL.endsWith('/') ? '' : '/'}h2-console`)
 const editorContent = ref('')
@@ -79,6 +80,7 @@ export const ALL_MENUS = [
     nameEn: 'Database',
     dbConsole: true,
     external: true,
-    menuUrl: dbUrl
+    menuUrl: dbUrl,
+    checkEnabled: isAdminUser
   }
 ]
