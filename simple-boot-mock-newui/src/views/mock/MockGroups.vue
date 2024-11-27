@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { computed, onActivated, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
-import { useTableAndSearchForm } from '@/hooks/CommonHooks'
+import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
 import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
 import { useAllUsers } from '@/api/mock/MockUserApi'
@@ -44,15 +44,14 @@ searchParam.value.userName = route.params.userName || searchParam.value.userName
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam)
 
-onMounted(async () => {
-  await loadProjectsAndRefreshOptions()
-  loadMockGroups()
+const { initLoadOnce } = useInitLoadOnce(async () => {
+  await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
+  return loadMockGroups()
 })
 
-onActivated(async () => {
-  await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
-  loadMockGroups()
-})
+onMounted(initLoadOnce)
+
+onActivated(initLoadOnce)
 
 /**
  *

@@ -52,7 +52,6 @@ export const useAllUsers = (searchParam, config = { current: true }) => {
       userOptions.value = users.value.map(user => ({ label: user.userName, value: user.userName }))
     })
   }
-  loadSelectUsers()
   const loadUsersAndRefreshOptions = async () => {
     await loadSelectUsers()
     const userOpt = userOptions.value.find(option => option.value === searchParam.value.userName)

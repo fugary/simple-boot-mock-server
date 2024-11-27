@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { computed, onMounted, onActivated, ref } from 'vue'
 import { useDefaultPage } from '@/config'
-import { useTableAndSearchForm } from '@/hooks/CommonHooks'
+import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions } from '@/components/utils'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import MockProjectApi from '@/api/mock/MockProjectApi'
@@ -26,14 +26,15 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
 const loadMockProjects = (pageNumber) => searchMethod(pageNumber)
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 
-onMounted(() => {
-  loadMockProjects()
+const { initLoadOnce } = useInitLoadOnce(async () => {
+  await loadUsersAndRefreshOptions()
+  return loadMockProjects()
 })
 
-onActivated(async () => {
-  await loadUsersAndRefreshOptions()
-  loadMockProjects()
-})
+onMounted(initLoadOnce)
+
+onActivated(initLoadOnce)
+
 const gotoMockGroups = (project) => {
   if (project.status === 1) {
     $goto(`/mock/groups/project/${project.projectCode}/${project.userName}?backUrl=${route.fullPath}`)
