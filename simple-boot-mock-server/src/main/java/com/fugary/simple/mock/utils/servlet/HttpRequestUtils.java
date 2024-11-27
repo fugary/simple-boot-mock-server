@@ -69,12 +69,15 @@ public class HttpRequestUtils {
 	}
 
 	public static String getRequestUrl(HttpServletRequest request){
-		StringBuffer url = request.getRequestURL();
-		String queryString = request.getQueryString();
-		if (StringUtils.isNotBlank(queryString)) {
-			url.append("?").append(queryString);
+		if (request != null) {
+			StringBuffer url = request.getRequestURL();
+			String queryString = request.getQueryString();
+			if (StringUtils.isNotBlank(queryString)) {
+				url.append("?").append(queryString);
+			}
+			return url.toString();
 		}
-		return url.toString();
+		return null;
 	}
 
 	public static HttpSession getCurrentSession() {
