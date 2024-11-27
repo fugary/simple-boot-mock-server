@@ -22,7 +22,7 @@ const loadApiLogs = (...args) => {
 const dateParam = ref({
   createDates: []
 })
-const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
+const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam, { current: false })
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
   await loadUsersAndRefreshOptions(false)
@@ -70,9 +70,10 @@ const columns = computed(() => {
     labelKey: 'mock.label.logData',
     minWidth: '150px',
     formatter (data) {
-      return <ElText onClick={() => showCodeWindow(data.logData)}
+      const dataStr = data.logData || data.responseBody
+      return <ElText onClick={() => showCodeWindow(dataStr)}
                      style="white-space: nowrap;cursor: pointer;">
-        {data.logData}
+        {dataStr}
       </ElText>
     }
   }, {

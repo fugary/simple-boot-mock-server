@@ -43,7 +43,7 @@ export const loadAllUsers = (config = {}) => {
     .then(result => result.resultData)
 }
 
-export const useAllUsers = (searchParam) => {
+export const useAllUsers = (searchParam, config = { current: true }) => {
   const users = ref([])
   const userOptions = ref([])
   const loadSelectUsers = () => {
@@ -56,7 +56,7 @@ export const useAllUsers = (searchParam) => {
   const loadUsersAndRefreshOptions = async () => {
     await loadSelectUsers()
     const userOpt = userOptions.value.find(option => option.value === searchParam.value.userName)
-    searchParam.value.userName = userOpt?.value || useCurrentUserName()
+    searchParam.value.userName = userOpt?.value || (config.current ? useCurrentUserName() : '')
   }
   return {
     users,
