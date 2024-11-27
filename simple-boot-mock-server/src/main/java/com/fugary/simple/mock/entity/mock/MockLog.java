@@ -26,6 +26,9 @@ public class MockLog implements Serializable {
     private String ipAddress;
     private Long logTime;
     private String exceptions;
+    private String requestUrl;
+    private String mockGroupPath;
+    private String responseBody;
     private String extend1;
     private String extend2;
 }

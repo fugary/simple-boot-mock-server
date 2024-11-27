@@ -10,10 +10,7 @@ import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.push.MockPushProcessor;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockGroupService;
-import com.fugary.simple.mock.utils.JsonUtils;
-import com.fugary.simple.mock.utils.MockJsUtils;
-import com.fugary.simple.mock.utils.SimpleMockUtils;
-import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.utils.*;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
 import com.fugary.simple.mock.web.vo.SimpleResult;
@@ -79,9 +76,11 @@ public class MockController {
                     .header(HttpHeaders.CONTENT_TYPE, data.getContentType())
                     .header(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()))
                     .body(data.getResponseBody());
+            SimpleLogUtils.addResponseData(data.getResponseBody());
         } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(mockGroup.getProxyUrl())) {
             // 所有request没有匹配上,但是有proxy地址
             responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, request));
+            SimpleLogUtils.addResponseData(responseEntity);
         }
         mockGroupService.delayTime(start, mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight()));
         return responseEntity;

@@ -7,6 +7,7 @@ import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.events.OperationLogEvent;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.utils.JsonUtils;
+import com.fugary.simple.mock.utils.SimpleLogUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
@@ -63,13 +64,18 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
         long startTime = System.currentTimeMillis();
         Object result = null;
         Exception exception = null;
+        boolean mockLogEnabled = simpleMockConfigProperties.isMockLogEnabled();
+        MockLog.MockLogBuilder logBuilder = mockLogEnabled ? initLogBuilder() : null;
         try {
+            SimpleLogUtils.setLogBuilder(logBuilder);
             result = joinpoint.proceed();
         } catch (Exception e) {
             exception = e;
+        } finally {
+            SimpleLogUtils.clearLogBuilder();
         }
-        if (simpleMockConfigProperties.isMockLogEnabled()) {
-            processLog(joinpoint, startTime, result, exception);
+        if (mockLogEnabled) {
+            processLog(logBuilder, joinpoint, startTime, result, exception);
         }
         if (exception != null) {
             throw exception;
@@ -77,59 +83,69 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
         return result;
     }
 
-    private void processLog(ProceedingJoinPoint joinpoint, long startTime, Object result, Exception exception) {
+    protected MockLog.MockLogBuilder initLogBuilder() {
+        HttpServletRequest request = HttpRequestUtils.getCurrentRequest();
+        MockLog.MockLogBuilder logBuilder = null;
+        if (request != null) {
+            String groupPath = mockGroupService.calcGroupPath(request.getServletPath());
+            if (StringUtils.isNotBlank(groupPath) || !HttpMethod.GET.matches(request.getMethod())) {
+                logBuilder = MockLog.builder()
+                        .ipAddress(HttpRequestUtils.getIp(request))
+                        .logType(request.getMethod())
+                        .headers(JsonUtils.toJson(HttpRequestUtils.getRequestHeadersMap(request)))
+                        .mockGroupPath(groupPath)
+                        .requestUrl(HttpRequestUtils.getRequestUrl(request));
+            }
+        }
+        return logBuilder;
+    }
+
+    private void processLog(MockLog.MockLogBuilder logBuilder, ProceedingJoinPoint joinpoint, long startTime, Object result, Exception exception) {
         MethodSignature signature = (MethodSignature) joinpoint.getSignature();
         Object[] args = joinpoint.getArgs();
-        HttpServletRequest request = HttpRequestUtils.getCurrentRequest();
-        if (request != null) {
-            String servletPath = request.getServletPath();
-            String groupPath = mockGroupService.calcGroupPath(servletPath);
-            if (StringUtils.isNotBlank(groupPath) || !HttpMethod.GET.matches(request.getMethod())) {
-                String logName = getLogName(signature);
-                MockUser loginUser = SecurityUtils.getLoginUser();
-                Date createDate = new Date();
-                MockLog.MockLogBuilder logBuilder = MockLog.builder()
-                        .ipAddress(HttpRequestUtils.getIp(request))
-                        .logName(logName)
-                        .logType(request.getMethod())
-                        .createDate(createDate)
-                        .logTime(createDate.getTime() - startTime)
-                        .headers(JsonUtils.toJson(HttpRequestUtils.getRequestHeadersMap(request)))
-                        .extend1(groupPath)
-                        .exceptions(exception == null ? null : ExceptionUtils.getStackTrace(exception));
-                if (loginUser != null) {
-                    logBuilder.userName(loginUser.getUserName())
-                            .creator(loginUser.getUserName());
-                }
-                boolean success = exception == null;
-                if (result instanceof SimpleResult) {
-                    SimpleResult simpleResult = ((SimpleResult<?>) result);
-                    logBuilder.logMessage(simpleResult.getMessage());
-                    success = simpleResult.isSuccess();
-                }
-                logBuilder.logResult(success ? MockConstants.SUCCESS : MockConstants.FAIL);
-                Pair<Boolean, MockUser> loginPair = checkLogin(logName, args);
-                if (loginPair.getLeft()) {
-                    MockUser loginVo = loginPair.getRight();
-                    logBuilder.userName(loginVo.getUserName());
-                    if (success) {
-                        logBuilder.creator(loginVo.getUserName());
-                    }
-                    logBuilder.logData(SimpleMockUtils.logDataString(List.of(loginVo)));
-                } else {
-                    List<Object> argsList = Arrays.stream(args).filter(this::isValidParam).collect(Collectors.toList());
-                    logBuilder.logData(SimpleMockUtils.logDataString(argsList));
-                }
-                HttpServletResponse response = HttpRequestUtils.getCurrentResponse();
-                if (response != null) {
-                    String header = response.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
-                    if (StringUtils.isNotBlank(header)) {
-                        logBuilder.dataId(header);
-                    }
-                }
-                MockLog mockLog = logBuilder.build();
-                publishEvent(mockLog);
+        if (logBuilder != null) {
+            String logName = getLogName(signature);
+            MockUser loginUser = SecurityUtils.getLoginUser();
+            Date createDate = new Date();
+            logBuilder.logName(logName)
+                    .createDate(createDate)
+                    .logTime(createDate.getTime() - startTime)
+                    .exceptions(exception == null ? null : ExceptionUtils.getStackTrace(exception));
+            if (loginUser != null) {
+                logBuilder.userName(loginUser.getUserName())
+                        .creator(loginUser.getUserName());
             }
+            boolean success = exception == null;
+            if (result instanceof SimpleResult) {
+                SimpleResult<?> simpleResult = ((SimpleResult<?>) result);
+                logBuilder.logMessage(simpleResult.getMessage());
+                success = simpleResult.isSuccess();
+                if (simpleResult.getResultData() != null) {
+                    logBuilder.responseBody(JsonUtils.toJson(simpleResult.getResultData()));
+                }
+            }
+            logBuilder.logResult(success ? MockConstants.SUCCESS : MockConstants.FAIL);
+            Pair<Boolean, MockUser> loginPair = checkLogin(logName, args);
+            if (loginPair.getLeft()) {
+                MockUser loginVo = loginPair.getRight();
+                logBuilder.userName(loginVo.getUserName());
+                if (success) {
+                    logBuilder.creator(loginVo.getUserName());
+                }
+                logBuilder.logData(SimpleMockUtils.logDataString(List.of(loginVo)));
+            } else {
+                List<Object> argsList = Arrays.stream(args).filter(this::isValidParam).collect(Collectors.toList());
+                logBuilder.logData(SimpleMockUtils.logDataString(argsList));
+            }
+            HttpServletResponse response = HttpRequestUtils.getCurrentResponse();
+            if (response != null) {
+                String header = response.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
+                if (StringUtils.isNotBlank(header)) {
+                    logBuilder.dataId(header);
+                }
+            }
+            MockLog mockLog = logBuilder.build();
+            publishEvent(mockLog);
         }
     }
 
