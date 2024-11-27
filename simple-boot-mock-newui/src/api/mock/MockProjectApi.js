@@ -11,11 +11,11 @@ const MockProjectApi = useResourceApi(MOCK_PROJECT_URL)
  * 加载当前用户可选项目
  * @return {Promise<T>}
  */
-export const selectProjects = (data, config) => {
+export const selectProjects = (params, config) => {
   return $http(Object.assign({
     url: `${MOCK_PROJECT_URL}/selectProjects`,
-    method: 'post',
-    data
+    method: 'get',
+    params
   }, config)).then(response => response.data?.resultData)
 }
 

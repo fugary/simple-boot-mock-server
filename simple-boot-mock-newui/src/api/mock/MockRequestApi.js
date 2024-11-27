@@ -49,11 +49,11 @@ export const saveMockParams = (data, config) => {
   }, config)).then(response => response.data)
 }
 
-export const loadSchemas = (data, config) => {
+export const loadSchemas = (params, config) => {
   return $http(Object.assign({
     url: `${MOCK_REQUEST_URL}/loadSchemas`,
-    method: 'post',
-    data
+    method: 'get',
+    params
   }, config)).then(response => response.data)
 }
 

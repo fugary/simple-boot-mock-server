@@ -17,4 +17,6 @@ public class SimpleMockConfigProperties {
     private String jwtPassword = "";
 
     private Integer jwtExpire = 7;
+
+    private boolean mockLogEnabled = true;
 }

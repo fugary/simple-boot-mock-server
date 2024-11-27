@@ -76,8 +76,8 @@ public class MockProjectController {
         return SimpleResultUtils.createSimpleResult(mockProjectService.saveOrUpdate(SimpleMockUtils.addAuditInfo(project)));
     }
 
-    @PostMapping("/selectProjects")
-    public SimpleResult<List<MockProject>> selectProjects(@RequestBody MockProjectQueryVo queryVo) {
+    @GetMapping("/selectProjects")
+    public SimpleResult<List<MockProject>> selectProjects(@ModelAttribute MockProjectQueryVo queryVo) {
         QueryWrapper<MockProject> queryWrapper = Wrappers.<MockProject>query();
         String userName = SecurityUtils.getUserName(queryVo.getUserName());
         queryWrapper.eq("status", 1)

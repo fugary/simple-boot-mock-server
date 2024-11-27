@@ -95,8 +95,8 @@ public class MockRequestController {
      * @param queryVo
      * @return
      */
-    @PostMapping("/loadSchemas")
-    public SimpleResult<List<MockSchema>> loadSchemas(@RequestBody MockSchemaQueryVo queryVo) {
+    @GetMapping("/loadSchemas")
+    public SimpleResult<List<MockSchema>> loadSchemas(@ModelAttribute MockSchemaQueryVo queryVo) {
         return SimpleResultUtils.createSimpleResult(mockSchemaService.querySchemas(queryVo.getRequestId(), queryVo.getDataId()));
     }
 }

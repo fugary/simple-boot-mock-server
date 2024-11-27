@@ -26,4 +26,8 @@ export default [{
       icon: 'UserFilled'
     }
   }]
+}, {
+  path: `${BASE_PATH}/logs`,
+  name: 'MockLogs',
+  component: () => import('@/views/mock/MockLogs.vue')
 }]

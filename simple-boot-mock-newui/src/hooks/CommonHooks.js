@@ -1,6 +1,8 @@
 import { ref, watch } from 'vue'
 import { isFunction, isNumber } from 'lodash-es'
 import { useGlobalSearchParamStore } from '@/stores/GlobalSearchParamStore'
+import { $coreHideLoading, $coreShowLoading } from '@/utils'
+import { GLOBAL_LOADING } from '@/config'
 
 const defaultPageProcessor = (searchResult, searchParam) => {
   if (searchResult.page && searchParam.value.page) {
@@ -44,6 +46,30 @@ export const useTableAndSearchForm = ({
     loading,
     searchParam,
     searchMethod: searchTableItems
+  }
+}
+
+export const useInitLoadOnce = (loader, config = {}) => {
+  const initLoading = ref(false)
+  const initLoadOnce = async () => {
+    if (!initLoading.value) {
+      try {
+        initLoading.value = true
+        if (config.loading ?? GLOBAL_LOADING) {
+          $coreShowLoading()
+        }
+        await loader()
+      } finally {
+        initLoading.value = false
+        if (config.loading ?? GLOBAL_LOADING) {
+          $coreHideLoading()
+        }
+      }
+    }
+  }
+  return {
+    initLoading,
+    initLoadOnce
   }
 }
 

@@ -68,6 +68,13 @@ public interface MockGroupService extends IService<MockGroup> {
     void delayTime(long stateTime,Integer delayTime);
 
     /**
+     * 计算groupPath
+     * @param requestPath
+     * @return
+     */
+    String calcGroupPath(String requestPath);
+
+    /**
      * 加载需要导出的对象
      * @param groups
      * @return

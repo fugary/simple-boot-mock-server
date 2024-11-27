@@ -37,6 +37,15 @@ public class MockConstants {
 
     public static final String MOCK_META_DATA_REQ = "mock-meta-req";
     /**
+     * 成功
+     */
+    public static final String SUCCESS = "SUCCESS";
+
+    /**
+     * 失败
+     */
+    public static final String FAIL = "FAIL";
+    /**
      * 中止导入
      */
     public static final Integer IMPORT_STRATEGY_ERROR = 1;
