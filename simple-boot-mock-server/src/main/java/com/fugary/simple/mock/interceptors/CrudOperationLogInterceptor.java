@@ -11,6 +11,7 @@ import com.fugary.simple.mock.utils.SimpleLogUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
+import com.fugary.simple.mock.web.controllers.MockController;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -65,7 +66,7 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
         Object result = null;
         Exception exception = null;
         boolean mockLogEnabled = simpleMockConfigProperties.isMockLogEnabled();
-        MockLog.MockLogBuilder logBuilder = mockLogEnabled ? initLogBuilder() : null;
+        MockLog.MockLogBuilder logBuilder = mockLogEnabled ? initLogBuilder(joinpoint) : null;
         try {
             SimpleLogUtils.setLogBuilder(logBuilder);
             result = joinpoint.proceed();
@@ -83,12 +84,12 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
         return result;
     }
 
-    protected MockLog.MockLogBuilder initLogBuilder() {
+    protected MockLog.MockLogBuilder initLogBuilder(ProceedingJoinPoint joinpoint) {
         HttpServletRequest request = HttpRequestUtils.getCurrentRequest();
         MockLog.MockLogBuilder logBuilder = null;
         if (request != null) {
             String groupPath = mockGroupService.calcGroupPath(request.getServletPath());
-            if (StringUtils.isNotBlank(groupPath) || !HttpMethod.GET.matches(request.getMethod())) {
+            if (checkNeedLog(joinpoint)) {
                 logBuilder = MockLog.builder()
                         .ipAddress(HttpRequestUtils.getIp(request))
                         .logType(request.getMethod())
@@ -98,6 +99,12 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
             }
         }
         return logBuilder;
+    }
+
+    private boolean checkNeedLog(ProceedingJoinPoint joinpoint) {
+        HttpServletRequest request = HttpRequestUtils.getCurrentRequest();
+        Class<?> declaringType = joinpoint.getSignature().getDeclaringType();
+        return request != null && (MockController.class.isAssignableFrom(declaringType) || !HttpMethod.GET.matches(request.getMethod()));
     }
 
     private void processLog(MockLog.MockLogBuilder logBuilder, ProceedingJoinPoint joinpoint, long startTime, Object result, Exception exception) {
@@ -120,9 +127,7 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                 SimpleResult<?> simpleResult = ((SimpleResult<?>) result);
                 logBuilder.logMessage(simpleResult.getMessage());
                 success = simpleResult.isSuccess();
-                if (simpleResult.getResultData() != null) {
-                    logBuilder.responseBody(JsonUtils.toJson(simpleResult.getResultData()));
-                }
+                logBuilder.responseBody(JsonUtils.toJson(simpleResult));
             }
             logBuilder.logResult(success ? MockConstants.SUCCESS : MockConstants.FAIL);
             Pair<Boolean, MockUser> loginPair = checkLogin(logName, args);
