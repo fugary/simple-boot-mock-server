@@ -55,7 +55,7 @@ const formOptions = computed(() => {
     rules: [{
       validator (_, value) {
         console.log('==================', value, '===========')
-        return !value || /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(value)
+        return !value || /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)
       },
       message: $i18nBundle('common.msg.emailMsg')
     }]
