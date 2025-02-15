@@ -168,6 +168,10 @@ export const useMonacoEditorOptions = (config) => {
     }
     if (editorRef.value && !editorRef.value.__internalPasteFunc__) {
       const editor = toRaw(editorRef.value)
+      const setValue = editor.setValue
+      editor.setValue = function (value) {
+        setValue.call(this, value || '')
+      }
       editor.__internalPasteFunc__ = () => {
         const value = editor.getValue()
         contentRef.value = processPasteCode(value)
