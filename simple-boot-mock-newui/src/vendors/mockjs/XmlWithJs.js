@@ -99,16 +99,36 @@ export const initXmlWithJs = (monaco) => {
     tokenizer: {
       root: [
         [/{{/, { token: 'delimiter.curly', next: '@jsInBraces' }],
-        [/<[^>\/]+/, { token: 'tag', next: '@tag' }],
-        [/<\/[^>]+>/, 'tag'],
-        [/[^{<]+/, 'text']
+        [/<!DOCTYPE/i, 'metatag.html', '@doctype'], // 大小写不敏感匹配
+        [/<!--/, 'comment.html', '@comment'],
+        [/<\?/, 'metatag.html', '@processing'],
+        [/<(\w+)/, { token: 'tag.html', next: '@tag.$1' }],
+        [/<\/\w+>/, 'tag.html'],
+        [/[^<{]+/, 'text.html']
+      ],
+      // ========== XML 专用状态 ==========
+      doctype: [
+        [/[^>]+/, 'metatag.content.html'],
+        [/>/, 'metatag.html', '@pop']
+      ],
+      comment: [
+        [/-->/, 'comment.html', '@pop'],
+        [/[^-]+/, 'comment.content.html'],
+        [/./, 'comment.content.html']
+      ],
+      processing: [
+        [/\?>/, 'metatag.html', '@pop'],
+        [/[^\?]+/, 'metatag.content.html'],
+        [/./, 'metatag.content.html']
       ],
       tag: [
-        [/[^>\/]+/, 'attribute.name'],
-        [/="[^"]*"/, 'attribute.value'],
-        [/='[^']*'/, 'attribute.value'],
-        [/[\s\S]*>/, { token: 'tag', next: '@pop' }],
-        [/\/>/, { token: 'tag', next: '@pop' }]
+        [/\//, 'tag.html'],
+        [/\w+/, 'attribute.name.html'], // 使用HTML专用token类型
+        [/=/, 'delimiter.html'], // 修改这里的关键点
+        [/"([^"]*)"/, 'attribute.value.html'],
+        [/'([^']*)'/, 'attribute.value.html'],
+        [/>/, { token: 'tag.html', next: '@pop' }],
+        [/\s+/, '']
       ],
       jsInBraces: [
         [/}}/, { token: 'delimiter.curly', next: '@pop' }],

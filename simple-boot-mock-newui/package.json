@@ -38,7 +38,6 @@
     "vue-virtual-scroller": "^2.0.0-beta.8"
   },
   "devDependencies": {
-    "@rollup/rollup-win32-x64-msvc": "^4.18.0",
     "@rushstack/eslint-patch": "^1.10.3",
     "@typescript-eslint/eslint-plugin": "^7.13.1",
     "@typescript-eslint/parser": "^7.13.1",
