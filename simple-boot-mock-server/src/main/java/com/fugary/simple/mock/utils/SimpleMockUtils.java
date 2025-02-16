@@ -177,27 +177,10 @@ public class SimpleMockUtils {
      *
      * @param mockGroup
      * @param mockRequest
-     * @return
-     */
-    public static MockParamsVo toMockParams(MockGroup mockGroup, MockRequest mockRequest) {
-        MockParamsVo mockParams = new MockParamsVo();
-        if (StringUtils.isNotBlank(mockRequest.getMockParams())) {
-            mockParams = JsonUtils.fromJson(mockRequest.getMockParams(), MockParamsVo.class);
-        }
-        mockParams.setTargetUrl(mockGroup.getProxyUrl());
-        mockParams.setRequestPath(mockRequest.getRequestPath());
-        mockParams.setMethod(mockRequest.getMethod());
-        return mockParams;
-    }
-
-    /**
-     * 解析成MockParamsVo
-     *
-     * @param mockGroup
      * @param request
      * @return
      */
-    public static MockParamsVo toMockParams(MockGroup mockGroup, HttpServletRequest request) {
+    public static MockParamsVo toMockParams(MockGroup mockGroup, MockRequest mockRequest, HttpServletRequest request) {
         MockParamsVo mockParams = new MockParamsVo();
         String pathPrefix = request.getContextPath() + "/mock/\\w+(/.*)";
         String requestPath = request.getRequestURI();
@@ -205,7 +188,8 @@ public class SimpleMockUtils {
         if (matcher.matches()) {
             requestPath = matcher.group(1);
         }
-        mockParams.setTargetUrl(mockGroup.getProxyUrl());
+        String proxyUrl = calcProxyUrl(mockGroup, mockRequest);
+        mockParams.setTargetUrl(proxyUrl);
         mockParams.setRequestPath(requestPath);
         mockParams.setMethod(request.getMethod());
         Enumeration<String> headerNames = request.getHeaderNames();
@@ -263,6 +247,21 @@ public class SimpleMockUtils {
             log.error("Body解析错误", e);
         }
         return mockParams;
+    }
+
+    /**
+     * 计算Proxy地址
+     *
+     * @param mockGroup
+     * @param mockRequest
+     * @return
+     */
+    public static String calcProxyUrl(MockGroup mockGroup, MockRequest mockRequest) {
+        String proxyUrl = mockGroup.getProxyUrl();
+        if (mockRequest != null && StringUtils.isNotBlank(mockRequest.getProxyUrl())) {
+            proxyUrl = mockRequest.getProxyUrl();
+        }
+        return proxyUrl;
     }
 
     /**

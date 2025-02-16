@@ -222,7 +222,7 @@ const editFormOptions = computed(() => defineFormOptions([{
   rules: [{
     message: $i18nBundle('mock.msg.proxyUrlMsg'),
     validator: () => {
-      return !currentGroup.value?.proxyUrl || /^https?:\/\//.test(currentGroup.value?.proxyUrl)
+      return !currentGroup.value?.proxyUrl || /^https?:\/\/.+/.test(currentGroup.value?.proxyUrl)
     }
   }]
 }, useFormStatus(), useFormDelay(), {

@@ -59,6 +59,7 @@ public class MockController {
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
         Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request, NumberUtils.toInt(requestId), NumberUtils.toInt(dataId));
         MockData data = dataPair.getRight();
+        MockRequest mockRequest = dataPair.getMiddle();
         MockGroup mockGroup = dataPair.getLeft();
         long start = System.currentTimeMillis();
         ResponseEntity<?> responseEntity = ResponseEntity.notFound().build();
@@ -78,9 +79,9 @@ public class MockController {
                     .header(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()))
                     .body(data.getResponseBody());
             SimpleLogUtils.addResponseData(data.getResponseBody());
-        } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(mockGroup.getProxyUrl())) {
+        } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
             // 所有request没有匹配上,但是有proxy地址
-            responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, request));
+            responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
             SimpleLogUtils.addResponseData(responseEntity);
         }
         mockGroupService.delayTime(start, mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight()));

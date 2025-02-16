@@ -118,6 +118,16 @@ const editFormOptions = computed(() => {
     attrs: {
       clearable: false
     }
+  }, {
+    labelKey: 'mock.label.proxyUrl',
+    prop: 'proxyUrl',
+    tooltip: $i18nBundle('mock.msg.proxyUrlTooltip'),
+    rules: [{
+      message: $i18nBundle('mock.msg.proxyUrlMsg'),
+      validator: () => {
+        return !currentRequest.value?.proxyUrl || /^https?:\/\/.+/.test(currentRequest.value?.proxyUrl)
+      }
+    }]
   }, useFormStatus(), useFormDelay(),
   {
     labelKey: 'mock.label.matchPattern',
