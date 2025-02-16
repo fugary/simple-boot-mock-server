@@ -1,5 +1,5 @@
 # Start with base image
-FROM adoptopenjdk/openjdk11:alpine-jre
+FROM eclipse-temurin:11-jre
 
 # Add Maintainer Info
 LABEL maintainer="fugary"
