@@ -128,7 +128,7 @@ public class SimpleMockUtils {
      * @return
      */
     public static boolean isValidProxyUrl(String proxyUrl) {
-        return StringUtils.isNotBlank(proxyUrl) && proxyUrl.matches("https?://.*");
+        return StringUtils.isNotBlank(proxyUrl) && proxyUrl.matches("https?://.+");
     }
 
     /**

@@ -17,7 +17,7 @@ const MOCK_DATA_URL = '/admin/data'
 
 export const ALL_STATUS_CODES = [200, 201, 202, 301, 302, 307, 400, 401, 404, 405, 415, 500, 502, 503]
 
-export const ALL_CONTENT_TYPES = ['application/json', 'application/xml', 'text/html', 'text/css', 'application/javascript', 'application/x-www-form-urlencoded']
+export const ALL_CONTENT_TYPES = ['application/json', 'application/xml', 'text/html', 'text/plain', 'text/css', 'application/javascript', 'application/x-www-form-urlencoded']
 
 export const generateJWT = function (data, config) {
   return $http(Object.assign({

@@ -217,6 +217,8 @@ const { contentRef, languageRef, monacoEditorOptions, languageSelectOption } = u
 const { contentRef: patternContentRef, languageRef: patternLanguageRef, monacoEditorOptions: patternMonacoEditorOptions } = useMonacoEditorOptions({ readOnly: false })
 
 const editFormOptions = computed(() => {
+  const status = currentDataItem.value?.statusCode || 200
+  const isRedirect = status >= 300 && status < 400 // redirect
   return defineFormOptions([{
     labelKey: 'mock.label.statusCode',
     prop: 'statusCode',
@@ -258,16 +260,20 @@ const editFormOptions = computed(() => {
   }, {
     labelKey: 'mock.label.responseHeaders',
     slot: 'headerParams'
-  }, useContentTypeOption(), {
+  }, {
+    ...useContentTypeOption(),
+    enabled: !isRedirect
+  }, {
     ...languageSelectOption.value,
     change (val) {
       if (currentDataItem.value) {
         currentDataItem.value.responseFormat = val
         currentDataItem.value.contentType = calcContentType(val, currentDataItem.value?.responseBody)
       }
-    }
+    },
+    enabled: !isRedirect
   }, {
-    labelKey: 'mock.label.responseBody',
+    labelKey: isRedirect ? 'mock.label.linkAddress' : 'mock.label.responseBody',
     type: 'vue-monaco-editor',
     prop: 'responseBody',
     attrs: {
@@ -276,7 +282,7 @@ const editFormOptions = computed(() => {
         currentDataItem.value.responseBody = value
         contentRef.value = value
       },
-      language: languageRef.value,
+      language: isRedirect ? 'text' : languageRef.value,
       height: '200px',
       options: monacoEditorOptions
     }
