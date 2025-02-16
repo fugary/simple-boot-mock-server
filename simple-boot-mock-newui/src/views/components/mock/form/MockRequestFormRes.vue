@@ -114,6 +114,10 @@ const supportXml = computed(() => {
   const schemaBodyObj = isString(props.schemaBody) ? JSON.parse(props.schemaBody) : props.schemaBody
   return !!schemaBodyObj?.xml
 })
+const redirectMockResponse = computed(() => {
+  const status = paramTarget.value?.responseStatusCode || 200
+  return status >= 300 && status < 400
+})
 </script>
 
 <template>
@@ -256,15 +260,17 @@ const supportXml = computed(() => {
             :hidden="!paramTarget.responseBody?.length"
             is-dot
           >
-            {{ $t('mock.label.mockResponseBody') }}
+            {{ $t(redirectMockResponse?'mock.label.linkAddress':'mock.label.mockResponseBody') }}
           </el-badge>
         </template>
         <el-container class="flex-column">
           <common-form-control
+            v-if="!redirectMockResponse"
             :model="paramTarget"
             :option="contentTypeOption"
           />
           <common-form-control
+            v-if="!redirectMockResponse"
             :model="languageModel2"
             :option="langOption"
             @change="languageRef2=$event"

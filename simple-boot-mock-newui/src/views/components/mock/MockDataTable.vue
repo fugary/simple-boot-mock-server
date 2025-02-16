@@ -276,6 +276,7 @@ const editFormOptions = computed(() => {
     labelKey: isRedirect ? 'mock.label.linkAddress' : 'mock.label.responseBody',
     type: 'vue-monaco-editor',
     prop: 'responseBody',
+    required: isRedirect,
     attrs: {
       defaultValue: currentDataItem.value?.responseBody,
       'onUpdate:value': (value) => {

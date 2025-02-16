@@ -106,6 +106,7 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
     [FORM_DATA]: [],
     [FORM_URL_ENCODED]: [],
     method: requestItem?.method || 'GET',
+    responseStatusCode: previewData?.statusCode,
     responseBody: previewData?.responseBody,
     responseFormat: previewData?.responseFormat,
     contentType: previewData?.contentType || 'application/json'
