@@ -61,7 +61,11 @@ watch(() => props.responseTarget, (responseTarget) => {
     }
   } else {
     contentRef.value = responseTarget?.data
-    setTimeout(() => formatDocument())
+    const isRedirect = !!responseTarget?.responseHeaders?.find(header => header.name === 'mock-data-redirect')
+    setTimeout(() => {
+      isRedirect && (languageRef.value = 'text')
+      formatDocument()
+    })
   }
 }, { immediate: true })
 

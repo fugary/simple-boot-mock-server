@@ -67,7 +67,8 @@ public class MockController {
             HttpStatus httpStatus = HttpStatus.resolve(data.getStatusCode());
             if (httpStatus != null && httpStatus.is3xxRedirection()) { // 重定向
                 if (SimpleMockUtils.isMockPreview(request)) {
-                    return ResponseEntity.ok("重定向请设为默认响应后复制URL到浏览器访问");
+                    return ResponseEntity.status(HttpStatus.OK).header(MockConstants.MOCK_DATA_REDIRECT_HEADER, "1")
+                            .body("测试重定向请复制URL到浏览器访问，跳转地址：" + data.getResponseBody());
                 }
                 return ResponseEntity.status(data.getStatusCode()).headers(httpHeaders).header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
             }
