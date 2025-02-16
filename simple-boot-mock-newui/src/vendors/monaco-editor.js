@@ -168,10 +168,6 @@ export const useMonacoEditorOptions = (config) => {
     }
     if (editorRef.value && !editorRef.value.__internalPasteFunc__) {
       const editor = toRaw(editorRef.value)
-      const setValue = editor.setValue
-      editor.setValue = function (value) {
-        setValue.call(this, value || '')
-      }
       editor.__internalPasteFunc__ = () => {
         const value = editor.getValue()
         contentRef.value = processPasteCode(value)
@@ -199,16 +195,32 @@ export const getLoadingDiv = (attrs = {}) => {
   return withDirectives(h('div', { style: 'height:100%', ...attrs }), loadingDirective)
 }
 
+const fixEditorSetValue = (props, context) => {
+  const onMountKey = 'onMount'
+  const onMountFunc = context.attrs?.[onMountKey] || function () {}
+  const newOnMount = instance => { // editor实例
+    if (!instance.__newSetValue__) {
+      const setValue = instance.setValue
+      instance.setValue = function (value) {
+        setValue.call(this, value || '')
+      }
+      instance.__newSetValue__ = true
+    }
+    onMountFunc(instance)
+  }
+  return { ...props, [onMountKey]: newOnMount }
+}
+
 export default {
   install (app) {
     app.component(VueMonacoEditor.name, {
-      setup (props) {
+      setup (props, context) {
         monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
           diagnosticCodesToIgnore: [1003, 1005, 1128]
         })
         initMockJsHints()
         loader.config({ monaco })
-        return () => h(VueMonacoEditor, props, () => [getLoadingDiv()])
+        return () => h(VueMonacoEditor, fixEditorSetValue(props, context), () => [getLoadingDiv()])
       }
     })
   }
