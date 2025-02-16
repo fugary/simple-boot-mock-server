@@ -34,12 +34,14 @@ const copyInfo = () => {
     v-common-tooltip="tooltip"
     type="primary"
     :underline="false"
+    @click="copyInfo"
   >
-    <common-icon
-      :size="18"
-      icon="DocumentCopy"
-      @click="copyInfo"
-    />
+    <slot>
+      <common-icon
+        :size="18"
+        icon="DocumentCopy"
+      />
+    </slot>
   </el-link>
 </template>
 

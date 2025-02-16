@@ -94,7 +94,20 @@ const changeStatus = (status) => {
     <el-row>
       <el-col>
         {{ requestItem.requestPath }}
-        <mock-url-copy-link :url-path="fullPath" />
+        <mock-url-copy-link
+          v-if="requestItem.proxyUrl||groupItem.proxyUrl"
+          :tooltip="`${$t('mock.label.proxyUrl')}: ${requestItem.proxyUrl||groupItem.proxyUrl}`"
+          :url-path="requestItem.proxyUrl||groupItem.proxyUrl"
+        >
+          <common-icon
+            :size="18"
+            icon="Link"
+          />
+        </mock-url-copy-link>
+        <mock-url-copy-link
+          class="margin-left1"
+          :url-path="fullPath"
+        />
       </el-col>
     </el-row>
     <el-row>
@@ -143,7 +156,6 @@ const changeStatus = (status) => {
         <el-text
           type="info"
           size="small"
-          line-clamp="2"
         >
           {{ requestItem.requestName }}
         </el-text>

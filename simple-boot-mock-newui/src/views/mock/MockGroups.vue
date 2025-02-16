@@ -87,7 +87,15 @@ const columns = computed(() => {
     labelKey: 'mock.label.proxyUrl',
     property: 'proxyUrl',
     minWidth: '130px',
-    enabled: checkShowColumn(tableData.value, 'proxyUrl')
+    enabled: checkShowColumn(tableData.value, 'proxyUrl'),
+    formatter (data) {
+      if (data.proxyUrl) {
+        return <>
+          <span>{data.proxyUrl}</span>
+          <MockUrlCopyLink class="margin-left1" urlPath={data.proxyUrl}/>
+        </>
+      }
+    }
   }, {
     labelKey: 'common.label.delay',
     property: 'delay',
