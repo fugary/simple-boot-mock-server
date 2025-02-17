@@ -82,6 +82,10 @@ export const routeScrollBehavior = (to, from) => {
   scrollMain(to, scrollOption)
 }
 
+router.beforeEach(() => {
+  document.querySelectorAll('.common-el-tooltip,.common-el-popover')
+    .forEach(el => el.remove()) // 清理所有残留 Tooltip
+})
 router.beforeEach(checkRouteAuthority)
 router.afterEach((...args) => {
   processRouteLoading(...args)

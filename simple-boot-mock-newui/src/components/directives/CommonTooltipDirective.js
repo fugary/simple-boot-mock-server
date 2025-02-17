@@ -46,6 +46,7 @@ const getTooltipDirective = (props) => {
       el.tooltipConfig = calcTooltipConfig(binding)
     },
     unmounted (el) {
+      el.tooltipVnode?.component?.exposed?.showOrHideTooltip(false)
       el.tooltipDynamicHelper?.destroy()
     }
   }
