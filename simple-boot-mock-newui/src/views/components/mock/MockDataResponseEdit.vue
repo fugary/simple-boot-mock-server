@@ -15,11 +15,11 @@ const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, 
 const showWindow = ref(false)
 const currentMockData = ref()
 const schemas = ref([])
+const isRedirect = ref(false)
 
 const toEditDataResponse = (mockData) => {
   currentMockData.value = cloneDeep(mockData)
   contentRef.value = mockData.responseBody
-  languageRef.value = mockData.responseFormat
   showWindow.value = true
   loadSchemas({
     requestId: mockData.requestId,
@@ -27,7 +27,10 @@ const toEditDataResponse = (mockData) => {
   }).then(schemasData => {
     schemas.value = schemasData?.resultData || []
   })
-  checkEditorLang(mockData.responseFormat)
+  const status = currentMockData.value?.statusCode || 200
+  isRedirect.value = status >= 300 && status < 400 // redirect
+  languageRef.value = isRedirect.value ? 'text' : mockData.responseFormat
+  checkEditorLang(isRedirect.value ? 'text' : mockData.responseFormat)
 }
 
 const emit = defineEmits(['saveDataResponse'])
@@ -96,6 +99,7 @@ const supportXml = computed(() => {
     </template>
     <el-container class="flex-column">
       <common-form-control
+        v-if="!isRedirect"
         :model="currentMockData"
         :option="contentTypeOption"
       />

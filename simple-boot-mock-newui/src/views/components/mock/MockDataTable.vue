@@ -270,8 +270,7 @@ const editFormOptions = computed(() => {
         currentDataItem.value.responseFormat = val
         currentDataItem.value.contentType = calcContentType(val, currentDataItem.value?.responseBody)
       }
-    },
-    enabled: !isRedirect
+    }
   }, {
     labelKey: isRedirect ? 'mock.label.linkAddress' : 'mock.label.responseBody',
     type: 'vue-monaco-editor',

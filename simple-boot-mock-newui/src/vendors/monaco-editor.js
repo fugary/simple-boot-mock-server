@@ -100,7 +100,7 @@ export const $formatDocument = (editor, readOnly, delay = 200) => {
         readOnly: false
       })
     }
-    editor.getAction('editor.action.formatDocument').run().then(function () {
+    editor.getAction('editor.action.formatDocument')?.run().then(function () {
       if (readOnly) {
         editor.updateOptions({
           readOnly: true
