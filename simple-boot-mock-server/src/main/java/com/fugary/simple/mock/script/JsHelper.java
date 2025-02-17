@@ -34,8 +34,13 @@ public class JsHelper {
      * @return
      */
     public String atob(String input) {
-        byte[] decoded = Base64.getDecoder().decode(input);
-        return new String(decoded, StandardCharsets.UTF_8);
+        try {
+            byte[] decoded = Base64.getDecoder().decode(input);
+            return new String(decoded, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.error("执行Base64解码失败", e);
+        }
+        return input;
     }
 
     /**
