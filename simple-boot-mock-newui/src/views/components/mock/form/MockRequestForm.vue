@@ -99,7 +99,7 @@ const responseExamples = computed(() => {
                 <el-text
                   class="padding-right1"
                   truncated
-                  style="white-space: break-spaces;"
+                  style="white-space: break-spaces;word-break: break-all;"
                 >
                   {{ requestUrl }}
                 </el-text>
