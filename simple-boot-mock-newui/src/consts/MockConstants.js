@@ -20,8 +20,6 @@ export const BEARER_KEY = 'Bearer'
 
 export const isDefaultProject = projectCode => MOCK_DEFAULT_PROJECT === projectCode
 
-export const IMG_EXT_LIST = ['.png', '.jpg', '.gif', '.svg', '.bmp', '.webp']
-
 export const DEFAULT_HEADERS = ['Accept',
   'Accept-Charset',
   'Accept-Encoding',

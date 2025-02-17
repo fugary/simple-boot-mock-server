@@ -56,8 +56,7 @@ watch(() => props.responseTarget, (responseTarget) => {
     if (isString(responseTarget.data)) {
       $coreError($i18nBundle('mock.msg.checkImageAccept'))
     } else {
-      const base64Data = btoa(new Uint8Array(responseTarget.data).reduce((data, byte) => data + String.fromCharCode(byte), '')) // 将 ArrayBuffer 转换为 Base64
-      responseImg.value = `data:${contentType};base64,${base64Data}`
+      responseImg.value = URL.createObjectURL(responseTarget.data)
     }
   } else {
     contentRef.value = responseTarget?.data

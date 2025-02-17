@@ -4,7 +4,6 @@ import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
 import { isArray, isFunction, isString } from 'lodash-es'
 import { ALL_CONTENT_TYPES } from '@/api/mock/MockDataApi'
-import { IMG_EXT_LIST } from '@/consts/MockConstants'
 
 export const generateSchemaSample = (schemaBody, type) => {
   return $coreConfirm($i18nKey('common.msg.commonConfirm', 'common.label.generateData'))
@@ -77,10 +76,12 @@ export const useContentTypeOption = (prop = 'contentType') => {
 
 export const checkImageAccept = headers => Object.keys(headers || {}).find(key => key.toLowerCase() === 'accept')
 
+export const isImageUrl = (url) => /\.(png|jpg|jpeg|gif|webp|bmp)(\?.*)?$/i.test(url)
+
 export const calcPreviewHeaders = (url, config) => {
-  const imageExt = IMG_EXT_LIST.find(ext => url?.toLowerCase().endsWith(ext))
+  const imageExt = isImageUrl(url)
   const accept = checkImageAccept(config?.headers)
   if (imageExt || (accept && config.headers[accept]?.includes('image'))) {
-    config.responseType = 'arraybuffer'
+    config.responseType = 'blob'
   }
 }
