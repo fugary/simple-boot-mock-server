@@ -15,7 +15,24 @@ import { processEvnParams } from '@/services/mock/MockCommonService'
 
 const MOCK_DATA_URL = '/admin/data'
 
-export const ALL_STATUS_CODES = [200, 201, 202, 301, 302, 307, 400, 401, 404, 405, 415, 500, 502, 503]
+export const ALL_STATUS_CODES = [
+  { code: 200, labelCn: '成功', labelEn: 'OK' },
+  { code: 201, labelCn: '已创建', labelEn: 'Created' },
+  { code: 202, labelCn: '已接受', labelEn: 'Accepted' },
+  { code: 204, labelCn: '无内容', labelEn: 'No Content' },
+  { code: 301, labelCn: '永久重定向', labelEn: 'Moved Permanently' },
+  { code: 302, labelCn: '临时重定向', labelEn: 'Temporary Redirect' },
+  { code: 304, labelCn: '未修改', labelEn: 'Not Modified' },
+  { code: 400, labelCn: '错误请求', labelEn: 'Bad Request' },
+  { code: 401, labelCn: '未授权', labelEn: 'Unauthorized' },
+  { code: 403, labelCn: '禁止访问', labelEn: 'Forbidden' },
+  { code: 404, labelCn: '未找到', labelEn: 'Not Found' },
+  { code: 405, labelCn: '方法不允许', labelEn: 'Method Not Allowed' },
+  { code: 500, labelCn: '服务器内部错误', labelEn: 'Internal Server Error' },
+  { code: 502, labelCn: '错误网关', labelEn: 'Bad Gateway' },
+  { code: 503, labelCn: '服务不可用', labelEn: 'Service Unavailable' },
+  { code: 504, labelCn: '网关超时', labelEn: 'Gateway Timeout' }
+]
 
 export const ALL_CONTENT_TYPES = ['application/json', 'application/xml', 'text/html', 'text/plain', 'text/css', 'application/javascript', 'application/x-www-form-urlencoded']
 

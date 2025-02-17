@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { onMounted, ref, computed, watch } from 'vue'
 import { defineTableColumns, defineFormOptions, defineTableButtons } from '@/components/utils'
-import { $coreConfirm, checkShowColumn, getSingleSelectOptions } from '@/utils'
+import { $coreConfirm, checkShowColumn } from '@/utils'
 import MockDataApi, { ALL_STATUS_CODES, ALL_CONTENT_TYPES, markDefault, copyMockData } from '@/api/mock/MockDataApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import CommonIcon from '@/components/common-icon/index.vue'
@@ -10,7 +10,7 @@ import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { toTestMatchPattern } from '@/utils/DynamicUtils'
-import { $i18nBundle, $i18nKey } from '@/messages'
+import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
 import { ElMessage, ElTag } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
@@ -52,13 +52,15 @@ const columns = computed(() => {
       } else if (data.statusCode < 500) {
         type = 'warning'
       }
+      const status = ALL_STATUS_CODES.find(status => data.statusCode === status.code)
+      const statusLabel = status ? $i18nMsg(`${status.labelCn} - ${(status.labelEn)}`, `${status.labelEn} - ${(status.labelCn)}`) : ''
       return <>
           {data.defaultFlag
             ? <CommonIcon color="#2d8cf0"
                           v-common-tooltip={$i18nBundle('mock.label.default')}
                           icon="Flag"/>
             : ''}
-          <ElTag type={type} class="margin-left1">{data.statusCode}</ElTag>
+          <ElTag v-common-tooltip={statusLabel} type={type} class="margin-left1">{data.statusCode}</ElTag>
         </>
     },
     attrs: {
@@ -196,7 +198,7 @@ const newDataItem = () => ({
   requestId: props.requestItem.id,
   groupId: props.requestItem.groupId,
   status: 1,
-  statusCode: ALL_STATUS_CODES[0],
+  statusCode: ALL_STATUS_CODES[0].code,
   contentType: ALL_CONTENT_TYPES[0],
   headerParams: []
 })
@@ -219,11 +221,18 @@ const { contentRef: patternContentRef, languageRef: patternLanguageRef, monacoEd
 const editFormOptions = computed(() => {
   const status = currentDataItem.value?.statusCode || 200
   const isRedirect = status >= 300 && status < 400 // redirect
+  const statusOptions = ALL_STATUS_CODES.map(status => {
+    const label = $i18nMsg(`${status.labelCn} - ${(status.labelEn)}`, `${status.labelEn} - ${(status.labelCn)}`)
+    return {
+      value: status.code,
+      label: `${status.code} - ${label}`
+    }
+  })
   return defineFormOptions([{
     labelKey: 'mock.label.statusCode',
     prop: 'statusCode',
     type: 'select',
-    children: getSingleSelectOptions(...ALL_STATUS_CODES),
+    children: statusOptions,
     attrs: {
       clearable: false
     }
