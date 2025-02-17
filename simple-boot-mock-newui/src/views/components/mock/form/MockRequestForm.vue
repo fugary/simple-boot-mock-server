@@ -5,6 +5,7 @@ import MockRequestFormRes from '@/views/components/mock/form/MockRequestFormRes.
 import MockRequestFormReq from '@/views/components/mock/form/MockRequestFormReq.vue'
 import MockRequestFormUrl from '@/views/components/mock/form/MockRequestFormUrl.vue'
 import MockRequestFormMatchPattern from '@/views/components/mock/form/MockRequestFormMatchPattern.vue'
+import { addParamsToURL } from '@/utils'
 
 const props = defineProps({
   responseTarget: {
@@ -38,6 +39,9 @@ const requestUrl = computed(() => {
   paramTarget.value?.pathParams?.forEach(pathParam => {
     reqUrl = reqUrl.replace(new RegExp(`:${pathParam.name}`, 'g'), pathParam.value)
       .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), pathParam.value)
+  })
+  paramTarget.value?.requestParams?.filter(requestParam => !!requestParam.name).forEach(requestParam => {
+    reqUrl = addParamsToURL(reqUrl, { [requestParam.name]: requestParam.value })
   })
   return reqUrl
 })
@@ -95,6 +99,7 @@ const responseExamples = computed(() => {
                 <el-text
                   class="padding-right1"
                   truncated
+                  style="white-space: break-spaces;"
                 >
                   {{ requestUrl }}
                 </el-text>
