@@ -133,8 +133,12 @@ const redirectMockResponse = computed(() => {
       <template
         #add-icon
       >
-        <template v-if="responseTarget">
+        <div
+          v-if="responseTarget"
+          style="display: flex; margin-top: -7px;"
+        >
           <el-text
+            v-common-tooltip="responseTarget?.error?.message"
             :type="requestInfo.status===200?'success':'danger'"
             class="padding-right3"
           >
@@ -152,7 +156,7 @@ const redirectMockResponse = computed(() => {
           >
             Duration: {{ requestInfo.duration }}ms
           </el-text>
-        </template>
+        </div>
       </template>
       <el-tab-pane
         v-if="responseTarget"
