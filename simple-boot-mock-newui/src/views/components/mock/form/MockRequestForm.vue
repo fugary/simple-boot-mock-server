@@ -40,7 +40,7 @@ const requestUrl = computed(() => {
     reqUrl = reqUrl.replace(new RegExp(`:${pathParam.name}`, 'g'), pathParam.value)
       .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), pathParam.value)
   })
-  paramTarget.value?.requestParams?.filter(requestParam => !!requestParam.name).forEach(requestParam => {
+  paramTarget.value?.requestParams?.filter(requestParam => !!requestParam.name && requestParam.enabled).forEach(requestParam => {
     reqUrl = addParamsToURL(reqUrl, { [requestParam.name]: requestParam.value })
   })
   return reqUrl
