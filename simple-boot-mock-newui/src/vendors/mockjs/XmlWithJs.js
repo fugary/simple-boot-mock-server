@@ -102,8 +102,8 @@ export const initXmlWithJs = (monaco) => {
         [/<!DOCTYPE/i, 'metatag.html', '@doctype'], // 大小写不敏感匹配
         [/<!--/, 'comment.html', '@comment'],
         [/<\?/, 'metatag.html', '@processing'],
-        [/<(\w+)/, { token: 'tag.html', next: '@tag.$1' }],
-        [/<\/\w+>/, 'tag.html'],
+        [/<(([\w-]+:)?[\w-]+)/, { token: 'tag.html', next: '@tag.$1' }],
+        [/<\/(([\w-]+:)?[\w-]+)/, 'tag.html'],
         [/[^<{]+/, 'text.html']
       ],
       // ========== XML 专用状态 ==========
