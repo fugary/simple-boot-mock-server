@@ -17,7 +17,7 @@ import {
 } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
-import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
+import { useFormDelay, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
@@ -163,6 +163,7 @@ const searchFormOptions = computed(() => {
       loadMockGroups(1)
     }
   },
+  useSearchStatus({ change () { loadMockGroups(1) } }),
   {
     labelKey: 'common.label.keywords',
     prop: 'keyword'

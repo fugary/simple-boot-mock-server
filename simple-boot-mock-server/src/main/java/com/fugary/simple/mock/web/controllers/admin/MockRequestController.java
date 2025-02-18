@@ -37,7 +37,8 @@ public class MockRequestController {
     @GetMapping
     public SimpleResult<List<MockRequest>> search(@ModelAttribute MockRequestQueryVo queryVo) {
         Page<MockRequest> page = SimpleResultUtils.toPage(queryVo);
-        QueryWrapper<MockRequest> queryWrapper = Wrappers.<MockRequest>query();
+        QueryWrapper<MockRequest> queryWrapper = Wrappers.<MockRequest>query()
+                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
         if (queryVo.getGroupId() != null) {
             queryWrapper.eq("group_id", queryVo.getGroupId());
         }

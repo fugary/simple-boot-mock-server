@@ -8,7 +8,7 @@ import MockProjectApi from '@/api/mock/MockProjectApi'
 import { $coreConfirm, $goto, formatDate, isAdminUser, useCurrentUserName } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
-import { useFormStatus } from '@/consts/GlobalConstants'
+import { useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { chunk } from 'lodash-es'
 import CommonIcon from '@/components/common-icon/index.vue'
@@ -56,6 +56,7 @@ const searchFormOptions = computed(() => {
       loadMockProjects(1)
     }
   },
+  useSearchStatus({ change () { loadMockProjects(1) } }),
   {
     labelKey: 'common.label.keywords',
     prop: 'keyword'

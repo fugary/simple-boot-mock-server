@@ -13,6 +13,7 @@ import java.io.Serializable;
 public class SimpleQueryVo implements Serializable {
 
     private static final long serialVersionUID = -4434584087743713106L;
+    private Integer status;
     private String keyword;
     private SimplePage page;
 }

@@ -36,7 +36,8 @@ public class MockProjectController {
     @GetMapping
     public SimpleResult<List<MockProject>> search(@ModelAttribute MockProjectQueryVo queryVo) {
         Page<MockProject> page = SimpleResultUtils.toPage(queryVo);
-        QueryWrapper<MockProject> queryWrapper = Wrappers.<MockProject>query();
+        QueryWrapper<MockProject> queryWrapper = Wrappers.<MockProject>query()
+                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("project_name", keyword)
                 .or().like("project_code", keyword));

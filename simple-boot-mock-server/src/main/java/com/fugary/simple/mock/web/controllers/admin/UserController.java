@@ -36,7 +36,8 @@ public class UserController {
     @GetMapping
     public SimpleResult<List<MockUser>> search(@ModelAttribute SimpleQueryVo queryVo) {
         Page<MockUser> page = SimpleResultUtils.toPage(queryVo);
-        QueryWrapper<MockUser> queryWrapper = Wrappers.query();
+        QueryWrapper<MockUser> queryWrapper = Wrappers.<MockUser>query()
+                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         if (StringUtils.isNotBlank(keyword)) {
             queryWrapper.and(wrapper -> wrapper.like("user_name", keyword)

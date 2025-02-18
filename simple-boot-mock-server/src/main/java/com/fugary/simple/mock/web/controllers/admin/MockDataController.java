@@ -41,7 +41,8 @@ public class MockDataController {
     @GetMapping
     public SimpleResult<List<MockData>> search(@ModelAttribute MockDataQueryVo queryVo) {
         Page<MockData> page = SimpleResultUtils.toPage(queryVo);
-        QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query();
+        QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
+                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
         if (queryVo.getRequestId() != null) {
             queryWrapper.eq("request_id", queryVo.getRequestId());
         }

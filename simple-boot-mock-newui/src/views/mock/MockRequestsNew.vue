@@ -6,7 +6,7 @@ import MockRequestApi, { ALL_METHODS } from '@/api/mock/MockRequestApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions } from '@/components/utils'
 import { ref, computed, nextTick } from 'vue'
-import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
+import { useFormDelay, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useDefaultPage } from '@/config'
 import { $i18nBundle } from '@/messages'
@@ -62,9 +62,10 @@ const searchFormOptions = computed(() => {
       type: 'select',
       children: methodOptions,
       change () {
-        loadMockRequests(1)
+        loadMockRequests()
       }
-    }
+    },
+    useSearchStatus({ change () { loadMockRequests() } })
   ]
 })
 const selectedRows = ref([])
