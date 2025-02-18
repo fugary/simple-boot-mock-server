@@ -311,7 +311,13 @@ const saveMockData = (data) => {
     delete dataItem.headerParams
   }
   return MockDataApi.saveOrUpdate(dataItem)
-    .then(() => loadMockData())
+    .then((data) => {
+      if (data.success && data.resultData && selectDataItem.value?.id !== data.resultData.id) {
+        selectDataItem.value = data.resultData
+      }
+      loadMockData()
+      return data
+    })
 }
 
 const dataResponseEditRef = ref()

@@ -65,8 +65,9 @@ public class MockDataController {
     }
 
     @PostMapping
-    public SimpleResult save(@RequestBody MockData data) {
-        return SimpleResultUtils.createSimpleResult(mockDataService.saveOrUpdate(SimpleMockUtils.addAuditInfo(data)));
+    public SimpleResult<MockData> save(@RequestBody MockData data) {
+        mockDataService.saveOrUpdate(SimpleMockUtils.addAuditInfo(data));
+        return SimpleResultUtils.createSimpleResult(data);
     }
 
     @PostMapping("/copyMockData/{dataId}")

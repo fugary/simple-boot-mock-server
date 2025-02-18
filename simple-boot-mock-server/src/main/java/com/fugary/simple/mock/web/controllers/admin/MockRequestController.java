@@ -83,11 +83,9 @@ public class MockRequestController {
     }
 
     @PostMapping
-    public SimpleResult save(@RequestBody MockRequest request) {
-//        if (mockRequestService.existsMockRequest(request)) { // 不再校验重复，可以随便添加
-//            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
-//        }
-        return SimpleResultUtils.createSimpleResult(mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(request)));
+    public SimpleResult<MockRequest> save(@RequestBody MockRequest request) {
+        mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(request));
+        return SimpleResultUtils.createSimpleResult(request);
     }
 
     /**

@@ -161,7 +161,14 @@ const editFormOptions = computed(() => {
 
 const saveMockRequest = item => {
   return MockRequestApi.saveOrUpdate(item)
-    .then(() => loadMockRequests())
+    .then((data) => {
+      if (data.success && data.resultData && selectRequest.value?.id !== data.resultData.id) {
+        selectRequest.value = data.resultData
+        requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
+      }
+      loadMockRequests()
+      return data
+    })
 }
 
 const batchMode = ref(false)
