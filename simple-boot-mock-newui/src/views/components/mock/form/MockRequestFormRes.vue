@@ -263,7 +263,7 @@ const redirectMockResponse = computed(() => {
             :hidden="!paramTarget.responseBody?.length"
             is-dot
           >
-            {{ $t(redirectMockResponse?'mock.label.linkAddress':'mock.label.mockResponseBody') }}
+            {{ $t(redirectMockResponse?'mock.label.redirectUrl':'mock.label.mockResponseBody') }}
           </el-badge>
         </template>
         <el-container class="flex-column">
@@ -273,7 +273,6 @@ const redirectMockResponse = computed(() => {
             :option="contentTypeOption"
           />
           <common-form-control
-            v-if="!redirectMockResponse"
             :model="languageModel2"
             :option="langOption"
             @change="languageRef2=$event"

@@ -290,7 +290,7 @@ const editFormOptions = computed(() => {
       }
     }
   }, {
-    labelKey: isRedirect ? 'mock.label.linkAddress' : 'mock.label.responseBody',
+    labelKey: isRedirect ? 'mock.label.redirectUrl' : 'mock.label.responseBody',
     type: 'vue-monaco-editor',
     prop: 'responseBody',
     required: isRedirect,

@@ -89,7 +89,7 @@ const supportXml = computed(() => {
     :ok-click="saveDataResponse"
   >
     <template #header>
-      {{ $i18nKey('common.label.commonEdit', 'mock.label.responseBody1') }}
+      {{ $i18nKey('common.label.commonEdit', isRedirect?'mock.label.redirectUrl':'mock.label.responseBody1') }}
       <el-link
         v-common-tooltip="$i18nBundle('mock.msg.responseBodyTooltip', ['{{ request.params.name }}'])"
         :underline="false"
