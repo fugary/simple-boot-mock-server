@@ -87,6 +87,15 @@ const changeStatus = (status) => {
     })
 }
 
+const requestProxyUrl = computed(() => {
+  let proxyUrl = requestItem.value.proxyUrl || props.groupItem.proxyUrl
+  if (proxyUrl) { // 去掉末尾的斜杠
+    proxyUrl = proxyUrl.endsWith('/') ? proxyUrl.slice(0, proxyUrl.length - 1) : proxyUrl
+    return `${proxyUrl}${requestItem.value?.requestPath}`
+  }
+  return null
+})
+
 </script>
 
 <template>
@@ -95,9 +104,9 @@ const changeStatus = (status) => {
       <el-col>
         {{ requestItem.requestPath }}
         <mock-url-copy-link
-          v-if="requestItem.proxyUrl||groupItem.proxyUrl"
-          :tooltip="`${$t('mock.label.proxyUrl')}: ${requestItem.proxyUrl||groupItem.proxyUrl}`"
-          :url-path="requestItem.proxyUrl||groupItem.proxyUrl"
+          v-if="requestProxyUrl"
+          :tooltip="`${$t('mock.label.proxyUrl')}: ${requestProxyUrl}`"
+          :url-path="requestProxyUrl"
         >
           <common-icon
             :size="18"
