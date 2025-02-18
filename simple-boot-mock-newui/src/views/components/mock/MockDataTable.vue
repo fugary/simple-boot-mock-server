@@ -99,7 +99,16 @@ const columns = computed(() => {
                          onToggleValue={(status) => saveMockData({ ...data, status })}/>
     },
     attrs: {
-      align: 'center'
+      align: 'center',
+      filterMultiple: false,
+      filters: [{
+        value: 1,
+        text: $i18nBundle('common.label.statusEnabled')
+      }, {
+        value: 0,
+        text: $i18nBundle('common.label.statusDisabled')
+      }],
+      filterMethod: (value, row) => value === row.status
     }
   }, {
     labelKey: 'mock.label.responseBody',

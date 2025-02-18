@@ -267,6 +267,7 @@ defineExpose({
       <common-table-column
         v-for="(column, index) in calcColumns"
         :key="index"
+        :column-index="index"
         :column="column"
         :button-size="buttonSize"
       >

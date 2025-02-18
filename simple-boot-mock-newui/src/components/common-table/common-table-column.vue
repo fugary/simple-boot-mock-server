@@ -17,6 +17,10 @@ const props = defineProps({
     type: Object,
     required: true
   },
+  columnIndex: {
+    type: Number,
+    default: 0
+  },
   /**
    * @type {''|'large'|'small'|'default'}
    */
@@ -43,12 +47,17 @@ const getPropertyData = (row) => {
 
 const slots = useSlots()
 
+const columnLabel = computed(() => {
+  return props.column.label || toLabelByKey(props.column.labelKey)
+})
+
 </script>
 
 <template>
   <el-table-column
     v-if="!column.isOperation"
-    :label="column.label || toLabelByKey(column.labelKey)"
+    :key="`${columnLabel}-${columnIndex}`"
+    :label="columnLabel"
     :prop="column.prop||column.property"
     :width="column.width"
     :min-width="column.minWidth"
