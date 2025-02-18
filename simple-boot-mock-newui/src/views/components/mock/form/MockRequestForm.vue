@@ -112,10 +112,11 @@ const responseExamples = computed(() => {
           </el-col>
           <el-col
             :span="4"
-            class="padding-top1 padding-left2"
+            class="flex-center-col padding-left2"
           >
             <el-button
               type="primary"
+              style="margin-top: -15px;"
               @click="sendRequest(form)"
             >
               {{ $t('mock.label.sendRequest') }}

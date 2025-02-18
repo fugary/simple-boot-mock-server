@@ -100,7 +100,7 @@ const requestProxyUrl = computed(() => {
 
 <template>
   <el-container class="flex-column">
-    <el-row>
+    <el-row class="margin-bottom1">
       <el-col>
         {{ requestItem.requestPath }}
         <mock-url-copy-link
@@ -119,7 +119,7 @@ const requestProxyUrl = computed(() => {
         />
       </el-col>
     </el-row>
-    <el-row>
+    <el-row class="margin-bottom1">
       <el-col :span="12">
         <el-tag
           :type="methodsConfig[requestItem.method].type"

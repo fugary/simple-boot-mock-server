@@ -455,6 +455,9 @@ html, body, #app, .index-container {
 .request-table .current-row td:first-child{
     border-left: 4px solid var(--el-color-primary);
 }
+.request-table td{
+    border-left: 4px solid transparent;
+}
 
 .common-split {
     display: flex;
