@@ -45,6 +45,7 @@ public class MockDataController {
         if (queryVo.getRequestId() != null) {
             queryWrapper.eq("request_id", queryVo.getRequestId());
         }
+        queryWrapper.orderByAsc("status_code", "create_date");
         return SimpleResultUtils.createSimpleResult(mockDataService.page(page, queryWrapper));
     }
 
