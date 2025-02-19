@@ -29,8 +29,10 @@ const toEditDataResponse = (mockData) => {
   })
   const status = currentMockData.value?.statusCode || 200
   isRedirect.value = status >= 300 && status < 400 // redirect
-  languageRef.value = isRedirect.value ? 'text' : mockData.responseFormat
-  checkEditorLang(isRedirect.value ? 'text' : mockData.responseFormat)
+  languageRef.value = mockData.responseFormat || (isRedirect.value ? 'text' : undefined)
+  if (!languageRef.value) {
+    checkEditorLang()
+  }
 }
 
 const emit = defineEmits(['saveDataResponse'])

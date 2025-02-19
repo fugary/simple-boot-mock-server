@@ -300,7 +300,7 @@ const editFormOptions = computed(() => {
         currentDataItem.value.responseBody = value
         contentRef.value = value
       },
-      language: isRedirect ? 'text' : languageRef.value,
+      language: currentDataItem.value?.responseFormat || (isRedirect ? 'text' : languageRef.value),
       height: '200px',
       options: monacoEditorOptions
     }
