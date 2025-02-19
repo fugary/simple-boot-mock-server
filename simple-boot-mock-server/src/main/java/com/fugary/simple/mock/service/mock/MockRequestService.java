@@ -40,9 +40,10 @@ public interface MockRequestService extends IService<MockRequest> {
      * 复制一份数据
      *
      * @param requestId
+     * @param newGroupId
      * @return
      */
-    boolean copyMockRequest(Integer requestId);
+    boolean copyMockRequest(Integer requestId, Integer newGroupId);
 
     /**
      * 根据请求获取对应的响应数据，优先取默认响应或者第一条响应

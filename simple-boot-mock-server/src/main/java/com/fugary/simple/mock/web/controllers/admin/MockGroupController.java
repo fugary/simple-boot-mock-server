@@ -101,6 +101,11 @@ public class MockGroupController {
         return SimpleResultUtils.createSimpleResult(mockGroupService.saveOrUpdate(SimpleMockUtils.addAuditInfo(group)));
     }
 
+    @PostMapping("/copyMockGroup/{groupId}")
+    public SimpleResult<MockGroup> copyMockRequest(@PathVariable("groupId") Integer id) {
+        return mockGroupService.copyMockGroup(id);
+    }
+
     @PostMapping("/import")
     public SimpleResult<Integer> doImport(@ModelAttribute MockGroupImportParamVo importVo, MultipartHttpServletRequest request){
         List<MultipartFile> files = SimpleMockUtils.getUploadFiles(request);

@@ -70,7 +70,7 @@ public class MockRequestController {
 
     @PostMapping("/copyMockRequest/{requestId}")
     public SimpleResult copyMockRequest(@PathVariable("requestId") Integer id) {
-        return SimpleResultUtils.createSimpleResult(mockRequestService.copyMockRequest(id));
+        return SimpleResultUtils.createSimpleResult(mockRequestService.copyMockRequest(id, null));
     }
 
     @DeleteMapping("/{id}")

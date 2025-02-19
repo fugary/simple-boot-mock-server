@@ -97,4 +97,12 @@ public interface MockGroupService extends IService<MockGroup> {
      * @return
      */
     SimpleResult<Integer> importGroups(List<ExportGroupVo> importGroups, MockGroupImportParamVo importVo);
+
+    /**
+     * 复制一份数据
+     *
+     * @param groupId
+     * @return
+     */
+    SimpleResult<MockGroup> copyMockGroup(Integer groupId);
 }

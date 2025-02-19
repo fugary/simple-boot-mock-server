@@ -3,7 +3,7 @@ import { computed, onActivated, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
-import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
+import MockGroupApi, { checkExport, copyMockGroup, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import {
   $coreConfirm,
@@ -129,6 +129,14 @@ const buttons = defineTableButtons([{
   type: 'success',
   click: item => {
     $goto(`/mock/groups/${item.id}?backUrl=${route.fullPath}`)
+  }
+}, {
+  labelKey: 'common.label.copy',
+  type: 'warning',
+  click: item => {
+    $coreConfirm($i18nBundle('common.msg.confirmCopy'))
+      .then(() => copyMockGroup(item.id))
+      .then(() => loadMockGroups())
   }
 }, {
   labelKey: 'common.label.delete',
@@ -338,7 +346,7 @@ const showImportWindow = ref(false)
       :data="tableData"
       :columns="columns"
       :buttons="buttons"
-      :buttons-column-attrs="{width:'230px'}"
+      :buttons-column-attrs="{minWidth:'200px'}"
       :loading="loading"
       @page-size-change="loadMockGroups()"
       @current-page-change="loadMockGroups()"

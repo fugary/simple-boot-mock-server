@@ -52,4 +52,11 @@ export const uploadFiles = (files, params = {}, config = {}) => {
     formData, Object.assign({ headers: { 'Content-Type': 'multipart/form-data' }, loading: true }, config))
 }
 
+export const copyMockGroup = (id, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_GROUP_URL}/copyMockGroup/${id}`,
+    method: 'POST'
+  }, config)).then(response => response.data)
+}
+
 export default useResourceApi('/admin/groups')
