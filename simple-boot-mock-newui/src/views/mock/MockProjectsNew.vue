@@ -108,8 +108,8 @@ const editFormOptions = computed(() => defineFormOptions([{
   required: true,
   upperCase: true,
   rules: [{
-    validator (val) {
-      return /[A-Za-z0-9_-]+/.test(val)
+    validator (_, value) {
+      return /^[A-Z0-9_-]+$/ig.test(value)
     },
     message: $i18nBundle('mock.msg.projectCodeTooltip')
   }]

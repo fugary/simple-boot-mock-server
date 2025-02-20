@@ -250,8 +250,8 @@ const editFormOptions = computed(() => {
       clearable: false
     },
     rules: [{
-      validator (val) {
-        return /^\d{3}$/g.test(currentDataItem.value?.[val.field])
+      validator (_, value) {
+        return /^\d{3}$/g.test(value)
       },
       message: $i18nBundle('common.msg.patternInvalid')
     }]
