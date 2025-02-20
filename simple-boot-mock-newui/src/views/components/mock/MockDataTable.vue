@@ -11,7 +11,7 @@ import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { toTestMatchPattern } from '@/utils/DynamicUtils'
 import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
-import { ElMessage, ElTag } from 'element-plus'
+import { ElMessage, ElTag, ElText } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
@@ -54,14 +54,14 @@ const columns = computed(() => {
       }
       const status = ALL_STATUS_CODES.find(status => data.statusCode === status.code)
       const statusLabel = status ? $i18nMsg(`${status.labelCn} - ${(status.labelEn)}`, `${status.labelEn} - ${(status.labelCn)}`) : ''
-      return <>
+      return <ElText type="success">
           {data.defaultFlag
-            ? <CommonIcon color="#2d8cf0"
+            ? <CommonIcon type="success"
                           v-common-tooltip={$i18nBundle('mock.label.default')}
                           icon="Flag"/>
             : ''}
           <ElTag v-common-tooltip={statusLabel} type={type} class="margin-left1">{data.statusCode}</ElTag>
-        </>
+        </ElText>
     },
     attrs: {
       align: 'center'
@@ -93,7 +93,7 @@ const columns = computed(() => {
     }
   }, {
     labelKey: 'common.label.status',
-    minWidth: '100px',
+    minWidth: '80px',
     formatter (data) {
       return <DelFlagTag v-model={data.status} clickToToggle={true}
                          onToggleValue={(status) => saveMockData({ ...data, status })}/>
@@ -119,8 +119,10 @@ const columns = computed(() => {
       if (data.responseBody && data.responseBody.length > 100) {
         showStr = data.responseBody.substring(0, 100) + '...'
       }
+      const status = data?.statusCode || 200
+      const isRedirect = status >= 300 && status < 400 // redirect
       return <ViewDataLink data={showStr} style="word-break: break-all;"
-                           tooltip={$i18nKey('common.label.commonConfig', 'mock.label.responseBody')}
+                           tooltip={$i18nKey('common.label.commonConfig', isRedirect ? 'mock.label.redirectUrl' : 'mock.label.responseBody')}
                            onViewDataDetails={() => toEditDataResponse(data)}/>
     }
   }, {
@@ -243,8 +245,16 @@ const editFormOptions = computed(() => {
     type: 'select',
     children: statusOptions,
     attrs: {
+      filterable: true,
+      allowCreate: true,
       clearable: false
-    }
+    },
+    rules: [{
+      validator (val) {
+        return /^\d{3}$/g.test(currentDataItem.value?.[val.field])
+      },
+      message: $i18nBundle('common.msg.patternInvalid')
+    }]
   }, {
     labelKey: 'mock.label.responseName',
     prop: 'dataName'
