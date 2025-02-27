@@ -1,8 +1,11 @@
 import { useResourceApi } from '@/hooks/ApiHooks'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { $http } from '@/vendors/axios'
 import { isAdminUser, useCurrentUserName } from '@/utils'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
+import { defineFormOptions } from '@/components/utils'
+import { $i18nBundle } from '@/messages'
+import { useFormStatus } from '@/consts/GlobalConstants'
 
 const MOCK_PROJECT_URL = '/admin/projects'
 const MockProjectApi = useResourceApi(MOCK_PROJECT_URL)
@@ -43,6 +46,69 @@ export const useSelectProjects = (searchParam) => {
     projectOptions,
     loadSelectProjects,
     loadProjectsAndRefreshOptions
+  }
+}
+/**
+ * 编辑项目的工具
+ *
+ * @param searchParam
+ * @param userOptions
+ * @returns {{showEditWindow: Ref<UnwrapRef<boolean>, UnwrapRef<boolean> | boolean>, newOrEditProject: ((function(*, *): Promise<void>)|*), editFormOptions: ComputedRef<CommonFormOption|CommonFormOption[]>, currentProject: Ref<any>}}
+ */
+export const useProjectEditHook = (searchParam, userOptions) => {
+  const showEditWindow = ref(false)
+  const currentProject = ref()
+  const newOrEditProject = async (id, $event) => {
+    $event?.stopPropagation()
+    if (id) {
+      await MockProjectApi.getById(id).then(data => {
+        data.resultData && (currentProject.value = data.resultData)
+      })
+    } else {
+      currentProject.value = {
+        status: 1,
+        userName: searchParam.value?.userName || useCurrentUserName()
+      }
+    }
+    showEditWindow.value = true
+  }
+  const editFormOptions = computed(() => defineFormOptions([{
+    labelKey: 'common.label.user',
+    prop: 'userName',
+    type: 'select',
+    enabled: isAdminUser(),
+    children: userOptions.value,
+    attrs: {
+      clearable: false
+    }
+  }, {
+    labelKey: 'mock.label.projectCode',
+    prop: 'projectCode',
+    tooltip: $i18nBundle('mock.msg.projectCodeTooltip'),
+    required: true,
+    upperCase: true,
+    rules: [{
+      validator (_, value) {
+        return /^[A-Z0-9_-]+$/ig.test(value)
+      },
+      message: $i18nBundle('mock.msg.projectCodeTooltip')
+    }]
+  }, {
+    labelKey: 'mock.label.projectName',
+    prop: 'projectName',
+    required: true
+  }, useFormStatus(), {
+    labelKey: 'common.label.description',
+    prop: 'description',
+    attrs: {
+      type: 'textarea'
+    }
+  }]))
+  return {
+    currentProject,
+    newOrEditProject,
+    showEditWindow,
+    editFormOptions
   }
 }
 

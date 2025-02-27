@@ -2,13 +2,12 @@
 import { computed, onMounted, onActivated, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
-import { defineFormOptions } from '@/components/utils'
 import { useAllUsers } from '@/api/mock/MockUserApi'
-import MockProjectApi from '@/api/mock/MockProjectApi'
-import { $coreConfirm, $goto, formatDate, isAdminUser, useCurrentUserName } from '@/utils'
+import MockProjectApi, { useProjectEditHook } from '@/api/mock/MockProjectApi'
+import { $coreConfirm, $goto, formatDate, isAdminUser } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
-import { useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
+import { useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { chunk } from 'lodash-es'
 import CommonIcon from '@/components/common-icon/index.vue'
@@ -17,7 +16,7 @@ import { isDefaultProject } from '@/consts/MockConstants'
 
 const route = useRoute()
 
-const { search, getById, deleteById, saveOrUpdate } = MockProjectApi
+const { search, deleteById, saveOrUpdate } = MockProjectApi
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: { page: useDefaultPage(50) },
@@ -76,54 +75,7 @@ const deleteProjects = () => {
     .then(() => loadMockProjects())
 }
 
-const showEditWindow = ref(false)
-const currentProject = ref()
-const newOrEdit = async (id, $event) => {
-  $event?.stopPropagation()
-  if (id) {
-    await getById(id).then(data => {
-      data.resultData && (currentProject.value = data.resultData)
-    })
-  } else {
-    currentProject.value = {
-      status: 1,
-      userName: searchParam.value?.userName || useCurrentUserName()
-    }
-  }
-  showEditWindow.value = true
-}
-const editFormOptions = computed(() => defineFormOptions([{
-  labelKey: 'common.label.user',
-  prop: 'userName',
-  type: 'select',
-  enabled: isAdminUser(),
-  children: userOptions.value,
-  attrs: {
-    clearable: false
-  }
-}, {
-  labelKey: 'mock.label.projectCode',
-  prop: 'projectCode',
-  tooltip: $i18nBundle('mock.msg.projectCodeTooltip'),
-  required: true,
-  upperCase: true,
-  rules: [{
-    validator (_, value) {
-      return /^[A-Z0-9_-]+$/ig.test(value)
-    },
-    message: $i18nBundle('mock.msg.projectCodeTooltip')
-  }]
-}, {
-  labelKey: 'mock.label.projectName',
-  prop: 'projectName',
-  required: true
-}, useFormStatus(), {
-  labelKey: 'common.label.description',
-  prop: 'description',
-  attrs: {
-    type: 'textarea'
-  }
-}]))
+const { showEditWindow, currentProject, newOrEditProject: newOrEdit, editFormOptions } = useProjectEditHook(searchParam, userOptions)
 const saveProjectItem = (item) => {
   return saveOrUpdate(item).then(() => loadMockProjects())
 }

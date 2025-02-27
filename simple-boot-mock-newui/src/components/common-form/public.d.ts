@@ -137,6 +137,8 @@ export interface CommonFormOption extends FormControlTypeOption {
     change?: (val: any) => void;
     /** 提示信息 */
     tooltip?: string;
+    /** 图标 */
+    tooltipIcon?: string;
     /** 提示函数 */
     tooltipFunc?: () => void;
     /** 自动trim，默认false**/

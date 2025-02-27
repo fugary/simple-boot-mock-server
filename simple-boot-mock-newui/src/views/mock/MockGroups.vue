@@ -16,7 +16,7 @@ import {
   useBackUrl
 } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
-import { $i18nBundle } from '@/messages'
+import { $i18nBundle, $i18nKey } from '@/messages'
 import { useFormDelay, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
@@ -24,9 +24,10 @@ import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
 import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
 import { ElLink } from 'element-plus'
-import { useSelectProjects } from '@/api/mock/MockProjectApi'
+import MockProjectApi, { useProjectEditHook, useSelectProjects } from '@/api/mock/MockProjectApi'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
+import CommonIcon from '@/components/common-icon/index.vue'
 
 const route = useRoute()
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
@@ -206,6 +207,10 @@ const newOrEdit = async id => {
   }
   showEditWindow.value = true
 }
+const { showEditWindow: showEditProjectWindow, currentProject, newOrEditProject, editFormOptions: editProjectFormOptions } = useProjectEditHook(searchParam, userOptions)
+const saveProjectItem = (item) => {
+  return MockProjectApi.saveOrUpdate(item).then(() => loadProjectsAndRefreshOptions())
+}
 const editFormOptions = computed(() => defineFormOptions([{
   labelKey: 'common.label.user',
   prop: 'userName',
@@ -219,10 +224,15 @@ const editFormOptions = computed(() => defineFormOptions([{
   labelKey: 'mock.label.project',
   prop: 'projectCode',
   type: 'select',
-  enabled: projectOptions.value.length > 1,
   children: projectOptions.value,
   attrs: {
     clearable: false
+  },
+  tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
+  tooltipIcon: 'CirclePlusFilled',
+  tooltipFunc (event) {
+    newOrEditProject()
+    event.preventDefault()
   }
 }, {
   labelKey: 'mock.label.groupName',
@@ -356,8 +366,16 @@ const showImportWindow = ref(false)
       v-model="currentGroup"
       v-model:show-edit-window="showEditWindow"
       :form-options="editFormOptions"
-      name="Mock分组"
+      :name="$t('mock.label.mockGroups')"
       :save-current-item="saveGroupItem"
+    />
+    <simple-edit-window
+      v-model="currentProject"
+      v-model:show-edit-window="showEditProjectWindow"
+      :form-options="editProjectFormOptions"
+      :name="$t('mock.label.mockProjects')"
+      :save-current-item="saveProjectItem"
+      label-width="130px"
     />
     <mock-group-import
       v-model="showImportWindow"

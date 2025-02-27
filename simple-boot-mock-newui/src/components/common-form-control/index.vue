@@ -283,7 +283,7 @@ const slotsResult = computed(() => {
             @click="calcOption.tooltipFunc"
           >&nbsp;
             <common-icon
-              icon="QuestionFilled"
+              :icon="calcOption.tooltipIcon||'QuestionFilled'"
             />
           </el-link>
         </span>
