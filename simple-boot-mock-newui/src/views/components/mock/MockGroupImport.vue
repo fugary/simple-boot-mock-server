@@ -6,7 +6,9 @@ import { defineFormOptions } from '@/components/utils'
 import { ElButton } from 'element-plus'
 import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, uploadFiles } from '@/api/mock/MockGroupApi'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
-import { $i18nBundle } from '@/messages'
+import { $i18nBundle, $i18nKey } from '@/messages'
+import MockProjectApi, { useProjectEditHook } from '@/api/mock/MockProjectApi'
+import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 
 const props = defineProps({
   defaultUser: {
@@ -41,6 +43,11 @@ watch(() => props.defaultProject, (val) => {
   importModel.value.projectCode = val
 })
 const importFiles = ref([])
+const calcUserOptions = computed(() => props.userOptions)
+const { showEditWindow: showEditProjectWindow, currentProject, newOrEditProject, editFormOptions: editProjectFormOptions } = useProjectEditHook(importModel, calcUserOptions)
+const saveProjectItem = (item) => {
+  return MockProjectApi.saveOrUpdate(item).then(() => emit('updateProjects'))
+}
 const formOptions = computed(() => {
   return defineFormOptions([{
     labelKey: 'common.label.user',
@@ -55,10 +62,15 @@ const formOptions = computed(() => {
     labelKey: 'mock.label.project',
     prop: 'projectCode',
     type: 'select',
-    enabled: props.projectOptions.length > 1,
     children: props.projectOptions,
     attrs: {
       clearable: false
+    },
+    tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
+    tooltipIcon: 'CirclePlusFilled',
+    tooltipFunc (event) {
+      newOrEditProject()
+      event.preventDefault()
     }
   }, {
     labelKey: 'mock.label.source',
@@ -108,7 +120,7 @@ const formOptions = computed(() => {
     }
   }])
 })
-const emit = defineEmits(['import-success'])
+const emit = defineEmits(['import-success', 'updateProjects'])
 const doImportGroups = () => {
   if (importFiles.value?.length) {
     uploadFiles(importFiles.value, importModel.value, {
@@ -145,6 +157,14 @@ const doImportGroups = () => {
         :show-buttons="false"
         :model="importModel"
         v-bind="$attrs"
+      />
+      <simple-edit-window
+        v-model="currentProject"
+        v-model:show-edit-window="showEditProjectWindow"
+        :form-options="editProjectFormOptions"
+        :name="$t('mock.label.mockProjects')"
+        :save-current-item="saveProjectItem"
+        label-width="130px"
       />
     </el-container>
   </common-window>

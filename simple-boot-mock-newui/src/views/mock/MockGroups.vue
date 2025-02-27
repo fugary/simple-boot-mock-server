@@ -384,6 +384,7 @@ const showImportWindow = ref(false)
       :default-project="searchParam.projectCode"
       :project-options="projectOptions"
       @import-success="loadMockGroups()"
+      @update-projects="loadProjectsAndRefreshOptions()"
     />
   </el-container>
 </template>
