@@ -13,8 +13,10 @@ import lombok.Data;
 public class MockSchema extends MockBase {
 
     private static final long serialVersionUID = 8517817442841283836L;
+    private Integer groupId;
     private Integer requestId;
     private Integer dataId;
+    private String bodyType;
     private String parametersSchema;
     private String requestMediaType;
     private String requestBodySchema;

@@ -384,6 +384,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         if (schemas != null) {
             schemas.forEach(schema -> {
                 schema.setId(null);
+                schema.setGroupId(request.getGroupId());
                 schema.setRequestId(request.getId());
                 schema.setDataId(data != null ? data.getId() : null);
                 mockSchemaService.saveOrUpdate(SimpleMockUtils.addAuditInfo(schema));

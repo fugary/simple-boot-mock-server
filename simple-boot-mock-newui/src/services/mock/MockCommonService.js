@@ -2,13 +2,14 @@ import { $coreConfirm, getSingleSelectOptions } from '@/utils'
 import { $i18nKey } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
-import { isArray, isFunction, isString } from 'lodash-es'
+import { isArray, isFunction, isString, cloneDeep } from 'lodash-es'
 import { ALL_CONTENT_TYPES } from '@/api/mock/MockDataApi'
 
 export const generateSchemaSample = (schemaBody, type) => {
   return $coreConfirm($i18nKey('common.msg.commonConfirm', 'common.label.generateData'))
     .then(() => {
-      const schema = JSON.parse(schemaBody)
+      let schema = isString(schemaBody) ? JSON.parse(schemaBody) : cloneDeep(schemaBody)
+      schema = removeSchemaDeprecated(schema)
       const json = sample(schema)
       let resStr
       if (type?.includes('xml')) {
@@ -27,6 +28,26 @@ export const generateSchemaSample = (schemaBody, type) => {
       }
       return resStr
     })
+}
+
+/**
+ * 删除deprecated数据
+ *
+ * @param schema
+ * @returns {*}
+ */
+export const removeSchemaDeprecated = schema => {
+  const properties = schema?.properties
+  if (properties) {
+    Object.keys(properties).forEach(key => {
+      if (properties[key]?.deprecated) {
+        delete properties[key]
+      } else {
+        properties[key] = removeSchemaDeprecated(properties[key])
+      }
+    })
+  }
+  return schema
 }
 
 export const calcSuggestionsFunc = (keySuggestions) => {

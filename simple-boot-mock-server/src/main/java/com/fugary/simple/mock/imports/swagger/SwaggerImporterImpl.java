@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.imports.swagger;
 
+import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.imports.MockGroupImporter;
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.web.vo.export.*;
@@ -128,6 +129,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                     exportSchemaVo.setParametersSchema(parametersSchema);
                     exportSchemaVo.setRequestMediaType(contentType);
                     exportSchemaVo.setRequestBodySchema(JsonUtils.toJson(mediaType.getSchema()));
+                    exportSchemaVo.setBodyType(MockConstants.MOCK_SCHEMA_BODY_TYPE_CONTENT);
                     List<Example> requestExamples = getExamples(mediaType);
                     if (!requestExamples.isEmpty()) {
                         exportSchemaVo.setRequestExamples(JsonUtils.toJson(requestExamples));
@@ -161,6 +163,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
             }
             exportSchemaVo.setResponseMediaType(contentType);
             exportSchemaVo.setResponseBodySchema(JsonUtils.toJson(mediaType.getSchema()));
+            exportSchemaVo.setBodyType(MockConstants.MOCK_SCHEMA_BODY_TYPE_CONTENT);
             List<Example> responseExamples = getExamples(mediaType);
             if (!responseExamples.isEmpty()) {
                 exportSchemaVo.setResponseExamples(JsonUtils.toJson(responseExamples));

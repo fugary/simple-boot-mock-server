@@ -19,16 +19,17 @@ import java.util.Map;
 public class MockSchemaServiceImpl extends ServiceImpl<MockSchemaMapper, MockSchema> implements MockSchemaService {
 
     @Override
-    public void saveCopySchemas(Map<String, List<MockSchema>> schemaMap, Integer oldRequestId, Integer oldDataId, Integer requestId, Integer dataId) {
+    public void saveCopySchemas(Map<String, List<MockSchema>> schemaMap, Integer oldRequestId, Integer oldDataId, Integer groupId, Integer requestId, Integer dataId) {
         List<MockSchema> schemas = schemaMap.get(StringUtils.join(oldRequestId, "-", oldDataId));
-        this.saveCopySchemas(schemas, requestId, dataId);
+        this.saveCopySchemas(schemas, groupId, requestId, dataId);
     }
 
     @Override
-    public void saveCopySchemas(List<MockSchema> schemas, Integer requestId, Integer dataId) {
+    public void saveCopySchemas(List<MockSchema> schemas, Integer groupId, Integer requestId, Integer dataId) {
         if (schemas != null) {
             schemas.forEach(schema -> {
                 schema.setId(null);
+                schema.setGroupId(groupId);
                 schema.setRequestId(requestId);
                 schema.setDataId(dataId);
             });

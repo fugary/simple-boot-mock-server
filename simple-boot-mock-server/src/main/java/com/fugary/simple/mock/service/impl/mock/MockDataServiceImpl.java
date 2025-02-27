@@ -53,7 +53,7 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
                 List<MockSchema> schemas = mockSchemaService.list(Wrappers.<MockSchema>query()
                         .eq("request_id", oldRequestId)
                         .eq("data_id", oldDataId));
-                mockSchemaService.saveCopySchemas(schemas, data.getRequestId(), data.getId());
+                mockSchemaService.saveCopySchemas(schemas, data.getGroupId(), data.getRequestId(), data.getId());
             }
         }
         return true;

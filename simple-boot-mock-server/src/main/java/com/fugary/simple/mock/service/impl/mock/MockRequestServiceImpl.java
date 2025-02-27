@@ -80,14 +80,14 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             List<MockSchema> schemaList = mockSchemaService.list(Wrappers.<MockSchema>query().eq("request_id", requestId));
             Map<String, List<MockSchema>> schemaMap = schemaList.stream().collect(Collectors
                     .groupingBy(schema -> StringUtils.join(schema.getRequestId(), "-", schema.getDataId())));
-            mockSchemaService.saveCopySchemas(schemaMap, requestId, null, mockRequest.getId(), null);
+            mockSchemaService.saveCopySchemas(schemaMap, mockRequest.getGroupId(), requestId, null, mockRequest.getId(), null);
             dataList.forEach(data -> {
                 Integer oldDataId = data.getId();
                 data.setId(null);
                 data.setRequestId(mockRequest.getId());
                 boolean saved = mockDataService.saveOrUpdate(data);
                 if (saved) {
-                    mockSchemaService.saveCopySchemas(schemaMap, requestId, oldDataId, mockRequest.getId(), data.getId());
+                    mockSchemaService.saveCopySchemas(schemaMap, mockRequest.getGroupId(), requestId, oldDataId, mockRequest.getId(), data.getId());
                 }
             });
             return true;
