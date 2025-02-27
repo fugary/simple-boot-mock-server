@@ -57,6 +57,10 @@ const formOptions = computed(() => {
     children: props.userOptions,
     attrs: {
       clearable: false
+    },
+    change (value) {
+      importModel.value.projectCode = MOCK_DEFAULT_PROJECT
+      emit('changedUser', value)
     }
   }, {
     labelKey: 'mock.label.project',
@@ -120,7 +124,7 @@ const formOptions = computed(() => {
     }
   }])
 })
-const emit = defineEmits(['import-success', 'updateProjects'])
+const emit = defineEmits(['import-success', 'updateProjects', 'changedUser'])
 const doImportGroups = () => {
   if (importFiles.value?.length) {
     uploadFiles(importFiles.value, importModel.value, {

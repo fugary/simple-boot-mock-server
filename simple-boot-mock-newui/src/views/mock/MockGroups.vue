@@ -144,6 +144,11 @@ const buttons = defineTableButtons([{
   type: 'danger',
   click: item => deleteGroup(item)
 }])
+const changedUser = async (userName) => {
+  userName && (searchParam.value.userName = userName)
+  await loadProjectsAndRefreshOptions()
+  loadMockGroups(1)
+}
 //* ************搜索框**************//
 const searchFormOptions = computed(() => {
   return [{
@@ -155,10 +160,7 @@ const searchFormOptions = computed(() => {
     attrs: {
       clearable: false
     },
-    change: async () => {
-      await loadProjectsAndRefreshOptions()
-      loadMockGroups(1)
-    }
+    change: changedUser
   }, {
     labelKey: 'mock.label.project',
     prop: 'projectCode',
@@ -219,6 +221,12 @@ const editFormOptions = computed(() => defineFormOptions([{
   children: userOptions.value,
   attrs: {
     clearable: false
+  },
+  change (value) {
+    if (currentGroup.value) {
+      currentGroup.value.projectCode = MOCK_DEFAULT_PROJECT
+    }
+    changedUser(value)
   }
 }, {
   labelKey: 'mock.label.project',
@@ -385,6 +393,7 @@ const showImportWindow = ref(false)
       :project-options="projectOptions"
       @import-success="loadMockGroups()"
       @update-projects="loadProjectsAndRefreshOptions()"
+      @changed-user="changedUser"
     />
   </el-container>
 </template>
