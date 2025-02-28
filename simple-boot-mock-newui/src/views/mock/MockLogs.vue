@@ -8,6 +8,7 @@ import { showCodeWindow } from '@/utils/DynamicUtils'
 import { ElText, ElTag } from 'element-plus'
 import { useDefaultPage } from '@/config'
 import MethodTag from '@/views/components/utils/MethodTag.vue'
+import { $i18nKey } from '@/messages'
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: { keyword: '', page: useDefaultPage() },
@@ -97,7 +98,24 @@ const buttons = computed(() => {
     labelKey: 'common.label.view',
     type: 'primary',
     click: item => {
-      showCodeWindow(JSON.stringify(item))
+      showCodeWindow(JSON.stringify(item), {
+        showSelectButton: true,
+        buttons: [{
+          enabled: !!item.logData,
+          type: 'info',
+          label: $i18nKey('common.label.commonView', 'mock.label.requestBody1'),
+          click: () => {
+            showCodeWindow(item.logData)
+          }
+        }, {
+          enabled: !!item.responseBody,
+          label: $i18nKey('common.label.commonView', 'mock.label.responseBody1'),
+          type: 'info',
+          click: () => {
+            showCodeWindow(item.responseBody)
+          }
+        }]
+      })
     }
   }]
 })
@@ -119,7 +137,10 @@ const searchFormOptions = computed(() => {
     labelKey: 'mock.label.logResult',
     prop: 'logResult',
     type: 'select',
-    children: getSingleSelectOptions('SUCCESS', 'FAIL')
+    children: getSingleSelectOptions('SUCCESS', 'FAIL'),
+    change () {
+      loadApiLogs()
+    }
   }, {
     labelKey: 'mock.label.logType',
     prop: 'logType'

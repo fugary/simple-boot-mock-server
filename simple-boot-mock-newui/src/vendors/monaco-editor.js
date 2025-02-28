@@ -110,7 +110,7 @@ export const $formatDocument = (editor, readOnly, delay = 200) => {
   }, delay)
 }
 
-const processPasteCode = data => {
+export const processPasteCode = data => {
   data = data?.replace(/(\\r|\\n|\\t)+/ig, '').replace(/(?!(\\\\\\))[\\]+/ig, '').replace(/^\s+/, '').replace(/\s+$/, '')
   if (data?.match(/^&lt;.*/)) {
     data = data.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>')

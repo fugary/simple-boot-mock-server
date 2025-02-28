@@ -1,8 +1,9 @@
 <script setup>
-import { reactive, ref, computed, isRef } from 'vue'
-import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
+import { reactive, ref, computed, isRef, toRaw } from 'vue'
+import { processPasteCode, useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import { showCodeWindow as dynamicShowCodeWindow } from '@/utils/DynamicUtils'
 
 const showWindow = ref(false)
 const { contentRef: codeText, languageRef, languageModel, languageSelectOption, normalLanguageSelectOption, formatDocument, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
@@ -16,7 +17,9 @@ const codeConfig = reactive({
   height: '350px',
   fullEditor: false,
   closeOnClickModal: true,
-  readOnly: true
+  readOnly: true,
+  showSelectButton: false,
+  buttons: []
 })
 
 let codeRef = null
@@ -48,7 +51,7 @@ defineExpose({
 
 const fullscreen = ref(false)
 
-const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 180px)' : codeConfig.height)
+const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 190px)' : codeConfig.height)
 
 const langOption = computed(() => {
   if (codeConfig.language) {
@@ -59,6 +62,25 @@ const langOption = computed(() => {
     }
   }
   return codeConfig.fullEditor ? languageSelectOption.value : normalLanguageSelectOption.value
+})
+
+const calcButtons = computed(() => {
+  let buttons = codeConfig.buttons || []
+  if (codeConfig.showSelectButton) {
+    buttons = [{
+      enabled: !!editorRef.value,
+      label: $i18nKey('common.label.commonView', 'common.label.selection'),
+      type: 'success',
+      click () {
+        const editor = toRaw(editorRef.value)
+        const selectedStr = editor.getModel()?.getValueInRange(editor.getSelection())
+        if (selectedStr) {
+          dynamicShowCodeWindow(processPasteCode(selectedStr))
+        }
+      }
+    }, ...buttons]
+  }
+  return buttons
 })
 
 </script>
@@ -74,6 +96,7 @@ const langOption = computed(() => {
     :title="codeConfig.title"
     append-to-body
     show-fullscreen
+    :buttons="calcButtons"
     :close-on-click-modal="codeConfig.closeOnClickModal"
   >
     <el-container class="flex-column">
