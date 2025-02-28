@@ -294,4 +294,8 @@ public class SimpleMockUtils {
         resultStr = PASSWORD_PATTERN.matcher(resultStr).replaceAll("$1:$3***$4");
         return resultStr;
     }
+
+    public static String calcMockSchemaKey(Integer groupId, Integer requestId, Integer dataId) {
+        return StringUtils.join(groupId, "-", requestId, "-", dataId);
+    }
 }

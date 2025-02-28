@@ -16,4 +16,6 @@ import java.util.List;
 public class ExportGroupVo extends MockGroup {
 
     private List<ExportRequestVo> requests;
+
+    private List<ExportSchemaVo> schemas;
 }

@@ -114,6 +114,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     public boolean deleteMockGroups(List<Integer> ids) {
         List<MockRequest> requests = mockRequestService.list(Wrappers.<MockRequest>query().in("group_id", ids));
         mockRequestService.deleteMockRequests(requests.stream().map(MockRequest::getId).collect(Collectors.toList()));
+        mockSchemaService.remove(Wrappers.<MockSchema>query().in("group_id", ids));
         return this.removeByIds(ids);
     }
 
@@ -253,12 +254,11 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         List<Integer> groupIds = groups.stream().map(MockGroup::getId).collect(Collectors.toList());
         List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().in("group_id", groupIds));
         List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query().in("group_id", groupIds));
-        List<Integer> requestIds = mockRequests.stream().map(MockRequest::getId).collect(Collectors.toList());
-        List<MockSchema> mockSchemas = mockSchemaService.list(Wrappers.<MockSchema>query().in("request_id", requestIds));
+        List<MockSchema> mockSchemas = mockSchemaService.list(Wrappers.<MockSchema>query().in("group_id", groupIds));
         Map<Integer, List<MockRequest>> requestMap = mockRequests.stream().collect(Collectors.groupingBy(MockRequest::getGroupId));
         Map<Integer, List<MockData>> mockDataMap = mockDataList.stream().collect(Collectors.groupingBy(MockData::getRequestId));
         Map<String, List<MockSchema>> mockSchemaMap = mockSchemas.stream().collect(Collectors
-                .groupingBy(schema -> StringUtils.join(schema.getRequestId(), "-", schema.getDataId())));
+                .groupingBy(schema -> SimpleMockUtils.calcMockSchemaKey(schema.getGroupId(), schema.getRequestId(), schema.getDataId())));
         return groups.stream().map(group -> {
             ExportGroupVo exportGroupVo = new ExportGroupVo();
             copyProperties(exportGroupVo, group);
@@ -284,12 +284,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 }).collect(Collectors.toList());
             }
             exportGroupVo.setRequests(exportRequests);
+            exportGroupVo.setSchemas(calcMockGroupSchemaVo(mockSchemaMap, group));
             return exportGroupVo;
         }).collect(Collectors.toList());
     }
 
     protected List<ExportSchemaVo> calcMockSchemaVo(Map<String, List<MockSchema>> mockSchemaMap, MockRequest mockRequest, MockData mockData) {
-        List<MockSchema> schemas = mockSchemaMap.get(StringUtils.join(mockRequest.getId(), "-", mockData != null ? mockData.getId() : null));
+        List<MockSchema> schemas = mockSchemaMap.get(SimpleMockUtils.calcMockSchemaKey(mockRequest.getGroupId(), mockRequest.getId(), mockData != null ? mockData.getId() : null));
         if (CollectionUtils.isNotEmpty(schemas)) {
             return schemas.stream().map(mockSchema -> {
                 ExportSchemaVo exportSchemaVo = new ExportSchemaVo();
@@ -298,6 +299,12 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             }).collect(Collectors.toList());
         }
         return new ArrayList<>();
+    }
+
+    protected List<ExportSchemaVo> calcMockGroupSchemaVo(Map<String, List<MockSchema>> mockSchemaMap, MockGroup group) {
+        MockRequest mockRequest = new MockRequest();
+        mockRequest.setGroupId(group.getId());
+        return calcMockSchemaVo(mockSchemaMap, mockRequest, null);
     }
 
     @Override
@@ -347,6 +354,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         for (MockRequest mockRequest : mockRequests) {
             mockRequestService.copyMockRequest(mockRequest.getId(), mockGroup.getId());
         }
+        List<MockSchema> mockSchemas = mockSchemaService.list(Wrappers.<MockSchema>query().eq("group_id", groupId)
+                .isNull("request_id"));
+        for (MockSchema mockSchema : mockSchemas) {
+            mockSchema.setId(null);
+            mockSchema.setGroupId(mockGroup.getId());
+            mockSchemaService.saveOrUpdate(SimpleMockUtils.addAuditInfo(mockSchema));
+        }
         return SimpleResultUtils.createSimpleResult(mockGroup);
     }
 
@@ -359,6 +373,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             group.setGroupPath(StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
             group.setProjectCode(StringUtils.defaultIfBlank(importVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
             boolean saved = saveOrUpdate(SimpleMockUtils.addAuditInfo(group));
+            ExportRequestVo groupRequestVo = new ExportRequestVo();
+            groupRequestVo.setGroupId(group.getId());
+            importSchemas(group.getSchemas(), groupRequestVo, null);
             if (saved && group.getRequests() != null) {
                 group.getRequests().forEach(request -> {
                     request.setId(null);
