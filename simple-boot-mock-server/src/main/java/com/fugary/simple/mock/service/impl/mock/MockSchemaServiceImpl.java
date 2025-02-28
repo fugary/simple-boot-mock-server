@@ -47,4 +47,11 @@ public class MockSchemaServiceImpl extends ServiceImpl<MockSchemaMapper, MockSch
         }
         return List.of();
     }
+
+    @Override
+    public List<MockSchema> queryGroupSchemas(Integer groupId) {
+        return this.lambdaQuery().eq(MockSchema::getGroupId, groupId)
+                .isNull(MockSchema::getRequestId)
+                .list();
+    }
 }

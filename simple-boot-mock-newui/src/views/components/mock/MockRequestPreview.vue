@@ -22,6 +22,7 @@ const previewData = ref()
 const paramTarget = ref()
 const responseTarget = ref()
 const schemas = ref([])
+const componentsSpec = ref()
 
 let saveCallback
 const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
@@ -33,7 +34,8 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
     requestId: mockRequest.id,
     dataId: viewData?.id
   }).then(schemasData => {
-    schemas.value = schemasData?.resultData || []
+    schemas.value = schemasData.schemas
+    componentsSpec.value = schemasData.componentSpec
   })
   if (viewData?.id) {
     const viewDataPromise = MockDataApi.getById(viewData.id)
@@ -182,6 +184,7 @@ defineExpose({
       :response-target="responseTarget"
       :mock-response-editable="!!previewData"
       :schemas="schemas"
+      :schema-spec="componentsSpec"
       @send-request="doDataPreview"
       @save-mock-response-body="doSaveMockResponseBody"
     />

@@ -40,6 +40,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  schemaSpec: {
+    type: Object,
+    default: undefined
+  },
   examples: {
     type: Array,
     default: () => []
@@ -113,7 +117,7 @@ if (paramTarget.value) {
 const authValid = ref(true)
 
 const generateSample = async (type) => {
-  contentRef.value = await generateSchemaSample(props.schemaBody, type)
+  contentRef.value = await generateSchemaSample(props.schemaBody, type, props.schemaSpec)
   setTimeout(() => checkEditorLang())
 }
 const selectExample = (example) => {

@@ -54,7 +54,16 @@ export const loadSchemas = (params, config) => {
     url: `${MOCK_REQUEST_URL}/loadSchemas`,
     method: 'get',
     params
-  }, config)).then(response => response.data)
+  }, config)).then(response => calcSchemas(response.data))
+}
+
+export const calcSchemas = (schemasData) => {
+  const componentSchema = schemasData?.resultData?.componentSchema?.requestBodySchema
+  const componentSpec = componentSchema ? JSON.parse(componentSchema) : {}
+  return {
+    schemas: schemasData?.resultData?.schemas || [],
+    componentSpec
+  }
 }
 
 export const checkParamsFilled = (params) => {

@@ -5,12 +5,12 @@ import { XMLBuilder } from 'fast-xml-parser'
 import { isArray, isFunction, isString, cloneDeep } from 'lodash-es'
 import { ALL_CONTENT_TYPES } from '@/api/mock/MockDataApi'
 
-export const generateSchemaSample = (schemaBody, type) => {
+export const generateSchemaSample = (schemaBody, type, spec) => {
   return $coreConfirm($i18nKey('common.msg.commonConfirm', 'common.label.generateData'))
     .then(() => {
       let schema = isString(schemaBody) ? JSON.parse(schemaBody) : cloneDeep(schemaBody)
       schema = removeSchemaDeprecated(schema)
-      const json = sample(schema)
+      const json = sample(schema, undefined, spec)
       let resStr
       if (type?.includes('xml')) {
         const builder = new XMLBuilder({

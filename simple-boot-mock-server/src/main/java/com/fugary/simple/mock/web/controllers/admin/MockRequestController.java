@@ -3,6 +3,8 @@ package com.fugary.simple.mock.web.controllers.admin;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fugary.simple.mock.contants.MockConstants;
+import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockSchema;
@@ -13,6 +15,7 @@ import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.MockRequestQueryVo;
 import com.fugary.simple.mock.web.vo.query.MockSchemaQueryVo;
+import com.fugary.simple.mock.web.vo.result.MockSchemaResultVo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -95,7 +98,20 @@ public class MockRequestController {
      * @return
      */
     @GetMapping("/loadSchemas")
-    public SimpleResult<List<MockSchema>> loadSchemas(@ModelAttribute MockSchemaQueryVo queryVo) {
-        return SimpleResultUtils.createSimpleResult(mockSchemaService.querySchemas(queryVo.getRequestId(), queryVo.getDataId()));
+    public SimpleResult<MockSchemaResultVo> loadSchemas(@ModelAttribute MockSchemaQueryVo queryVo) {
+        MockRequest request = mockRequestService.getById(queryVo.getRequestId());
+        if (request == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        List<MockSchema> schemas = mockSchemaService.querySchemas(queryVo.getRequestId(), queryVo.getDataId());
+        MockSchemaResultVo resultVo = new MockSchemaResultVo();
+        resultVo.setSchemas(schemas);
+        List<MockSchema> groupSchemas = mockSchemaService.queryGroupSchemas(request.getGroupId());
+        for (MockSchema groupSchema : groupSchemas) {
+            if (MockConstants.MOCK_SCHEMA_BODY_TYPE_COMPONENT.equals(groupSchema.getBodyType())) {
+                resultVo.setComponentSchema(groupSchema);
+            }
+        }
+        return SimpleResultUtils.createSimpleResult(resultVo);
     }
 }

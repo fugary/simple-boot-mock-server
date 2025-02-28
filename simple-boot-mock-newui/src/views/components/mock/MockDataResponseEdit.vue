@@ -15,6 +15,7 @@ const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, 
 const showWindow = ref(false)
 const currentMockData = ref()
 const schemas = ref([])
+const componentsSpec = ref()
 const isRedirect = ref(false)
 
 const toEditDataResponse = (mockData) => {
@@ -25,7 +26,8 @@ const toEditDataResponse = (mockData) => {
     requestId: mockData.requestId,
     dataId: mockData?.id
   }).then(schemasData => {
-    schemas.value = schemasData?.resultData || []
+    schemas.value = schemasData.schemas
+    componentsSpec.value = schemasData.componentSpec
   })
   const status = currentMockData.value?.statusCode || 200
   isRedirect.value = status >= 300 && status < 400 // redirect
@@ -56,7 +58,7 @@ const responseExamples = computed(() => {
   return examples ? JSON.parse(examples) : []
 })
 const generateSample = async (type) => {
-  contentRef.value = await generateSchemaSample(schemaBody.value, type)
+  contentRef.value = await generateSchemaSample(schemaBody.value, type, componentsSpec.value)
   setTimeout(() => checkEditorLang())
 }
 const selectExample = (example) => {

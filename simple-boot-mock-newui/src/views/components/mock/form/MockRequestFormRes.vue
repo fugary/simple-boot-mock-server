@@ -29,6 +29,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  schemaSpec: {
+    type: Object,
+    default: undefined
+  },
   examples: {
     type: Array,
     default: () => []
@@ -88,7 +92,7 @@ const codeHeight = '300px'
 const emit = defineEmits(['saveMockResponseBody'])
 
 const generateSample = async (type) => {
-  contentRef2.value = await generateSchemaSample(props.schemaBody, type)
+  contentRef2.value = await generateSchemaSample(props.schemaBody, type, props.schemaSpec)
   setTimeout(() => checkEditorLang())
 }
 const selectExample = (example) => {

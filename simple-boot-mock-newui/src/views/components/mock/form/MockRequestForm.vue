@@ -27,6 +27,10 @@ const props = defineProps({
   schemas: {
     type: Array,
     default: () => []
+  },
+  schemaSpec: {
+    type: Object,
+    default: undefined
   }
 })
 const paramTarget = defineModel('modelValue', {
@@ -137,6 +141,7 @@ const responseExamples = computed(() => {
           :response-target="responseTarget"
           :schema-type="schema?.requestMediaType"
           :schema-body="schema?.requestBodySchema"
+          :schema-spec="schemaSpec"
           :examples="requestExamples"
         />
       </template>
@@ -148,6 +153,7 @@ const responseExamples = computed(() => {
       :response-target="responseTarget"
       :schema-type="schema?.responseMediaType"
       :schema-body="schema?.responseBodySchema"
+      :schema-spec="schemaSpec"
       :examples="responseExamples"
       @save-mock-response-body="emit('saveMockResponseBody', $event)"
     />

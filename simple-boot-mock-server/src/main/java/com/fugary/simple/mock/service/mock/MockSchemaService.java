@@ -43,4 +43,11 @@ public interface MockSchemaService extends IService<MockSchema> {
      * @return
      */
     List<MockSchema> querySchemas(Integer requestId, Integer dataId);
+
+    /**
+     * 查询Schema列表
+     * @param groupId
+     * @return
+     */
+    List<MockSchema> queryGroupSchemas(Integer groupId);
 }

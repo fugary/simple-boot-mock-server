@@ -72,6 +72,9 @@ const formOptions = computed(() => {
     },
     tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
     tooltipIcon: 'CirclePlusFilled',
+    tooltipLinkAttrs: {
+      type: 'primary'
+    },
     tooltipFunc (event) {
       newOrEditProject()
       event.preventDefault()
