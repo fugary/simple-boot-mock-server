@@ -107,6 +107,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     public boolean deleteMockGroup(Integer id) {
         List<MockRequest> requests = mockRequestService.list(Wrappers.<MockRequest>query().eq("group_id", id));
         mockRequestService.deleteMockRequests(requests.stream().map(MockRequest::getId).collect(Collectors.toList()));
+        mockSchemaService.remove(Wrappers.<MockSchema>query().eq("group_id", id));
         return this.removeById(id);
     }
 
