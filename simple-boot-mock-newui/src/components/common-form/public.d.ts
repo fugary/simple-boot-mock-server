@@ -4,6 +4,7 @@ import {
   InputProps, InputNumberProps, CascaderProps,
   RadioGroupProps, RadioProps, RadioButtonProps,
   CheckboxProps, CheckboxGroupProps, CheckboxButtonProps,
+  LinkProps, ElTooltipProps,
   DatePickerProps, timePickerDefaultProps, SwitchProps, SliderProps, TransferProps
 } from 'element-plus'
 import { SelectProps as SelectV1Props } from 'element-plus/es/components/select/src/select'
@@ -139,6 +140,10 @@ export interface CommonFormOption extends FormControlTypeOption {
     tooltip?: string;
     /** 图标 */
     tooltipIcon?: string;
+    /** tooltip配置 */
+    tooltipAttrs?: ElTooltipProps;
+    /** tooltip link配置 */
+    tooltipLinkAttrs?: LinkProps;
     /** 提示函数 */
     tooltipFunc?: () => void;
     /** 自动trim，默认false**/

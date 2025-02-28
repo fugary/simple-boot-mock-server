@@ -210,8 +210,15 @@ const newOrEdit = async id => {
   showEditWindow.value = true
 }
 const { showEditWindow: showEditProjectWindow, currentProject, newOrEditProject, editFormOptions: editProjectFormOptions } = useProjectEditHook(searchParam, userOptions)
+const reloadProjectsAndRefreshOptions = async (item, importModel) => {
+  await loadProjectsAndRefreshOptions()
+  const formModel = importModel?.value ? importModel : currentGroup
+  if (formModel?.value && projectOptions.value?.find(option => option.value === item.projectCode)) {
+    formModel.value.projectCode = item.projectCode
+  }
+}
 const saveProjectItem = (item) => {
-  return MockProjectApi.saveOrUpdate(item).then(() => loadProjectsAndRefreshOptions())
+  return MockProjectApi.saveOrUpdate(item).then(() => reloadProjectsAndRefreshOptions(item))
 }
 const editFormOptions = computed(() => defineFormOptions([{
   labelKey: 'common.label.user',
@@ -238,6 +245,9 @@ const editFormOptions = computed(() => defineFormOptions([{
   },
   tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
   tooltipIcon: 'CirclePlusFilled',
+  tooltipLinkAttrs: {
+    type: 'primary'
+  },
   tooltipFunc (event) {
     newOrEditProject()
     event.preventDefault()
@@ -392,7 +402,7 @@ const showImportWindow = ref(false)
       :default-project="searchParam.projectCode"
       :project-options="projectOptions"
       @import-success="loadMockGroups()"
-      @update-projects="loadProjectsAndRefreshOptions()"
+      @update-projects="reloadProjectsAndRefreshOptions"
       @changed-user="changedUser"
     />
   </el-container>

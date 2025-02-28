@@ -46,7 +46,7 @@ const importFiles = ref([])
 const calcUserOptions = computed(() => props.userOptions)
 const { showEditWindow: showEditProjectWindow, currentProject, newOrEditProject, editFormOptions: editProjectFormOptions } = useProjectEditHook(importModel, calcUserOptions)
 const saveProjectItem = (item) => {
-  return MockProjectApi.saveOrUpdate(item).then(() => emit('updateProjects'))
+  return MockProjectApi.saveOrUpdate(item).then(() => emit('updateProjects', item, importModel))
 }
 const formOptions = computed(() => {
   return defineFormOptions([{

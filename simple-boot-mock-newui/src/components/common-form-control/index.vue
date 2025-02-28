@@ -276,9 +276,11 @@ const slotsResult = computed(() => {
         :content="calcOption.tooltip"
         placement="top-start"
         raw-content
+        v-bind="calcOption.tooltipAttrs"
       >
         <span>
           <el-link
+            v-bind="calcOption.tooltipLinkAttrs"
             :underline="false"
             @click="calcOption.tooltipFunc"
           >&nbsp;
