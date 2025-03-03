@@ -7,7 +7,7 @@ import { $i18nKey, $i18nBundle } from '@/messages'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
-import { generateSchemaSample, useContentTypeOption } from '@/services/mock/MockCommonService'
+import { generateSampleCheckResults, generateSchemaSample, useContentTypeOption } from '@/services/mock/MockCommonService'
 import { loadSchemas } from '@/api/mock/MockRequestApi'
 import { calcContentType } from '@/consts/MockConstants'
 
@@ -57,8 +57,8 @@ const responseExamples = computed(() => {
   const examples = schema.value?.responseExamples
   return examples ? JSON.parse(examples) : []
 })
-const generateSample = async (type) => {
-  contentRef.value = await generateSchemaSample(schemaBody.value, type, componentsSpec.value)
+const generateSample = async (schema) => {
+  contentRef.value = await generateSchemaSample(schema.schema, schema.type)
   setTimeout(() => checkEditorLang())
 }
 const selectExample = (example) => {
@@ -76,10 +76,7 @@ const langOption = {
     }
   }
 }
-const supportXml = computed(() => {
-  const schemaBodyObj = isString(schemaBody.value) ? JSON.parse(schemaBody.value) : schemaBody.value
-  return !!schemaBodyObj?.xml
-})
+const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.value, componentsSpec.value, schema.value?.responseMediaType))
 </script>
 
 <template>
@@ -141,23 +138,27 @@ const supportXml = computed(() => {
               icon="ContentPasteSearchFilled"
             />
           </el-link>
-          <mock-generate-sample
-            v-if="schemaBody&&supportXml"
-            @generate-sample="generateSample"
-          />
-          <el-link
-            v-if="schemaBody&&!supportXml"
-            v-common-tooltip="$t('common.label.generateJsonData')"
-            type="primary"
-            :underline="false"
-            class="margin-left3"
-            @click="generateSample('json')"
-          >
-            <common-icon
-              :size="18"
-              icon="DataObjectFilled"
+          <template v-if="supportedGenerates?.length">
+            <mock-generate-sample
+              v-if="supportedGenerates.length>1"
+              :schemas="supportedGenerates"
+              :title="$t('common.label.generateData')"
+              @generate-sample="generateSample($event)"
             />
-          </el-link>
+            <el-link
+              v-if="supportedGenerates.length===1"
+              v-common-tooltip="$t('common.label.generateData')"
+              type="primary"
+              :underline="false"
+              class="margin-left3"
+              @click="generateSample(supportedGenerates[0])"
+            >
+              <common-icon
+                :size="18"
+                :icon="`custom-icon-${supportedGenerates[0]?.type}`"
+              />
+            </el-link>
+          </template>
           <mock-data-example
             v-if="responseExamples.length"
             :examples="responseExamples"

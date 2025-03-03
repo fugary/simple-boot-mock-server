@@ -48,6 +48,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
     public ExportMockVo doImport(String data) {
         ParseOptions parseOptions = new ParseOptions();
         parseOptions.setResolve(true);
+        parseOptions.setResolveFully(true);
         SwaggerParseResult result = new OpenAPIParser().readContents(data, null, parseOptions);
         OpenAPI openAPI = result.getOpenAPI();
         if (openAPI != null) {
@@ -76,21 +77,8 @@ public class SwaggerImporterImpl implements MockGroupImporter {
     protected List<ExportSchemaVo> calcComponentSchemas(OpenAPI openAPI, ExportGroupVo groupVo) {
         List<ExportSchemaVo> schemas = new ArrayList<>();
         if (openAPI.getComponents() != null) {
-            Map<String, Schema> componentSchemas = openAPI.getComponents().getSchemas();
             Map<String, Schema> groupComponentSchemas = new HashMap<>();
-            if (componentSchemas != null) {
-                groupVo.getRequests().stream().flatMap(request -> request.getDataList().stream()
-                        .flatMap(data -> data.getSchemas().stream())).flatMap(schema -> {
-                    Set<String> schemaSet = calcComponentKeys(schema.getParametersSchema());
-                    schemaSet.addAll(calcComponentKeys(schema.getRequestBodySchema()));
-                    schemaSet.addAll(calcComponentKeys(schema.getResponseBodySchema()));
-                    return schemaSet.stream();
-                }).distinct().forEach(schemaKey -> {
-                    if (componentSchemas.get(schemaKey) != null) {
-                        groupComponentSchemas.put(schemaKey, componentSchemas.get(schemaKey));
-                    }
-                });
-            }
+            calcGroupComponents(openAPI, groupVo, groupComponentSchemas);
             if (!groupComponentSchemas.isEmpty()) {
                 OpenAPI groupOpenAPI = new OpenAPI()
                         .specVersion(openAPI.getSpecVersion())
@@ -102,6 +90,23 @@ public class SwaggerImporterImpl implements MockGroupImporter {
             }
         }
         return schemas;
+    }
+
+    protected void calcGroupComponents(OpenAPI openAPI, ExportGroupVo groupVo, Map<String, Schema> groupComponentSchemas) {
+        Map<String, Schema> componentSchemas = openAPI.getComponents().getSchemas();
+        if (componentSchemas != null) {
+            groupVo.getRequests().stream().flatMap(request -> request.getDataList().stream()
+                    .flatMap(data -> data.getSchemas().stream())).flatMap(schema -> {
+                Set<String> schemaSet = calcComponentKeys(schema.getParametersSchema());
+                schemaSet.addAll(calcComponentKeys(schema.getRequestBodySchema()));
+                schemaSet.addAll(calcComponentKeys(schema.getResponseBodySchema()));
+                return schemaSet.stream();
+            }).distinct().forEach(schemaKey -> {
+                if (componentSchemas.get(schemaKey) != null) {
+                    groupComponentSchemas.put(schemaKey, componentSchemas.get(schemaKey));
+                }
+            });
+        }
     }
 
     protected Set<String> calcComponentKeys(String content){

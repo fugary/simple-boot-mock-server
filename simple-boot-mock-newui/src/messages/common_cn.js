@@ -109,6 +109,7 @@ common.label.commonSave = '保存{0}'
 common.label.commonExpand = '展开{0}'
 common.label.commonCollapse = '收起{0}'
 common.label.commonDelay = '延迟{0}毫秒'
+common.label.commonGenerate = '生成{0}'
 
 //* =======================msg=====================//
 common.msg.nonNull = '{0}不能为空'

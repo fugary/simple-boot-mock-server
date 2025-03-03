@@ -127,3 +127,35 @@ export const calcPreviewHeaders = (url, config) => {
     config.responseType = 'blob'
   }
 }
+
+const defaultCheckFunc = schema => !schema?.__contentType || schema?.__contentType?.includes('json') || schema?.__contentType?.includes('*/*')
+
+export const generateSampleCheck = (schemaBody, schemaSpec, schemaType, checkFun = defaultCheckFunc) => {
+  let parsedSchemaBody = isString(schemaBody) ? JSON.parse(schemaBody) : schemaBody
+  if (parsedSchemaBody) {
+    parsedSchemaBody.__contentType = schemaType
+    if (!isArray(parsedSchemaBody)) {
+      parsedSchemaBody = [parsedSchemaBody]
+    }
+    return parsedSchemaBody.find(schema => checkFun(schema))
+  }
+}
+
+export const generateSampleCheckResults = (schemaBody, schemaSpec, schemaType) => {
+  const results = []
+  if (schemaBody) {
+    const jsonSchema = generateSampleCheck(schemaBody, schemaSpec, schemaType)
+    jsonSchema && results.push({
+      type: 'json',
+      schema: jsonSchema
+    })
+    const xmlSchema = generateSampleCheck(schemaBody, schemaSpec, schemaType, schema => {
+      return !!schema?.xml || !!schema?.__contentType?.includes('xml')
+    })
+    xmlSchema && results.push({
+      type: 'xml',
+      schema: xmlSchema
+    })
+  }
+  return results
+}

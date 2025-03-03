@@ -1,8 +1,14 @@
 <script setup>
+import { $i18nBundle } from '@/messages'
+
 defineProps({
   title: {
     type: String,
     default: ''
+  },
+  schemas: {
+    type: Array,
+    default: () => []
   }
 })
 const emit = defineEmits(['generateSample'])
@@ -18,16 +24,18 @@ const emit = defineEmits(['generateSample'])
     >
       <common-icon
         :size="18"
-        icon="DataObjectFilled"
+        icon="custom-icon-json"
       />
     </el-link>
     <template #dropdown>
       <el-dropdown-menu>
-        <el-dropdown-item @click="emit('generateSample', 'json')">
-          {{ $t('common.label.generateJsonData') }}
-        </el-dropdown-item>
-        <el-dropdown-item @click="emit('generateSample', 'xml')">
-          {{ $t('common.label.generateXmlData') }}
+        <el-dropdown-item
+          v-for="(schema, index) in schemas"
+          :key="index"
+          @click="emit('generateSample', schema)"
+        >
+          <common-icon :icon="`custom-icon-${schema.type}`" />
+          {{ $i18nBundle('common.label.commonGenerate', [schema.type]) }}
         </el-dropdown-item>
       </el-dropdown-menu>
     </template>

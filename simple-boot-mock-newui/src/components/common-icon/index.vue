@@ -15,6 +15,14 @@ const calcIcon = computed(() => {
   }
   return props.icon
 })
+
+const customIcon = computed(() => {
+  if (props.icon?.startsWith('custom')) {
+    return props.icon
+  }
+  return ''
+})
+
 </script>
 
 <template>
@@ -24,6 +32,12 @@ const calcIcon = computed(() => {
   >
     <component
       :is="calcIcon"
+      v-if="!customIcon"
+    />
+    <span
+      v-else
+      class="custom-icon"
+      :class="customIcon"
     />
   </el-icon>
 </template>

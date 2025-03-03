@@ -4,7 +4,7 @@ import { computed, watch, ref } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nKey, $i18nBundle } from '@/messages'
-import { generateSchemaSample, useContentTypeOption } from '@/services/mock/MockCommonService'
+import { generateSampleCheckResults, generateSchemaSample, useContentTypeOption } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import { isString } from 'lodash-es'
 import { $coreError } from '@/utils'
@@ -91,8 +91,8 @@ const codeHeight = '300px'
 
 const emit = defineEmits(['saveMockResponseBody'])
 
-const generateSample = async (type) => {
-  contentRef2.value = await generateSchemaSample(props.schemaBody, type, props.schemaSpec)
+const generateSample = async (schema) => {
+  contentRef2.value = await generateSchemaSample(schema.schema, schema.type)
   setTimeout(() => checkEditorLang())
 }
 const selectExample = (example) => {
@@ -113,10 +113,7 @@ const langOption = {
 watch(contentRef2, val => {
   paramTarget.value.responseBody = val
 })
-const supportXml = computed(() => {
-  const schemaBodyObj = isString(props.schemaBody) ? JSON.parse(props.schemaBody) : props.schemaBody
-  return !!schemaBodyObj?.xml
-})
+const supportedGenerates = computed(() => generateSampleCheckResults(props.schemaBody, props.schemaSpec, props.schemaType))
 const redirectMockResponse = computed(() => {
   const status = paramTarget.value?.responseStatusCode || 200
   return status >= 300 && status < 400
@@ -328,23 +325,27 @@ const redirectMockResponse = computed(() => {
                   icon="ContentPasteSearchFilled"
                 />
               </el-link>
-              <mock-generate-sample
-                v-if="schemaBody&&supportXml"
-                @generate-sample="generateSample"
-              />
-              <el-link
-                v-if="schemaBody&&!supportXml"
-                v-common-tooltip="$t('common.label.generateJsonData')"
-                type="primary"
-                :underline="false"
-                class="margin-left3"
-                @click="generateSample('json')"
-              >
-                <common-icon
-                  :size="18"
-                  icon="DataObjectFilled"
+              <template v-if="supportedGenerates?.length">
+                <mock-generate-sample
+                  v-if="supportedGenerates.length>1"
+                  :schemas="supportedGenerates"
+                  :title="$t('common.label.generateData')"
+                  @generate-sample="generateSample($event)"
                 />
-              </el-link>
+                <el-link
+                  v-if="supportedGenerates.length===1"
+                  v-common-tooltip="$t('common.label.generateData')"
+                  type="primary"
+                  :underline="false"
+                  class="margin-left3"
+                  @click="generateSample(supportedGenerates[0])"
+                >
+                  <common-icon
+                    :size="18"
+                    :icon="`custom-icon-${supportedGenerates[0]?.type}`"
+                  />
+                </el-link>
+              </template>
               <mock-data-example
                 v-if="examples.length"
                 :examples="examples"

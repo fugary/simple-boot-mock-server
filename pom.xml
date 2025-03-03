@@ -27,7 +27,7 @@
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-fileupload.version>1.5</commons-fileupload.version>
         <graalvm.version>22.3.1</graalvm.version>
-        <swagger-parser.version>2.1.22</swagger-parser.version>
+        <swagger-parser.version>2.1.25</swagger-parser.version>
         <js.mockjs.version>1.1.0</js.mockjs.version>
         <js.dayjs.version>1.11.12</js.dayjs.version>
     </properties>

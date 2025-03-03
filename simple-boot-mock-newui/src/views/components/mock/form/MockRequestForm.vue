@@ -62,7 +62,8 @@ const sendRequest = (form) => {
 }
 
 const schema = computed(() => {
-  return props.schemas[0]
+  const jsonSchema = props.schemas.find(schema => schema.requestMediaType?.includes('json') || schema.responseMediaType?.includes('json'))
+  return jsonSchema || props.schemas[0]
 })
 
 const requestExamples = computed(() => {
