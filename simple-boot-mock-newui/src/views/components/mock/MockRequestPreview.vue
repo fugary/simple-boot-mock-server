@@ -21,8 +21,7 @@ const requestItem = ref()
 const previewData = ref()
 const paramTarget = ref()
 const responseTarget = ref()
-const schemas = ref([])
-const componentsSpec = ref()
+const schemasConf = ref({})
 
 let saveCallback
 const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
@@ -34,8 +33,7 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
     requestId: mockRequest.id,
     dataId: viewData?.id
   }).then(schemasData => {
-    schemas.value = schemasData.schemas
-    componentsSpec.value = schemasData.componentSpec
+    schemasConf.value = schemasData
   })
   if (viewData?.id) {
     const viewDataPromise = MockDataApi.getById(viewData.id)
@@ -47,7 +45,7 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
   saveCallback = callback
   clearParamsAndResponse()
   return nextTick(() => {
-    paramTarget.value = calcParamTarget(groupItem.value, requestItem.value, previewData.value)
+    paramTarget.value = calcParamTarget(groupItem.value, requestItem.value, previewData.value, schemasConf.value)
   })
 }
 
@@ -183,8 +181,8 @@ defineExpose({
       :request-path="requestPath"
       :response-target="responseTarget"
       :mock-response-editable="!!previewData"
-      :schemas="schemas"
-      :schema-spec="componentsSpec"
+      :schemas="schemasConf.schemas"
+      :schema-spec="schemasConf.componentSpec"
       @send-request="doDataPreview"
       @save-mock-response-body="doSaveMockResponseBody"
     />

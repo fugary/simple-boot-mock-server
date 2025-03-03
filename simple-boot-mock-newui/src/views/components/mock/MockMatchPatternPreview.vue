@@ -18,15 +18,14 @@ const groupItem = ref()
 const currentItem = ref()
 const paramTarget = ref()
 const responseTarget = ref()
-const schemas = ref([])
-const componentsSpec = ref()
+const schemasConf = ref({})
 
 let saveResolve
 const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
   groupItem.value = mockGroup
   currentItem.value = viewData || mockRequest // 当前预览的是request还是data
   showWindow.value = true
-  paramTarget.value = calcParamTarget(groupItem.value, mockRequest, viewData)
+  paramTarget.value = calcParamTarget(groupItem.value, mockRequest, viewData, schemasConf.value)
   paramTarget.value.requestPath = '/mock/checkMatchPattern'
   const matchPattern = viewData?.matchPattern || mockRequest?.matchPattern
   if (matchPattern) {
@@ -36,8 +35,7 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
     requestId: mockRequest.id,
     dataId: viewData?.id
   }).then(schemasData => {
-    schemas.value = schemasData.schemas
-    componentsSpec.value = schemasData.componentSpec
+    schemasConf.value = schemasData
   })
   return new Promise(resolve => (saveResolve = resolve))
 }
@@ -123,8 +121,8 @@ defineExpose({
         :request-path="paramTarget.requestPath"
         :response-target="responseTarget"
         match-pattern-mode
-        :schemas="schemas"
-        :schema-spec="componentsSpec"
+        :schemas="schemasConf.schemas"
+        :schema-spec="schemasConf.componentSpec"
         @send-request="doDataPreview"
       />
     </el-container>

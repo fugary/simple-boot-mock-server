@@ -4,7 +4,8 @@ import { computed, ref } from 'vue'
 import { getSingleSelectOptions, toFlatKeyValue } from '@/utils'
 import { $i18nBundle } from '@/messages'
 import { ElMessage, ElButton } from 'element-plus'
-import { calcSuggestionsFunc } from '@/services/mock/MockCommonService'
+import { calcSuggestionsFunc, concatValueSuggestions } from '@/services/mock/MockCommonService'
+import { isFunction } from 'lodash-es'
 
 const props = defineProps({
   formProp: {
@@ -108,7 +109,7 @@ const inputTextModel = ref({
   text: ''
 })
 const inputTextOption = {
-  tooltip: $i18nBundle('mock.msg.pasteToProcess'),
+  tooltip: $i18nBundle('api.msg.pasteToProcess'),
   prop: 'text',
   labelWidth: '40px',
   change (value) {
@@ -128,8 +129,9 @@ const calcSuggestions = (key = 'name') => {
 const paramsOptions = computed(() => {
   const nameSuggestions = calcSuggestions('name')
   const valueSuggestions = calcSuggestions('value')
-  return params.value.map((param) => {
+  return params.value.map((param, index) => {
     const nvSpan = 8
+    const paramValueSuggestions = concatValueSuggestions(param.valueSuggestions, valueSuggestions)
     return defineFormOptions([{
       labelWidth: '30px',
       prop: 'enabled',
@@ -141,12 +143,18 @@ const paramsOptions = computed(() => {
       prop: props.nameKey,
       required: props.nameReadOnly || props.nameRequired,
       disabled: props.nameReadOnly,
+      colSpan: nvSpan,
       type: nameSuggestions ? 'autocomplete' : 'input',
       attrs: {
         fetchSuggestions: nameSuggestions,
-        triggerOnFocus: false
+        triggerOnFocus: false,
+        tabindex: index * 2 + 1
       },
-      colSpan: nvSpan
+      dynamicOption: (item, ...args) => {
+        if (isFunction(item.dynamicOption)) {
+          return item.dynamicOption(item, ...args)
+        }
+      }
     }, {
       labelWidth: '1px',
       prop: 'type',
@@ -167,10 +175,16 @@ const paramsOptions = computed(() => {
       required: props.nameReadOnly || props.valueRequired,
       colSpan: nvSpan,
       enabled: param.type !== 'file',
-      type: valueSuggestions ? 'autocomplete' : 'input',
+      type: paramValueSuggestions ? 'autocomplete' : 'input',
       attrs: {
-        fetchSuggestions: valueSuggestions,
-        triggerOnFocus: false
+        fetchSuggestions: paramValueSuggestions,
+        triggerOnFocus: false,
+        tabindex: 100 + index * 2 + 2
+      },
+      dynamicOption: (item, ...args) => {
+        if (isFunction(item.dynamicOption)) {
+          return item.dynamicOption(item, ...args)
+        }
       }
     }, {
       label: 'Files',
@@ -186,7 +200,7 @@ const paramsOptions = computed(() => {
       },
       slots: {
         trigger () {
-          return <ElButton type="primary" size="small">{$i18nBundle('mock.label.selectFile')}</ElButton>
+          return <ElButton type="primary" size="small">{$i18nBundle('api.label.selectFile')}</ElButton>
         }
       },
       colSpan: 6

@@ -61,6 +61,27 @@ export const calcSuggestionsFunc = (keySuggestions) => {
     }
   }
 }
+/**
+ * 组合多个Suggestions配置
+ * @param args
+ * @returns {(function(*, *): void)|*}
+ */
+export const concatValueSuggestions = (...args) => {
+  const suggestionsArr = args?.filter(suggestions => !!suggestions)
+  if (suggestionsArr?.length) {
+    return (queryString, cb) => {
+      const dataList = []
+      suggestionsArr.forEach(suggestions => {
+        const callback = items => isArray(items) && dataList.push(...items)
+        const suggestionsFunc = calcSuggestionsFunc(suggestions)
+        if (suggestionsFunc) {
+          suggestionsFunc(queryString, callback)
+        }
+      })
+      cb(dataList)
+    }
+  }
+}
 
 export const calcEnvSuggestions = (groupConfig) => {
   if (groupConfig) {

@@ -137,13 +137,17 @@ export const processResponse = function (response) {
   }
 }
 
-export const calcParamTarget = (groupItem, requestItem, previewData) => {
+export const calcParamTarget = (groupItem, requestItem, previewData, schemasConf) => {
   const value = previewData?.mockParams || requestItem?.mockParams
   const requestPath = `/mock/${groupItem.groupPath}${requestItem?.requestPath}`
+  let pathParams = calcSchemaParameters(schemasConf, item => item.in === 'path')
+  if (!pathParams?.length) {
+    pathParams = calcParamTargetByUrl(requestPath)
+  }
   const target = {
-    pathParams: calcParamTargetByUrl(requestPath),
-    requestParams: [],
-    headerParams: [],
+    pathParams,
+    requestParams: calcSchemaParameters(schemasConf),
+    headerParams: calcSchemaParameters(schemasConf, item => item.in === 'header'),
     [FORM_DATA]: [],
     [FORM_URL_ENCODED]: [],
     method: requestItem?.method || 'GET',
@@ -176,6 +180,32 @@ export const calcParamTarget = (groupItem, requestItem, previewData) => {
     target.groupConfig = JSON.parse(groupItem.groupConfig)
   }
   return target
+}
+
+/**
+ * 请求参数Schema计算
+ * @param schemasConf
+ * @param filter
+ * @returns {*[]}
+ */
+export const calcSchemaParameters = (schemasConf, filter = item => item.in === 'query') => {
+  const schemaContent = schemasConf?.schemas?.[0]?.parametersSchema
+  if (schemaContent) {
+    const paramSchemas = JSON.parse(schemaContent)
+    if (isArray(paramSchemas)) {
+      return paramSchemas.filter(filter).map(param => {
+        return {
+          name: param.name,
+          value: param.schema?.default || '',
+          enabled: true,
+          valueRequired: param.required,
+          valueSuggestions: param.schema?.enum,
+          dynamicOption: () => ({ required: param.required })
+        }
+      })
+    }
+  }
+  return []
 }
 
 export const preProcessParams = (params = []) => {
