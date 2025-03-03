@@ -31,7 +31,7 @@ public class LoginController {
     @PostMapping("/login")
     public SimpleResult<LoginResultVo> login(@RequestBody MockUser user) {
         MockUser loginUser = mockUserService.getOne(Wrappers.<MockUser>query().eq("user_name",
-                user.getUserName()));
+                user.getUserName()).eq("status", 1));
         if (loginUser == null || !mockUserService.matchPassword(user.getUserPassword(), loginUser.getUserPassword())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2001);
         }
