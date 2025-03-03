@@ -18,5 +18,5 @@ public class ExportRequestVo extends MockRequest {
 
     private List<ExportDataVo> dataList;
 
-    private List<ExportSchemaVo> schemas;
+    private List<ExportSchemaVo> schemas = new ArrayList<>();
 }

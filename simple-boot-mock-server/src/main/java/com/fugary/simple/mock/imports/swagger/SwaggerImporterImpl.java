@@ -48,8 +48,6 @@ public class SwaggerImporterImpl implements MockGroupImporter {
     public ExportMockVo doImport(String data) {
         ParseOptions parseOptions = new ParseOptions();
         parseOptions.setResolve(true);
-        parseOptions.setResolveRequestBody(true);
-        parseOptions.setResolveFully(true);
         SwaggerParseResult result = new OpenAPIParser().readContents(data, null, parseOptions);
         OpenAPI openAPI = result.getOpenAPI();
         if (openAPI != null) {
@@ -145,7 +143,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                 String method = operationPair.getKey();
                 Operation operation = operationPair.getValue();
                 ExportRequestVo requestVo = new ExportRequestVo();
-                requestVo.setRequestName(StringUtils.defaultIfBlank(operation.getOperationId(), operation.getSummary()));
+                requestVo.setRequestName(StringUtils.abbreviate(StringUtils.defaultIfBlank(operation.getOperationId(), operation.getSummary()), 200));
                 requestVo.setRequestPath(path);
                 requestVo.setMethod(StringUtils.upperCase(method));
                 requestVo.setDescription(operation.getDescription());

@@ -4,6 +4,7 @@ import com.fugary.simple.mock.entity.mock.MockGroup;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,5 +18,5 @@ public class ExportGroupVo extends MockGroup {
 
     private List<ExportRequestVo> requests;
 
-    private List<ExportSchemaVo> schemas;
+    private List<ExportSchemaVo> schemas = new ArrayList<>();
 }

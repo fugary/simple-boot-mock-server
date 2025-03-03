@@ -16,5 +16,5 @@ import java.util.List;
 @Data
 public class ExportDataVo extends MockData {
 
-    private List<ExportSchemaVo> schemas;
+    private List<ExportSchemaVo> schemas = new ArrayList<>();
 }
