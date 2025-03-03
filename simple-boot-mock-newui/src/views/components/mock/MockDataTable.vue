@@ -193,13 +193,13 @@ const buttons = defineTableButtons([{
   icon: 'DeleteFilled',
   click: item => {
     $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
-      .then(() => MockDataApi.deleteById(item.id))
+      .then(() => MockDataApi.deleteById(item.id, { loading: true }))
       .then(() => loadMockData())
   }
 }])
 const deleteDataList = () => {
   $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
-    .then(() => MockDataApi.removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
+    .then(() => MockDataApi.removeByIds(selectedRows.value.map(item => item.id), { loading: true }))
     .then(() => loadMockData())
 }
 const showEditWindow = ref(false)

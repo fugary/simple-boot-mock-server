@@ -65,13 +65,13 @@ const searchFormOptions = computed(() => {
 const deleteProject = (project, $event) => {
   $event?.stopPropagation()
   $coreConfirm($i18nBundle('common.msg.commonDeleteConfirm', [project.projectName]))
-    .then(() => deleteById(project.id))
+    .then(() => deleteById(project.id, { loading: true }))
     .then(() => loadMockProjects())
 }
 
 const deleteProjects = () => {
   $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
-    .then(() => MockProjectApi.removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
+    .then(() => MockProjectApi.removeByIds(selectedRows.value.map(item => item.id), { loading: true }))
     .then(() => loadMockProjects())
 }
 

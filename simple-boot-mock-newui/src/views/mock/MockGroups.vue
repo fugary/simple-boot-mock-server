@@ -183,13 +183,13 @@ const searchFormOptions = computed(() => {
 
 const deleteGroup = group => {
   $coreConfirm($i18nBundle('common.msg.commonDeleteConfirm', [group.groupName]))
-    .then(() => deleteById(group.id))
+    .then(() => deleteById(group.id, { loading: true }))
     .then(() => loadMockGroups())
 }
 
 const deleteGroups = () => {
   $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
-    .then(() => MockGroupApi.removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
+    .then(() => MockGroupApi.removeByIds(selectedRows.value.map(item => item.id), { loading: true }))
     .then(() => loadMockGroups())
 }
 
