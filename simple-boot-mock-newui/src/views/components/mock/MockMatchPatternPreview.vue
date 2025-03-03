@@ -19,6 +19,7 @@ const currentItem = ref()
 const paramTarget = ref()
 const responseTarget = ref()
 const schemas = ref([])
+const componentsSpec = ref()
 
 let saveResolve
 const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
@@ -35,7 +36,8 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
     requestId: mockRequest.id,
     dataId: viewData?.id
   }).then(schemasData => {
-    schemas.value = schemasData?.resultData || []
+    schemas.value = schemasData.schemas
+    componentsSpec.value = schemasData.componentSpec
   })
   return new Promise(resolve => (saveResolve = resolve))
 }
@@ -122,6 +124,7 @@ defineExpose({
         :response-target="responseTarget"
         match-pattern-mode
         :schemas="schemas"
+        :schema-spec="componentsSpec"
         @send-request="doDataPreview"
       />
     </el-container>
