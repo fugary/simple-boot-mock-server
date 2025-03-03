@@ -2,7 +2,6 @@ package com.fugary.simple.mock.imports.swagger;
 
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.imports.MockGroupImporter;
-import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.SchemaJsonUtils;
 import com.fugary.simple.mock.web.vo.export.*;
 import io.swagger.parser.OpenAPIParser;
@@ -100,7 +99,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                         .components(new Components().schemas(groupComponentSchemas));
                 ExportSchemaVo groupSchemaVo = new ExportSchemaVo();
                 groupSchemaVo.setBodyType(MockConstants.MOCK_SCHEMA_BODY_TYPE_COMPONENT);
-                groupSchemaVo.setRequestBodySchema(SchemaJsonUtils.toJson(groupOpenAPI, SpecVersion.V31.equals(openAPI.getSpecVersion())));
+                groupSchemaVo.setRequestBodySchema(SchemaJsonUtils.toJson(groupOpenAPI, isV31(openAPI)));
                 schemas.add(groupSchemaVo);
             }
         }
@@ -132,16 +131,15 @@ public class SwaggerImporterImpl implements MockGroupImporter {
         group.setGroupName(info.getTitle() + "-" + tag.getName());
         group.setDescription(tag.getDescription());
         group.setStatus(1);
-        group.setGroupPath(DigestUtils.md5Hex(JsonUtils.toJson(group)));
-        group.setRequests(toMockRequests(valueList));
+        group.setGroupPath(DigestUtils.md5Hex(SchemaJsonUtils.toJson(group, isV31(openAPI))));
+        group.setRequests(toMockRequests(openAPI, valueList));
         group.setSchemas(calcComponentSchemas(openAPI, group));
         return group;
     }
 
-    protected List<ExportRequestVo> toMockRequests(List<Triple<String, PathItem, List<Pair<String, Operation>>>> valueList) {
+    protected List<ExportRequestVo> toMockRequests(OpenAPI openAPI, List<Triple<String, PathItem, List<Pair<String, Operation>>>> valueList) {
         return valueList.stream().flatMap(triple -> {
             String path = triple.getLeft();
-            PathItem pathItem = triple.getMiddle();
             List<Pair<String, Operation>> operations = triple.getRight();
             return operations.stream().map(operationPair -> {
                 String method = operationPair.getKey();
@@ -152,22 +150,22 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                 requestVo.setMethod(StringUtils.upperCase(method));
                 requestVo.setDescription(operation.getDescription());
                 requestVo.setStatus(1);
-                requestVo.setSchemas(getRequestSchemaVo(operation));
-                requestVo.setDataList(toMockDataList(operation, requestVo));
+                requestVo.setSchemas(getRequestSchemaVo(openAPI, operation));
+                requestVo.setDataList(toMockDataList(openAPI, operation, requestVo));
                 return requestVo;
             });
         }).collect(Collectors.toList());
     }
 
-    protected String getParametersSchema(Operation operation) {
+    protected String getParametersSchema(OpenAPI openAPI, Operation operation) {
         if (operation.getParameters() != null) {
-            return JsonUtils.toJson(operation.getParameters());
+            return SchemaJsonUtils.toJson(operation.getParameters(), isV31(openAPI));
         }
         return null;
     }
 
-    protected List<ExportSchemaVo> getRequestSchemaVo(Operation operation) {
-        String parametersSchema = getParametersSchema(operation);
+    protected List<ExportSchemaVo> getRequestSchemaVo(OpenAPI openAPI, Operation operation) {
+        String parametersSchema = getParametersSchema(openAPI, operation);
         List<ExportSchemaVo> requestSchemas = new ArrayList<>();
         if (operation.getRequestBody() != null && operation.getRequestBody().getContent() != null) {
             for (Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry : operation.getRequestBody().getContent().entrySet()) {
@@ -177,31 +175,39 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                     ExportSchemaVo exportSchemaVo = new ExportSchemaVo();
                     exportSchemaVo.setParametersSchema(parametersSchema);
                     exportSchemaVo.setRequestMediaType(contentType);
-                    exportSchemaVo.setRequestBodySchema(JsonUtils.toJson(mediaType.getSchema()));
+                    exportSchemaVo.setRequestBodySchema(SchemaJsonUtils.toJson(mediaType.getSchema(), isV31(openAPI)));
                     exportSchemaVo.setBodyType(MockConstants.MOCK_SCHEMA_BODY_TYPE_CONTENT);
                     List<Example> requestExamples = getExamples(mediaType);
                     if (!requestExamples.isEmpty()) {
-                        exportSchemaVo.setRequestExamples(JsonUtils.toJson(requestExamples));
+                        exportSchemaVo.setRequestExamples(SchemaJsonUtils.toJson(requestExamples, isV31(openAPI)));
                     }
                     requestSchemas.add(exportSchemaVo);
                 }
             }
+        } else if (StringUtils.isNotBlank(parametersSchema)) {
+            ExportSchemaVo exportSchemaVo = new ExportSchemaVo();
+            exportSchemaVo.setParametersSchema(parametersSchema);
+            exportSchemaVo.setBodyType(MockConstants.MOCK_SCHEMA_BODY_TYPE_CONTENT);
+            requestSchemas.add(exportSchemaVo);
         }
         return requestSchemas;
     }
 
-    protected List<ExportSchemaVo> getResponseSchemaVo(ExportRequestVo requestVo, Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry) {
+    protected List<ExportSchemaVo> getResponseSchemaVo(OpenAPI openAPI, ExportRequestVo requestVo, Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry) {
         List<ExportSchemaVo> responseSchemas = new ArrayList<>();
         if (entry != null) {
-            Optional<ExportSchemaVo> requestOptional = requestVo.getSchemas().stream()
-                    .filter(schema -> StringUtils.equalsIgnoreCase(schema.getRequestMediaType(), entry.getKey()))
-                    .findFirst();
-            responseSchemas.addAll(calcResponseSchemaVo(entry, requestOptional.orElse(null)));
+            ExportSchemaVo requestSchema = null;
+            for (ExportSchemaVo reqSchema : requestVo.getSchemas()) {
+                if (requestSchema == null || StringUtils.equalsIgnoreCase(reqSchema.getRequestMediaType(), entry.getKey())) {
+                    requestSchema = reqSchema;
+                }
+            }
+            responseSchemas.addAll(calcResponseSchemaVo(openAPI, entry, requestSchema));
         }
         return responseSchemas;
     }
 
-    protected List<ExportSchemaVo> calcResponseSchemaVo(Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry, ExportSchemaVo requestSchema) {
+    protected List<ExportSchemaVo> calcResponseSchemaVo(OpenAPI openAPI, Map.Entry<String, io.swagger.v3.oas.models.media.MediaType> entry, ExportSchemaVo requestSchema) {
         List<ExportSchemaVo> dataSchemas = new ArrayList<>();
         String contentType = entry.getKey();
         io.swagger.v3.oas.models.media.MediaType mediaType = entry.getValue();
@@ -211,11 +217,11 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                 copyProperties(exportSchemaVo, requestSchema);
             }
             exportSchemaVo.setResponseMediaType(contentType);
-            exportSchemaVo.setResponseBodySchema(JsonUtils.toJson(mediaType.getSchema()));
+            exportSchemaVo.setResponseBodySchema(SchemaJsonUtils.toJson(mediaType.getSchema(), isV31(openAPI)));
             exportSchemaVo.setBodyType(MockConstants.MOCK_SCHEMA_BODY_TYPE_CONTENT);
             List<Example> responseExamples = getExamples(mediaType);
             if (!responseExamples.isEmpty()) {
-                exportSchemaVo.setResponseExamples(JsonUtils.toJson(responseExamples));
+                exportSchemaVo.setResponseExamples(SchemaJsonUtils.toJson(responseExamples, isV31(openAPI)));
             }
             dataSchemas.add(exportSchemaVo);
         }
@@ -243,7 +249,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
         }
     }
 
-    protected List<ExportDataVo> toMockDataList(Operation operation, ExportRequestVo requestVo) {
+    protected List<ExportDataVo> toMockDataList(OpenAPI openAPI, Operation operation, ExportRequestVo requestVo) {
         if (operation.getResponses() != null) {
             return operation.getResponses().entrySet().stream().flatMap(entry -> {
                 String statusCode = entry.getKey();
@@ -271,11 +277,11 @@ public class SwaggerImporterImpl implements MockGroupImporter {
                             if (!responseExamples.isEmpty()) {
                                 Object exampleValue = responseExamples.get(0).getValue();
                                 if(!(exampleValue instanceof String)){
-                                    exampleValue = JsonUtils.toJson(exampleValue);
+                                    exampleValue = SchemaJsonUtils.toJson(exampleValue, isV31(openAPI));
                                 }
                                 resData.setResponseBody((String) exampleValue);
                             }
-                            resData.setSchemas(getResponseSchemaVo(requestVo, contentEntry));
+                            resData.setSchemas(getResponseSchemaVo(openAPI, requestVo, contentEntry));
                             return resData;
                         });
                     }
@@ -310,5 +316,9 @@ public class SwaggerImporterImpl implements MockGroupImporter {
             return;
         }
         operationsList.add(Pair.of(method, operation));
+    }
+
+    protected boolean isV31(OpenAPI openAPI) {
+        return SpecVersion.V31.equals(openAPI.getSpecVersion());
     }
 }
