@@ -5,14 +5,13 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.fugary.simple.mock.config.SimpleMockConfigProperties;
-import com.fugary.simple.mock.utils.SimpleResultUtils;
-import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.service.mock.MockUserService;
 import com.fugary.simple.mock.service.token.TokenService;
+import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -88,7 +87,7 @@ public class TokenServiceImpl implements TokenService {
 
     protected MockUser toMockUser(DecodedJWT decoded) {
         String userName = decoded.getClaim(USER_NAME_KEY).asString();
-        return mockUserService.getOne(Wrappers.<MockUser>query().eq("user_name", userName));
+        return mockUserService.loadValidUser(userName);
     }
 
     protected DecodedJWT getDecoded(String accessToken) {

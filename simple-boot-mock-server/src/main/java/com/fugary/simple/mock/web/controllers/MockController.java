@@ -7,9 +7,12 @@ import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.push.MockPushProcessor;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockGroupService;
+import com.fugary.simple.mock.service.mock.MockProjectService;
+import com.fugary.simple.mock.service.mock.MockUserService;
 import com.fugary.simple.mock.utils.*;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
@@ -48,6 +51,12 @@ public class MockController {
     private MockGroupService mockGroupService;
 
     @Autowired
+    private MockUserService mockUserService;
+
+    @Autowired
+    private MockProjectService mockProjectService;
+
+    @Autowired
     private ScriptEngineProvider scriptEngineProvider;
 
     @Autowired
@@ -57,7 +66,13 @@ public class MockController {
     public ResponseEntity<?> doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String requestId = request.getHeader(MockConstants.MOCK_REQUEST_ID_HEADER);
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
-        Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request, NumberUtils.toInt(requestId), NumberUtils.toInt(dataId));
+        Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request, NumberUtils.toInt(requestId), NumberUtils.toInt(dataId), mockGroup -> {
+            if (StringUtils.isBlank(requestId) && StringUtils.isBlank(dataId)) {
+                MockUser mockUser = mockUserService.loadValidUser(mockGroup.getUserName());
+                return mockUser != null && mockProjectService.checkProjectValid(mockGroup.getUserName(), mockGroup.getProjectCode());
+            }
+            return true;
+        });
         MockData data = dataPair.getRight();
         MockRequest mockRequest = dataPair.getMiddle();
         MockGroup mockGroup = dataPair.getLeft();

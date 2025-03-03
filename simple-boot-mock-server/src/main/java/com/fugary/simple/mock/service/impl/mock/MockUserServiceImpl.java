@@ -52,6 +52,12 @@ public class MockUserServiceImpl extends ServiceImpl<MockUserMapper, MockUser> i
     }
 
     @Override
+    public MockUser loadValidUser(String userName) {
+        return getOne(Wrappers.<MockUser>query().eq("user_name",
+                userName).eq("status", 1));
+    }
+
+    @Override
     public String encryptPassword(String password) {
         return DigestUtils.sha256Hex(password);
     }

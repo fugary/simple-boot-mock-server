@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Created on 2020/5/3 22:36 .<br>
@@ -50,7 +51,7 @@ public interface MockGroupService extends IService<MockGroup> {
      * @param defaultId
      * @return
      */
-    Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId, Integer defaultId);
+    Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId, Integer defaultId, Predicate<MockGroup> checker);
 
     /**
      * 计算delay时间

@@ -54,4 +54,14 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
                 .eq("project_code", project.getProjectCode()));
         return existProjects.stream().anyMatch(existProject -> !existProject.getId().equals(project.getId()));
     }
+
+    @Override
+    public boolean checkProjectValid(String userName, String projectCode) {
+        if (MockConstants.MOCK_DEFAULT_PROJECT.equalsIgnoreCase(projectCode)) {
+            return true;
+        }
+        return exists(Wrappers.<MockProject>query().eq("user_name", userName)
+                .eq("project_code", projectCode)
+                .eq("status", 1));
+    }
 }

@@ -1,6 +1,5 @@
 package com.fugary.simple.mock.web.controllers;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.service.mock.MockUserService;
@@ -30,8 +29,7 @@ public class LoginController {
 
     @PostMapping("/login")
     public SimpleResult<LoginResultVo> login(@RequestBody MockUser user) {
-        MockUser loginUser = mockUserService.getOne(Wrappers.<MockUser>query().eq("user_name",
-                user.getUserName()).eq("status", 1));
+        MockUser loginUser = mockUserService.loadValidUser(user.getUserName());
         if (loginUser == null || !mockUserService.matchPassword(user.getUserPassword(), loginUser.getUserPassword())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2001);
         }

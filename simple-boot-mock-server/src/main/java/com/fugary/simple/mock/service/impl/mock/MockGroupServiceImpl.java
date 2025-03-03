@@ -43,6 +43,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -127,7 +128,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId, Integer defaultId) {
+    public Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId, Integer defaultId, Predicate<MockGroup> checker) {
         String requestPath = request.getServletPath();
         String method = request.getMethod();
         String requestGroupPath = calcGroupPath(requestPath);
@@ -138,6 +139,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     .eq("group_path", requestGroupPath)
                     .eq(!testRequest,"status", 1));
             if (mockGroup != null) {
+                if (checker != null && !checker.test(mockGroup)) {
+                    return Triple.of(null, null, null);
+                }
                 // 查询Request
                 QueryWrapper<MockRequest> requestQuery = Wrappers.<MockRequest>query().eq("group_id", mockGroup.getId())
                         .eq("method", method)

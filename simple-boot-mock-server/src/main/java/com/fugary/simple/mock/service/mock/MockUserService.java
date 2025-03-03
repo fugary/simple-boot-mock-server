@@ -27,6 +27,14 @@ public interface MockUserService extends IService<MockUser> {
     boolean existsUser(MockUser user);
 
     /**
+     * 获取正常用户
+     *
+     * @param userName
+     * @return
+     */
+    MockUser loadValidUser(String userName);
+
+    /**
      * 加密密码
      * @param password
      * @return
