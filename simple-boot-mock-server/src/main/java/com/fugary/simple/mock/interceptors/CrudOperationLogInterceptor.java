@@ -64,13 +64,13 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
     public Object proceedingMethod(ProceedingJoinPoint joinpoint) throws Throwable {
         long startTime = System.currentTimeMillis();
         Object result = null;
-        Exception exception = null;
+        Throwable exception = null;
         boolean mockLogEnabled = simpleMockConfigProperties.isMockLogEnabled();
         MockLog.MockLogBuilder logBuilder = mockLogEnabled ? initLogBuilder(joinpoint) : null;
         try {
             SimpleLogUtils.setLogBuilder(logBuilder);
             result = joinpoint.proceed();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             exception = e;
         } finally {
             SimpleLogUtils.clearLogBuilder();
@@ -107,7 +107,7 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
         return request != null && (MockController.class.isAssignableFrom(declaringType) || !HttpMethod.GET.matches(request.getMethod()));
     }
 
-    private void processLog(MockLog.MockLogBuilder logBuilder, ProceedingJoinPoint joinpoint, long startTime, Object result, Exception exception) {
+    private void processLog(MockLog.MockLogBuilder logBuilder, ProceedingJoinPoint joinpoint, long startTime, Object result, Throwable exception) {
         MethodSignature signature = (MethodSignature) joinpoint.getSignature();
         Object[] args = joinpoint.getArgs();
         if (logBuilder != null) {
