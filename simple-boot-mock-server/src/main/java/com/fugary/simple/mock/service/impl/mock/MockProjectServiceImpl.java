@@ -94,8 +94,11 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
     public SimpleResult<MockProject> saveMockProject(MockProject project) {
         if (project.getId() != null) {
             MockProject oldProject = getById(project.getId());
-            if (oldProject != null && !StringUtils.equals(project.getProjectCode(), oldProject.getProjectCode())) { // projectCode有变化
+            if (oldProject != null
+                    && (!StringUtils.equals(project.getProjectCode(), oldProject.getProjectCode())
+                    || !StringUtils.equals(project.getUserName(), oldProject.getUserName()))) { // projectCode有变化
                 mockGroupService.update(Wrappers.<MockGroup>update()
+                        .set("user_name", project.getUserName())
                         .set("project_code", project.getProjectCode())
                         .eq("user_name", oldProject.getUserName())
                         .eq("project_code", oldProject.getProjectCode()));
