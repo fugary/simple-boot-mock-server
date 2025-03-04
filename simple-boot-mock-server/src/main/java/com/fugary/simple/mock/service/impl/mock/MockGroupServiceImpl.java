@@ -353,9 +353,10 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         }
         mockGroup.setId(null);
         mockGroup.setGroupPath(SimpleMockUtils.uuid()); // 新路径
-        mockGroup.setGroupName(StringUtils.join(mockGroup.getGroupName(), "-copy"));
         if (StringUtils.isNotBlank(newProjectCode)) {
             mockGroup.setProjectCode(newProjectCode);
+        } else {
+            mockGroup.setGroupName(StringUtils.join(mockGroup.getGroupName(), "-copy"));
         }
         saveOrUpdate(mockGroup);
         List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().eq("group_id", groupId));
