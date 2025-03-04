@@ -458,7 +458,10 @@ const onSelectDataItem = (dataItem) => {
       ref="dataResponseEditRef"
       @save-data-response="saveDataResponse"
     />
-    <mock-request-preview ref="mockPreviewRef" />
+    <mock-request-preview
+      ref="mockPreviewRef"
+      affix-enabled
+    />
   </el-container>
 </template>
 

@@ -183,6 +183,7 @@ defineExpose({
       :mock-response-editable="!!previewData"
       :schemas="schemasConf.schemas"
       :schema-spec="schemasConf.componentSpec"
+      v-bind="$attrs"
       @send-request="doDataPreview"
       @save-mock-response-body="doSaveMockResponseBody"
     />

@@ -5,7 +5,7 @@ import MockRequestFormRes from '@/views/components/mock/form/MockRequestFormRes.
 import MockRequestFormReq from '@/views/components/mock/form/MockRequestFormReq.vue'
 import MockRequestFormUrl from '@/views/components/mock/form/MockRequestFormUrl.vue'
 import MockRequestFormMatchPattern from '@/views/components/mock/form/MockRequestFormMatchPattern.vue'
-import { addParamsToURL } from '@/utils'
+import { addParamsToURL, calcAffixOffset } from '@/utils'
 
 const props = defineProps({
   responseTarget: {
@@ -15,6 +15,10 @@ const props = defineProps({
   requestPath: {
     type: String,
     required: true
+  },
+  affixEnabled: {
+    type: Boolean,
+    default: false
   },
   matchPatternMode: {
     type: Boolean,
@@ -75,6 +79,7 @@ const responseExamples = computed(() => {
   const examples = schema.value?.responseExamples
   return examples ? JSON.parse(examples) : []
 })
+const sendButtonOffset = computed(() => calcAffixOffset(20))
 
 </script>
 
@@ -86,46 +91,55 @@ const responseExamples = computed(() => {
     >
       <template #default="{form}">
         <el-row>
-          <el-col :span="20">
-            <mock-request-form-url
-              v-if="matchPatternMode"
-              v-model="paramTarget"
-            />
-            <el-descriptions
-              v-else
-              :column="1"
-              class="form-edit-width-100 margin-bottom3"
-              border
+          <el-col>
+            <el-affix
+              v-disable-affix="!affixEnabled"
+              :offset="sendButtonOffset"
             >
-              <el-descriptions-item
-                :label="paramTarget.method"
-                min-width="40px"
-              >
-                <el-text
-                  class="padding-right1"
-                  truncated
-                  style="white-space: break-spaces;word-break: break-all;"
+              <el-row style="background: var(--el-bg-color)">
+                <el-col :span="20">
+                  <mock-request-form-url
+                    v-if="matchPatternMode"
+                    v-model="paramTarget"
+                  />
+                  <el-descriptions
+                    v-else
+                    :column="1"
+                    class="form-edit-width-100 margin-bottom3"
+                    border
+                  >
+                    <el-descriptions-item
+                      :label="paramTarget.method"
+                      min-width="40px"
+                    >
+                      <el-text
+                        class="padding-right1"
+                        truncated
+                        style="white-space: break-spaces;word-break: break-all;"
+                      >
+                        {{ requestUrl }}
+                      </el-text>
+                      <mock-url-copy-link
+                        style="vertical-align: unset;"
+                        :url-path="requestUrl"
+                      />
+                    </el-descriptions-item>
+                  </el-descriptions>
+                </el-col>
+                <el-col
+                  :span="4"
+                  class="flex-center-col padding-left2"
                 >
-                  {{ requestUrl }}
-                </el-text>
-                <mock-url-copy-link
-                  style="vertical-align: unset;"
-                  :url-path="requestUrl"
-                />
-              </el-descriptions-item>
-            </el-descriptions>
-          </el-col>
-          <el-col
-            :span="4"
-            class="flex-center-col padding-left2"
-          >
-            <el-button
-              type="primary"
-              style="margin-top: -15px;"
-              @click="sendRequest(form)"
-            >
-              {{ $t('mock.label.sendRequest') }}
-            </el-button>
+                  <el-button
+                    type="primary"
+                    style="margin-top: -15px;"
+                    @click="sendRequest(form)"
+                  >
+                    {{ $t('mock.label.sendRequest') }}
+                  </el-button>
+                </el-col>
+              </el-row>
+            </el-affix>
           </el-col>
         </el-row>
         <el-row>

@@ -494,3 +494,6 @@ html, body, #app, .index-container {
     resize: horizontal;
     overflow: auto;
 }
+.disable-affix .el-affix--fixed {
+    position: unset;
+}

@@ -12,7 +12,7 @@ import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 import { useGlobalSearchParamStore } from '@/stores/GlobalSearchParamStore'
 import { useTabsViewStore } from '@/stores/TabsViewStore'
-import { LoadSaveParamMode } from '@/consts/GlobalConstants'
+import { GlobalLayoutMode, LoadSaveParamMode } from '@/consts/GlobalConstants'
 
 export const isAdminUser = () => {
   return isUserAdmin(useLoginConfigStore().accountInfo?.userName)
@@ -381,6 +381,12 @@ export const checkShowColumn = (dataList, field) => {
     }
   }
   return hasFieldData
+}
+export const calcAffixOffset = (fix = 10) => {
+  let initValue = 60 + fix
+  useGlobalConfigStore().layoutMode === GlobalLayoutMode.TOP && useGlobalConfigStore().isShowBreadcrumb && (initValue += 40)
+  useTabsViewStore().isTabMode && (initValue += 40)
+  return initValue
 }
 
 export default {
