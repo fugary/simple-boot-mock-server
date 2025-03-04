@@ -12,7 +12,7 @@ import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { chunk } from 'lodash-es'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { useRoute } from 'vue-router'
-import { isDefaultProject } from '@/consts/MockConstants'
+import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useWindowSize } from '@vueuse/core'
 
 const route = useRoute()
@@ -216,7 +216,7 @@ const pageAttrs = {
                       icon="LockFilled"
                       :size="16"
                     />
-                    {{ project.projectName }}
+                    {{ project.projectCode===MOCK_DEFAULT_PROJECT?$t('mock.label.defaultProject'):project.projectName }}
                   </el-text>
                 </el-checkbox>
                 <template v-if="project.showOperations">

@@ -28,7 +28,12 @@ export const useSelectProjects = (searchParam) => {
   const loadSelectProjects = (data, config) => {
     return selectProjects(data, config).then(result => {
       projects.value = result || []
-      projectOptions.value = projects.value.map(project => ({ label: project.projectName, value: project.projectCode }))
+      projectOptions.value = projects.value.map(project => {
+        if (project.projectCode === MOCK_DEFAULT_PROJECT) {
+          return { label: $i18nBundle('mock.label.defaultProject'), value: project.projectCode }
+        }
+        return { label: project.projectName, value: project.projectCode }
+      })
     })
   }
   const loadProjectsAndRefreshOptions = async () => {

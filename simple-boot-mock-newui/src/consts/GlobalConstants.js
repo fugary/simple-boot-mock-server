@@ -57,7 +57,7 @@ export const useSearchStatus = ({ prop = 'status', activeValue = 1, inactiveValu
 export const useFormDelay = (prop = 'delay') => {
   return {
     labelKey: 'common.label.delay',
-    tooltip: '延迟时间，单位：毫秒',
+    tooltip: $i18nBundle('mock.msg.delayTooltip'),
     type: 'input-number',
     prop
   }
