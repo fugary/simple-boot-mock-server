@@ -3,11 +3,16 @@ package com.fugary.simple.mock.service.impl.mock;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.contants.MockConstants;
+import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockProject;
 import com.fugary.simple.mock.mapper.mock.MockProjectMapper;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
+import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -63,5 +68,25 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
         return exists(Wrappers.<MockProject>query().eq("user_name", userName)
                 .eq("project_code", projectCode)
                 .eq("status", 1));
+    }
+
+    @Override
+    public SimpleResult<MockProject> copyMockProject(Integer projectId) {
+        MockProject mockProject = getById(projectId);
+        if (mockProject == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        MockProject oldProject = SimpleMockUtils.copy(mockProject, MockProject.class);
+        mockProject.setId(null);
+        mockProject.setProjectCode(SimpleMockUtils.uuid()); // 新Project代码
+        mockProject.setProjectName(StringUtils.join(mockProject.getProjectName(), "-copy"));
+        saveOrUpdate(mockProject);
+        List<MockGroup> mockGroups = mockGroupService.list(Wrappers.<MockGroup>query()
+                .eq("user_name", oldProject.getUserName())
+                .eq("project_code", oldProject.getProjectCode()));
+        for (MockGroup mockGroup : mockGroups) {
+            mockGroupService.copyMockGroup(mockGroup.getId(), mockProject.getProjectCode());
+        }
+        return SimpleResultUtils.createSimpleResult(mockProject);
     }
 }

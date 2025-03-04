@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -297,5 +299,48 @@ public class SimpleMockUtils {
 
     public static String calcMockSchemaKey(Integer groupId, Integer requestId, Integer dataId) {
         return StringUtils.join(groupId, "-", requestId, "-", dataId);
+    }
+
+    /**
+     * 复制属性
+     *
+     * @param from
+     * @param to
+     * @return
+     * @param <T>
+     * @param <S>
+     */
+    public static <T, S> T copy(S from, T to) {
+        try {
+            BeanUtils.copyProperties(from, to);
+        } catch (Exception e) {
+            log.error("copy属性错误", e);
+        }
+        return to;
+    }
+
+    /**
+     * 复制属性
+     *
+     * @param from
+     * @param to
+     * @return
+     * @param <T>
+     * @param <S>
+     */
+    public static <T, S> T copy(S from, Class<T> to) {
+        if (from == null) {
+            return null;
+        }
+        Constructor<T> constructor = null;
+        T target = null;
+        try {
+            constructor = to.getConstructor();
+            target = constructor.newInstance();
+            copy(from, target);
+        } catch (Exception e) {
+            log.error("copy属性错误", e);
+        }
+        return target;
     }
 }

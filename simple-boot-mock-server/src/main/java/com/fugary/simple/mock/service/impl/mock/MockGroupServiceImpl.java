@@ -346,7 +346,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public SimpleResult<MockGroup> copyMockGroup(Integer groupId) {
+    public SimpleResult<MockGroup> copyMockGroup(Integer groupId, String newProjectCode) {
         MockGroup mockGroup = getById(groupId);
         if (mockGroup == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
@@ -354,6 +354,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         mockGroup.setId(null);
         mockGroup.setGroupPath(SimpleMockUtils.uuid()); // 新路径
         mockGroup.setGroupName(StringUtils.join(mockGroup.getGroupName(), "-copy"));
+        if (StringUtils.isNotBlank(newProjectCode)) {
+            mockGroup.setProjectCode(newProjectCode);
+        }
         saveOrUpdate(mockGroup);
         List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().eq("group_id", groupId));
         for (MockRequest mockRequest : mockRequests) {

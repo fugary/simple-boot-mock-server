@@ -62,6 +62,11 @@ public class MockProjectController {
         return SimpleResultUtils.createSimpleResult(mockProjectService.deleteMockProjects(ids));
     }
 
+    @PostMapping("/copyMockProject/{projectId}")
+    public SimpleResult<MockProject> copyMockProject(@PathVariable("projectId") Integer id) {
+        return mockProjectService.copyMockProject(id);
+    }
+
     @PostMapping
     public SimpleResult save(@RequestBody MockProject project) {
         MockUser loginUser = getLoginUser();

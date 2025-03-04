@@ -102,8 +102,8 @@ public class MockGroupController {
     }
 
     @PostMapping("/copyMockGroup/{groupId}")
-    public SimpleResult<MockGroup> copyMockRequest(@PathVariable("groupId") Integer id) {
-        return mockGroupService.copyMockGroup(id);
+    public SimpleResult<MockGroup> copyMockGroup(@PathVariable("groupId") Integer id) {
+        return mockGroupService.copyMockGroup(id, null);
     }
 
     @PostMapping("/import")

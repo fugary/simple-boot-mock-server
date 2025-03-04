@@ -2,6 +2,7 @@ package com.fugary.simple.mock.service.mock;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fugary.simple.mock.entity.mock.MockProject;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 
 import java.util.List;
 
@@ -44,4 +45,12 @@ public interface MockProjectService extends IService<MockProject> {
      * @return
      */
     boolean checkProjectValid(String userName, String projectCode);
+
+    /**
+     * 复制一份数据
+     *
+     * @param projectId
+     * @return
+     */
+    SimpleResult<MockProject> copyMockProject(Integer projectId);
 }
