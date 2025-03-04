@@ -111,5 +111,11 @@ export const useProjectEditHook = (searchParam, userOptions) => {
     editFormOptions
   }
 }
+export const copyMockProject = (id, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_PROJECT_URL}/copyMockProject/${id}`,
+    method: 'POST'
+  }, config)).then(response => response.data)
+}
 
 export default MockProjectApi

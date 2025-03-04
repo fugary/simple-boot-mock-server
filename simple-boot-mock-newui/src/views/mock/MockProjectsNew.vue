@@ -1,9 +1,9 @@
 <script setup lang="jsx">
-import { computed, onMounted, onActivated, ref } from 'vue'
+import { computed, onMounted, onActivated } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
-import MockProjectApi, { useProjectEditHook } from '@/api/mock/MockProjectApi'
+import MockProjectApi, { copyMockProject, useProjectEditHook } from '@/api/mock/MockProjectApi'
 import { $coreConfirm, $goto, formatDate, isAdminUser } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
@@ -13,6 +13,7 @@ import { chunk } from 'lodash-es'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { useRoute } from 'vue-router'
 import { isDefaultProject } from '@/consts/MockConstants'
+import { useWindowSize } from '@vueuse/core'
 
 const route = useRoute()
 
@@ -22,7 +23,13 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
   defaultParam: { page: useDefaultPage(50) },
   searchMethod: search
 })
-const loadMockProjects = (pageNumber) => searchMethod(pageNumber)
+const loadMockProjects = (pageNumber) => {
+  tableData.value = []
+  if (colSize.value && searchParam.value.page) {
+    searchParam.value.page.pageSize = Math.floor(10 / colSize.value) * colSize.value
+  }
+  return searchMethod(pageNumber)
+}
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
@@ -80,8 +87,7 @@ const saveProjectItem = (item) => {
   return saveOrUpdate(item).then(() => loadMockProjects())
 }
 
-const colSize = ref(4)
-const minWidth = '110px'
+const minWidth = '100px'
 
 const tableProjectItems = computed(() => {
   return tableData.value.map(project => {
@@ -90,14 +96,14 @@ const tableProjectItems = computed(() => {
       defaultProject,
       project,
       projectItems: [{
-        labelKey: 'mock.label.projectCode',
+        labelKey: 'common.label.status',
         formatter () {
-          return <>
-            <span class="margin-right2">{project.projectCode}</span>
-            <DelFlagTag v-model={project.status} clickToToggle={!defaultProject}
-                        onToggleValue={(status) => saveProjectItem({ ...project, status })} />
-          </>
+          return <DelFlagTag v-model={project.status} clickToToggle={!defaultProject}
+                             onToggleValue={(status) => saveProjectItem({ ...project, status })} />
         }
+      }, {
+        labelKey: 'mock.label.projectCode',
+        value: project.projectCode
       }, {
         labelKey: 'common.label.createDate',
         value: formatDate(project.createDate),
@@ -121,6 +127,20 @@ const dataRows = computed(() => {
 
 const selectedRows = computed(() => tableProjectItems.value.map(item => item.project).filter(project => project?.selected))
 
+const toCopyProject = (project, $event) => {
+  $event?.stopPropagation()
+  $coreConfirm($i18nBundle('common.msg.confirmCopy'))
+    .then(() => copyMockProject(project.id, { loading: true }))
+    .then(() => loadMockProjects())
+}
+const { width } = useWindowSize()
+const colSize = computed(() => {
+  return Math.floor(width.value / 420) || 1
+})
+const pageAttrs = {
+  layout: 'total, prev, pager, next',
+  background: true
+}
 </script>
 
 <template>
@@ -168,11 +188,14 @@ const selectedRows = computed(() => tableProjectItems.value.map(item => item.pro
         <el-col
           v-for="{project, projectItems, defaultProject} in dataRow"
           :key="project.id"
-          :span="6"
+          :span="Math.floor(24/colSize)"
+          @mouseenter="project.showOperations=true"
+          @mouseleave="project.showOperations=false"
         >
           <el-card
             shadow="hover"
             class="small-card operation-card"
+            style="border-radius: 10px;"
             :class="{pointer: project.status===1, 'project-selected': project.selected}"
             @click="gotoMockGroups(project)"
           >
@@ -196,26 +219,38 @@ const selectedRows = computed(() => tableProjectItems.value.map(item => item.pro
                     {{ project.projectName }}
                   </el-text>
                 </el-checkbox>
-                <el-button
-                  v-if="!defaultProject"
-                  v-common-tooltip="$t('common.label.edit')"
-                  type="primary"
-                  size="small"
-                  round
-                  @click="newOrEdit(project.id, $event)"
-                >
-                  <common-icon icon="Edit" />
-                </el-button>
-                <el-button
-                  v-if="!defaultProject"
-                  v-common-tooltip="$t('common.label.delete')"
-                  type="danger"
-                  size="small"
-                  round
-                  @click="deleteProject(project, $event)"
-                >
-                  <common-icon icon="DeleteFilled" />
-                </el-button>
+                <template v-if="project.showOperations">
+                  <el-button
+                    v-if="!defaultProject"
+                    v-common-tooltip="$t('common.label.edit')"
+                    type="primary"
+                    size="small"
+                    round
+                    @click="newOrEdit(project.id, $event)"
+                  >
+                    <common-icon icon="Edit" />
+                  </el-button>
+                  <el-button
+                    v-if="!defaultProject"
+                    v-common-tooltip="$t('common.label.copy')"
+                    type="warning"
+                    size="small"
+                    round
+                    @click="toCopyProject(project, $event)"
+                  >
+                    <common-icon icon="FileCopyFilled" />
+                  </el-button>
+                  <el-button
+                    v-if="!defaultProject"
+                    v-common-tooltip="$t('common.label.delete')"
+                    type="danger"
+                    size="small"
+                    round
+                    @click="deleteProject(project, $event)"
+                  >
+                    <common-icon icon="DeleteFilled" />
+                  </el-button>
+                </template>
               </div>
             </template>
             <common-descriptions
@@ -226,6 +261,14 @@ const selectedRows = computed(() => tableProjectItems.value.map(item => item.pro
           </el-card>
         </el-col>
       </el-row>
+      <el-pagination
+        style="justify-content: center;"
+        :total="searchParam.page.totalCount"
+        :page-size="searchParam.page.pageSize"
+        :current-page="searchParam.page.pageNumber"
+        v-bind="pageAttrs"
+        @current-change="loadMockProjects($event)"
+      />
     </el-container>
     <simple-edit-window
       v-model="currentProject"

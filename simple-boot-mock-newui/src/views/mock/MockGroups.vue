@@ -136,7 +136,7 @@ const buttons = defineTableButtons([{
   type: 'warning',
   click: item => {
     $coreConfirm($i18nBundle('common.msg.confirmCopy'))
-      .then(() => copyMockGroup(item.id))
+      .then(() => copyMockGroup(item.id, { loading: true }))
       .then(() => loadMockGroups())
   }
 }, {
