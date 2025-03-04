@@ -6,6 +6,7 @@ import MockRequestFormReq from '@/views/components/mock/form/MockRequestFormReq.
 import MockRequestFormUrl from '@/views/components/mock/form/MockRequestFormUrl.vue'
 import MockRequestFormMatchPattern from '@/views/components/mock/form/MockRequestFormMatchPattern.vue'
 import { addParamsToURL, calcAffixOffset } from '@/utils'
+import { useDisableAffix } from '@/hooks/useDisableAffix'
 
 const props = defineProps({
   responseTarget: {
@@ -80,7 +81,7 @@ const responseExamples = computed(() => {
   return examples ? JSON.parse(examples) : []
 })
 const sendButtonOffset = computed(() => calcAffixOffset(20))
-
+const { disableAffix, AffixToggleButton } = useDisableAffix()
 </script>
 
 <template>
@@ -93,7 +94,7 @@ const sendButtonOffset = computed(() => calcAffixOffset(20))
         <el-row>
           <el-col>
             <el-affix
-              v-disable-affix="!affixEnabled"
+              v-disable-affix="!affixEnabled||disableAffix"
               :offset="sendButtonOffset"
             >
               <el-row style="background: var(--el-bg-color)">
@@ -123,6 +124,7 @@ const sendButtonOffset = computed(() => calcAffixOffset(20))
                         style="vertical-align: unset;"
                         :url-path="requestUrl"
                       />
+                      <affix-toggle-button circle />
                     </el-descriptions-item>
                   </el-descriptions>
                 </el-col>
