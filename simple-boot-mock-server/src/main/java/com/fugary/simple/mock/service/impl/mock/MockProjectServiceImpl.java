@@ -89,4 +89,19 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
         }
         return SimpleResultUtils.createSimpleResult(mockProject);
     }
+
+    @Override
+    public SimpleResult<MockProject> saveMockProject(MockProject project) {
+        if (project.getId() != null) {
+            MockProject oldProject = getById(project.getId());
+            if (oldProject != null && !StringUtils.equals(project.getProjectCode(), oldProject.getProjectCode())) { // projectCode有变化
+                mockGroupService.update(Wrappers.<MockGroup>update()
+                        .set("project_code", project.getProjectCode())
+                        .eq("user_name", oldProject.getUserName())
+                        .eq("project_code", oldProject.getProjectCode()));
+            }
+        }
+        saveOrUpdate(SimpleMockUtils.addAuditInfo(project));
+        return SimpleResultUtils.createSimpleResult(project);
+    }
 }

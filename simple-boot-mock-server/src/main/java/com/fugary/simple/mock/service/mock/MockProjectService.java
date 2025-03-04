@@ -53,4 +53,12 @@ public interface MockProjectService extends IService<MockProject> {
      * @return
      */
     SimpleResult<MockProject> copyMockProject(Integer projectId);
+
+    /**
+     * 保存项目信息
+     *
+     * @param project
+     * @return
+     */
+    SimpleResult<MockProject> saveMockProject(MockProject project);
 }

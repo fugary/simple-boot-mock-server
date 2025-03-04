@@ -8,7 +8,6 @@ import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockProject;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.service.mock.MockProjectService;
-import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
@@ -68,7 +67,7 @@ public class MockProjectController {
     }
 
     @PostMapping
-    public SimpleResult save(@RequestBody MockProject project) {
+    public SimpleResult<MockProject> save(@RequestBody MockProject project) {
         MockUser loginUser = getLoginUser();
         if (StringUtils.isBlank(project.getUserName()) && loginUser != null) {
             project.setUserName(loginUser.getUserName());
@@ -79,7 +78,7 @@ public class MockProjectController {
         if (mockProjectService.existsMockProject(project)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
         }
-        return SimpleResultUtils.createSimpleResult(mockProjectService.saveOrUpdate(SimpleMockUtils.addAuditInfo(project)));
+        return mockProjectService.saveMockProject(project);
     }
 
     @GetMapping("/selectProjects")
