@@ -47,7 +47,7 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
         for (Integer id : ids) {
             deleteMockProject(id);
         }
-        return false;
+        return true;
     }
 
     @Override
