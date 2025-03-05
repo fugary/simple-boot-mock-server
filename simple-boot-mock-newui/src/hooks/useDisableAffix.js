@@ -11,7 +11,7 @@ import { useElementSize } from '@vueuse/core'
  * @return {{affixChangeButton: DefineSetupFnComponent<Record<string, any>, {}, {}>, disableAffix: Ref<UnwrapRef<boolean>>}}
  */
 export const useDisableAffix = (scrollSelector = '.home-main', config = {}) => {
-  const disableAffix = ref(false)
+  const disableAffix = ref(config.defaultDisabled ?? false)
   const toggleDisableAffix = () => {
     disableAffix.value = !disableAffix.value
   }
