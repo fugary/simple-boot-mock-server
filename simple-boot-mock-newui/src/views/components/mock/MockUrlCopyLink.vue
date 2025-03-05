@@ -1,6 +1,8 @@
 <script setup>
 import { $copyText } from '@/utils'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
+import { isExternalLink } from '@/components/utils'
+import { computed } from 'vue'
 
 const props = defineProps({
   urlPath: {
@@ -17,21 +19,28 @@ const props = defineProps({
   }
 })
 
-const copyInfo = () => {
+const info = computed(() => {
   let info = props.content
   if (!info && props.urlPath) {
     info = getMockUrl(props.urlPath)
   }
-  if (info) {
-    $copyText(info)
+  return info
+})
+
+const copyInfo = () => {
+  if (info.value) {
+    $copyText(info.value)
   }
 }
+
+const externalLink = computed(() => isExternalLink(info.value) ? info.value : '')
 
 </script>
 
 <template>
   <el-link
     v-common-tooltip="tooltip"
+    v-open-new-window="externalLink"
     type="primary"
     :underline="false"
     @click="copyInfo"
