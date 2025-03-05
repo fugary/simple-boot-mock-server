@@ -30,7 +30,7 @@ export const useSelectProjects = (searchParam) => {
       projects.value = result || []
       projectOptions.value = projects.value.map(project => {
         if (project.projectCode === MOCK_DEFAULT_PROJECT) {
-          return { label: $i18nBundle('mock.label.defaultProject'), value: project.projectCode }
+          return { labelKey: 'mock.label.defaultProject', value: project.projectCode }
         }
         return { label: project.projectName, value: project.projectCode }
       })
