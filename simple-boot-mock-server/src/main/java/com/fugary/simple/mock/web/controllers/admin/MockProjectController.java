@@ -39,7 +39,8 @@ public class MockProjectController {
                 .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("project_name", keyword)
-                .or().like("project_code", keyword));
+                .or().like("project_code", keyword)
+                .or().like("description", keyword));
         String userName = SecurityUtils.getUserName(queryVo.getUserName());
         queryWrapper.and(wrapper -> wrapper.and(wrapper1 -> wrapper1.eq("user_name", userName)
                 .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)));

@@ -41,7 +41,8 @@ public class UserController {
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         if (StringUtils.isNotBlank(keyword)) {
             queryWrapper.and(wrapper -> wrapper.like("user_name", keyword)
-                    .or().like("nick_name", keyword));
+                    .or().like("nick_name", keyword)
+                    .or().like("user_email", keyword));
         }
         return SimpleResultUtils.createSimpleResult(mockUserService.page(page, queryWrapper));
     }

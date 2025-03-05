@@ -47,7 +47,10 @@ public class MockRequestController {
         }
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         if (StringUtils.isNotBlank(keyword)) {
-            queryWrapper.and(wrapper -> wrapper.like("request_path", keyword));
+            queryWrapper.and(wrapper -> wrapper
+                    .like("request_path", keyword)
+                    .or().like("request_name", keyword)
+                    .or().like("description", keyword));
         }
         if (StringUtils.isNotBlank(queryVo.getMethod())) {
             queryWrapper.and(wrapper -> wrapper.eq("method", queryVo.getMethod()));

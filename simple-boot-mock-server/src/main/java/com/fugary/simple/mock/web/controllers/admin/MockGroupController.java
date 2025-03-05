@@ -58,7 +58,8 @@ public class MockGroupController {
         QueryWrapper<MockGroup> queryWrapper = Wrappers.<MockGroup>query()
                 .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
         queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("group_name", keyword)
-                    .or().like("group_path", keyword));
+                    .or().like("group_path", keyword)
+                    .or().like("description", keyword));
         String userName = SecurityUtils.getUserName(queryVo.getUserName());
         queryWrapper.eq("user_name", userName);
         queryWrapper.eq("project_code", StringUtils.defaultIfBlank(queryVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
