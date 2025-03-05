@@ -91,67 +91,83 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
       :model="paramTarget"
     >
       <template #default="{form}">
-        <el-row>
-          <el-col>
-            <el-affix
-              v-disable-affix="!affixEnabled||disableAffix"
-              :offset="sendButtonOffset"
-            >
-              <el-row style="background: var(--el-bg-color)">
-                <el-col :span="20">
-                  <mock-request-form-url
-                    v-if="matchPatternMode"
-                    v-model="paramTarget"
-                  />
-                  <el-descriptions
-                    v-else
-                    :column="1"
-                    class="form-edit-width-100 margin-bottom3"
-                    border
-                  >
-                    <el-descriptions-item
-                      :label="paramTarget.method"
-                      min-width="40px"
+        <template v-if="!matchPatternMode">
+          <el-row>
+            <el-col>
+              <el-affix
+                v-disable-affix="!affixEnabled || disableAffix"
+                :offset="sendButtonOffset"
+              >
+                <el-row style="background: var(--el-bg-color)">
+                  <el-col :span="20">
+                    <el-descriptions
+                      :column="1"
+                      class="form-edit-width-100 margin-bottom3"
+                      border
                     >
-                      <el-text
-                        class="padding-right1"
-                        truncated
-                        style="white-space: break-spaces;word-break: break-all;"
+                      <el-descriptions-item
+                        :label="paramTarget.method"
+                        min-width="40px"
                       >
-                        {{ requestUrl }}
-                      </el-text>
-                      <mock-url-copy-link
-                        style="vertical-align: unset;"
-                        :url-path="requestUrl"
-                      />
-                      <affix-toggle-button circle />
-                    </el-descriptions-item>
-                  </el-descriptions>
-                </el-col>
-                <el-col
-                  :span="4"
-                  class="flex-center-col padding-left2"
-                >
-                  <el-button
-                    type="primary"
-                    style="margin-top: -15px;"
-                    @click="sendRequest(form)"
+                        <el-text
+                          class="padding-right1"
+                          truncated
+                          style="white-space: break-spaces;word-break: break-all;display: inline;"
+                        >
+                          {{ requestUrl }}
+                        </el-text>
+                        <mock-url-copy-link
+                          style="vertical-align: unset;"
+                          :url-path="requestUrl"
+                        />
+                        <affix-toggle-button
+                          v-if="affixEnabled"
+                          circle
+                        />
+                      </el-descriptions-item>
+                    </el-descriptions>
+                  </el-col>
+                  <el-col
+                    :span="4"
+                    class="flex-center-col padding-left2"
                   >
-                    {{ $t('mock.label.sendRequest') }}
-                  </el-button>
-                </el-col>
-              </el-row>
-            </el-affix>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col>
-            <mock-request-form-match-pattern
-              v-if="matchPatternMode"
-              v-model="paramTarget"
-            />
-          </el-col>
-        </el-row>
+                    <el-button
+                      type="primary"
+                      style="margin-top: -15px;"
+                      @click="sendRequest(form)"
+                    >
+                      {{ $t('mock.label.sendRequest') }}
+                    </el-button>
+                  </el-col>
+                </el-row>
+              </el-affix>
+            </el-col>
+          </el-row>
+        </template>
+        <template v-else>
+          <el-row>
+            <el-col :span="20">
+              <mock-request-form-url v-model="paramTarget" />
+            </el-col>
+            <el-col
+              :span="4"
+              class="flex-center-col padding-left2"
+            >
+              <el-button
+                type="primary"
+                style="margin-top: -15px;"
+                @click="sendRequest(form)"
+              >
+                {{ $t('mock.label.sendRequest') }}
+              </el-button>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col>
+              <mock-request-form-match-pattern v-model="paramTarget" />
+            </el-col>
+          </el-row>
+        </template>
         <mock-request-form-req
           v-model="paramTarget"
           :show-authorization="!matchPatternMode"
