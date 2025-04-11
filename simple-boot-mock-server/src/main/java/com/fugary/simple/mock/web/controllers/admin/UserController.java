@@ -66,14 +66,19 @@ public class UserController {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         boolean needEncryptPassword= true;
+        MockUser existUser = null;
         if (user.getId() != null) {
-            MockUser existUser = mockUserService.getById(user.getId());
+            existUser = mockUserService.getById(user.getId());
             needEncryptPassword = existUser == null || !StringUtils.equalsIgnoreCase(existUser.getUserPassword(), user.getUserPassword());
         }
         if (needEncryptPassword) {
             user.setUserPassword(mockUserService.encryptPassword(user.getUserPassword()));
         }
-        return SimpleResultUtils.createSimpleResult(mockUserService.saveOrUpdate(SimpleMockUtils.addAuditInfo(user)));
+        boolean saveResult = mockUserService.saveOrUpdate(SimpleMockUtils.addAuditInfo(user));
+        if (saveResult) {
+            mockUserService.updateUserName(user, existUser);
+        }
+        return SimpleResultUtils.createSimpleResult(saveResult);
     }
 
     @GetMapping("/info")

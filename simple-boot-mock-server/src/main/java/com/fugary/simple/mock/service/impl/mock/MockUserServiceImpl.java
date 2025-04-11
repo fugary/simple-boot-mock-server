@@ -66,4 +66,14 @@ public class MockUserServiceImpl extends ServiceImpl<MockUserMapper, MockUser> i
     public boolean matchPassword(String password, String encryptPassword) {
         return StringUtils.equalsIgnoreCase(encryptPassword(password), encryptPassword);
     }
+
+    @Override
+    public void updateUserName(MockUser user, MockUser existUser) {
+        if (existUser != null && !StringUtils.equalsIgnoreCase(existUser.getUserName(), user.getUserName())) {
+            mockGroupService.update(Wrappers.<MockGroup>update().eq("user_name", existUser.getUserName())
+                    .set("user_name", user.getUserName()));
+            mockProjectService.update(Wrappers.<MockProject>update().eq("user_name", existUser.getUserName())
+                    .set("user_name", user.getUserName()));
+        }
+    }
 }

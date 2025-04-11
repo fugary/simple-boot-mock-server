@@ -41,7 +41,7 @@ const formOptions = computed(() => {
     labelKey: 'common.label.username',
     prop: 'userName',
     required: true,
-    disabled: !!userAccount.value?.id
+    disabled: !!userAccount.value?.id && (!isAdminUser() || isUserAdmin(userAccount.value?.userName))
   }, {
     labelKey: 'common.label.nickName',
     prop: 'nickName',

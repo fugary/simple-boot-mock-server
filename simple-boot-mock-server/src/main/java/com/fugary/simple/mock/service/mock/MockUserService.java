@@ -48,4 +48,12 @@ public interface MockUserService extends IService<MockUser> {
      * @return
      */
     boolean matchPassword(String password, String encryptPassword);
+
+    /**
+     * 更新用户名
+     *
+     * @param user
+     * @param existUser
+     */
+    void updateUserName(MockUser user, MockUser existUser);
 }
