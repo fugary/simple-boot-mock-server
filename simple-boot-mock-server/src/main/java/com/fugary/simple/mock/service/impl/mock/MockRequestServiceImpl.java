@@ -13,6 +13,7 @@ import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,9 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
 
     @Override
     public boolean deleteMockRequests(List<Integer> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return true;
+        }
         List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query().in("request_id", ids));
         mockDataService.deleteMockDatas(dataList.stream().map(MockData::getId).collect(Collectors.toList()));
         mockSchemaService.remove(Wrappers.<MockSchema>query().in("request_id", ids));

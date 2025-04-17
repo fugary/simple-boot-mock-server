@@ -8,6 +8,7 @@ import com.fugary.simple.mock.mapper.mock.MockDataMapper;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -67,6 +68,9 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
 
     @Override
     public boolean deleteMockDatas(List<Integer> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return true;
+        }
         mockSchemaService.remove(Wrappers.<MockSchema>query().in("data_id", ids));
         return removeByIds(ids);
     }
