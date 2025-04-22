@@ -90,7 +90,7 @@ public class MockController {
             }
             responseEntity = ResponseEntity.status(data.getStatusCode())
                     .headers(httpHeaders)
-                    .header(HttpHeaders.CONTENT_TYPE, data.getContentType())
+                    .header(HttpHeaders.CONTENT_TYPE, SimpleMockUtils.getContentType(data.getContentType(), data.getDefaultCharset()))
                     .header(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()))
                     .body(data.getResponseBody());
             SimpleLogUtils.addResponseData(data.getResponseBody());

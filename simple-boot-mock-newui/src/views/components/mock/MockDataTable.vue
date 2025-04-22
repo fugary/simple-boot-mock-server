@@ -211,7 +211,8 @@ const newDataItem = () => ({
   status: 1,
   statusCode: ALL_STATUS_CODES[0].code,
   contentType: ALL_CONTENT_TYPES[0],
-  headerParams: []
+  headerParams: [],
+  defaultCharset: 'UTF-8'
 })
 const newOrEdit = async id => {
   if (id) {
@@ -290,6 +291,7 @@ const editFormOptions = computed(() => {
     slot: 'headerParams'
   }, {
     ...useContentTypeOption(),
+    slot: 'newContentType',
     enabled: !isRedirect
   }, {
     ...languageSelectOption.value,
@@ -452,6 +454,22 @@ const onSelectDataItem = (dataItem) => {
             :name-suggestions="DEFAULT_HEADERS"
           />
         </common-form-control>
+      </template>
+      <template #newContentType="{option}">
+        <el-row>
+          <el-col :span="12">
+            <common-form-control
+              :model="currentDataItem"
+              :option="option"
+            />
+          </el-col>
+          <el-col :span="12">
+            <common-form-control
+              :model="currentDataItem"
+              :option="option.charsetOption"
+            />
+          </el-col>
+        </el-row>
       </template>
     </simple-edit-window>
     <mock-data-response-edit

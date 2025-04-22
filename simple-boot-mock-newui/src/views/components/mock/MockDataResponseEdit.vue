@@ -99,11 +99,20 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
       </el-link>
     </template>
     <el-container class="flex-column">
-      <common-form-control
-        v-if="!isRedirect"
-        :model="currentMockData"
-        :option="contentTypeOption"
-      />
+      <el-row v-if="!isRedirect">
+        <el-col :span="12">
+          <common-form-control
+            :model="currentMockData"
+            :option="contentTypeOption"
+          />
+        </el-col>
+        <el-col :span="12">
+          <common-form-control
+            :model="currentMockData"
+            :option="contentTypeOption.charsetOption"
+          />
+        </el-col>
+      </el-row>
       <common-form-control
         :model="languageModel"
         :option="langOption"

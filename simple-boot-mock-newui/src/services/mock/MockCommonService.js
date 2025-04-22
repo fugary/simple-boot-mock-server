@@ -104,7 +104,14 @@ export const processEvnParams = (groupConfig, dataValue) => {
   return dataValue
 }
 
-export const useContentTypeOption = (prop = 'contentType') => {
+export const useContentTypeOption = (prop = 'contentType', charset = true) => {
+  const charsetOption = charset
+    ? {
+        label: 'Charset',
+        prop: 'defaultCharset',
+        tooltip: 'Default charset is UTF-8, none for responding without charset'
+      }
+    : undefined
   return {
     label: 'Content Type',
     prop,
@@ -112,7 +119,8 @@ export const useContentTypeOption = (prop = 'contentType') => {
     children: getSingleSelectOptions(...ALL_CONTENT_TYPES),
     attrs: {
       clearable: false
-    }
+    },
+    charsetOption
   }
 }
 

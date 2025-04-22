@@ -343,4 +343,19 @@ public class SimpleMockUtils {
         }
         return target;
     }
+
+    /**
+     * 计算ContentType
+     *
+     * @param contentType
+     * @param charset
+     * @return
+     */
+    public static String getContentType(String contentType, String charset) {
+        charset = StringUtils.defaultIfBlank(charset, StandardCharsets.UTF_8.name());
+        if (StringUtils.equalsIgnoreCase(charset, "none")) {
+            return contentType;
+        }
+        return contentType + ";charset=" + charset;
+    }
 }

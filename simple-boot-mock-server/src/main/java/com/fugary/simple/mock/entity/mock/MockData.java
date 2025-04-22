@@ -24,5 +24,6 @@ public class MockData extends MockBase {
     private String description;
     private String headers;
     private String mockParams;
+    private String defaultCharset;
 
 }
