@@ -1,0 +1,9 @@
+alter table t_mock_data modify column response_body longtext;
+alter table t_mock_data modify column mock_params longtext;
+alter table t_mock_schema modify column request_body_schema longtext;
+alter table t_mock_schema modify column request_examples longtext;
+alter table t_mock_schema modify column response_body_schema longtext;
+alter table t_mock_schema modify column response_examples longtext;
+alter table t_mock_log modify column log_message longtext;
+alter table t_mock_log modify column log_data longtext;
+alter table t_mock_log modify column exceptions longtext;
