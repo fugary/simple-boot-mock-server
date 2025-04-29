@@ -27,13 +27,6 @@ const emit = defineEmits(['requestChanged', 'toTestMockRequest', 'toEditMockRequ
 
 const buttons = computed(() => {
   return defineTableButtons([{
-    labelKey: 'common.label.edit',
-    icon: 'Edit',
-    type: 'primary',
-    click: (item) => {
-      emit('toEditMockRequest', item, props.groupItem)
-    }
-  }, {
     labelKey: 'common.label.test',
     icon: 'RemoveRedEyeFilled',
     type: 'success',
@@ -55,6 +48,17 @@ const buttons = computed(() => {
     enabled: !!requestItem.value?.delay,
     click: (item) => {
       emit('toEditDelay', item, props.groupItem)
+    }
+  }])
+})
+
+const moreButtons = computed(() => {
+  return defineTableButtons([{
+    labelKey: 'common.label.edit',
+    icon: 'Edit',
+    type: 'primary',
+    click: (item) => {
+      emit('toEditMockRequest', item, props.groupItem)
     }
   }, {
     labelKey: 'common.label.copy',
@@ -170,6 +174,40 @@ const requestProxyUrl = computed(() => {
             />
           </el-link>
         </template>
+        <el-dropdown
+          placement="bottom"
+          style="top: 5px;"
+        >
+          <el-link
+            :underline="false"
+            type="info"
+          >
+            <common-icon
+              :size="16"
+              icon="MoreFilled"
+            />
+          </el-link>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <template v-for="(moreButton, index) in moreButtons">
+                <el-dropdown-item
+                  v-if="moreButton.enabled!==false&&(!moreButton.buttonIf||moreButton.buttonIf(requestItem))"
+                  :key="index"
+                  :disabled="moreButton.disabled"
+                  @click="moreButton.click?.(requestItem)"
+                >
+                  <el-text :type="moreButton.type">
+                    <common-icon
+                      :size="16"
+                      :icon="moreButton.icon"
+                    />
+                    {{ moreButton.label || $t(moreButton.labelKey) }}
+                  </el-text>
+                </el-dropdown-item>
+              </template>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </el-col>
     </el-row>
     <el-row v-if="requestItem.requestName">
