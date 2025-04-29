@@ -24,10 +24,17 @@ const { goBack } = useBackUrl('/mock/groups')
 const { groupItem, groupUrl, loadSuccess } = useMockGroupItem(groupId)
 
 const { tableData, loading, searchParam, searchMethod: searchMockRequests } = useTableAndSearchForm({
-  defaultParam: { groupId, page: useDefaultPage(50) },
+  defaultParam: { groupId, page: useDefaultPage(10) },
   searchMethod: (param) => MockRequestApi.search(param, { loading: true }),
   saveParam: false
 })
+
+const pageAttrs = {
+  layout: 'prev, pager, next',
+  background: true,
+  hideOnSinglePage: true,
+  pagerCount: 3
+}
 
 const loadMockRequests = (...args) => {
   return searchMockRequests(...args).then((result) => {
@@ -259,18 +266,22 @@ const editGroupEnvParams = () => {
               <common-table
                 :key="batchMode"
                 ref="requestTableRef"
+                v-model:page="searchParam.page"
                 class="request-table"
                 :data="tableData"
                 :columns="newColumns"
                 :loading="loading"
                 row-key="id"
+                :page-attrs="pageAttrs"
+                @page-size-change="loadMockRequests()"
+                @current-page-change="loadMockRequests()"
                 @selection-change="selectedRows=$event"
                 @current-change="selectRequest=$event"
               >
                 <template #buttonHeader>
                   {{ $t('mock.label.mockRequests') }}
                   <el-tag
-                    v-if="tableData?.length"
+                    v-if="searchParam.page?.totalCount"
                     title="filtered requests count"
                     class="margin-left1"
                     type="primary"
@@ -278,7 +289,7 @@ const editGroupEnvParams = () => {
                     effect="plain"
                     round
                   >
-                    {{ tableData?.length }}
+                    {{ searchParam.page?.totalCount }}
                   </el-tag>
                   <div class="float-right">
                     <el-button
