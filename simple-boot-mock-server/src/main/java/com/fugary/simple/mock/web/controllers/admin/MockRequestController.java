@@ -1,13 +1,16 @@
 package com.fugary.simple.mock.web.controllers.admin;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
+import com.fugary.simple.mock.entity.mock.CountData;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockSchema;
+import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
@@ -17,10 +20,14 @@ import com.fugary.simple.mock.web.vo.query.MockRequestQueryVo;
 import com.fugary.simple.mock.web.vo.query.MockSchemaQueryVo;
 import com.fugary.simple.mock.web.vo.result.MockSchemaResultVo;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created on 2020/5/3 21:22 .<br>
@@ -36,6 +43,9 @@ public class MockRequestController {
 
     @Autowired
     private MockSchemaService mockSchemaService;
+
+    @Autowired
+    private MockDataService mockDataService;
 
     @GetMapping
     public SimpleResult<List<MockRequest>> search(@ModelAttribute MockRequestQueryVo queryVo) {
@@ -56,7 +66,19 @@ public class MockRequestController {
             queryWrapper.and(wrapper -> wrapper.eq("method", queryVo.getMethod()));
         }
         queryWrapper.orderByAsc("request_path", "method");
-        return SimpleResultUtils.createSimpleResult(mockRequestService.page(page, queryWrapper));
+        Page<MockRequest> pageResult = mockRequestService.page(page, queryWrapper);
+        Map<Integer, Long> countMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(pageResult.getRecords())) {
+            List<Integer> requestIds = pageResult.getRecords().stream().map(MockRequest::getId)
+                    .collect(Collectors.toList());
+            QueryWrapper<MockData> countQuery = Wrappers.<MockData>query()
+                    .select("request_id as group_key", "count(0) as data_count")
+                    .in("request_id", requestIds).groupBy("request_id");
+            countMap = mockDataService.listMaps(countQuery).stream().map(CountData::new)
+                    .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
+                            CountData::getDataCount));
+        }
+        return SimpleResultUtils.createSimpleResult(pageResult).addInfo("countMap", countMap);
     }
 
     @GetMapping("/{id}")

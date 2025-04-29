@@ -35,6 +35,10 @@ const loadMockRequests = (...args) => {
       if (tableData.value?.length) {
         selectRequest.value = tableData.value.find(req => req.id === selectRequest.value?.id) || tableData.value[0]
         requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
+        const countMap = result.infos?.countMap || {}
+        tableData.value.forEach(request => {
+          request.dataCount = countMap[request.id] || 0
+        })
       }
     })
     return result
@@ -302,9 +306,9 @@ const editGroupEnvParams = () => {
           <template #split-1>
             <mock-data-table
               v-if="selectRequest"
+              v-model:request-item="selectRequest"
               class="form-edit-width-100"
               :group-item="groupItem"
-              :request-item="selectRequest"
             />
           </template>
         </common-split>

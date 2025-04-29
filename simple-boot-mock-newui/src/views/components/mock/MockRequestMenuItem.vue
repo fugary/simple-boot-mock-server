@@ -117,6 +117,18 @@ const requestProxyUrl = computed(() => {
           class="margin-left1"
           :url-path="fullPath"
         />
+        <el-tag
+          v-if="requestItem.dataCount"
+          title="mock data count"
+          class="margin-left1"
+          type="success"
+          size="small"
+          effect="plain"
+          style="height: 20px;"
+          round
+        >
+          {{ requestItem.dataCount }}
+        </el-tag>
       </el-col>
     </el-row>
     <el-row class="margin-bottom1">

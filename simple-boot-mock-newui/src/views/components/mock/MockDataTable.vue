@@ -23,11 +23,11 @@ const props = defineProps({
   groupItem: {
     type: Object,
     required: true
-  },
-  requestItem: {
-    type: Object,
-    required: true
   }
+})
+const requestItem = defineModel('requestItem', {
+  type: Object,
+  required: true
 })
 const selectedRows = ref([])
 const batchMode = ref(false)
@@ -88,7 +88,7 @@ const columns = computed(() => {
       }
       return <ViewDataLink data={showStr} icon="RuleFilled" style="word-break: break-all;"
                              tooltip={$i18nKey('common.label.commonConfig', 'mock.label.matchPattern')}
-                             onViewDataDetails={() => toTestMatchPattern(props.groupItem, props.requestItem, data)
+                             onViewDataDetails={() => toTestMatchPattern(props.groupItem, requestItem.value, data)
                                .then(() => loadMockData())}/>
     }
   }, {
@@ -135,7 +135,7 @@ const columns = computed(() => {
   }])
 })
 const { searchParam, tableData, loading, searchMethod: searchMockData } = useTableAndSearchForm({
-  defaultParam: { requestId: props.requestItem.id },
+  defaultParam: { requestId: requestItem.value.id },
   searchMethod: MockDataApi.search,
   saveParam: false
 })
@@ -144,6 +144,7 @@ const loadMockData = (...args) => {
   const lastId = selectDataItem.value?.id
   searchMockData(...args)
     .then(() => {
+      requestItem.value.dataCount = tableData.value?.length || 0
       if (!tableData.value?.length) {
         mockPreviewRef.value?.clearParamsAndResponse()
       } else {
@@ -156,7 +157,7 @@ const loadMockData = (...args) => {
 onMounted(() => {
   loadMockData()
 })
-watch(() => props.requestItem?.id, requestId => {
+watch(() => requestItem.value?.id, requestId => {
   searchParam.value.requestId = requestId
   loadMockData()
 })
@@ -206,8 +207,8 @@ const showEditWindow = ref(false)
 const currentDataItem = ref()
 const selectDataItem = ref()
 const newDataItem = () => ({
-  requestId: props.requestItem.id,
-  groupId: props.requestItem.groupId,
+  requestId: requestItem.value.id,
+  groupId: requestItem.value.groupId,
   status: 1,
   statusCode: ALL_STATUS_CODES[0].code,
   contentType: ALL_CONTENT_TYPES[0],
@@ -364,7 +365,7 @@ const mockPreviewRef = ref()
 const onSelectDataItem = (dataItem) => {
   selectDataItem.value = dataItem
   if (dataItem) {
-    mockPreviewRef.value?.toPreviewRequest(props.groupItem, props.requestItem, selectDataItem.value, (newItem) => {
+    mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, (newItem) => {
       Object.assign(dataItem, newItem)
     })
   }
