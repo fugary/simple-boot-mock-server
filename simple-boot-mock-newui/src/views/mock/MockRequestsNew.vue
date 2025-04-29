@@ -269,6 +269,17 @@ const editGroupEnvParams = () => {
               >
                 <template #buttonHeader>
                   {{ $t('mock.label.mockRequests') }}
+                  <el-tag
+                    v-if="tableData?.length"
+                    title="filtered requests count"
+                    class="margin-left1"
+                    type="primary"
+                    size="small"
+                    effect="plain"
+                    round
+                  >
+                    {{ tableData?.length }}
+                  </el-tag>
                   <div class="float-right">
                     <el-button
                       v-common-tooltip="$t('common.label.batchMode')"
