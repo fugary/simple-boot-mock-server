@@ -15,6 +15,14 @@ public class MockConstants {
 
     public static final String MOCK_SCHEMA_BODY_TYPE_COMPONENT = "COMPONENT";
 
+    public static final String CREATOR_KEY = "creator";
+
+    public static final String CREATE_DATE_KEY = "createDate";
+
+    public static final String MODIFIER_KEY = "modifier";
+
+    public static final String MODIFY_DATE_KEY = "modifyDate";
+
     public static final String MOCK_DEFAULT_PROJECT = "default";
 
     public static final String MOCK_USER_KEY = "simple-mock-user";

@@ -4,10 +4,11 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fugary.simple.mock.entity.mock.CountData;
 import com.fugary.simple.mock.entity.mock.MockData;
-import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
@@ -15,6 +16,7 @@ import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.MockDataQueryVo;
 import com.fugary.simple.mock.web.vo.query.MockJwtParamVo;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created on 2020/5/3 21:22 .<br>
@@ -35,19 +38,29 @@ public class MockDataController {
     @Autowired
     private MockDataService mockDataService;
 
-    @Autowired
-    private ScriptEngineProvider scriptEngineProvider;
-
     @GetMapping
     public SimpleResult<List<MockData>> search(@ModelAttribute MockDataQueryVo queryVo) {
         Page<MockData> page = SimpleResultUtils.toPage(queryVo);
         QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
-                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
+                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus())
+                .isNull("modify_from");
         if (queryVo.getRequestId() != null) {
             queryWrapper.eq("request_id", queryVo.getRequestId());
         }
         queryWrapper.orderByAsc("status_code", "create_date");
-        return SimpleResultUtils.createSimpleResult(mockDataService.page(page, queryWrapper));
+        Page<MockData> pageResult = mockDataService.page(page, queryWrapper);
+        Map<Integer, Long> historyMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(pageResult.getRecords())) {
+            List<Integer> dataIds = pageResult.getRecords().stream().map(MockData::getId)
+                    .collect(Collectors.toList());
+            QueryWrapper<MockData> countQuery = Wrappers.<MockData>query()
+                    .select("modify_from as group_key", "count(0) as data_count")
+                    .in("modify_from", dataIds).groupBy("modify_from");
+            historyMap = mockDataService.listMaps(countQuery).stream().map(CountData::new)
+                    .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
+                            CountData::getDataCount));
+        }
+        return SimpleResultUtils.createSimpleResult(pageResult).addInfo("historyMap", historyMap);
     }
 
     @GetMapping("/{id}")

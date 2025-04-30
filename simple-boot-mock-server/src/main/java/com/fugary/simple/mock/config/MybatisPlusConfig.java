@@ -1,6 +1,7 @@
 package com.fugary.simple.mock.config;
 
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
@@ -27,10 +28,20 @@ public class MybatisPlusConfig {
         return paginationInterceptor;
     }
 
+    /**
+     * 版本插件
+     * @return
+     */
+    @Bean
+    public OptimisticLockerInnerInterceptor optimisticLockerInnerInterceptor() {
+        return new OptimisticLockerInnerInterceptor();
+    }
+
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         interceptor.addInnerInterceptor(paginationInterceptor());
+        interceptor.addInnerInterceptor(optimisticLockerInnerInterceptor());
         return interceptor;
     }
 }

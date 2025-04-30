@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -357,5 +358,18 @@ public class SimpleMockUtils {
             return contentType;
         }
         return contentType + ";charset=" + charset;
+    }
+
+    /**
+     * 是否没有改变
+     *
+     * @param oldMockData
+     * @param newMockData
+     * @return
+     */
+    public static boolean isSameMockData(MockData oldMockData, MockData newMockData) {
+        return EqualsBuilder.reflectionEquals(oldMockData, newMockData, "version", "modifyFrom",
+                MockConstants.CREATOR_KEY, MockConstants.CREATE_DATE_KEY,
+                MockConstants.MODIFIER_KEY, MockConstants.MODIFY_DATE_KEY);
     }
 }

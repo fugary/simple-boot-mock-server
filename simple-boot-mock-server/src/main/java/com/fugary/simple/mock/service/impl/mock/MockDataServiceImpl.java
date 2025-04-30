@@ -30,16 +30,26 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
         MockData existMockData = getById(mockData.getId());
         boolean result = false;
         if (existMockData != null && existMockData.getRequestId().equals(mockData.getRequestId())) {
-            result = update(Wrappers.<MockData>update()
-                    .eq("request_id", existMockData.getRequestId())
-                    .set("default_flag", 0));
-            if (SimpleMockUtils.isDefault(mockData)) {
-                result = update(Wrappers.<MockData>update()
-                        .eq("id", existMockData.getId())
-                        .set("default_flag", 1));
-            }
+            mockData.setDefaultFlag(1);
+            return this.saveOrUpdate(mockData);
         }
         return result;
+    }
+
+    /**
+     * 取消其他的默认标记
+     *
+     * @param mockData
+     */
+    protected void unMarkOtherDefault(MockData mockData) {
+        List<MockData> defaultList = list(Wrappers.<MockData>query().eq("request_id", mockData.getRequestId())
+                .isNull("modify_from").eq("default_flag", 1)
+                .ne("id", mockData.getId())); //  获取default_flag为1的数据
+        defaultList.forEach(md -> {
+            md.setDefaultFlag(0);
+            SimpleMockUtils.addAuditInfo(md);
+            saveOrUpdate(md);
+        });
     }
 
     @Override
@@ -77,9 +87,28 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
 
     @Override
     public boolean saveOrUpdate(MockData entity) {
-        boolean result = super.saveOrUpdate(entity);
-        if(result && SimpleMockUtils.isDefault(entity)){
-            this.markMockDataDefault(entity);
+        if (entity.getId() == null || entity.getVersion() == null) {
+            entity.setVersion(1);
+        }
+        boolean needSave = true;
+        if (entity.getId() != null) {
+            MockData historyData = getById(entity.getId());
+            if (historyData != null) {
+                needSave = !SimpleMockUtils.isSameMockData(historyData, entity);
+                if (needSave) {
+                    historyData.setId(null);
+                    historyData.setModifyFrom(entity.getId());
+                    historyData.setVersion(entity.getVersion());
+                    this.save(historyData);
+                }
+            }
+        }
+        boolean result = true;
+        if (needSave) {
+            result = super.saveOrUpdate(entity);
+            if(result && SimpleMockUtils.isDefault(entity)){
+                unMarkOtherDefault(entity);
+            }
         }
         return result;
     }

@@ -261,7 +261,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     public List<ExportGroupVo> loadExportGroups(List<MockGroup> groups) {
         List<Integer> groupIds = groups.stream().map(MockGroup::getId).collect(Collectors.toList());
         List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().in("group_id", groupIds));
-        List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query().in("group_id", groupIds));
+        List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query().in("group_id", groupIds).isNull("modify_from"));
         List<MockSchema> mockSchemas = mockSchemaService.list(Wrappers.<MockSchema>query().in("group_id", groupIds));
         Map<Integer, List<MockRequest>> requestMap = mockRequests.stream().collect(Collectors.groupingBy(MockRequest::getGroupId));
         Map<Integer, List<MockData>> mockDataMap = mockDataList.stream().collect(Collectors.groupingBy(MockData::getRequestId));

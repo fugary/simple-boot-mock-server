@@ -80,7 +80,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             }
             saveOrUpdate(mockRequest);
             List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query()
-                    .eq("request_id", requestId));
+                    .eq("request_id", requestId).isNull("modify_from"));
             List<MockSchema> schemaList = mockSchemaService.list(Wrappers.<MockSchema>query().eq("request_id", requestId));
             Map<String, List<MockSchema>> schemaMap = schemaList.stream().collect(Collectors
                     .groupingBy(schema -> StringUtils.join(schema.getRequestId(), "-", schema.getDataId())));
@@ -104,7 +104,8 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     public MockData findMockData(Integer requestId, Integer defaultId) {
         List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)
-                .eq("status", 1));
+                .eq("status", 1)
+                .isNull("modify_from"));
         MockData mockData = findForceMockData(mockDataList, defaultId);
         if (mockData != null) {
             return mockData;
@@ -116,13 +117,15 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     public List<MockData> loadDataByRequest(Integer requestId) {
         return mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)
-                .eq("status", 1));
+                .eq("status", 1)
+                .isNull("modify_from"));
     }
 
     @Override
     public List<MockData> loadAllDataByRequest(Integer requestId) {
         return mockDataService.list(Wrappers.<MockData>query()
-                .eq("request_id", requestId));
+                .eq("request_id", requestId)
+                .isNull("modify_from"));
     }
 
     /**

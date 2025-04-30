@@ -79,7 +79,7 @@ public class MockRequestController {
                     .collect(Collectors.toList());
             QueryWrapper<MockData> countQuery = Wrappers.<MockData>query()
                     .select("request_id as group_key", "count(0) as data_count")
-                    .in("request_id", requestIds).groupBy("request_id");
+                    .in("request_id", requestIds).isNull("modify_from").groupBy("request_id");
             countMap = mockDataService.listMaps(countQuery).stream().map(CountData::new)
                     .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
                             CountData::getDataCount));
