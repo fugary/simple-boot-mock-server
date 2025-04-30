@@ -65,6 +65,12 @@ public class MockRequestController {
         if (StringUtils.isNotBlank(queryVo.getMethod())) {
             queryWrapper.and(wrapper -> wrapper.eq("method", queryVo.getMethod()));
         }
+        if (queryVo.getHasData() != null) {
+            queryWrapper.exists(queryVo.getHasData(),
+                    "select 1 from t_mock_data where t_mock_data.request_id=t_mock_request.id");
+            queryWrapper.notExists(!queryVo.getHasData(),
+                    "select 1 from t_mock_data where t_mock_data.request_id=t_mock_request.id");
+        }
         queryWrapper.orderByAsc("request_path", "method");
         Page<MockRequest> pageResult = mockRequestService.page(page, queryWrapper);
         Map<Integer, Long> countMap = new HashMap<>();

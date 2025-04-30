@@ -76,7 +76,21 @@ const searchFormOptions = computed(() => {
         loadMockRequests()
       }
     },
-    useSearchStatus({ change () { loadMockRequests() } })
+    useSearchStatus({ change () { loadMockRequests() } }), {
+      labelKey: 'mock.label.hasMockData',
+      prop: 'hasData',
+      type: 'select',
+      children: [{
+        value: true,
+        label: $i18nBundle('common.label.yes')
+      }, {
+        value: false,
+        label: $i18nBundle('common.label.no')
+      }],
+      change () {
+        loadMockRequests()
+      }
+    }
   ]
 })
 const selectedRows = ref([])

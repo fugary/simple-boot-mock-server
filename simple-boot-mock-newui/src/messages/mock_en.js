@@ -66,6 +66,7 @@ mock.label.logType = 'Log Type'
 mock.label.logResult = 'Log Result'
 mock.label.ipAddress = 'IP Address'
 mock.label.logTime = 'Log Time'
+mock.label.hasMockData = 'Exists data'
 
 mock.msg.noExportData = 'No data to export'
 mock.msg.exportConfirm = 'Confirm to export mock data?'

@@ -66,6 +66,7 @@ mock.label.logType = '日志类型'
 mock.label.logResult = '日志结果'
 mock.label.ipAddress = '访问IP'
 mock.label.logTime = '耗时'
+mock.label.hasMockData = '有Mock数据'
 
 mock.msg.noExportData = '没有需要导出的数据'
 mock.msg.exportConfirm = '确认导出Mock数据？'
