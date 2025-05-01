@@ -63,6 +63,15 @@ public class MockDataController {
         return SimpleResultUtils.createSimpleResult(pageResult).addInfo("historyMap", historyMap);
     }
 
+    @PostMapping("/histories/{id}")
+    public SimpleResult<List<MockData>> histories(@ModelAttribute MockDataQueryVo queryVo, @PathVariable Integer id) {
+        Page<MockData> page = SimpleResultUtils.toPage(queryVo);
+        QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
+                .eq("modify_from", id);
+        queryWrapper.orderByDesc("data_version");
+        return SimpleResultUtils.createSimpleResult(mockDataService.page(page, queryWrapper));
+    }
+
     @GetMapping("/{id}")
     public SimpleResult<MockData> get(@PathVariable("id") Integer id) {
         return SimpleResultUtils.createSimpleResult(mockDataService.getById(id));

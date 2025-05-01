@@ -1,0 +1,1 @@
+update t_mock_data set data_version = 1 where data_version is null;
