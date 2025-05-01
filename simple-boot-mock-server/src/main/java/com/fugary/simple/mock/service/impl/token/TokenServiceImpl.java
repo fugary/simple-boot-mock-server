@@ -15,6 +15,7 @@ import com.fugary.simple.mock.web.vo.SimpleResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -80,7 +81,7 @@ public class TokenServiceImpl implements TokenService {
             }
         } catch (JWTVerificationException e) {
             // Invalid signature/claims
-            log.error("Token Error", e);
+            log.error("Token Error：{}", ExceptionUtils.getMessage(e));
         }
         return SimpleResultUtils.createSimpleResult(errorCode);
     }
