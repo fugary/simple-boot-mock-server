@@ -13,10 +13,6 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   },
-  target: {
-    type: Object,
-    default: null
-  },
   columns: {
     type: Array,
     default: () => []
@@ -25,25 +21,28 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
-  search: {
+  searchFunc: {
     type: Function,
     required: true
   },
-  compare: {
+  compareFunc: {
     type: Function,
     required: true
   }
 })
 const showWindow = ref(false)
+const target = ref({})
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: Object.assign({ page: useDefaultPage(10) }, props.defaultParam),
   saveParam: false,
-  searchMethod: props.search
+  searchMethod: props.searchFunc
 })
 const searchHistories = (...args) => {
   return searchMethod(...args)
-    .then(() => {
-      tableData.value = [props.target, ...tableData.value]
+    .then((data) => {
+      target.value = data.infos?.current || {}
+      target.value.current = !target.value.modifyFrom
+      tableData.value = [target.value, ...tableData.value]
     })
 }
 const buttons = defineTableButtons([{
@@ -53,13 +52,13 @@ const buttons = defineTableButtons([{
     return !data.current
   },
   click (item) {
-    props.compare?.(item)
+    props.compareFunc?.(item, target.value)
   }
 }, {
   labelKey: 'mock.label.viewChange',
   type: 'success',
   click (item) {
-    props.compare?.(item, true)
+    props.compareFunc?.(item, target.value, true)
   }
 }])
 const showHistoryListWindow = () => {

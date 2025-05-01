@@ -468,7 +468,7 @@ const calcMockCompareItems = (original, modified) => {
       ...getMockCompareItem({ original, modified, label: 'Content Type', key: 'contentType' }),
       ...getMockCompareItem({ original, modified, label: 'Charset', key: 'defaultCharset' }),
       ...getMockCompareItem({ original, modified, labelKey: 'mock.label.matchPattern', key: 'matchPattern', copy: true }),
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.responseFormat', key: 'responseFormat' }),
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.dataFormat', key: 'responseFormat' }),
       ...getMockCompareItem({ original, modified, labelKey: 'common.label.delay', key: 'delay' }),
       ...getMockCompareItem({ original, modified, labelKey: 'common.label.description', key: 'description' }),
       ...getMockCompareItem({ original, modified, labelKey: 'mock.label.responseHeaders', key: 'headers' }),
@@ -491,8 +491,7 @@ const calcMockCompareItems = (original, modified) => {
   }
   return []
 }
-const toShowHistoryWindow = (data) => {
-  const target = { ...data, current: true }
+const toShowHistoryWindow = (current) => {
   showHistoryListWindow({
     columns: defineTableColumns([{
       labelKey: 'mock.label.statusCode',
@@ -539,8 +538,8 @@ const toShowHistoryWindow = (data) => {
         </>
       }
     }]),
-    search: (param, config) => searchHistories(target.id, param, config),
-    compare: async (modified, previous) => {
+    searchFunc: (param, config) => searchHistories(current.id, param, config),
+    compareFunc: async (modified, target, previous) => {
       let original = modified
       if (previous) {
         await loadHistoryDiff({
@@ -560,8 +559,7 @@ const toShowHistoryWindow = (data) => {
         contentKey: 'responseBody',
         compareItems: calcMockCompareItems(original, modified)
       })
-    },
-    target
+    }
   })
 }
 </script>
