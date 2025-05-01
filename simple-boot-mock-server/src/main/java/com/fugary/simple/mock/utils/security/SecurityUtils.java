@@ -60,4 +60,14 @@ public class SecurityUtils {
         userName = SecurityUtils.validateUserUpdate(userName) ? userName : "";
         return userName;
     }
+
+    /**
+     * 当前登录用户名
+     *
+     * @return
+     */
+    public static String getLoginUserName() {
+        MockUser loginUser = getLoginUser();
+        return loginUser != null ? loginUser.getUserName() : "";
+    }
 }

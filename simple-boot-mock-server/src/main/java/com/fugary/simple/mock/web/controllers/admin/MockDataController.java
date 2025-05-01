@@ -64,7 +64,7 @@ public class MockDataController {
     }
 
     @PostMapping("/histories/{id}")
-    public SimpleResult<List<MockData>> histories(@ModelAttribute MockDataQueryVo queryVo, @PathVariable Integer id) {
+    public SimpleResult<List<MockData>> histories(@RequestBody MockDataQueryVo queryVo, @PathVariable Integer id) {
         Page<MockData> page = SimpleResultUtils.toPage(queryVo);
         QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
                 .eq("modify_from", id);

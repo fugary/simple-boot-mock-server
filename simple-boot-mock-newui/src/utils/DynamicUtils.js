@@ -7,6 +7,7 @@ const MockMatchPatternPreview = () => import('@/views/components/mock/MockMatchP
 const MockEnvParams = () => import('@/views/components/mock/MockEnvParams.vue')
 const ShowUserInfo = () => import('@/views/components/user/ShowUserInfo.vue')
 const CodeWindow = () => import('@/views/components/utils/CodeWindow.vue')
+const MockHistoryListWindow = () => import('@/views/components/utils/MockHistoryListWindow.vue')
 
 export const closeAllOnRouteChange = () => {
   document.querySelectorAll('.el-overlay:not([style*="display: none"]) .common-window .el-dialog__headerbtn:not(.dialog-fullscreen-btn)')
@@ -55,6 +56,15 @@ export const showCodeWindow = async (code, config = {}) => {
     onClosed: () => dynamicHelper.destroy()
   })
   vnode.component?.exposed?.showCodeWindow(code, config)
+}
+
+export const showHistoryListWindow = async (config) => {
+  const dynamicHelper = new DynamicHelper()
+  const vnode = await dynamicHelper.createAndRender(MockHistoryListWindow, {
+    onClosed: () => dynamicHelper.destroy(),
+    ...config
+  })
+  vnode.component?.exposed?.showHistoryListWindow()
 }
 
 /**

@@ -2,14 +2,20 @@
 import { onMounted, ref, computed, watch } from 'vue'
 import { defineTableColumns, defineFormOptions, defineTableButtons } from '@/components/utils'
 import { $coreConfirm, checkShowColumn } from '@/utils'
-import MockDataApi, { ALL_STATUS_CODES, ALL_CONTENT_TYPES, markDefault, copyMockData } from '@/api/mock/MockDataApi'
+import MockDataApi, {
+  ALL_STATUS_CODES,
+  ALL_CONTENT_TYPES,
+  markDefault,
+  copyMockData,
+  searchHistories
+} from '@/api/mock/MockDataApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import CommonIcon from '@/components/common-icon/index.vue'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { toTestMatchPattern } from '@/utils/DynamicUtils'
+import { showHistoryListWindow, toTestMatchPattern } from '@/utils/DynamicUtils'
 import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
 import { ElMessage, ElTag, ElText } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
@@ -31,6 +37,26 @@ const requestItem = defineModel('requestItem', {
 })
 const selectedRows = ref([])
 const batchMode = ref(false)
+const getStatusCode = (data) => {
+  let type = 'danger'
+  if (data.statusCode < 300) {
+    type = 'success'
+  } else if (data.statusCode < 400) {
+    type = 'primary'
+  } else if (data.statusCode < 500) {
+    type = 'warning'
+  }
+  const status = ALL_STATUS_CODES.find(status => data.statusCode === status.code)
+  const statusLabel = status ? $i18nMsg(`${status.labelCn} - ${(status.labelEn)}`, `${status.labelEn} - ${(status.labelCn)}`) : ''
+  return <ElText type="success">
+    {data.defaultFlag
+      ? <CommonIcon type="success"
+                      v-common-tooltip={$i18nBundle('mock.label.default')}
+                      icon="Flag"/>
+      : ''}
+    <ElTag v-common-tooltip={statusLabel} type={type} class="margin-left1">{data.statusCode}</ElTag>
+  </ElText>
+}
 const columns = computed(() => {
   const hasMatchPattern = checkShowColumn(tableData.value, 'matchPattern')
   return defineTableColumns([{
@@ -43,26 +69,7 @@ const columns = computed(() => {
     labelKey: 'mock.label.statusCode',
     property: 'statusCode',
     minWidth: '80px',
-    formatter (data) {
-      let type = 'danger'
-      if (data.statusCode < 300) {
-        type = 'success'
-      } else if (data.statusCode < 400) {
-        type = 'primary'
-      } else if (data.statusCode < 500) {
-        type = 'warning'
-      }
-      const status = ALL_STATUS_CODES.find(status => data.statusCode === status.code)
-      const statusLabel = status ? $i18nMsg(`${status.labelCn} - ${(status.labelEn)}`, `${status.labelEn} - ${(status.labelCn)}`) : ''
-      return <ElText type="success">
-          {data.defaultFlag
-            ? <CommonIcon type="success"
-                          v-common-tooltip={$i18nBundle('mock.label.default')}
-                          icon="Flag"/>
-            : ''}
-          <ElTag v-common-tooltip={statusLabel} type={type} class="margin-left1">{data.statusCode}</ElTag>
-        </ElText>
-    },
+    formatter: getStatusCode,
     attrs: {
       align: 'center'
     }
@@ -143,13 +150,17 @@ const { searchParam, tableData, loading, searchMethod: searchMockData } = useTab
 const loadMockData = (...args) => {
   const lastId = selectDataItem.value?.id
   searchMockData(...args)
-    .then(() => {
+    .then((result) => {
       requestItem.value.dataCount = tableData.value?.length || 0
       if (!tableData.value?.length) {
         mockPreviewRef.value?.clearParamsAndResponse()
       } else {
         const selectData = tableData.value.find(data => data.id === lastId) || tableData.value[0]
         dataTableRef.value?.table?.setCurrentRow(selectData, true)
+        const historyMap = result.infos?.historyMap || {}
+        tableData.value.forEach(data => {
+          data.historyCount = historyMap[data.id] || 0
+        })
       }
     })
 }
@@ -178,6 +189,16 @@ const buttons = defineTableButtons([{
       .then(() => loadMockData())
   }
 }, {
+  labelKey: 'mock.label.modifyHistory',
+  type: 'info',
+  icon: 'AccessTimeFilled',
+  buttonIf (item) {
+    return !!item.historyCount
+  },
+  click: item => {
+    toShowHistoryWindow(item)
+  }
+}, {
   labelKey: 'mock.label.setDefault',
   type: 'primary',
   icon: 'Flag',
@@ -185,8 +206,12 @@ const buttons = defineTableButtons([{
     return !item.defaultFlag && !item.matchPattern
   },
   click: item => {
-    item.defaultFlag = 1
-    markDefault(item).then(() => loadMockData())
+    $coreConfirm($i18nBundle('mock.msg.configSetDefault'))
+      .then(() => {
+        item.defaultFlag = 1
+        return markDefault(item)
+      })
+      .then(() => loadMockData())
   }
 }, {
   labelKey: 'common.label.delete',
@@ -370,7 +395,60 @@ const onSelectDataItem = (dataItem) => {
     })
   }
 }
-
+const toShowHistoryWindow = (target) => {
+  showHistoryListWindow({
+    columns: defineTableColumns([{
+      labelKey: 'mock.label.statusCode',
+      property: 'statusCode',
+      minWidth: '100px',
+      formatter: getStatusCode,
+      attrs: {
+        align: 'center'
+      }
+    }, {
+      labelKey: 'mock.label.responseName',
+      property: 'dataName'
+    }, {
+      label: 'Content Type',
+      property: 'contentType',
+      minWidth: '150px'
+    }, {
+      labelKey: 'mock.label.matchPattern',
+      property: 'matchPattern'
+    }, {
+      labelKey: 'common.label.status',
+      minWidth: '80px',
+      formatter (data) {
+        return <DelFlagTag v-model={data.status} clickToToggle={false}/>
+      }
+    }, {
+      labelKey: 'mock.label.responseBody',
+      property: 'responseBody',
+      minWidth: '200px',
+      formatter (data) {
+        let showStr = data.responseBody
+        if (data.responseBody && data.responseBody.length > 100) {
+          showStr = data.responseBody.substring(0, 100) + '...'
+        }
+        return showStr
+      }
+    }, {
+      labelKey: 'mock.label.version',
+      minWidth: '120px',
+      formatter (item) {
+        return <>
+          {item.version}
+          {item.current ? <ElTag type="success" class="margin-left1">{$i18nBundle('mock.label.current')}</ElTag> : ''}
+        </>
+      }
+    }]),
+    search: (param, config) => searchHistories(target.id, param, config),
+    target: {
+      ...target,
+      current: true
+    }
+  })
+}
 </script>
 
 <template>
