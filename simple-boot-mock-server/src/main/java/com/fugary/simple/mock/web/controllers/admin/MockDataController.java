@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.CountData;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.service.mock.MockDataService;
@@ -14,7 +15,9 @@ import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.MockDataQueryVo;
+import com.fugary.simple.mock.web.vo.query.MockHistoryVo;
 import com.fugary.simple.mock.web.vo.query.MockJwtParamVo;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +73,28 @@ public class MockDataController {
                 .eq("modify_from", id);
         queryWrapper.orderByDesc("data_version");
         return SimpleResultUtils.createSimpleResult(mockDataService.page(page, queryWrapper));
+    }
+
+    @PostMapping("/loadHistoryDiff")
+    public SimpleResult<Map<String, MockData>> loadHistoryDiff(@RequestBody MockHistoryVo queryVo) {
+        Integer id = queryVo.getId();
+        Integer maxVersion = queryVo.getVersion();
+        MockData modified = mockDataService.getById(id);
+        Page<MockData> page = new Page<>(1, 2);
+        mockDataService.page(page, Wrappers.<MockData>query().eq("modify_from", ObjectUtils.defaultIfNull(modified.getModifyFrom(), modified.getId()))
+                .le(maxVersion != null, "data_version", maxVersion)
+                .orderByDesc("data_version"));
+        if (page.getRecords().isEmpty()) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        } else {
+            Map<String, MockData> map = new HashMap<>(2);
+            List<MockData> dataList = page.getRecords();
+            map.put("modified", modified);
+            dataList.stream().filter(data -> !data.getId().equals(modified.getId())).findFirst().ifPresent(data -> {
+                map.put("original", data);
+            });
+            return SimpleResultUtils.createSimpleResult(map);
+        }
     }
 
     @GetMapping("/{id}")

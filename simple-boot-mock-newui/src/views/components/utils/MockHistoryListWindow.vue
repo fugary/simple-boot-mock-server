@@ -28,6 +28,10 @@ const props = defineProps({
   search: {
     type: Function,
     required: true
+  },
+  compare: {
+    type: Function,
+    required: true
   }
 })
 const showWindow = ref(false)
@@ -49,13 +53,13 @@ const buttons = defineTableButtons([{
     return !data.current
   },
   click (item) {
-    console.log('============compare', item)
+    props.compare?.(item)
   }
 }, {
   labelKey: 'mock.label.viewChange',
   type: 'success',
   click (item) {
-    console.log('============change', item)
+    props.compare?.(item, true)
   }
 }])
 const showHistoryListWindow = () => {

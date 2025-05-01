@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.service.impl.mock;
 
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.entity.mock.MockData;
@@ -8,12 +9,10 @@ import com.fugary.simple.mock.mapper.mock.MockDataMapper;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
-import com.fugary.simple.mock.utils.security.SecurityUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -101,8 +100,12 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
                     historyData.setId(null);
                     historyData.setModifyFrom(entity.getId());
                     historyData.setVersion(entity.getVersion());
-                    historyData.setModifier(SecurityUtils.getLoginUserName());
-                    historyData.setModifyDate(new Date());
+                    if (StringUtils.isBlank(historyData.getModifier())) {
+                        historyData.setModifier(historyData.getCreator());
+                    }
+                    if (historyData.getModifyDate() == null) {
+                        historyData.setModifyDate(historyData.getCreateDate());
+                    }
                     this.save(historyData);
                 }
             }

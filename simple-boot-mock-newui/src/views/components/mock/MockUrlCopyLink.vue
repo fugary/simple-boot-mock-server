@@ -15,7 +15,7 @@ const props = defineProps({
   },
   tooltip: {
     type: String,
-    default: '复制链接地址'
+    default: 'Click to copy'
   }
 })
 

@@ -20,16 +20,18 @@ const props = defineProps({
 
 const calcItems = computed(() => {
   return props.items.filter(item => item.enabled !== false).map(item => {
-    const label = item.labelKey ? toLabelByKey(item.labelKey) : item.label
+    let label = item.labelKey ? toLabelByKey(item.labelKey) : item.label
+    label = isFunction(item.labelFormatter) ? item.labelFormatter(item) : label
     const value = isFunction(item.formatter) ? item.formatter(item) : item.value
+    const labelResult = { label, vnode: isVNode(label) }
     const valueResult = { value, vnode: isVNode(value) }
     const slotsResult = calcSlotsResult(item)
     return {
       ...item,
-      label,
       width: item.width || props.width,
       minWidth: item.minWidth || props.minWidth,
       valueResult,
+      labelResult,
       slotsResult
     }
   })
@@ -44,7 +46,6 @@ const calcItems = computed(() => {
     <el-descriptions-item
       v-for="(calcItem, index) in calcItems"
       :key="index"
-      :label="calcItem.label"
       :min-width="calcItem.minWidth"
       :width="calcItem.width"
       :span="calcItem.span"
@@ -63,6 +64,19 @@ const calcItems = computed(() => {
         <template v-else>
           {{ calcItem.slotsResult[slotKey].result }}
         </template>
+      </template>
+      <template
+        v-if="calcItem.labelResult.label"
+        #label
+      >
+        <span
+          v-if="calcItem.labelResult.label&&!calcItem.labelResult.vnode"
+          v-html="calcItem.labelResult.label"
+        />
+        <component
+          :is="calcItem.labelResult.label"
+          v-if="calcItem.labelResult.vnode"
+        />
       </template>
       <template v-if="calcItem.valueResult.value">
         <span
