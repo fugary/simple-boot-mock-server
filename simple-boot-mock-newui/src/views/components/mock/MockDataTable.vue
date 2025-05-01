@@ -25,6 +25,7 @@ import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
 import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
 import { calcContentType, DEFAULT_HEADERS } from '@/consts/MockConstants'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
+import { isString } from 'lodash-es'
 
 const props = defineProps({
   groupItem: {
@@ -405,16 +406,26 @@ const calcFormatter = ({ original, modified, key, modifiedKey, value }) => {
     </ElText>
   }
 }
-const getMockCompareItem = ({ original, modified, label, labelKey, key, modifiedKey, originalAppend, modifiedAppend, date = false, copy = false, ...config }) => {
+const getMockCompareItem = ({ original, modified, label, labelKey, key, modifiedKey, originalAppend, modifiedAppend, date = false, copy = false, limit, ...config }) => {
   modifiedKey = modifiedKey || key
   const enabled = original[key] !== null || modified[modifiedKey] !== null
+  let originalValue = original[key]
+  let modifiedValue = modified[modifiedKey]
+  if (limit && limit > 0) {
+    if (isString(originalValue) && originalValue && originalValue.length > limit) {
+      originalValue = originalValue.substring(0, limit) + '...'
+    }
+    if (isString(modifiedValue) && modifiedValue && modifiedValue.length > limit) {
+      modifiedValue = modifiedValue.substring(0, limit) + '...'
+    }
+  }
   return [{
     enabled,
     label,
     labelKey,
     formatter: config.originalFormatter || (() => {
       return <>
-      {date ? formatDate(original[key]) : original[key]}
+      {date ? formatDate(originalValue) : originalValue}
       {copy ? <MockUrlCopyLink class="margin-left1" showLink={!!original[key]} content={original[key]} /> : ''}
       {originalAppend}
       </>
@@ -432,7 +443,7 @@ const getMockCompareItem = ({ original, modified, label, labelKey, key, modified
       modified,
       key,
       value: <>
-        {date ? formatDate(modified[modifiedKey]) : modified[modifiedKey]}
+        {date ? formatDate(modifiedValue) : modifiedValue}
         {copy ? <MockUrlCopyLink class="margin-left1" showLink={!!modified[modifiedKey]} content={modified[modifiedKey]} /> : '' }
         {modifiedAppend}
       </>
@@ -470,8 +481,8 @@ const calcMockCompareItems = (original, modified) => {
       ...getMockCompareItem({ original, modified, labelKey: 'mock.label.matchPattern', key: 'matchPattern', copy: true }),
       ...getMockCompareItem({ original, modified, labelKey: 'mock.label.dataFormat', key: 'responseFormat' }),
       ...getMockCompareItem({ original, modified, labelKey: 'common.label.delay', key: 'delay' }),
-      ...getMockCompareItem({ original, modified, labelKey: 'common.label.description', key: 'description' }),
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.responseHeaders', key: 'headers' }),
+      ...getMockCompareItem({ original, modified, labelKey: 'common.label.description', key: 'description', copy: true }),
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.responseHeaders', key: 'headers', limit: 50, copy: true }),
       ...getMockCompareItem({
         original,
         modified,
