@@ -50,6 +50,9 @@ const getStatusCode = (data) => {
   }
   const status = ALL_STATUS_CODES.find(status => data.statusCode === status.code)
   const statusLabel = status ? $i18nMsg(`${status.labelCn} - ${(status.labelEn)}`, `${status.labelEn} - ${(status.labelCn)}`) : ''
+  if (!status) {
+    return ''
+  }
   return <ElText type="success">
     {data.defaultFlag
       ? <CommonIcon type="success"

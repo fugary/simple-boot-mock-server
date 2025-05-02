@@ -5,6 +5,10 @@ import { isExternalLink } from '@/components/utils'
 import { computed } from 'vue'
 
 const props = defineProps({
+  showLink: {
+    type: Boolean,
+    default: true
+  },
   urlPath: {
     type: String,
     default: ''
@@ -16,6 +20,10 @@ const props = defineProps({
   tooltip: {
     type: String,
     default: 'Click to copy'
+  },
+  icon: {
+    type: String,
+    default: 'DocumentCopy'
   }
 })
 
@@ -39,6 +47,7 @@ const externalLink = computed(() => isExternalLink(info.value) ? info.value : ''
 
 <template>
   <el-link
+    v-if="showLink"
     v-common-tooltip="tooltip"
     v-open-new-window="externalLink"
     type="primary"
@@ -48,7 +57,7 @@ const externalLink = computed(() => isExternalLink(info.value) ? info.value : ''
     <slot>
       <common-icon
         :size="18"
-        icon="DocumentCopy"
+        :icon="icon"
       />
     </slot>
   </el-link>
