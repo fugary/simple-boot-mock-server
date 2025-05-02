@@ -476,13 +476,6 @@ const calcMockCompareItems = (original, modified) => {
         modifiedFormatter: getStatusCodeFormatter(modified)
       }),
       ...getMockCompareItem({ original, modified, labelKey: 'mock.label.responseName', key: 'dataName', copy: true }),
-      ...getMockCompareItem({ original, modified, label: 'Content Type', key: 'contentType' }),
-      ...getMockCompareItem({ original, modified, label: 'Charset', key: 'defaultCharset' }),
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.matchPattern', key: 'matchPattern', copy: true }),
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.dataFormat', key: 'responseFormat' }),
-      ...getMockCompareItem({ original, modified, labelKey: 'common.label.delay', key: 'delay' }),
-      ...getMockCompareItem({ original, modified, labelKey: 'common.label.description', key: 'description', copy: true }),
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.responseHeaders', key: 'headers', limit: 50, copy: true }),
       ...getMockCompareItem({
         original,
         modified,
@@ -491,6 +484,14 @@ const calcMockCompareItems = (original, modified) => {
         originalFormatter: getDelFlagFormatter(original),
         modifiedFormatter: getDelFlagFormatter(modified)
       }),
+      ...getMockCompareItem({ original, modified, label: 'Content Type', key: 'contentType' }),
+      ...getMockCompareItem({ original, modified, label: 'Charset', key: 'defaultCharset' }),
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.matchPattern', key: 'matchPattern', copy: true }),
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.dataFormat', key: 'responseFormat' }),
+      ...getMockCompareItem({ original, modified, labelKey: 'common.label.delay', key: 'delay' }),
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.responseHeaders', key: 'headers', limit: 50, copy: true }),
+      ...getMockCompareItem({ original, modified, labelKey: 'common.label.description', key: 'description', copy: true }),
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.queryParams', key: 'mockParams', limit: 50, copy: true }),
       ...getMockCompareItem({
         original,
         modified,
