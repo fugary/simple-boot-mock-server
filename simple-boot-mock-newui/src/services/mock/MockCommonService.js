@@ -109,7 +109,11 @@ export const useContentTypeOption = (prop = 'contentType', charset = true) => {
     ? {
         label: 'Charset',
         prop: 'defaultCharset',
-        tooltip: 'Default charset is UTF-8, none for responding without charset'
+        type: 'autocomplete',
+        tooltip: 'Default charset is UTF-8, none for responding without charset',
+        attrs: {
+          fetchSuggestions: ['UTF-8', 'ISO-8859-1', 'GBK', 'GB2312', 'GB18030', 'UTF-16'].map(value => ({ value }))
+        }
       }
     : undefined
   return {
