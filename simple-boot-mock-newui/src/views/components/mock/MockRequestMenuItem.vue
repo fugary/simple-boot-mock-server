@@ -121,22 +121,10 @@ const requestProxyUrl = computed(() => {
           class="margin-left1"
           :url-path="fullPath"
         />
-        <el-tag
-          v-if="requestItem.dataCount"
-          title="mock data count"
-          class="margin-left1"
-          type="success"
-          size="small"
-          effect="plain"
-          style="height: 20px;"
-          round
-        >
-          {{ requestItem.dataCount }}
-        </el-tag>
       </el-col>
     </el-row>
     <el-row class="margin-bottom1">
-      <el-col :span="12">
+      <el-col :span="14">
         <el-tag
           :type="methodsConfig[requestItem.method].type"
           size="small"
@@ -150,9 +138,21 @@ const requestProxyUrl = computed(() => {
           click-to-toggle
           @toggle-value="changeStatus"
         />
+        <el-tag
+          v-if="requestItem.dataCount"
+          title="mock data count"
+          class="margin-left1"
+          type="success"
+          size="small"
+          effect="plain"
+          style="height: 20px;"
+          round
+        >
+          {{ requestItem.dataCount }}
+        </el-tag>
       </el-col>
       <el-col
-        :span="12"
+        :span="10"
         class="text-right"
       >
         <template
