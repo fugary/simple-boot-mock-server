@@ -518,17 +518,11 @@ const toShowHistoryWindow = (current) => {
       }
     }, {
       labelKey: 'mock.label.responseName',
-      property: 'dataName'
-    }, {
-      label: 'Content Type',
-      property: 'contentType',
-      minWidth: '150px'
-    }, {
-      labelKey: 'mock.label.matchPattern',
-      property: 'matchPattern'
+      property: 'dataName',
+      minWidth: '100px'
     }, {
       labelKey: 'common.label.status',
-      minWidth: '80px',
+      minWidth: '100px',
       formatter (data) {
         return <DelFlagTag v-model={data.status} clickToToggle={false}/>
       }
@@ -544,6 +538,11 @@ const toShowHistoryWindow = (current) => {
         return showStr
       }
     }, {
+      labelKey: 'common.label.modifyDate',
+      property: 'modifyDate',
+      dateFormat: 'YYYY-MM-DD HH:mm:ss',
+      minWidth: '160px'
+    }, {
       labelKey: 'mock.label.version',
       minWidth: '120px',
       formatter (item) {
@@ -552,6 +551,14 @@ const toShowHistoryWindow = (current) => {
           {item.current ? <ElTag type="success" class="margin-left1">{$i18nBundle('mock.label.current')}</ElTag> : ''}
         </>
       }
+    }, {
+      labelKey: 'mock.label.matchPattern',
+      property: 'matchPattern',
+      minWidth: '100px'
+    }, {
+      label: 'Content Type',
+      property: 'contentType',
+      minWidth: '150px'
     }]),
     searchFunc: (param, config) => searchHistories(current.id, param, config),
     compareFunc: async (modified, target, previous) => {

@@ -1,8 +1,9 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useDefaultPage } from '@/config'
 import { defineTableButtons } from '@/components/utils'
+import { checkShowColumn } from '@/utils'
 
 const props = defineProps({
   title: {
@@ -61,6 +62,18 @@ const buttons = defineTableButtons([{
     props.compareFunc?.(item, target.value, true)
   }
 }])
+const calcColumns = computed(() => {
+  return props.columns.map((column) => {
+    let enabled = column.enabled ?? true
+    if (column.property) {
+      enabled = checkShowColumn(tableData.value, column.property)
+    }
+    return {
+      ...column,
+      enabled
+    }
+  })
+})
 const showHistoryListWindow = () => {
   searchHistories(1)
   showWindow.value = true
@@ -94,9 +107,9 @@ defineExpose({
       <common-table
         v-model:page="searchParam.page"
         :data="tableData"
-        :columns="columns"
+        :columns="calcColumns"
         :buttons="buttons"
-        :buttons-column-attrs="{minWidth:'200px'}"
+        :buttons-column-attrs="{minWidth:'220px',fixed:'right'}"
         :loading="loading"
         @page-size-change="searchHistories()"
         @current-page-change="searchHistories()"
