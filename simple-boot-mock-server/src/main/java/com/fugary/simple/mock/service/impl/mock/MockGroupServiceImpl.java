@@ -317,13 +317,23 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public SimpleResult<List<ExportGroupVo>> toImportGroups(MultipartFile file, MockGroupImportParamVo importVo) {
+    public SimpleResult<List<ExportGroupVo>> toImportGroups(List<MultipartFile> files, MockGroupImportParamVo importVo) {
         try {
-            String fileData = StreamUtils.copyToString(file.getInputStream(), StandardCharsets.UTF_8);
-            MockGroupImporter importer = MockGroupImporter.findImporter(mockGroupImporters, importVo.getType());
-            ExportMockVo mockVo;
-            if (importer == null || (mockVo = importer.doImport(fileData)) == null) {
-                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2003);
+            ExportMockVo mockVo = new ExportMockVo();
+            for (MultipartFile file : files) {
+                String fileData = StreamUtils.copyToString(file.getInputStream(), StandardCharsets.UTF_8);
+                MockGroupImporter importer = MockGroupImporter.findImporter(mockGroupImporters, importVo.getType());
+                ExportMockVo currentVo;
+                if (importer == null || (currentVo = importer.doImport(fileData)) == null) {
+                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2003);
+                } else {
+                    SimpleMockUtils.addMockVo(mockVo, currentVo);
+                }
+            }
+            Integer duplicateStrategy = Objects.requireNonNullElse(importVo.getDuplicateStrategy(), MockConstants.IMPORT_STRATEGY_ERROR);
+            SimpleResult<List<ExportGroupVo>> strategyResult = SimpleMockUtils.mergeExportMockVo(mockVo, duplicateStrategy);
+            if (!strategyResult.isSuccess()) {
+                return strategyResult;
             }
             if ("swagger".equals(importVo.getType()) && BooleanUtils.isTrue(importVo.getSingleGroup())
                     && CollectionUtils.size(mockVo.getGroups()) > 1) {
@@ -336,7 +346,6 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             List<ExportGroupVo> importGroups = mockVo.getGroups();
             List<MockGroup> existGroups = checkGroupsExists(importGroups);
             if (CollectionUtils.isNotEmpty(existGroups)) {
-                Integer duplicateStrategy = Objects.requireNonNullElse(importVo.getDuplicateStrategy(), MockConstants.IMPORT_STRATEGY_ERROR);
                 if(MockConstants.IMPORT_STRATEGY_ERROR.equals(duplicateStrategy)) {
                     return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2004);
                 } else if(MockConstants.IMPORT_STRATEGY_SKIP.equals(duplicateStrategy)) {

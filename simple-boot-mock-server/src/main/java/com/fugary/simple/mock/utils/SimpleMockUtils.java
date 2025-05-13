@@ -1,11 +1,15 @@
 package com.fugary.simple.mock.utils;
 
 import com.fugary.simple.mock.contants.MockConstants;
+import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.*;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
 import com.fugary.simple.mock.web.vo.NameValueObj;
+import com.fugary.simple.mock.web.vo.SimpleResult;
+import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
+import com.fugary.simple.mock.web.vo.export.ExportMockVo;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -29,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.fugary.simple.mock.utils.servlet.HttpRequestUtils.getBodyResource;
 
@@ -371,5 +376,56 @@ public class SimpleMockUtils {
         return EqualsBuilder.reflectionEquals(oldMockData, newMockData, "version", "modifyFrom",
                 MockConstants.CREATOR_KEY, MockConstants.CREATE_DATE_KEY,
                 MockConstants.MODIFIER_KEY, MockConstants.MODIFY_DATE_KEY);
+    }
+
+    /**
+     * 数据相加
+     *
+     * @param mockVo1
+     * @param mockVo2
+     */
+    public static void addMockVo(ExportMockVo mockVo1, ExportMockVo mockVo2) {
+        if (mockVo1.getGroups() == null) {
+            mockVo1.setGroups(new ArrayList<>());
+        }
+        mockVo1.getGroups().addAll(mockVo2.getGroups() == null ? new ArrayList<>() : mockVo2.getGroups());
+    }
+
+    /**
+     * 策略合并
+     *
+     * @param mockVo
+     * @param duplicateStrategy
+     */
+    public static SimpleResult<List<ExportGroupVo>> mergeExportMockVo(ExportMockVo mockVo, Integer duplicateStrategy) {
+        List<ExportGroupVo> groups = mockVo.getGroups();
+        if (CollectionUtils.isNotEmpty(groups)) {
+            Map<String, List<ExportGroupVo>> groupsMap = groups.stream().filter(group -> StringUtils.isNotBlank(group.getGroupPath()))
+                    .collect(Collectors.groupingBy(ExportGroupVo::getGroupPath));
+            if (!groupsMap.isEmpty()) {
+                if (MockConstants.IMPORT_STRATEGY_ERROR.equals(duplicateStrategy)) {
+                    if (groupsMap.values().stream().anyMatch(list -> list.size() > 1)) {
+                        return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2004);
+                    }
+                } else if (MockConstants.IMPORT_STRATEGY_SKIP.equals(duplicateStrategy)) {
+                    groupsMap.forEach((key, value) -> {
+                        if (value.size() > 1) {
+                            for (int i = 1; i < value.size(); i++) {
+                                groups.remove(value.get(i));
+                            }
+                        }
+                    });
+                } else if (MockConstants.IMPORT_STRATEGY_NEW.equals(duplicateStrategy)) {
+                    groupsMap.forEach((key, value) -> {
+                        if (value.size() > 1) {
+                            for (int i = 1; i < value.size(); i++) {
+                                value.get(i).setGroupPath(SimpleMockUtils.uuid());
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        return SimpleResultUtils.createSimpleResult(groups);
     }
 }

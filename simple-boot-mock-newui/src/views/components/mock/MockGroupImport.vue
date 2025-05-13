@@ -49,6 +49,7 @@ const saveProjectItem = (item) => {
   return MockProjectApi.saveOrUpdate(item).then(() => emit('updateProjects', item, importModel))
 }
 const formOptions = computed(() => {
+  const fileLimits = 3
   return defineFormOptions([{
     labelKey: 'common.label.user',
     prop: 'userName',
@@ -82,10 +83,11 @@ const formOptions = computed(() => {
   }, {
     labelKey: 'mock.label.source',
     prop: 'type',
-    type: 'select',
-    children: IMPORT_TYPES,
+    type: 'segmented',
     attrs: {
-      clearable: false
+      clearable: false,
+      options: IMPORT_TYPES.filter(option => option.enabled !== false)
+        .map(option => ({ ...option, label: $i18nBundle(option.labelKey) }))
     }
   }, {
     labelKey: 'mock.label.duplicateStrategy',
@@ -112,30 +114,32 @@ const formOptions = computed(() => {
     labelKey: 'mock.label.importFile',
     type: 'upload',
     attrs: {
+      style: 'width: 100%',
       fileList: importFiles.value,
       'onUpdate:fileList': (files) => {
         importFiles.value = files
       },
-      limit: 1,
-      showFileList: false,
+      multiple: true,
+      limit: fileLimits,
+      showFileList: true,
       autoUpload: false,
-      onExceed (files) {
-        importFiles.value = [...files.map(file => ({
-          name: file.name,
-          status: 'ready',
-          size: file.size,
-          raw: file
-        }))] // 文件覆盖
+      onExceed () {
+        // importFiles.value = [...files.map(file => ({
+        //   name: file.name,
+        //   status: 'ready',
+        //   size: file.size,
+        //   raw: file
+        // }))] // 文件覆盖
+        $coreError($i18nBundle('common.msg.exceedFiles'))
       }
     },
     slots: {
       trigger () {
         return <>
           <ElButton type="primary">{$i18nBundle('mock.label.selectFile')}</ElButton>
-          <span style="display: inline-block; margin-left: 10px;">{importFiles.value?.[0]?.name}</span>
+          <span className="margin-left2">{$i18nBundle('mock.msg.importFileLimit', [fileLimits])}</span>
         </>
-      },
-      tip: () => <div className="el-upload__tip">{$i18nBundle('mock.msg.importFileLimit')}</div>
+      }
     }
   }])
 })
