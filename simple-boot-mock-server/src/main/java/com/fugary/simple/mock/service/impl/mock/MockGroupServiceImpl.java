@@ -27,6 +27,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.InitializingBean;
@@ -323,6 +324,14 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             ExportMockVo mockVo;
             if (importer == null || (mockVo = importer.doImport(fileData)) == null) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2003);
+            }
+            if ("swagger".equals(importVo.getType()) && BooleanUtils.isTrue(importVo.getSingleGroup())
+                    && CollectionUtils.size(mockVo.getGroups()) > 1) {
+                ExportGroupVo groupVo = mockVo.getGroups().get(0);
+                ExportGroupVo newGroup = SimpleMockUtils.copy(groupVo, ExportGroupVo.class);
+                newGroup.setRequests(mockVo.getGroups().stream().flatMap(group -> group.getRequests().stream())
+                        .collect(Collectors.toList()));
+                mockVo.setGroups(List.of(newGroup));
             }
             List<ExportGroupVo> importGroups = mockVo.getGroups();
             List<MockGroup> existGroups = checkGroupsExists(importGroups);

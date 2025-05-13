@@ -72,6 +72,7 @@ mock.label.version = '版本'
 mock.label.compare = '对比'
 mock.label.viewChange = '查看变更'
 mock.label.current = '当前'
+mock.label.combineSingleGroup = '合并为单个组'
 
 mock.msg.configSetDefault = '确定要设为默认响应？'
 mock.msg.noExportData = '没有需要导出的数据'
@@ -103,3 +104,4 @@ mock.msg.projectCodeTooltip = '字母、数字、_-组成，唯一标识'
 mock.msg.responseBodyTooltip = `响应内容支持请求参数替换，使用{0}格式替换数据，支持的request请求数据: <br>${mock.msg.requestIntro}`
 mock.msg.checkImageAccept = '要测试图片响应，请设置请求头Accept为image/*'
 mock.msg.delayTooltip = '延迟时间，单位：毫秒'
+mock.msg.combineSingleGroup = '是否合并为单个组，默认按照OpenAPI的tag分组'

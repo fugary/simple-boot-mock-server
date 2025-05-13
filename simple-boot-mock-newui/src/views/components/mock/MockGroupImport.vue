@@ -97,6 +97,18 @@ const formOptions = computed(() => {
       clearable: false
     }
   }, {
+    labelKey: 'mock.label.combineSingleGroup',
+    prop: 'singleGroup',
+    type: 'switch',
+    enabled: importModel.value.type === 'swagger',
+    tooltip: $i18nBundle('mock.msg.combineSingleGroup '),
+    attrs: {
+      activeValue: true,
+      inactiveValue: false,
+      activeText: $i18nBundle('common.label.yes'),
+      inactiveText: $i18nBundle('common.label.no')
+    }
+  }, {
     labelKey: 'mock.label.importFile',
     type: 'upload',
     attrs: {
