@@ -170,7 +170,7 @@ const doImportGroups = () => {
   >
     <el-container class="flex-column">
       <common-form
-        label-width="130px"
+        label-width="150px"
         class="form-edit-width-90"
         :options="formOptions"
         :show-buttons="false"
