@@ -103,7 +103,7 @@ const formOptions = computed(() => {
     prop: 'singleGroup',
     type: 'switch',
     enabled: importModel.value.type === 'swagger',
-    tooltip: $i18nBundle('mock.msg.combineSingleGroup '),
+    tooltip: $i18nBundle('mock.msg.combineSingleGroup'),
     attrs: {
       activeValue: true,
       inactiveValue: false,
