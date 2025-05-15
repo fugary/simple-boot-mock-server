@@ -50,7 +50,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
     }
 
     private boolean isMockJSFragment(String template) {
-        return template.startsWith("Mock.mock(");
+        return template.contains("Mock.mock(");
     }
 
     private String parseMockJSFragment(String template) {
