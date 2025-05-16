@@ -59,7 +59,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
             }).collect(Collectors.groupingBy(triple -> {
                 List<Pair<String, Operation>> operations = triple.getRight();
                 Pair<String, Operation> firstOptionPair = operations.get(0);
-                return firstOptionPair.getRight().getTags().get(0);
+                return getTagName0(firstOptionPair.getRight().getTags());
             }, LinkedHashMap::new, Collectors.toList()));
             List<Tag> tags = openAPI.getTags();
             if (CollectionUtils.isEmpty(tags)) {
@@ -72,6 +72,10 @@ public class SwaggerImporterImpl implements MockGroupImporter {
             return exportMockVo;
         }
         return null;
+    }
+
+    protected String getTagName0(List<String> tags) {
+        return CollectionUtils.isNotEmpty(tags) ? tags.get(0) : "default";
     }
 
     protected List<ExportSchemaVo> calcComponentSchemas(OpenAPI openAPI, ExportGroupVo groupVo) {
