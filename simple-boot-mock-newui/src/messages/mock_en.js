@@ -75,6 +75,7 @@ mock.label.compare = 'Compare'
 mock.label.viewChange = 'View Changes'
 mock.label.current = 'Current'
 mock.label.combineSingleGroup = 'As Single Group'
+mock.label.owner = 'Owner'
 
 mock.msg.configSetDefault = 'Confirm to set as default?'
 mock.msg.noExportData = 'No data to export'

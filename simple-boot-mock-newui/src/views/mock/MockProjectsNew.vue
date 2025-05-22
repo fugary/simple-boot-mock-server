@@ -4,7 +4,7 @@ import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import MockProjectApi, { checkProjectEdit, copyMockProject, useProjectEditHook } from '@/api/mock/MockProjectApi'
-import { $coreConfirm, $goto, formatDate, isAdminUser } from '@/utils'
+import { $coreConfirm, $goto, formatDate, isAdminUser, useCurrentUserName } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
 import { useSearchStatus } from '@/consts/GlobalConstants'
@@ -14,6 +14,7 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import { useRoute } from 'vue-router'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useWindowSize } from '@vueuse/core'
+import { ElText } from 'element-plus'
 
 const props = defineProps({
   publicFlag: {
@@ -115,13 +116,35 @@ const tableProjectItems = computed(() => {
         labelKey: 'mock.label.projectCode',
         value: project.projectCode
       }, {
-        labelKey: 'common.label.createDate',
-        value: formatDate(project.createDate),
-        enabled: !!project.createDate
+        enabled: !!project.userName && project.userName !== useCurrentUserName(),
+        labelFormatter () {
+          return <ElText type="primary" tag="b">
+            {$i18nBundle('mock.label.owner')}
+          </ElText>
+        },
+        formatter () {
+          return <ElText type="primary">
+            {project.userName}
+          </ElText>
+        }
       }, {
         labelKey: 'common.label.modifyDate',
-        value: formatDate(project.modifyDate),
-        enabled: !!project.modifyDate
+        enabled: !!project.createDate || !!project.modifyDate,
+        formatter () {
+          let modifyStr = ''
+          const format = 'YYYY-MM-DD HH:mm'
+          if (project.modifyDate) {
+            modifyStr = <>
+              <CommonIcon icon="EditCalendarFilled" size={20} class="margin-left1" style="top: 4px;"/>
+              {formatDate(project.modifyDate, format)}
+            </>
+          }
+          return <>
+            <CommonIcon icon="CalendarMonthFilled" size={20} style="top: 4px;"/>
+            {formatDate(project.createDate, format)}
+            {modifyStr}
+          </>
+        }
       }, {
         labelKey: 'common.label.description',
         value: project.description,

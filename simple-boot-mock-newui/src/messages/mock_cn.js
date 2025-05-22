@@ -75,6 +75,7 @@ mock.label.compare = '对比'
 mock.label.viewChange = '查看变更'
 mock.label.current = '当前'
 mock.label.combineSingleGroup = '合并为单个组'
+mock.label.owner = '所属用户'
 
 mock.msg.configSetDefault = '确定要设为默认响应？'
 mock.msg.noExportData = '没有需要导出的数据'
