@@ -11,5 +11,5 @@ import lombok.Data;
 public class MockProjectQueryVo extends SimpleQueryVo{
 
     private String userName;
-
+    private boolean publicFlag;
 }

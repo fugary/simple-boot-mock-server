@@ -16,12 +16,13 @@ import { previewMockRequest, toEditGroupEnvParams, toTestMatchPattern } from '@/
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import MockRequestMenuItem from '@/views/components/mock/MockRequestMenuItem.vue'
 import CommonIcon from '@/components/common-icon/index.vue'
+import { checkProjectEdit } from '@/api/mock/MockProjectApi'
 
 const route = useRoute()
 const groupId = route.params.groupId
 
 const { goBack } = useBackUrl('/mock/groups')
-const { groupItem, groupUrl, loadSuccess } = useMockGroupItem(groupId)
+const { groupItem, mockProject, groupUrl, loadSuccess } = useMockGroupItem(groupId)
 
 const { tableData, loading, searchParam, searchMethod: searchMockRequests } = useTableAndSearchForm({
   defaultParam: { groupId, page: useDefaultPage(10) },
@@ -211,6 +212,7 @@ const newColumns = computed(() => {
     property: 'requestPath',
     formatter (data) {
       return <MockRequestMenuItem v-model={data}
+                                  editable={projectEditable.value}
                                   onToTestMockRequest={() => previewMockRequest(groupItem.value, data)}
                                   onToTestMatchPattern={() => { toTestMatchPattern(groupItem.value, data) }}
                                   onToEditMockRequest={() => { newOrEdit(data.id) }}
@@ -235,6 +237,8 @@ const editGroupEnvParams = () => {
     .then(() => $reload(route))
 }
 
+const projectEditable = computed(() => checkProjectEdit(mockProject.value))
+
 </script>
 
 <template>
@@ -257,6 +261,7 @@ const editGroupEnvParams = () => {
     >
       <template #buttons>
         <el-button
+          v-if="projectEditable"
           type="success"
           @click="editGroupEnvParams"
         >
@@ -305,7 +310,10 @@ const editGroupEnvParams = () => {
                   >
                     {{ searchParam.page?.totalCount }}
                   </el-tag>
-                  <div class="float-right">
+                  <div
+                    v-if="projectEditable"
+                    class="float-right"
+                  >
                     <el-button
                       v-common-tooltip="$t('common.label.batchMode')"
                       round
@@ -343,6 +351,7 @@ const editGroupEnvParams = () => {
             <mock-data-table
               v-if="selectRequest"
               v-model:request-item="selectRequest"
+              :editable="projectEditable"
               class="form-edit-width-100"
               :group-item="groupItem"
             />

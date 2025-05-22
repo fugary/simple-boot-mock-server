@@ -26,6 +26,10 @@ export const isUserAdmin = userName => {
   return userName === 'admin'
 }
 
+export const isCurrentUser = userName => {
+  return useCurrentUserName() === userName
+}
+
 export const useSystemKey = () => {
   return SYSTEM_KEY
 }

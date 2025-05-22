@@ -24,11 +24,16 @@ import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
 import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
 import { ElLink } from 'element-plus'
-import MockProjectApi, { useProjectEditHook, useSelectProjects } from '@/api/mock/MockProjectApi'
+import MockProjectApi, { checkProjectEdit, useProjectEditHook, useSelectProjects } from '@/api/mock/MockProjectApi'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
 import CommonIcon from '@/components/common-icon/index.vue'
-
+const props = defineProps({
+  publicFlag: {
+    type: Boolean,
+    default: false
+  }
+})
 const route = useRoute()
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
 
@@ -36,14 +41,21 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
   defaultParam: { page: useDefaultPage(), userName: useCurrentUserName(), projectCode: MOCK_DEFAULT_PROJECT },
   searchMethod: search
 })
+const mockProject = ref()
 const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
+  .then(data => {
+    mockProject.value = data.infos?.mockProject
+    return data
+  })
 
 const { backUrl, goBack } = useBackUrl()
 searchParam.value.projectCode = route.params.projectCode || searchParam.value.projectCode
 searchParam.value.userName = route.params.userName || searchParam.value.userName
+searchParam.value.publicFlag = props.publicFlag
+const projectEditable = computed(() => checkProjectEdit(mockProject.value))
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
-const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam)
+const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, props.publicFlag)
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
   await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
@@ -119,9 +131,10 @@ const columns = computed(() => {
     dateFormat: 'YYYY-MM-DD HH:mm:ss'
   }]
 })
-const buttons = defineTableButtons([{
+const buttons = computed(() => defineTableButtons([{
   labelKey: 'common.label.edit',
   type: 'primary',
+  enabled: !!projectEditable.value,
   click: item => {
     newOrEdit(item.id)
   }
@@ -134,6 +147,7 @@ const buttons = defineTableButtons([{
 }, {
   labelKey: 'common.label.copy',
   type: 'warning',
+  enabled: !!projectEditable.value,
   click: item => {
     $coreConfirm($i18nBundle('common.msg.confirmCopy'))
       .then(() => copyMockGroup(item.id, { loading: true }))
@@ -142,8 +156,9 @@ const buttons = defineTableButtons([{
 }, {
   labelKey: 'common.label.delete',
   type: 'danger',
+  enabled: !!projectEditable.value,
   click: item => deleteGroup(item)
-}])
+}]))
 const changedUser = async (userName) => {
   userName && (searchParam.value.userName = userName)
   await loadProjectsAndRefreshOptions()
@@ -323,12 +338,16 @@ const showImportWindow = ref(false)
     >
       <template #buttons>
         <el-button
+          v-if="projectEditable"
           type="info"
           @click="newOrEdit()"
         >
           {{ $t('common.label.new') }}
         </el-button>
-        <el-dropdown style="margin-left: 12px;">
+        <el-dropdown
+          v-if="projectEditable"
+          style="margin-left: 12px;"
+        >
           <el-button type="success">
             {{ $t('mock.label.export') }}
             <common-icon icon="ArrowDown" />
@@ -348,13 +367,14 @@ const showImportWindow = ref(false)
           </template>
         </el-dropdown>
         <el-button
+          v-if="projectEditable"
           type="success"
           @click="showImportWindow = true"
         >
           {{ $t('mock.label.import') }}
         </el-button>
         <el-button
-          v-if="selectedRows?.length"
+          v-if="selectedRows?.length&&projectEditable"
           type="danger"
           @click="deleteGroups()"
         >

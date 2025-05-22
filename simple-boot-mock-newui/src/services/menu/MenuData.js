@@ -31,6 +31,14 @@ export const ALL_MENUS = [
     menuUrl: '/mock/projects'
   },
   {
+    id: 13,
+    parentId: 1,
+    iconCls: 'Share',
+    nameCn: '公开项目',
+    nameEn: 'Public Projects',
+    menuUrl: '/mock/pubProjects'
+  },
+  {
     id: 5,
     iconCls: 'setting',
     nameCn: '系统管理',

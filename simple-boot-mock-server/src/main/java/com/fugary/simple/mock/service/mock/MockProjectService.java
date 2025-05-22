@@ -38,6 +38,14 @@ public interface MockProjectService extends IService<MockProject> {
     boolean existsMockProject(MockProject project);
 
     /**
+     * 加载项目
+     * @param userName
+     * @param projectCode
+     * @return
+     */
+    MockProject loadMockProject(String userName, String projectCode);
+
+    /**
      * 检查project是否正常
      *
      * @param userName

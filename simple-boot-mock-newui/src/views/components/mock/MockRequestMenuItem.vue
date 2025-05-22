@@ -11,6 +11,10 @@ const props = defineProps({
   groupItem: {
     type: Object,
     required: true
+  },
+  editable: {
+    type: Boolean,
+    default: false
   }
 })
 const requestItem = defineModel('modelValue', {
@@ -64,6 +68,7 @@ const moreButtons = computed(() => {
     labelKey: 'common.label.copy',
     type: 'warning',
     icon: 'FileCopyFilled',
+    enabled: props.editable,
     click: (item) => {
       $coreConfirm($i18nBundle('common.msg.confirmCopy'))
         .then(() => copyMockRequest(item.id))
@@ -73,6 +78,7 @@ const moreButtons = computed(() => {
     labelKey: 'common.label.delete',
     type: 'danger',
     icon: 'DeleteFilled',
+    enabled: props.editable,
     click: item => {
       $coreConfirm($i18nBundle('common.msg.commonDeleteConfirm', [`${item.requestPath}#${item.method}`]))
         .then(() => MockRequestApi.deleteById(item.id))

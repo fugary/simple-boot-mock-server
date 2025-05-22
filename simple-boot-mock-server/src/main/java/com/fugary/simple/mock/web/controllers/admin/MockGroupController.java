@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockGroup;
+import com.fugary.simple.mock.entity.mock.MockProject;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.service.mock.MockGroupService;
+import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
@@ -51,24 +53,41 @@ public class MockGroupController {
     @Autowired
     private MockGroupService mockGroupService;
 
+    @Autowired
+    private MockProjectService mockProjectService;
+
     @GetMapping
     public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
+        String queryUserName = queryVo.getUserName();
+        String projectCode = StringUtils.defaultIfBlank(queryVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT);
         QueryWrapper<MockGroup> queryWrapper = Wrappers.<MockGroup>query()
                 .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
         queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("group_name", keyword)
-                    .or().like("group_path", keyword)
-                    .or().like("description", keyword));
-        String userName = SecurityUtils.getUserName(queryVo.getUserName());
+                .or().like("group_path", keyword)
+                .or().like("description", keyword));
+        MockProject mockProject = mockProjectService.loadMockProject(queryUserName, projectCode);
+        String userName = SecurityUtils.getUserName(queryUserName);
+        if (StringUtils.isBlank(userName) && queryVo.isPublicFlag()
+                && mockProject != null && mockProject.isEnabled() && Boolean.TRUE.equals(mockProject.getPublicFlag())) {
+            userName = queryUserName; // 允许查询
+        }
         queryWrapper.eq("user_name", userName);
-        queryWrapper.eq("project_code", StringUtils.defaultIfBlank(queryVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
-        return SimpleResultUtils.createSimpleResult(mockGroupService.page(page, queryWrapper));
+        queryWrapper.eq("project_code", projectCode);
+        return SimpleResultUtils.createSimpleResult(mockGroupService.page(page, queryWrapper))
+                .addInfo("mockProject", mockProject);
     }
 
     @GetMapping("/{id}")
     public SimpleResult<MockGroup> get(@PathVariable("id") Integer id) {
-        return SimpleResultUtils.createSimpleResult(mockGroupService.getById(id));
+        MockGroup mockGroup = mockGroupService.getById(id);
+        MockProject mockProject = null;
+        if (mockGroup != null) {
+            mockProject = mockProjectService.loadMockProject(mockGroup.getUserName(), mockGroup.getProjectCode());
+        }
+        return SimpleResultUtils.createSimpleResult(mockGroup)
+                .addInfo("mockProject", mockProject);
     }
 
     @DeleteMapping("/{id}")

@@ -15,4 +15,5 @@ public class MockProject extends MockBase {
     private String projectCode;
     private String projectName;
     private String description;
+    private Boolean publicFlag;
 }

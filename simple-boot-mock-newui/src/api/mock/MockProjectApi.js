@@ -1,8 +1,8 @@
 import { useResourceApi } from '@/hooks/ApiHooks'
 import { computed, ref } from 'vue'
 import { $http } from '@/vendors/axios'
-import { isAdminUser, useCurrentUserName } from '@/utils'
-import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
+import { isAdminUser, isCurrentUser, useCurrentUserName } from '@/utils'
+import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { defineFormOptions } from '@/components/utils'
 import { $i18nBundle } from '@/messages'
 import { useFormStatus } from '@/consts/GlobalConstants'
@@ -22,7 +22,7 @@ export const selectProjects = (params, config) => {
   }, config)).then(response => response.data?.resultData)
 }
 
-export const useSelectProjects = (searchParam) => {
+export const useSelectProjects = (searchParam, publicFlag) => {
   const projects = ref([])
   const projectOptions = ref([])
   const loadSelectProjects = (data, config) => {
@@ -41,7 +41,9 @@ export const useSelectProjects = (searchParam) => {
       userName: searchParam.value?.userName || useCurrentUserName()
     })
     const currentProj = projects.value.find(proj => proj.projectCode === searchParam.value.projectCode)
-    searchParam.value.projectCode = currentProj?.projectCode || MOCK_DEFAULT_PROJECT
+    if (!publicFlag) {
+      searchParam.value.projectCode = currentProj?.projectCode || MOCK_DEFAULT_PROJECT
+    }
     if (isAdminUser() && currentProj?.userName) {
       searchParam.value.userName = currentProj.userName
     }
@@ -102,6 +104,10 @@ export const useProjectEditHook = (searchParam, userOptions) => {
     labelKey: 'mock.label.projectName',
     prop: 'projectName',
     required: true
+  }, {
+    labelKey: 'mock.label.publicMockProject',
+    prop: 'publicFlag',
+    type: 'switch'
   }, useFormStatus(), {
     labelKey: 'common.label.description',
     prop: 'description',
@@ -116,6 +122,11 @@ export const useProjectEditHook = (searchParam, userOptions) => {
     editFormOptions
   }
 }
+
+export const checkProjectEdit = (project) => {
+  return project && (isAdminUser() || isCurrentUser(project.userName) || isDefaultProject(project.projectCode))
+}
+
 export const copyMockProject = (id, config) => {
   return $http(Object.assign({
     url: `${MOCK_PROJECT_URL}/copyMockProject/${id}`,

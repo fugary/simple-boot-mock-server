@@ -3,7 +3,7 @@ import { computed, onMounted, onActivated } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
-import MockProjectApi, { copyMockProject, useProjectEditHook } from '@/api/mock/MockProjectApi'
+import MockProjectApi, { checkProjectEdit, copyMockProject, useProjectEditHook } from '@/api/mock/MockProjectApi'
 import { $coreConfirm, $goto, formatDate, isAdminUser } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle } from '@/messages'
@@ -15,12 +15,19 @@ import { useRoute } from 'vue-router'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useWindowSize } from '@vueuse/core'
 
+const props = defineProps({
+  publicFlag: {
+    type: Boolean,
+    default: false
+  }
+})
+
 const route = useRoute()
 
 const { search, deleteById, saveOrUpdate } = MockProjectApi
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
-  defaultParam: { page: useDefaultPage(50) },
+  defaultParam: { page: useDefaultPage(50), publicFlag: props.publicFlag },
   searchMethod: search
 })
 const loadMockProjects = (pageNumber) => {
@@ -43,7 +50,7 @@ onActivated(initLoadOnce)
 
 const gotoMockGroups = (project) => {
   if (project.status === 1) {
-    $goto(`/mock/groups/project/${project.projectCode}/${project.userName}?backUrl=${route.fullPath}`)
+    $goto(`/mock/groups/${props.publicFlag ? 'pubProject' : 'project'}/${project.projectCode}/${project.userName}?backUrl=${route.fullPath}`)
   }
 }
 
@@ -53,7 +60,7 @@ const searchFormOptions = computed(() => {
     labelKey: 'common.label.user',
     prop: 'userName',
     type: 'select',
-    enabled: isAdminUser(),
+    enabled: isAdminUser() && !props.publicFlag,
     children: userOptions.value,
     attrs: {
       clearable: false
@@ -62,7 +69,10 @@ const searchFormOptions = computed(() => {
       loadMockProjects(1)
     }
   },
-  useSearchStatus({ change () { loadMockProjects(1) } }),
+  {
+    ...useSearchStatus({ change () { loadMockProjects(1) } }),
+    enabled: !props.publicFlag
+  },
   {
     labelKey: 'common.label.keywords',
     prop: 'keyword'
@@ -154,7 +164,10 @@ const pageAttrs = {
       :submit-label="$t('common.label.search')"
       @submit-form="loadMockProjects"
     >
-      <template #buttons>
+      <template
+        v-if="!publicFlag"
+        #buttons
+      >
         <el-button
           type="info"
           @click="newOrEdit()"
@@ -204,7 +217,7 @@ const pageAttrs = {
                 <el-checkbox
                   v-model="project.selected"
                   style="margin-right: auto;"
-                  :disabled="defaultProject"
+                  :disabled="defaultProject||!checkProjectEdit(project)"
                   @click="$event.stopPropagation()"
                 >
                   <el-text
@@ -219,7 +232,7 @@ const pageAttrs = {
                     {{ project.projectCode===MOCK_DEFAULT_PROJECT?$t('mock.label.defaultProject'):project.projectName }}
                   </el-text>
                 </el-checkbox>
-                <template v-if="project.showOperations">
+                <template v-if="checkProjectEdit(project)&&project.showOperations">
                   <el-button
                     v-if="!defaultProject"
                     v-common-tooltip="$t('common.label.edit')"

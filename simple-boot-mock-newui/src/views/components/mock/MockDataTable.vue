@@ -31,6 +31,10 @@ const props = defineProps({
   groupItem: {
     type: Object,
     required: true
+  },
+  editable: {
+    type: Boolean,
+    default: false
   }
 })
 const requestItem = defineModel('requestItem', {
@@ -177,7 +181,7 @@ watch(() => requestItem.value?.id, requestId => {
   searchParam.value.requestId = requestId
   loadMockData()
 })
-const buttons = defineTableButtons([{
+const buttons = computed(() => defineTableButtons([{
   labelKey: 'common.label.edit',
   type: 'primary',
   icon: 'Edit',
@@ -188,6 +192,7 @@ const buttons = defineTableButtons([{
   labelKey: 'common.label.copy',
   type: 'warning',
   icon: 'FileCopyFilled',
+  enabled: props.editable,
   click: item => {
     $coreConfirm($i18nBundle('common.msg.confirmCopy'))
       .then(() => copyMockData(item.id))
@@ -222,12 +227,13 @@ const buttons = defineTableButtons([{
   labelKey: 'common.label.delete',
   type: 'danger',
   icon: 'DeleteFilled',
+  enabled: props.editable,
   click: item => {
     $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
       .then(() => MockDataApi.deleteById(item.id, { loading: true }))
       .then(() => loadMockData())
   }
-}])
+}]))
 const deleteDataList = () => {
   $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
     .then(() => MockDataApi.removeByIds(selectedRows.value.map(item => item.id), { loading: true }))

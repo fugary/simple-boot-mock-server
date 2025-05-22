@@ -19,6 +19,18 @@ export default [{
       icon: 'List'
     }
   }, {
+    path: 'pubProject/:projectCode/:userName?',
+    name: 'PublicMockProjectGroups',
+    component: createNewComponent('PublicMockProjectGroups', () => import('@/views/mock/MockGroups.vue')),
+    props: {
+      publicFlag: true
+    },
+    meta: {
+      replaceTabHistory: 'MockGroups',
+      labelKey: 'mock.label.mockGroups',
+      icon: 'List'
+    }
+  }, {
     path: ':groupId',
     name: 'MockRequestsNew',
     component: () => import('@/views/mock/MockRequestsNew.vue'),
@@ -36,5 +48,17 @@ export default [{
     replaceTabHistory: 'MockProjectsNew',
     labelKey: 'mock.label.mockProjects',
     icon: 'MessageBox'
+  }
+}, {
+  path: `${BASE_PATH}/pubProjects`,
+  name: 'PublicMockProjectsNew',
+  component: createNewComponent('PublicMockProjectsNew', () => import('@/views/mock/MockProjectsNew.vue')),
+  props: {
+    publicFlag: true
+  },
+  meta: {
+    replaceTabHistory: 'MockProjectsNew',
+    labelKey: 'mock.label.publicMockProjects',
+    icon: 'Share'
   }
 }]
