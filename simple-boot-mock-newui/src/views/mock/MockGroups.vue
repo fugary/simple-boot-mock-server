@@ -25,7 +25,7 @@ import { getMockUrl } from '@/api/mock/MockRequestApi'
 import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
 import { ElLink } from 'element-plus'
 import MockProjectApi, { checkProjectEdit, useProjectEditHook, useSelectProjects } from '@/api/mock/MockProjectApi'
-import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
+import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
 import CommonIcon from '@/components/common-icon/index.vue'
 
@@ -84,12 +84,15 @@ const columns = computed(() => {
       const url = `/mock/groups/${data.id}?backUrl=${route.fullPath}`
       let projectInfo = ''
       if (data.projectCode) {
-        projectInfo = projectOptions.value.find(proj => proj.value === data.projectCode)?.label
+        projectInfo = projectOptions.value.find(proj => proj.value === data.projectCode)?.label || mockProject.value?.projectName
+        if (!projectInfo && !isDefaultProject(data.projectCode)) {
+          projectInfo = data.projectCode
+        }
       }
       return <>
-        <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink><br/>
-        <span class="el-text el-text--info">({projectInfo})</span>
-      </>
+          <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
+          {projectInfo ? <><br/><span class="el-text el-text--info">({projectInfo})</span></> : ''}
+        </>
     }
   }, {
     labelKey: 'mock.label.pathId',
@@ -337,6 +340,20 @@ const showImportWindow = ref(false)
   <el-container
     class="flex-column"
   >
+    <el-page-header
+      v-if="publicFlag&&mockProject"
+      class="margin-bottom3"
+      @back="goBack"
+    >
+      <template #content>
+        <span class="text-large font-600 mr-3">
+          {{ mockProject.projectName }}
+          <el-text type="info">
+            ({{ $t('mock.label.owner') }}: {{ mockProject.userName }})
+          </el-text>
+        </span>
+      </template>
+    </el-page-header>
     <common-form
       inline
       :model="searchParam"
