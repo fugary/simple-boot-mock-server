@@ -28,6 +28,7 @@ import MockProjectApi, { checkProjectEdit, useProjectEditHook, useSelectProjects
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
 import CommonIcon from '@/components/common-icon/index.vue'
+
 const props = defineProps({
   publicFlag: {
     type: Boolean,
@@ -78,10 +79,17 @@ const columns = computed(() => {
     }
   }, {
     labelKey: 'mock.label.groupName',
-    property: 'groupName',
     minWidth: '130px',
-    click: item => {
-      $goto(`/mock/groups/${item.id}?backUrl=${route.fullPath}`)
+    formatter (data) {
+      const url = `/mock/groups/${data.id}?backUrl=${route.fullPath}`
+      let projectInfo = ''
+      if (data.projectCode) {
+        projectInfo = projectOptions.value.find(proj => proj.value === data.projectCode)?.label
+      }
+      return <>
+        <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink><br/>
+        <span class="el-text el-text--info">({projectInfo})</span>
+      </>
     }
   }, {
     labelKey: 'mock.label.pathId',

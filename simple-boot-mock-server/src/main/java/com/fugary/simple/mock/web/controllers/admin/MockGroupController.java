@@ -74,7 +74,10 @@ public class MockGroupController {
             userName = queryUserName; // 允许查询
         }
         queryWrapper.eq("user_name", userName);
-        queryWrapper.eq("project_code", projectCode);
+        boolean isDefault = StringUtils.isNotBlank(userName) && MockConstants.MOCK_DEFAULT_PROJECT.equals(projectCode);
+        if (!isDefault) {
+            queryWrapper.eq("project_code", projectCode);
+        }
         return SimpleResultUtils.createSimpleResult(mockGroupService.page(page, queryWrapper))
                 .addInfo("mockProject", mockProject);
     }
