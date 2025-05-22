@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { markRaw, ref } from 'vue'
-import { isObject, isArray, set, isNumber, isFunction } from 'lodash-es'
+import { isObject, isArray, set, isNumber, isFunction, isBoolean } from 'lodash-es'
 import { ElLoading, ElMessageBox, ElMessage } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import numeral from 'numeral'
@@ -128,21 +128,57 @@ export const getSingleSelectOptions = (...dataList) => {
 let router = null
 /**
  * @param {string|RouteLocationRaw|number} path 路径、路由对象、数字
- * @param replace 是否用replace方法
+ * @param {{replace?: Boolean, cache?: Boolean, currentPath2Close?: string}} config replace、是否使用跳转页面的缓存、是否关闭当前页面
  * @return {*|Promise<T>}
  */
-export const $goto = (path, replace = false) => {
+export const $goto = (path, config) => {
+  if (isBoolean(config)) { // 兼容原来的replace参数
+    config = { replace: config }
+  }
+  config = config || {}
+  if (config.cache === false) {
+    $removeTabCache(path)
+  }
+  if (config.currentPath2Close) {
+    $closeCurrentTab(config.currentPath2Close)
+  }
   path = path || -1
   if (isNumber(path)) {
     return Promise.resolve().then(() => router?.go(path))
   } else {
-    if (replace) {
+    if (config.replace) {
       return router?.replace(path)
     } else {
       return router?.push(path)
     }
   }
 }
+/**
+ * 清理tab的缓存
+ *
+ * @param path
+ */
+export const $removeTabCache = path => {
+  const tabsViewStore = useTabsViewStore()
+  if (tabsViewStore.isTabMode && tabsViewStore.isCachedTabMode) {
+    const historyTab = tabsViewStore.findHistoryTab(path)
+    if (historyTab) {
+      console.log('=========================removeTabCache', path)
+      tabsViewStore.removeCachedTab(historyTab)
+    }
+  }
+}
+
+/**
+ * 关闭当前tab
+ */
+export const $closeCurrentTab = (currentPath) => {
+  const tabsViewStore = useTabsViewStore()
+  if (tabsViewStore.isTabMode) {
+    tabsViewStore.removeHistoryTab({ path: currentPath })
+  }
+}
+
 // 定制窗口打开模式
 const oriOpen = window.open
 /**

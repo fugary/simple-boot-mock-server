@@ -73,6 +73,7 @@ export const useLoginConfigStore = defineStore('loginConfig', () => {
       // 清理登录数据
       this.clearLoginInfo()
       // $reset清理数据
+      useTabsViewStore().clearAllTabs()
       useTabsViewStore().$reset()
       useGlobalSearchParamStore().$reset()
     },
