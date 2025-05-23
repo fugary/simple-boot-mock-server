@@ -2,9 +2,9 @@
 import { useRoute } from 'vue-router'
 import { $coreConfirm, $reload, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
-import MockRequestApi, { ALL_METHODS } from '@/api/mock/MockRequestApi'
+import MockRequestApi, { ALL_METHODS, loadHistoryDiff, searchHistories } from '@/api/mock/MockRequestApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
-import { defineFormOptions } from '@/components/utils'
+import { defineFormOptions, defineTableColumns } from '@/components/utils'
 import { ref, computed, nextTick } from 'vue'
 import { useFormDelay, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
@@ -12,11 +12,20 @@ import { useDefaultPage } from '@/config'
 import { $i18nBundle } from '@/messages'
 import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { previewMockRequest, toEditGroupEnvParams, toTestMatchPattern } from '@/utils/DynamicUtils'
+import {
+  previewMockRequest,
+  showCompareWindow,
+  showHistoryListWindow,
+  toEditGroupEnvParams,
+  toTestMatchPattern
+} from '@/utils/DynamicUtils'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import MockRequestMenuItem from '@/views/components/mock/MockRequestMenuItem.vue'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { checkProjectEdit } from '@/api/mock/MockProjectApi'
+import { getMockCompareItem } from '@/services/mock/MockDiffService'
+import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
+import { ElTag, ElText } from 'element-plus'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -44,8 +53,10 @@ const loadMockRequests = (...args) => {
         selectRequest.value = tableData.value.find(req => req.id === selectRequest.value?.id) || tableData.value[0]
         requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
         const countMap = result.infos?.countMap || {}
+        const historyMap = result.infos?.historyMap || {}
         tableData.value.forEach(request => {
           request.dataCount = countMap[request.id] || 0
+          request.historyCount = historyMap[request.id] || 0
         })
       }
     })
@@ -216,6 +227,7 @@ const newColumns = computed(() => {
                                   onToTestMockRequest={() => previewMockRequest(groupItem.value, data)}
                                   onToTestMatchPattern={() => { toTestMatchPattern(groupItem.value, data) }}
                                   onToEditMockRequest={() => { newOrEdit(data.id) }}
+                                  onToShowRequestHistory={() => toShowHistoryWindow(data)}
                                   onToEditDelay={() => { newOrEdit(data.id) }}
                                   onRequestChanged={() => loadMockRequests()}
                                   onSaveMockRequest={(item) => saveMockRequest(item)}
@@ -238,6 +250,138 @@ const editGroupEnvParams = () => {
 }
 
 const projectEditable = computed(() => checkProjectEdit(mockProject.value))
+const methodsConfig = Object.fromEntries(ALL_METHODS.map(method => [method.method, method]))
+
+const methodFormatter = item => {
+  return <ElTag type={methodsConfig[item.method].type}
+                size="small"
+                effect="dark">{item.method}</ElTag>
+}
+
+const calcMockCompareItems = (original, modified) => {
+  if (original && modified) {
+    const newTag = !original.id ? <ElTag class="margin-left1" type="warning">{ $i18nBundle('common.label.new') }</ElTag> : ''
+    const currentFlag = modified.current ? <ElTag class="margin-left1" type="success" round={true}>{$i18nBundle('mock.label.current')}</ElTag> : ''
+    const getDelFlagFormatter = (item) => () => <DelFlagTag v-model={item.status}/>
+    const getMethodFormatter = (item) => () => methodFormatter(item)
+    const getContentFormatter = (item, modFlag) => () => <ElText type={modFlag && original.matchPattern !== modified.matchPattern ? 'warning' : ''}>
+      <CommonIcon icon="ArrowDownBold"/>
+      <MockUrlCopyLink showLink={!!item.matchPattern} class="margin-left1" content={item.matchPattern} />
+    </ElText>
+    return [
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.version', key: 'version', modifiedAppend: <>{newTag}{currentFlag}</> }),
+      ...getMockCompareItem({ original, modified, labelKey: 'common.label.modifyDate', key: 'modifyDate', date: true }),
+      ...getMockCompareItem({ original, modified, labelKey: 'common.label.modifier', key: 'modifier' }),
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.requestPath', key: 'requestPath', copy: true }),
+      ...getMockCompareItem({
+        original,
+        modified,
+        labelKey: 'mock.label.method',
+        key: 'method',
+        originalFormatter: getMethodFormatter(original),
+        modifiedFormatter: getMethodFormatter(modified)
+      }),
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.requestName', key: 'requestName', copy: true }),
+      ...getMockCompareItem({
+        original,
+        modified,
+        labelKey: 'common.label.status',
+        key: 'status',
+        originalFormatter: getDelFlagFormatter(original),
+        modifiedFormatter: getDelFlagFormatter(modified)
+      }),
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.proxyUrl', key: 'proxyUrl', copy: true }),
+      ...getMockCompareItem({ original, modified, labelKey: 'common.label.delay', key: 'delay' }),
+      ...getMockCompareItem({ original, modified, labelKey: 'common.label.description', key: 'description', copy: true }),
+      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.queryParams', key: 'mockParams', limit: 50, copy: true }),
+      ...getMockCompareItem({
+        original,
+        modified,
+        labelKey: 'mock.label.matchPattern',
+        key: 'matchPattern',
+        originalFormatter: getContentFormatter(original),
+        modifiedFormatter: getContentFormatter(modified, true)
+      })]
+  }
+  return []
+}
+const toShowHistoryWindow = (current) => {
+  showHistoryListWindow({
+    columns: defineTableColumns([{
+      labelKey: 'mock.label.requestPath',
+      property: 'requestPath',
+      minWidth: '100px'
+    }, {
+      labelKey: 'mock.label.method',
+      formatter: methodFormatter,
+      minWidth: '100px'
+    }, {
+      labelKey: 'common.label.status',
+      minWidth: '100px',
+      formatter (data) {
+        return <DelFlagTag v-model={data.status} clickToToggle={false}/>
+      }
+    }, {
+      labelKey: 'common.label.modifyDate',
+      property: 'modifyDate',
+      dateFormat: 'YYYY-MM-DD HH:mm:ss',
+      minWidth: '160px'
+    }, {
+      labelKey: 'mock.label.version',
+      minWidth: '120px',
+      formatter (item) {
+        return <>
+          {item.version}
+          {item.current ? <ElTag type="success" class="margin-left1">{$i18nBundle('mock.label.current')}</ElTag> : ''}
+        </>
+      }
+    }, {
+      labelKey: 'mock.label.matchPattern',
+      property: 'matchPattern',
+      minWidth: '200px',
+      formatter (data) {
+        let showStr = data.matchPattern
+        if (data.matchPattern && data.matchPattern.length > 100) {
+          showStr = data.matchPattern.substring(0, 100) + '...'
+        }
+        return showStr
+      }
+    }, {
+      labelKey: 'mock.label.proxyUrl',
+      property: 'proxyUrl',
+      minWidth: '200px'
+    }, {
+      labelKey: 'mock.label.requestName',
+      property: 'requestName',
+      minWidth: '150px'
+    }]),
+    searchFunc: (param, config) => searchHistories(current.id, param, config),
+    compareFunc: async (modified, target, previous) => {
+      let original = modified
+      if (previous) {
+        await loadHistoryDiff({
+          id: modified.id,
+          version: modified.version
+        }).then(data => {
+          modified = data.resultData?.modified || {}
+          original = data.resultData?.original || {}
+          modified.current = !modified.modifyFrom
+        })
+      } else {
+        modified = target
+      }
+      showCompareWindow({
+        modified,
+        original,
+        contentKey: 'matchPattern',
+        compareItems: calcMockCompareItems(original, modified),
+        configOption: {
+          language: 'javascript'
+        }
+      })
+    }
+  })
+}
 
 </script>
 

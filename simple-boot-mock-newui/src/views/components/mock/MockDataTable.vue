@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { onMounted, ref, computed, watch } from 'vue'
 import { defineTableColumns, defineFormOptions, defineTableButtons } from '@/components/utils'
-import { $coreConfirm, checkShowColumn, formatDate } from '@/utils'
+import { $coreConfirm, checkShowColumn } from '@/utils'
 import MockDataApi, {
   ALL_STATUS_CODES,
   ALL_CONTENT_TYPES,
@@ -25,7 +25,7 @@ import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
 import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
 import { calcContentType, DEFAULT_HEADERS } from '@/consts/MockConstants'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
-import { isString } from 'lodash-es'
+import { getMockCompareItem } from '@/services/mock/MockDiffService'
 
 const props = defineProps({
   groupItem: {
@@ -406,59 +406,7 @@ const onSelectDataItem = (dataItem) => {
     })
   }
 }
-const calcFormatter = ({ original, modified, key, modifiedKey, value }) => {
-  return () => {
-    modifiedKey = modifiedKey || key
-    const type = modified[modifiedKey] !== original[key] ? 'warning' : ''
-    return <ElText type={type}>
-      {value}
-    </ElText>
-  }
-}
-const getMockCompareItem = ({ original, modified, label, labelKey, key, modifiedKey, originalAppend, modifiedAppend, date = false, copy = false, limit, ...config }) => {
-  modifiedKey = modifiedKey || key
-  const enabled = original[key] !== null || modified[modifiedKey] !== null
-  let originalValue = original[key]
-  let modifiedValue = modified[modifiedKey]
-  if (limit && limit > 0) {
-    if (isString(originalValue) && originalValue && originalValue.length > limit) {
-      originalValue = originalValue.substring(0, limit) + '...'
-    }
-    if (isString(modifiedValue) && modifiedValue && modifiedValue.length > limit) {
-      modifiedValue = modifiedValue.substring(0, limit) + '...'
-    }
-  }
-  return [{
-    enabled,
-    label,
-    labelKey,
-    formatter: config.originalFormatter || (() => {
-      return <>
-      {date ? formatDate(originalValue) : originalValue}
-      {copy ? <MockUrlCopyLink class="margin-left1" showLink={!!original[key]} content={original[key]} /> : ''}
-      {originalAppend}
-      </>
-    })
-  }, {
-    enabled,
-    labelFormatter: calcFormatter({
-      original,
-      modified,
-      key,
-      value: label || $i18nBundle(labelKey)
-    }),
-    formatter: config.modifiedFormatter || calcFormatter({
-      original,
-      modified,
-      key,
-      value: <>
-        {date ? formatDate(modifiedValue) : modifiedValue}
-        {copy ? <MockUrlCopyLink class="margin-left1" showLink={!!modified[modifiedKey]} content={modified[modifiedKey]} /> : '' }
-        {modifiedAppend}
-      </>
-    })
-  }]
-}
+
 const calcMockCompareItems = (original, modified) => {
   if (original && modified) {
     const newTag = !original.id ? <ElTag class="margin-left1" type="warning">{ $i18nBundle('common.label.new') }</ElTag> : ''

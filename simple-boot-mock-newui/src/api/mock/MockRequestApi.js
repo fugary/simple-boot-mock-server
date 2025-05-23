@@ -49,6 +49,22 @@ export const saveMockParams = (data, config) => {
   }, config)).then(response => response.data)
 }
 
+export const searchHistories = (id, data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_REQUEST_URL}/histories/${id}`,
+    method: 'POST',
+    data
+  }, config)).then(response => response.data)
+}
+
+export const loadHistoryDiff = (data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_REQUEST_URL}/loadHistoryDiff`,
+    method: 'POST',
+    data
+  }, config)).then(response => response.data)
+}
+
 export const loadSchemas = (params, config) => {
   return $http(Object.assign({
     url: `${MOCK_REQUEST_URL}/loadSchemas`,

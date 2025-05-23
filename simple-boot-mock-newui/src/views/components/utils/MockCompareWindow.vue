@@ -1,7 +1,7 @@
 <script setup>
-import { onBeforeUnmount, shallowRef } from 'vue'
+import { onBeforeUnmount, shallowRef, computed } from 'vue'
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     default: ''
@@ -15,18 +15,25 @@ defineProps({
   contentKey: { type: String, default: 'content' },
   compareItems: {
     type: Array, default: () => []
+  },
+  configOption: {
+    type: Object,
+    default: () => ({})
   }
 })
 const showWindow = defineModel({
   type: Boolean,
   default: false
 })
-const diffOptions = {
-  automaticLayout: true,
-  formatOnType: true,
-  formatOnPaste: true,
-  readOnly: true
-}
+const diffOptions = computed(() => {
+  return {
+    automaticLayout: true,
+    formatOnType: true,
+    formatOnPaste: true,
+    readOnly: true,
+    ...props.configOption
+  }
+})
 const diffEditorRef = shallowRef()
 const handleMount = diffEditor => (diffEditorRef.value = diffEditor)
 const showCompareWindow = () => {
@@ -61,7 +68,7 @@ defineExpose({
         :items="compareItems"
       />
       <vue-monaco-diff-editor
-        v-if="original && modified"
+        v-if="original && modified && contentKey"
         theme="vs-dark"
         :original="original[contentKey]"
         :modified="modified[contentKey]"

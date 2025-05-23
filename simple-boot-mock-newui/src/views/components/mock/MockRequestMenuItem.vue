@@ -27,7 +27,7 @@ const fullPath = computed(() => {
   return `/mock/${groupItem?.groupPath}${requestItem.value?.requestPath}`
 })
 
-const emit = defineEmits(['requestChanged', 'toTestMockRequest', 'toEditMockRequest', 'toTestMatchPattern', 'toEditDelay', 'saveMockRequest'])
+const emit = defineEmits(['requestChanged', 'toTestMockRequest', 'toEditMockRequest', 'toShowRequestHistory', 'toTestMatchPattern', 'toEditDelay', 'saveMockRequest'])
 
 const buttons = computed(() => {
   return defineTableButtons([{
@@ -73,6 +73,16 @@ const moreButtons = computed(() => {
       $coreConfirm($i18nBundle('common.msg.confirmCopy'))
         .then(() => copyMockRequest(item.id))
         .then(() => emit('requestChanged', item, props.groupItem))
+    }
+  }, {
+    labelKey: 'mock.label.modifyHistory',
+    type: 'info',
+    icon: 'AccessTimeFilled',
+    buttonIf (item) {
+      return !!item.historyCount
+    },
+    click: item => {
+      emit('toShowRequestHistory', item)
     }
   }, {
     labelKey: 'common.label.delete',
