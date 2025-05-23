@@ -106,30 +106,30 @@ public class MockRequestController {
     }
 
     @PostMapping("/histories/{id}")
-    public SimpleResult<List<MockData>> histories(@RequestBody MockDataQueryVo queryVo, @PathVariable Integer id) {
-        MockData currentData = mockDataService.getById(id);
-        Page<MockData> page = SimpleResultUtils.toPage(queryVo);
-        QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
+    public SimpleResult<List<MockRequest>> histories(@RequestBody MockDataQueryVo queryVo, @PathVariable Integer id) {
+        MockRequest currentData = mockRequestService.getById(id);
+        Page<MockRequest> page = SimpleResultUtils.toPage(queryVo);
+        QueryWrapper<MockRequest> queryWrapper = Wrappers.<MockRequest>query()
                 .eq(DB_MODIFY_FROM_KEY, id);
         queryWrapper.orderByDesc("data_version");
-        return SimpleResultUtils.createSimpleResult(mockDataService.page(page, queryWrapper))
+        return SimpleResultUtils.createSimpleResult(mockRequestService.page(page, queryWrapper))
                 .addInfo("current", currentData);
     }
 
     @PostMapping("/loadHistoryDiff")
-    public SimpleResult<Map<String, MockData>> loadHistoryDiff(@RequestBody MockHistoryVo queryVo) {
+    public SimpleResult<Map<String, MockRequest>> loadHistoryDiff(@RequestBody MockHistoryVo queryVo) {
         Integer id = queryVo.getId();
         Integer maxVersion = queryVo.getVersion();
-        MockData modified = mockDataService.getById(id);
-        Page<MockData> page = new Page<>(1, 2);
-        mockDataService.page(page, Wrappers.<MockData>query().eq(DB_MODIFY_FROM_KEY, ObjectUtils.defaultIfNull(modified.getModifyFrom(), modified.getId()))
+        MockRequest modified = mockRequestService.getById(id);
+        Page<MockRequest> page = new Page<>(1, 2);
+        mockRequestService.page(page, Wrappers.<MockRequest>query().eq(DB_MODIFY_FROM_KEY, ObjectUtils.defaultIfNull(modified.getModifyFrom(), modified.getId()))
                 .le(maxVersion != null, "data_version", maxVersion)
                 .orderByDesc("data_version"));
         if (page.getRecords().isEmpty()) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         } else {
-            Map<String, MockData> map = new HashMap<>(2);
-            List<MockData> dataList = page.getRecords();
+            Map<String, MockRequest> map = new HashMap<>(2);
+            List<MockRequest> dataList = page.getRecords();
             map.put("modified", modified);
             dataList.stream().filter(data -> !data.getId().equals(modified.getId())).findFirst().ifPresent(data -> {
                 map.put("original", data);
