@@ -74,6 +74,7 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
     @Override
     public boolean deleteMockData(Integer id) {
         mockSchemaService.remove(Wrappers.<MockSchema>query().eq("data_id", id));
+        this.remove(Wrappers.<MockData>query().eq("modify_from", id));
         return removeById(id);
     }
 
@@ -83,6 +84,7 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
             return true;
         }
         mockSchemaService.remove(Wrappers.<MockSchema>query().in("data_id", ids));
+        this.remove(Wrappers.<MockData>query().in("modify_from", ids));
         return removeByIds(ids);
     }
 
