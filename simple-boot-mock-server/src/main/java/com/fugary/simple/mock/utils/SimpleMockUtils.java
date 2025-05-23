@@ -372,7 +372,7 @@ public class SimpleMockUtils {
      * @param newMockData
      * @return
      */
-    public static boolean isSameMockData(MockData oldMockData, MockData newMockData) {
+    public static boolean isSameMockData(MockBase oldMockData, MockBase newMockData) {
         return EqualsBuilder.reflectionEquals(oldMockData, newMockData, "version", "modifyFrom",
                 MockConstants.CREATOR_KEY, MockConstants.CREATE_DATE_KEY,
                 MockConstants.MODIFIER_KEY, MockConstants.MODIFY_DATE_KEY);

@@ -1,5 +1,7 @@
 package com.fugary.simple.mock.entity.mock;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.Version;
 import lombok.Data;
 
 /**
@@ -20,5 +22,8 @@ public class MockRequest extends MockBase{
     private Integer delay;
     private String description;
     private String mockParams;
-
+    @Version
+    @TableField("data_version")
+    private Integer version;
+    private Integer modifyFrom;
 }

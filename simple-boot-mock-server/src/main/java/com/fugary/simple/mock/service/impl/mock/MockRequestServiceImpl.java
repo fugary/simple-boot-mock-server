@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
+
 /**
  * Created on 2020/5/3 22:37 .<br>
  *
@@ -45,6 +47,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query().eq("request_id", requestId));
         mockDataService.deleteMockDatas(dataList.stream().map(MockData::getId).collect(Collectors.toList()));
         mockSchemaService.remove(Wrappers.<MockSchema>query().eq("request_id", requestId));
+        this.remove(Wrappers.<MockRequest>query().eq(DB_MODIFY_FROM_KEY, requestId));
         return removeById(requestId);
     }
 
@@ -56,6 +59,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query().in("request_id", ids));
         mockDataService.deleteMockDatas(dataList.stream().map(MockData::getId).collect(Collectors.toList()));
         mockSchemaService.remove(Wrappers.<MockSchema>query().in("request_id", ids));
+        this.remove(Wrappers.<MockRequest>query().in(DB_MODIFY_FROM_KEY, ids));
         return removeByIds(ids);
     }
 
@@ -80,7 +84,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             }
             saveOrUpdate(mockRequest);
             List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query()
-                    .eq("request_id", requestId).isNull("modify_from"));
+                    .eq("request_id", requestId).isNull(DB_MODIFY_FROM_KEY));
             List<MockSchema> schemaList = mockSchemaService.list(Wrappers.<MockSchema>query().eq("request_id", requestId));
             Map<String, List<MockSchema>> schemaMap = schemaList.stream().collect(Collectors
                     .groupingBy(schema -> StringUtils.join(schema.getRequestId(), "-", schema.getDataId())));
@@ -105,7 +109,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)
                 .eq("status", 1)
-                .isNull("modify_from"));
+                .isNull(DB_MODIFY_FROM_KEY));
         MockData mockData = findForceMockData(mockDataList, defaultId);
         if (mockData != null) {
             return mockData;
@@ -118,14 +122,14 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         return mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)
                 .eq("status", 1)
-                .isNull("modify_from"));
+                .isNull(DB_MODIFY_FROM_KEY));
     }
 
     @Override
     public List<MockData> loadAllDataByRequest(Integer requestId) {
         return mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)
-                .isNull("modify_from"));
+                .isNull(DB_MODIFY_FROM_KEY));
     }
 
     /**
@@ -198,5 +202,36 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             return Boolean.TRUE.equals(result); // 必须等于true才执行
         }
         return true;
+    }
+
+    @Override
+    public boolean saveOrUpdate(MockRequest entity) {
+        if (entity.getId() == null || entity.getVersion() == null) {
+            entity.setVersion(1);
+        }
+        boolean needSave = true;
+        if (entity.getId() != null) {
+            MockRequest history = getById(entity.getId());
+            if (history != null) {
+                needSave = !SimpleMockUtils.isSameMockData(history, entity);
+                if (needSave) {
+                    history.setId(null);
+                    history.setModifyFrom(entity.getId());
+                    history.setVersion(entity.getVersion());
+                    if (StringUtils.isBlank(history.getModifier())) {
+                        history.setModifier(history.getCreator());
+                    }
+                    if (history.getModifyDate() == null) {
+                        history.setModifyDate(history.getCreateDate());
+                    }
+                    this.save(history);
+                }
+            }
+        }
+        boolean result = true;
+        if (needSave) {
+            result = super.saveOrUpdate(entity);
+        }
+        return result;
     }
 }

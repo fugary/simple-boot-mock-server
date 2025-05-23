@@ -16,9 +16,12 @@ import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
+import com.fugary.simple.mock.web.vo.query.MockDataQueryVo;
+import com.fugary.simple.mock.web.vo.query.MockHistoryVo;
 import com.fugary.simple.mock.web.vo.query.MockRequestQueryVo;
 import com.fugary.simple.mock.web.vo.query.MockSchemaQueryVo;
 import com.fugary.simple.mock.web.vo.result.MockSchemaResultVo;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
 
 /**
  * Created on 2020/5/3 21:22 .<br>
@@ -51,7 +56,8 @@ public class MockRequestController {
     public SimpleResult<List<MockRequest>> search(@ModelAttribute MockRequestQueryVo queryVo) {
         Page<MockRequest> page = SimpleResultUtils.toPage(queryVo);
         QueryWrapper<MockRequest> queryWrapper = Wrappers.<MockRequest>query()
-                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
+                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus())
+                .isNull(DB_MODIFY_FROM_KEY);
         if (queryVo.getGroupId() != null) {
             queryWrapper.eq("group_id", queryVo.getGroupId());
         }
@@ -79,12 +85,57 @@ public class MockRequestController {
                     .collect(Collectors.toList());
             QueryWrapper<MockData> countQuery = Wrappers.<MockData>query()
                     .select("request_id as group_key", "count(0) as data_count")
-                    .in("request_id", requestIds).isNull("modify_from").groupBy("request_id");
+                    .in("request_id", requestIds).isNull(DB_MODIFY_FROM_KEY).groupBy("request_id");
             countMap = mockDataService.listMaps(countQuery).stream().map(CountData::new)
                     .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
                             CountData::getDataCount));
         }
-        return SimpleResultUtils.createSimpleResult(pageResult).addInfo("countMap", countMap);
+        Map<Integer, Long> historyMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(pageResult.getRecords())) {
+            List<Integer> dataIds = pageResult.getRecords().stream().map(MockRequest::getId)
+                    .collect(Collectors.toList());
+            QueryWrapper<MockRequest> countQuery = Wrappers.<MockRequest>query()
+                    .select("modify_from as group_key", "count(0) as data_count")
+                    .in(DB_MODIFY_FROM_KEY, dataIds).groupBy(DB_MODIFY_FROM_KEY);
+            historyMap = mockRequestService.listMaps(countQuery).stream().map(CountData::new)
+                    .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
+                            CountData::getDataCount));
+        }
+        return SimpleResultUtils.createSimpleResult(pageResult).addInfo("countMap", countMap)
+                .addInfo("historyMap", historyMap);
+    }
+
+    @PostMapping("/histories/{id}")
+    public SimpleResult<List<MockData>> histories(@RequestBody MockDataQueryVo queryVo, @PathVariable Integer id) {
+        MockData currentData = mockDataService.getById(id);
+        Page<MockData> page = SimpleResultUtils.toPage(queryVo);
+        QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
+                .eq(DB_MODIFY_FROM_KEY, id);
+        queryWrapper.orderByDesc("data_version");
+        return SimpleResultUtils.createSimpleResult(mockDataService.page(page, queryWrapper))
+                .addInfo("current", currentData);
+    }
+
+    @PostMapping("/loadHistoryDiff")
+    public SimpleResult<Map<String, MockData>> loadHistoryDiff(@RequestBody MockHistoryVo queryVo) {
+        Integer id = queryVo.getId();
+        Integer maxVersion = queryVo.getVersion();
+        MockData modified = mockDataService.getById(id);
+        Page<MockData> page = new Page<>(1, 2);
+        mockDataService.page(page, Wrappers.<MockData>query().eq(DB_MODIFY_FROM_KEY, ObjectUtils.defaultIfNull(modified.getModifyFrom(), modified.getId()))
+                .le(maxVersion != null, "data_version", maxVersion)
+                .orderByDesc("data_version"));
+        if (page.getRecords().isEmpty()) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        } else {
+            Map<String, MockData> map = new HashMap<>(2);
+            List<MockData> dataList = page.getRecords();
+            map.put("modified", modified);
+            dataList.stream().filter(data -> !data.getId().equals(modified.getId())).findFirst().ifPresent(data -> {
+                map.put("original", data);
+            });
+            return SimpleResultUtils.createSimpleResult(map);
+        }
     }
 
     @GetMapping("/{id}")

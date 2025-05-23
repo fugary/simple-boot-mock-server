@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
+
 /**
  * Created on 2020/5/3 21:22 .<br>
  *
@@ -46,7 +48,7 @@ public class MockDataController {
         Page<MockData> page = SimpleResultUtils.toPage(queryVo);
         QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
                 .eq(queryVo.getStatus() != null, "status", queryVo.getStatus())
-                .isNull("modify_from");
+                .isNull(DB_MODIFY_FROM_KEY);
         if (queryVo.getRequestId() != null) {
             queryWrapper.eq("request_id", queryVo.getRequestId());
         }
@@ -58,7 +60,7 @@ public class MockDataController {
                     .collect(Collectors.toList());
             QueryWrapper<MockData> countQuery = Wrappers.<MockData>query()
                     .select("modify_from as group_key", "count(0) as data_count")
-                    .in("modify_from", dataIds).groupBy("modify_from");
+                    .in(DB_MODIFY_FROM_KEY, dataIds).groupBy(DB_MODIFY_FROM_KEY);
             historyMap = mockDataService.listMaps(countQuery).stream().map(CountData::new)
                     .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
                             CountData::getDataCount));
@@ -71,7 +73,7 @@ public class MockDataController {
         MockData currentData = mockDataService.getById(id);
         Page<MockData> page = SimpleResultUtils.toPage(queryVo);
         QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
-                .eq("modify_from", id);
+                .eq(DB_MODIFY_FROM_KEY, id);
         queryWrapper.orderByDesc("data_version");
         return SimpleResultUtils.createSimpleResult(mockDataService.page(page, queryWrapper))
                 .addInfo("current", currentData);
@@ -83,7 +85,7 @@ public class MockDataController {
         Integer maxVersion = queryVo.getVersion();
         MockData modified = mockDataService.getById(id);
         Page<MockData> page = new Page<>(1, 2);
-        mockDataService.page(page, Wrappers.<MockData>query().eq("modify_from", ObjectUtils.defaultIfNull(modified.getModifyFrom(), modified.getId()))
+        mockDataService.page(page, Wrappers.<MockData>query().eq(DB_MODIFY_FROM_KEY, ObjectUtils.defaultIfNull(modified.getModifyFrom(), modified.getId()))
                 .le(maxVersion != null, "data_version", maxVersion)
                 .orderByDesc("data_version"));
         if (page.getRecords().isEmpty()) {

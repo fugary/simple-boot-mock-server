@@ -49,6 +49,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
+
 /**
  * Created on 2020/5/3 22:37 .<br>
  *
@@ -150,7 +152,8 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 QueryWrapper<MockRequest> requestQuery = Wrappers.<MockRequest>query().eq("group_id", mockGroup.getId())
                         .eq("method", method)
                         .eq(!testRequest, "status", 1)
-                        .eq(testRequest, "id", requestId);
+                        .eq(testRequest, "id", requestId)
+                        .isNull(DB_MODIFY_FROM_KEY);
                 List<MockRequest> mockRequests = mockRequestService.list(requestQuery);
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
                 // 请求是否匹配上Request，如果匹配上就查询Data
@@ -261,8 +264,8 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     @Override
     public List<ExportGroupVo> loadExportGroups(List<MockGroup> groups) {
         List<Integer> groupIds = groups.stream().map(MockGroup::getId).collect(Collectors.toList());
-        List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().in("group_id", groupIds));
-        List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query().in("group_id", groupIds).isNull("modify_from"));
+        List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().in("group_id", groupIds).isNull(DB_MODIFY_FROM_KEY));
+        List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query().in("group_id", groupIds).isNull(DB_MODIFY_FROM_KEY));
         List<MockSchema> mockSchemas = mockSchemaService.list(Wrappers.<MockSchema>query().in("group_id", groupIds));
         Map<Integer, List<MockRequest>> requestMap = mockRequests.stream().collect(Collectors.groupingBy(MockRequest::getGroupId));
         Map<Integer, List<MockData>> mockDataMap = mockDataList.stream().collect(Collectors.groupingBy(MockData::getRequestId));
@@ -380,7 +383,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             mockGroup.setGroupName(StringUtils.join(mockGroup.getGroupName(), "-copy"));
         }
         saveOrUpdate(mockGroup);
-        List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().eq("group_id", groupId));
+        List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().eq("group_id", groupId).isNull(DB_MODIFY_FROM_KEY));
         for (MockRequest mockRequest : mockRequests) {
             mockRequestService.copyMockRequest(mockRequest.getId(), mockGroup.getId());
         }

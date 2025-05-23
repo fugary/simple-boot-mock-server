@@ -71,5 +71,8 @@ public class MockConstants {
      * 生成新的
      */
     public static final Integer IMPORT_STRATEGY_NEW = 3;
-
+    /**
+     * 数据库字段名
+     */
+    public static final String DB_MODIFY_FROM_KEY = "modify_from";
 }
