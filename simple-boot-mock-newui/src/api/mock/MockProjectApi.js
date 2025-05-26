@@ -38,7 +38,8 @@ export const useSelectProjects = (searchParam, autoSelect) => {
   }
   const loadProjectsAndRefreshOptions = async () => {
     await loadSelectProjects({
-      userName: searchParam.value?.userName || useCurrentUserName()
+      userName: searchParam.value?.userName || useCurrentUserName(),
+      publicFlag: searchParam.value?.publicFlag
     })
     const currentProj = projects.value.find(proj => proj.projectCode === searchParam.value.projectCode)
     if (autoSelect) {
