@@ -61,7 +61,7 @@ public class MockGroupController {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         String queryUserName = queryVo.getUserName();
-        String projectCode = StringUtils.defaultIfBlank(queryVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT);
+        String projectCode = queryVo.getProjectCode();
         QueryWrapper<MockGroup> queryWrapper = Wrappers.<MockGroup>query()
                 .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
         queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("group_name", keyword)
@@ -74,8 +74,8 @@ public class MockGroupController {
             userName = queryUserName; // 允许查询
         }
         queryWrapper.eq("user_name", userName);
-        boolean isDefault = StringUtils.isNotBlank(userName) && MockConstants.MOCK_DEFAULT_PROJECT.equals(projectCode);
-        if (!isDefault) {
+        boolean emptyProjectCode = StringUtils.isNotBlank(userName) && StringUtils.isBlank(projectCode);
+        if (!emptyProjectCode) {
             queryWrapper.eq("project_code", projectCode);
         }
         return SimpleResultUtils.createSimpleResult(mockGroupService.page(page, queryWrapper))

@@ -39,7 +39,7 @@ const route = useRoute()
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
-  defaultParam: { page: useDefaultPage(), userName: useCurrentUserName(), projectCode: MOCK_DEFAULT_PROJECT },
+  defaultParam: { page: useDefaultPage(), userName: useCurrentUserName() },
   searchMethod: search
 })
 const mockProject = ref()
@@ -56,7 +56,7 @@ searchParam.value.publicFlag = props.publicFlag
 const projectEditable = computed(() => checkProjectEdit(mockProject.value))
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
-const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, props.publicFlag)
+const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
   await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
@@ -90,9 +90,9 @@ const columns = computed(() => {
         }
       }
       return <>
-          <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
-          {projectInfo ? <><br/><span class="el-text el-text--info">({projectInfo})</span></> : ''}
-        </>
+        <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
+        {projectInfo ? <><br/><span class="el-text el-text--info">({projectInfo})</span></> : ''}
+      </>
     }
   }, {
     labelKey: 'mock.label.pathId',
@@ -194,7 +194,7 @@ const searchFormOptions = computed(() => {
     enabled: projectOptions.value.length > 1,
     children: projectOptions.value,
     attrs: {
-      clearable: false
+      clearable: true
     },
     change () {
       loadMockGroups(1)
@@ -311,7 +311,7 @@ const exportGroups = (groupIds) => {
   $coreConfirm($i18nBundle('mock.msg.exportConfirm')).then(() => {
     const exportConfig = {
       exportAll: !groupIds,
-      projectCode: searchParam.value.projectCode || MOCK_DEFAULT_PROJECT,
+      projectCode: searchParam.value.projectCode,
       groupIds,
       userName: searchParam.value.userName
     }

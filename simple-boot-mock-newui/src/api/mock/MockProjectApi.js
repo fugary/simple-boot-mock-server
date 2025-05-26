@@ -22,7 +22,7 @@ export const selectProjects = (params, config) => {
   }, config)).then(response => response.data?.resultData)
 }
 
-export const useSelectProjects = (searchParam, publicFlag) => {
+export const useSelectProjects = (searchParam, autoSelect) => {
   const projects = ref([])
   const projectOptions = ref([])
   const loadSelectProjects = (data, config) => {
@@ -41,7 +41,7 @@ export const useSelectProjects = (searchParam, publicFlag) => {
       userName: searchParam.value?.userName || useCurrentUserName()
     })
     const currentProj = projects.value.find(proj => proj.projectCode === searchParam.value.projectCode)
-    if (!publicFlag) {
+    if (autoSelect) {
       searchParam.value.projectCode = currentProj?.projectCode || MOCK_DEFAULT_PROJECT
     }
     if (isAdminUser() && currentProj?.userName) {
