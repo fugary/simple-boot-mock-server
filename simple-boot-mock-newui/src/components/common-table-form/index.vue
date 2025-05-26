@@ -119,7 +119,7 @@ const options = computed(() => {
             circle
             type="danger"
             size="small"
-            :underline="false"
+            underline="never"
             @click="deleteItem(row, $index)"
           >
             <common-icon

@@ -281,7 +281,7 @@ const slotsResult = computed(() => {
         <span>
           <el-link
             v-bind="calcOption.tooltipLinkAttrs"
-            :underline="false"
+            underline="never"
             @click="calcOption.tooltipFunc"
           >&nbsp;
             <common-icon

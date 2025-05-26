@@ -238,7 +238,7 @@ const supportedGenerates = computed(() => generateSampleCheckResults(props.schem
             <el-link
               v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.requestBody')"
               type="primary"
-              :underline="false"
+              underline="never"
               class="margin-left3"
               @click="formatDocument"
             >
@@ -251,7 +251,7 @@ const supportedGenerates = computed(() => generateSampleCheckResults(props.schem
               v-if="schemaBody"
               v-common-tooltip="$i18nKey('common.label.commonView', 'common.label.schema')"
               type="primary"
-              :underline="false"
+              underline="never"
               class="margin-left3"
               @click="showCodeWindow(schemaBody)"
             >
@@ -271,7 +271,7 @@ const supportedGenerates = computed(() => generateSampleCheckResults(props.schem
                 v-if="supportedGenerates.length===1"
                 v-common-tooltip="$t('common.label.generateData')"
                 type="primary"
-                :underline="false"
+                underline="never"
                 class="margin-left3"
                 @click="generateSample(supportedGenerates[0])"
               >

@@ -124,7 +124,7 @@ const slots = computed(() => {
       <el-link
         class="margin-left1 margin-top1"
         type="primary"
-        :underline="false"
+        underline="never"
         @click="setUnlimited()"
       >
         <el-tag

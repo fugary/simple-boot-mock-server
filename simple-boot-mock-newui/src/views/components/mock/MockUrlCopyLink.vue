@@ -51,7 +51,7 @@ const externalLink = computed(() => isExternalLink(info.value) ? info.value : ''
     v-common-tooltip="tooltip"
     v-open-new-window="externalLink"
     type="primary"
-    :underline="false"
+    underline="never"
     @click="copyInfo"
   >
     <slot>

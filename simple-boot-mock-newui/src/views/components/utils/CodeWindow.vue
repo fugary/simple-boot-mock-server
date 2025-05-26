@@ -112,7 +112,7 @@ const calcButtons = computed(() => {
           <el-link
             v-common-tooltip="$i18nKey('common.label.commonFormat', 'common.label.code')"
             type="primary"
-            :underline="false"
+            underline="never"
             class="margin-left3"
             @click="formatDocument"
           >

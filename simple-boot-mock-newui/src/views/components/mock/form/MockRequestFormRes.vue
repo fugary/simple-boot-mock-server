@@ -192,7 +192,7 @@ const redirectMockResponse = computed(() => {
                 <el-link
                   v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.responseBody')"
                   type="primary"
-                  :underline="false"
+                  underline="never"
                   class="margin-left3"
                   @click="formatDocument"
                 >
@@ -204,7 +204,7 @@ const redirectMockResponse = computed(() => {
                 <el-link
                   v-common-tooltip="$t('mock.msg.showRawData')"
                   type="primary"
-                  :underline="false"
+                  underline="never"
                   class="margin-left3"
                   @click="contentRef=responseTarget?.data"
                 >
@@ -291,7 +291,7 @@ const redirectMockResponse = computed(() => {
               <el-link
                 v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.mockResponseBody')"
                 type="primary"
-                :underline="false"
+                underline="never"
                 class="margin-left3"
                 @click="formatDocument2"
               >
@@ -303,7 +303,7 @@ const redirectMockResponse = computed(() => {
               <el-link
                 v-common-tooltip="$t('mock.msg.saveMockResponse')"
                 type="primary"
-                :underline="false"
+                underline="never"
                 class="margin-left3"
                 @click="emit('saveMockResponseBody', paramTarget)"
               >
@@ -316,7 +316,7 @@ const redirectMockResponse = computed(() => {
                 v-if="schemaBody"
                 v-common-tooltip="$i18nKey('common.label.commonView', 'common.label.schema')"
                 type="primary"
-                :underline="false"
+                underline="never"
                 class="margin-left3"
                 @click="showCodeWindow(schemaBody)"
               >
@@ -336,7 +336,7 @@ const redirectMockResponse = computed(() => {
                   v-if="supportedGenerates.length===1"
                   v-common-tooltip="$t('common.label.generateData')"
                   type="primary"
-                  :underline="false"
+                  underline="never"
                   class="margin-left3"
                   @click="generateSample(supportedGenerates[0])"
                 >

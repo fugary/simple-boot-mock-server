@@ -35,7 +35,7 @@ defineEmits(['viewDataDetails'])
       v-else
       v-common-tooltip="tooltip"
       type="primary"
-      :underline="false"
+      underline="never"
       @click="$emit('viewDataDetails')"
     >
       <common-icon

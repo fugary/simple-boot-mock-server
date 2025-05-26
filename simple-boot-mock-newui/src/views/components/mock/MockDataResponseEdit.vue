@@ -93,7 +93,7 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
       {{ $i18nKey('common.label.commonEdit', isRedirect?'mock.label.redirectUrl':'mock.label.responseBody1') }}
       <el-link
         v-common-tooltip="$i18nBundle('mock.msg.responseBodyTooltip', ['{{ request.params.name }}'])"
-        :underline="false"
+        underline="never"
       >
         <common-icon icon="QuestionFilled" />
       </el-link>
@@ -125,7 +125,7 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
           <el-link
             v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.responseBody1')"
             type="primary"
-            :underline="false"
+            underline="never"
             class="margin-left3"
             @click="formatDocument"
           >
@@ -138,7 +138,7 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
             v-if="schemaBody"
             v-common-tooltip="$i18nKey('common.label.commonView', 'common.label.schema')"
             type="primary"
-            :underline="false"
+            underline="never"
             class="margin-left3"
             @click="showCodeWindow(schemaBody)"
           >
@@ -158,7 +158,7 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
               v-if="supportedGenerates.length===1"
               v-common-tooltip="$t('common.label.generateData')"
               type="primary"
-              :underline="false"
+              underline="never"
               class="margin-left3"
               @click="generateSample(supportedGenerates[0])"
             >

@@ -19,7 +19,7 @@ const emit = defineEmits(['generateSample'])
     <el-link
       v-common-tooltip="title||$t('common.label.generateData')"
       type="primary"
-      :underline="false"
+      underline="never"
       class="margin-left3"
     >
       <common-icon

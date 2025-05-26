@@ -179,7 +179,7 @@ const requestProxyUrl = computed(() => {
             v-if="button.enabled!==false&&(!button.buttonIf||button.buttonIf(requestItem))"
             v-common-tooltip="button.label || $t(button.labelKey)"
             :type="button.type"
-            :underline="false"
+            underline="never"
             :disabled="button.disabled"
             class="margin-right2"
             @click="button.click?.(requestItem)"
@@ -195,7 +195,7 @@ const requestProxyUrl = computed(() => {
           style="top: 5px;"
         >
           <el-link
-            :underline="false"
+            underline="never"
             type="info"
           >
             <common-icon

@@ -49,7 +49,7 @@ const newWindowEdit = () => {
   <el-link
     v-common-tooltip="tooltip || $t('common.label.newWindowEdit')"
     type="primary"
-    :underline="false"
+    underline="never"
   >
     <common-icon
       :size="18"

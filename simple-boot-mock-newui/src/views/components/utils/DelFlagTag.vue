@@ -87,7 +87,7 @@ const handleClick = $event => {
 <template>
   <el-link
     v-common-tooltip="tooltip"
-    :underline="false"
+    underline="never"
     @click="handleClick"
   >
     <el-tag

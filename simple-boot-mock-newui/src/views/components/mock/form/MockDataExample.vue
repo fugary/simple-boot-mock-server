@@ -19,7 +19,7 @@ const emit = defineEmits(['selectExample'])
     <el-link
       v-common-tooltip="title||$i18nKey('common.label.commonView', 'common.label.example')"
       type="primary"
-      :underline="false"
+      underline="never"
       class="margin-left3"
     >
       <common-icon
