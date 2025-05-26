@@ -83,9 +83,10 @@ const columns = computed(() => {
     formatter (data) {
       const url = `/mock/groups/${data.id}?backUrl=${route.fullPath}`
       let projectInfo = ''
-      if (data.projectCode) {
-        projectInfo = projectOptions.value.find(proj => proj.value === data.projectCode)?.label || mockProject.value?.projectName
-        if (!projectInfo && !isDefaultProject(data.projectCode)) {
+      if (data.projectCode && !isDefaultProject(data.projectCode)) {
+        const projectOption = projectOptions.value.find(proj => proj.value === data.projectCode)
+        projectInfo = projectOption?.label || $i18nBundle(projectOption.labelKey) || mockProject.value?.projectName
+        if (!projectInfo) {
           projectInfo = data.projectCode
         }
       }
