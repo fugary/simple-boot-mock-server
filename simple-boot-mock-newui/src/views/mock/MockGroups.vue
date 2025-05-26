@@ -85,7 +85,7 @@ const columns = computed(() => {
       let projectInfo = ''
       if (data.projectCode && !isDefaultProject(data.projectCode)) {
         const projectOption = projectOptions.value.find(proj => proj.value === data.projectCode)
-        projectInfo = projectOption?.label || $i18nBundle(projectOption.labelKey) || mockProject.value?.projectName
+        projectInfo = projectOption?.label || $i18nBundle(projectOption?.labelKey) || mockProject.value?.projectName
         if (!projectInfo) {
           projectInfo = data.projectCode
         }
@@ -185,6 +185,7 @@ const searchFormOptions = computed(() => {
     enabled: isAdminUser(),
     children: userOptions.value,
     attrs: {
+      filterable: true,
       clearable: false
     },
     change: changedUser
@@ -195,6 +196,7 @@ const searchFormOptions = computed(() => {
     enabled: projectOptions.value.length > 1,
     children: projectOptions.value,
     attrs: {
+      filterable: true,
       clearable: !props.publicFlag
     },
     change (value) {

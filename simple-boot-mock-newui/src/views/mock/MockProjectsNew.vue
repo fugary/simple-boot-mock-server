@@ -64,6 +64,7 @@ const searchFormOptions = computed(() => {
     enabled: isAdminUser() || props.publicFlag,
     children: userOptions.value,
     attrs: {
+      filterable: true,
       clearable: props.publicFlag
     },
     change () {

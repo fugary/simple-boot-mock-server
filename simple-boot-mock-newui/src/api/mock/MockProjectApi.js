@@ -32,7 +32,8 @@ export const useSelectProjects = (searchParam, autoSelect) => {
         if (project.projectCode === MOCK_DEFAULT_PROJECT) {
           return { labelKey: 'mock.label.defaultProject', value: project.projectCode }
         }
-        return { label: project.projectName, value: project.projectCode, userName: project.userName }
+        const label = data.publicFlag ? `${project.projectName}-${project.userName}` : project.projectName
+        return { label, value: project.projectCode, userName: project.userName }
       })
     })
   }
