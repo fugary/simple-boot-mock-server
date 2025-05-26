@@ -194,9 +194,10 @@ const searchFormOptions = computed(() => {
     enabled: projectOptions.value.length > 1,
     children: projectOptions.value,
     attrs: {
-      clearable: true
+      clearable: !props.publicFlag
     },
-    change () {
+    change (value) {
+      searchParam.value.userName = projectOptions.value.find(option => option.value === value)?.userName || searchParam.value.userName
       loadMockGroups(1)
     }
   },
