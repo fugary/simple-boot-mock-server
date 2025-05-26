@@ -38,7 +38,7 @@ const loadMockProjects = (pageNumber) => {
   }
   return searchMethod(pageNumber)
 }
-const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
+const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam, { current: !props.publicFlag })
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
   await loadUsersAndRefreshOptions()
@@ -61,10 +61,10 @@ const searchFormOptions = computed(() => {
     labelKey: 'common.label.user',
     prop: 'userName',
     type: 'select',
-    enabled: isAdminUser() && !props.publicFlag,
+    enabled: isAdminUser() || props.publicFlag,
     children: userOptions.value,
     attrs: {
-      clearable: false
+      clearable: props.publicFlag
     },
     change () {
       loadMockProjects(1)

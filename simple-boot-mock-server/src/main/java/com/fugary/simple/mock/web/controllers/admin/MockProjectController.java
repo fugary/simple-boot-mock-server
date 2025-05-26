@@ -41,9 +41,12 @@ public class MockProjectController {
         queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("project_name", keyword)
                 .or().like("project_code", keyword)
                 .or().like("description", keyword));
-        String userName = SecurityUtils.getUserName(queryVo.getUserName());
+        String queryUserName = queryVo.getUserName();
+        String userName = SecurityUtils.getUserName(queryUserName);
         if (queryVo.isPublicFlag()) {
-            queryWrapper.eq("public_flag", true).eq("status", 1);
+            queryWrapper.eq("public_flag", true)
+                    .eq(StringUtils.isNotBlank(queryUserName), "user_name", queryUserName)
+                    .eq("status", 1);
         } else {
             queryWrapper.and(wrapper -> wrapper.and(wrapper1 -> wrapper1.eq("user_name", userName)
                     .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)));
