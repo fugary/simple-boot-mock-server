@@ -43,7 +43,7 @@ const pageAttrs = {
   layout: 'prev, pager, next',
   background: true,
   hideOnSinglePage: true,
-  pagerCount: 3
+  pagerCount: 5
 }
 
 const loadMockRequests = (...args) => {
@@ -253,9 +253,11 @@ const projectEditable = computed(() => checkProjectEdit(mockProject.value))
 const methodsConfig = Object.fromEntries(ALL_METHODS.map(method => [method.method, method]))
 
 const methodFormatter = item => {
-  return <ElTag type={methodsConfig[item.method].type}
-                size="small"
-                effect="dark">{item.method}</ElTag>
+  return methodsConfig[item.method]
+    ? <ElTag type={methodsConfig[item.method]?.type}
+               size="small"
+               effect="dark">{item.method}</ElTag>
+    : ''
 }
 
 const calcMockCompareItems = (original, modified) => {
