@@ -16,6 +16,7 @@ import {
   previewMockRequest,
   showCompareWindow,
   showHistoryListWindow,
+  showMockTips,
   toEditGroupEnvParams,
   toTestMatchPattern
 } from '@/utils/DynamicUtils'
@@ -171,7 +172,8 @@ const editFormOptions = computed(() => {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
-    tooltip: $i18nBundle('mock.msg.matchPatternTooltip'),
+    tooltip: $i18nBundle('mock.label.clickToShowDetails'),
+    tooltipFunc: () => showMockTips(),
     attrs: {
       class: 'common-resize-vertical',
       defaultValue: currentRequest.value?.matchPattern,

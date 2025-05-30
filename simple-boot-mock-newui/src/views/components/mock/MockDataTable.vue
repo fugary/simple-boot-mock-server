@@ -16,7 +16,7 @@ import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { showCompareWindow, showHistoryListWindow, toTestMatchPattern } from '@/utils/DynamicUtils'
+import { showMockTips, showCompareWindow, showHistoryListWindow, toTestMatchPattern } from '@/utils/DynamicUtils'
 import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
 import { ElMessage, ElTag, ElText } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
@@ -310,7 +310,8 @@ const editFormOptions = computed(() => {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
-    tooltip: $i18nBundle('mock.msg.matchPatternTooltip'),
+    tooltip: $i18nBundle('mock.label.clickToShowDetails'),
+    tooltipFunc: () => showMockTips(),
     attrs: {
       class: 'common-resize-vertical',
       defaultValue: currentDataItem.value?.matchPattern,

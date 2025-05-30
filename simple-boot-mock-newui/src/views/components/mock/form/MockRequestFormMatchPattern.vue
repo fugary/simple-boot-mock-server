@@ -2,6 +2,7 @@
 import { $i18nBundle } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { watch, computed } from 'vue'
+import { showMockTips } from '@/utils/DynamicUtils'
 
 const paramTarget = defineModel('modelValue', {
   type: Object,
@@ -17,7 +18,8 @@ const matchPatternOption = computed(() => {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
-    tooltip: $i18nBundle('mock.msg.matchPatternTooltip'),
+    tooltip: $i18nBundle('mock.label.clickToShowDetails'),
+    tooltipFunc: () => showMockTips(),
     required: true,
     attrs: {
       class: 'common-resize-vertical',

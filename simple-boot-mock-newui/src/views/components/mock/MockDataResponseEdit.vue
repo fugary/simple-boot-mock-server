@@ -3,8 +3,8 @@ import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { computed, ref } from 'vue'
 import { cloneDeep, isString } from 'lodash-es'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { $i18nKey, $i18nBundle } from '@/messages'
-import { showCodeWindow } from '@/utils/DynamicUtils'
+import { $i18nKey } from '@/messages'
+import { showCodeWindow, showMockTips } from '@/utils/DynamicUtils'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import { generateSampleCheckResults, generateSchemaSample, useContentTypeOption } from '@/services/mock/MockCommonService'
@@ -92,8 +92,9 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
     <template #header>
       {{ $i18nKey('common.label.commonEdit', isRedirect?'mock.label.redirectUrl':'mock.label.responseBody1') }}
       <el-link
-        v-common-tooltip="$i18nBundle('mock.msg.responseBodyTooltip', ['{{ request.params.name }}'])"
+        v-common-tooltip="$t('mock.label.clickToShowDetails')"
         underline="never"
+        @click="showMockTips"
       >
         <common-icon icon="QuestionFilled" />
       </el-link>
