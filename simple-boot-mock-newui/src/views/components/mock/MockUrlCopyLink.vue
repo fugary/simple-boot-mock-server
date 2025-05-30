@@ -3,6 +3,7 @@ import { $copyText } from '@/utils'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
 import { isExternalLink } from '@/components/utils'
 import { computed } from 'vue'
+import { $i18nBundle } from '@/messages'
 
 const props = defineProps({
   showLink: {
@@ -19,7 +20,7 @@ const props = defineProps({
   },
   tooltip: {
     type: String,
-    default: 'Click to copy'
+    default: null
   },
   icon: {
     type: String,
@@ -42,6 +43,8 @@ const copyInfo = () => {
 }
 
 const externalLink = computed(() => isExternalLink(info.value) ? info.value : '')
+
+const tooltip = computed(() => props.tooltip ?? $i18nBundle('common.msg.clickToCopy'))
 
 </script>
 

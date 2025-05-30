@@ -374,8 +374,8 @@ export const $currencyShort = (value, prefix) => {
  * @type {CopyTextConfig}
  */
 const defaultCopyConfig = {
-  success: 'Copied Successfully!',
-  error: 'Copy Not supported!'
+  successKey: 'common.msg.copySuccess',
+  errorKey: 'common.msg.copyError'
 }
 /**
  * @param text {string | CopyTextConfig} 需要复制的文本
@@ -394,12 +394,12 @@ export const $copyText = (text) => {
       if (isSupported) {
         copy(config.text)
         ElMessage({
-          message: config.success,
+          message: config.success || $i18nBundle(config.successKey),
           type: 'success'
         })
       } else {
         ElMessage({
-          message: config.error,
+          message: config.error || $i18nBundle(config.errorKey),
           type: 'error'
         })
       }
