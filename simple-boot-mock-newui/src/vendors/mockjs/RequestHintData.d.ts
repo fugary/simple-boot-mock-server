@@ -121,7 +121,7 @@ const sha256Base64: (data: string) => string
  * 数据AES加密，并输出Base64数据格式
  * @param data 数据
  * @param key 密钥
- * @param options 配置
+ * @param options 配置，支持mode、padding、iv, output配置
  * @returns result 加密后数据
  */
 const encryptAES: (data: string, key: string, options?: AESOptionsType) => string
@@ -129,7 +129,7 @@ const encryptAES: (data: string, key: string, options?: AESOptionsType) => strin
  * 数据DES加密，并输出Base64数据格式
  * @param data 数据
  * @param key 密钥
- * @param options 配置
+ * @param options 配置，支持mode、padding、iv, output配置
  * @returns result 加密后数据
  */
 const encryptDES: (data: string, key: string, options?: AESOptionsType) => string
@@ -137,7 +137,7 @@ const encryptDES: (data: string, key: string, options?: AESOptionsType) => strin
  * 数据3DES加密，并输出Base64数据格式
  * @param data 数据
  * @param key 密钥
- * @param options 配置
+ * @param options 配置，支持mode、padding、iv, output配置
  * @returns result 加密后数据
  */
 const encrypt3DES: (data: string, key: string, options?: AESOptionsType) => string
@@ -145,7 +145,7 @@ const encrypt3DES: (data: string, key: string, options?: AESOptionsType) => stri
  * 数据SM4加密，并输出Base64数据格式
  * @param data 数据
  * @param key 密钥
- * @param options 配置
+ * @param options 配置，支持mode、padding、iv, output配置
  * @returns result 加密后数据
  */
 const encryptSM4: (data: string, key: string, options?: AESOptionsType) => string
@@ -153,7 +153,10 @@ const encryptSM4: (data: string, key: string, options?: AESOptionsType) => strin
  * 数据RSA加密，并输出Base64数据格式
  * @param data 数据
  * @param key 密钥
- * @param options 配置
+ * @param options 配置，支持algorithm, keyType, output配置
+ * @property {'RSA' | 'RSA/ECB/PKCS1Padding' | 'RSA/ECB/NoPadding' | 'RSA/None/NoPadding'} algorithm 加密算法
+ * @property {'PrivateKey' | 'PublicKey'} keyType 私钥还是公钥
+ * @property {'base64' | 'hex'} output 输出格式
  * @returns result 加密后数据
  */
 const encryptRSA: (data: string, key: string, options?: RSAOptionsType) => string
@@ -161,10 +164,7 @@ const encryptRSA: (data: string, key: string, options?: RSAOptionsType) => strin
  * 数据AES解密
  * @param data 数据
  * @param key 密钥
- * @param options 配置
- * @property {'RSA' | 'RSA/ECB/PKCS1Padding' | 'RSA/ECB/NoPadding' | 'RSA/None/NoPadding'} algorithm 加密算法
- * @property {'PrivateKey' | 'PublicKey'} keyType 私钥还是公钥
- * @property {'base64' | 'hex'} output 输出格式
+ * @param options 配置，支持mode、padding、iv, output配置
  * @returns result 解密后数据
  */
 const decryptAES: (data: string, key: string, options?: AESOptionsType) => string
@@ -172,7 +172,7 @@ const decryptAES: (data: string, key: string, options?: AESOptionsType) => strin
  * 数据DES解密
  * @param data 数据
  * @param key 密钥
- * @param options 配置
+ * @param options 配置，支持mode、padding、iv, output配置
  * @returns result 解密后数据
  */
 const decryptDES: (data: string, key: string, options?: AESOptionsType) => string
@@ -180,7 +180,7 @@ const decryptDES: (data: string, key: string, options?: AESOptionsType) => strin
  * 数据3DES解密
  * @param data 数据
  * @param key 密钥
- * @param options 配置
+ * @param options 配置，支持mode、padding、iv, output配置
  * @returns result 解密后数据
  */
 const decrypt3DES: (data: string, key: string, options?: AESOptionsType) => string
@@ -188,7 +188,7 @@ const decrypt3DES: (data: string, key: string, options?: AESOptionsType) => stri
  * 数据SM4解密
  * @param data 数据
  * @param key 密钥
- * @param options 配置
+ * @param options 配置，支持mode、padding、iv, output配置
  * @returns result 解密后数据
  */
 const decryptSM4: (data: string, key: string, options?: AESOptionsType) => string
@@ -196,7 +196,7 @@ const decryptSM4: (data: string, key: string, options?: AESOptionsType) => strin
  * 数据RSA解密
  * @param data 数据
  * @param key 密钥
- * @param options 配置
+ * @param options 配置，支持algorithm, keyType, output配置
  * @property {'RSA' | 'RSA/ECB/PKCS1Padding' | 'RSA/ECB/NoPadding' | 'RSA/None/NoPadding'} algorithm 加密算法
  * @property {'PrivateKey' | 'PublicKey'} keyType 私钥还是公钥
  * @property {'base64' | 'hex'} output 输出格式
