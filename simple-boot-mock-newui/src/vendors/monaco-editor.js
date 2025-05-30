@@ -21,7 +21,9 @@ const defaultConfig = {
   wordWrap: 'on',
   readOnly: true,
   language: 'javascript',
-  fixedOverflowWidgets: true
+  fixedOverflowWidgets: true,
+  formatOnPaste: true,
+  internalPasteProcess: false
 }
 
 /**
@@ -166,7 +168,7 @@ export const useMonacoEditorOptions = (config) => {
     if (!oldContent && content) {
       checkEditorLang()
     }
-    if (editorRef.value && !editorRef.value.__internalPasteFunc__) {
+    if (editorRef.value && !editorRef.value.__internalPasteFunc__ && monacoEditorOptions.internalPasteProcess) {
       const editor = toRaw(editorRef.value)
       editor.__internalPasteFunc__ = () => {
         const value = editor.getValue()
