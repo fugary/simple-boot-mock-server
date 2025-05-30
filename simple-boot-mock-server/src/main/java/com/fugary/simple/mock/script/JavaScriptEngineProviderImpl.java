@@ -71,12 +71,19 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
     public String mock(String template) {
         String result = StringUtils.trimToEmpty(template);
         if (MockJsUtils.isJson(result) || isMockJSFragment(template)) {
-            Object mockRes = eval(parseMockJSFragment(template));
-            if (mockRes instanceof SimpleResult) {
-                result = JsonUtils.toJson(mockRes);
-            } else if (mockRes != null) {
-                result = mockRes.toString();
-            }
+            return evalStr(parseMockJSFragment(template));
+        }
+        return result;
+    }
+
+    @Override
+    public String evalStr(String script) {
+        String result = StringUtils.trimToEmpty(script);
+        Object mockRes = eval(script);
+        if (mockRes instanceof SimpleResult) {
+            result = JsonUtils.toJson(mockRes);
+        } else if (mockRes != null) {
+            result = mockRes.toString();
         }
         return result;
     }

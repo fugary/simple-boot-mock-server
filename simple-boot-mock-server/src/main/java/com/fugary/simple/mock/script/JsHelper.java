@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.script;
 
+import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -9,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -147,6 +149,126 @@ public class JsHelper {
     }
 
     /**
+     * AES加密
+     *
+     * @param input
+     * @param password
+     * @param config
+     * @return
+     */
+    public String encryptAES(String input, String password, Map<String, String> config) {
+        return HuToolCryptoUtils.symmetricCrypto(SymmetricAlgorithm.AES.getValue(), input, password, config, true);
+    }
+
+    /**
+     * AES解密
+     *
+     * @param input
+     * @param password
+     * @param config
+     * @return
+     */
+    public String decryptAES(String input, String password, Map<String, String> config) {
+        return HuToolCryptoUtils.symmetricCrypto(SymmetricAlgorithm.AES.getValue(), input, password, config, false);
+    }
+
+    /**
+     * DES加密
+     *
+     * @param input
+     * @param password
+     * @param config
+     * @return
+     */
+    public String encryptDES(String input, String password, Map<String, String> config) {
+        return HuToolCryptoUtils.symmetricCrypto(SymmetricAlgorithm.DES.getValue(), input, password, config, true);
+    }
+
+    /**
+     * DES解密
+     *
+     * @param input
+     * @param password
+     * @param config
+     * @return
+     */
+    public String decryptDES(String input, String password, Map<String, String> config) {
+        return HuToolCryptoUtils.symmetricCrypto(SymmetricAlgorithm.DES.getValue(), input, password, config, false);
+    }
+
+    /**
+     * 3DES加密
+     *
+     * @param input
+     * @param password
+     * @param config
+     * @return
+     */
+    public String encrypt3DES(String input, String password, Map<String, String> config) {
+        return HuToolCryptoUtils.symmetricCrypto(SymmetricAlgorithm.DESede.getValue(), input, password, config, true);
+    }
+
+    /**
+     * 3DES解密
+     *
+     * @param input
+     * @param password
+     * @param config
+     * @return
+     */
+    public String decrypt3DES(String input, String password, Map<String, String> config) {
+        return HuToolCryptoUtils.symmetricCrypto(SymmetricAlgorithm.DESede.getValue(), input, password, config, false);
+    }
+
+    /**
+     * SM4加密
+     *
+     * @param input
+     * @param password
+     * @param config
+     * @return
+     */
+    public String encryptSM4(String input, String password, Map<String, String> config) {
+        return HuToolCryptoUtils.symmetricCrypto("SM4", input, password, config, true);
+    }
+
+    /**
+     * SM4解密
+     *
+     * @param input
+     * @param password
+     * @param config
+     * @return
+     */
+    public String decryptSM4(String input, String password, Map<String, String> config) {
+        return HuToolCryptoUtils.symmetricCrypto("SM4", input, password, config, false);
+    }
+
+    /**
+     * RSA加密
+     *
+     * @param input
+     * @param key
+     * @param config
+     * @return
+     */
+    public String encryptRSA(String input, String key, Map<String, String> config) {
+        return HuToolCryptoUtils.asymmetricRSA(input, key, config, true);
+    }
+
+    /**
+     * RSA解密
+     *
+     * @param input
+     * @param key
+     * @param config
+     * @return
+     */
+    public String decryptRSA(String input, String key, Map<String, String> config) {
+        return HuToolCryptoUtils.asymmetricRSA(input, key, config, false);
+    }
+
+    /**
      * 初始化方法
      *
      * @return
@@ -157,22 +279,21 @@ public class JsHelper {
         for (Method method : getClass().getDeclaredMethods()) {
             if (!excludeMethods.contains(method.getName())) {
                 sb.append("if(!globalThis.").append(method.getName()).append("){\n")
-                        .append("\tglobalThis.").append(method.getName()).append(" = JsHelper.").append(method.getName())
-                        .append(";\n")
-                        .append("}\n");
+                        .append("\tglobalThis.").append(method.getName())
+                        .append(" = ");
+                if (StringUtils.startsWithAny(method.getName(), "encrypt", "decrypt")) {
+                    sb.append("(input, password, config) => {\n")
+                            .append("\t\tinput = (typeof input === 'string') ? input : JSON.stringify(input);\n")
+                            .append("\t\tpassword = (typeof password === 'string') ? password : JSON.stringify(password);\n")
+                            .append("\t\treturn JsHelper.").append(method.getName())
+                            .append("(input, password, config || {});\n")
+                            .append("\t}\n");
+                } else {
+                    sb.append("JsHelper.").append(method.getName()).append(";\n");
+                }
+                sb.append("}\n");
             }
         }
         return sb.toString();
     }
-
-    public static void main(String[] args) {
-        JsHelper jsHelper = new JsHelper();
-        log.info("getInitStr: \n{}", jsHelper.getInitStr());
-        String ins = "5452493A462F542F3939392D303030303030303030312F53332F30384A554C2F503230";
-        String o1 = jsHelper.decodeHex(ins);
-        log.info("decoded: {}", o1);
-        String o2 = jsHelper.encodeHex(o1);
-        log.info("encoded: {}", o2);
-    }
-
 }

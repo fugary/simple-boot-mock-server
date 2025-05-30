@@ -73,6 +73,36 @@ export const initXmlWithJs = (monaco) => {
   }, {
     label: 'sha256Base64()',
     detail: '数据SHA256加密，并输出Base64数据格式'
+  }, {
+    label: 'encryptAES()',
+    detail: '数据AES加密，并输出Base64数据格式'
+  }, {
+    label: 'encryptDES()',
+    detail: '数据DES加密，并输出Base64数据格式'
+  }, {
+    label: 'encrypt3DES()',
+    detail: '数据3DES加密，并输出Base64数据格式'
+  }, {
+    label: 'encryptSM4()',
+    detail: '数据SM4加密，并输出Base64数据格式'
+  }, {
+    label: 'encryptRSA()',
+    detail: '数据RSA加密，并输出Base64数据格式'
+  }, {
+    label: 'decryptAES()',
+    detail: '数据AES解密'
+  }, {
+    label: 'decryptDES()',
+    detail: '数据DES解密'
+  }, {
+    label: 'decrypt3DES()',
+    detail: '数据3DES解密'
+  }, {
+    label: 'decryptSM4()',
+    detail: '数据SM4解密'
+  }, {
+    label: 'decryptRSA()',
+    detail: '数据RSA解密'
   }]
 
   const MOCK_HINTS = [{

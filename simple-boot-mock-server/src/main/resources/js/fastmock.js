@@ -29,4 +29,11 @@
         processMockParam(mockData)
         return Mock.__oriMock(mockData, ...args)
     };
+    globalThis.Random = Mock.Random;
+    globalThis.mockStringify = (input, ...args) => {
+        if (typeof input === 'string') {
+            return input;
+        }
+        return JSON.stringify(input, ...args);
+    }
 })(Mock, request)

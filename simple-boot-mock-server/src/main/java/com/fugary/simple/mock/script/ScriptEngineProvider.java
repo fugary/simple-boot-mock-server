@@ -20,4 +20,11 @@ public interface ScriptEngineProvider {
      */
     Object eval(String script);
 
+    /**
+     * 数据执行成string输出
+     *
+     * @param script
+     * @return
+     */
+    String evalStr(String script);
 }
