@@ -80,6 +80,7 @@ const examples = [{
   `.trim()
 }, {
   label: 'Mock.js',
+  link: 'http://mockjs.com/',
   content: `
 Mock.mock({
     "code": "success",
@@ -101,7 +102,8 @@ Mock.mock({
 })
 `.trim()
 }, {
-  label: 'XML Content',
+  label: 'XML Content ( {{ dynamic js code }} is supported. )',
+  language: 'xmlWithJs',
   content: `
 <root>
   <name>{{Mock.mock('@name')}}</name>
@@ -169,10 +171,17 @@ const calcHeight = (text) => {
         >
           <p>
             {{ example.label }}
+            <el-link
+              v-if="example.link"
+              type="primary"
+              :href="example.link"
+            >
+              {{ example.link }}
+            </el-link>
           </p>
           <vue-monaco-editor
             v-model:value="example.content"
-            :language="languageRef"
+            :language="example.language||languageRef"
             :options="monacoEditorOptions"
             class="common-resize-vertical"
             :height="calcHeight(example.content)"
