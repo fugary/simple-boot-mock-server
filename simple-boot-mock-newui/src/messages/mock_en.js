@@ -78,7 +78,7 @@ mock.label.combineSingleGroup = 'As Single Group'
 mock.label.owner = 'Owner'
 mock.label.requestObject = 'Request Object'
 mock.label.buildInFunctions = 'Built-in Functions'
-mock.label.clickToShowDetails = 'Click to show details'
+mock.label.clickToShowDetails = 'Click to show help'
 
 mock.msg.configSetDefault = 'Confirm to set as default?'
 mock.msg.noExportData = 'No data to export'

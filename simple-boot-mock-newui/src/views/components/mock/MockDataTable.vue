@@ -344,6 +344,7 @@ const editFormOptions = computed(() => {
     type: 'vue-monaco-editor',
     prop: 'responseBody',
     required: isRedirect,
+    tooltipFunc: () => showMockTips(),
     attrs: {
       defaultValue: currentDataItem.value?.responseBody,
       'onUpdate:value': (value) => {

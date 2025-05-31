@@ -61,4 +61,12 @@ export default [{
     labelKey: 'mock.label.publicMockProjects',
     icon: 'Share'
   }
+}, {
+  path: `${BASE_PATH}/tips`,
+  name: 'MockTips',
+  component: () => import('@/views/mock/MockTips.vue'),
+  meta: {
+    replaceTabHistory: 'MockTips',
+    icon: 'QuestionFilled'
+  }
 }]

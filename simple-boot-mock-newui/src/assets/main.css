@@ -245,6 +245,10 @@ html, body, #app, .index-container {
     font-weight: bold;
 }
 
+.el-header.tabs-header {
+    height: 40px;
+}
+
 .common-form.el-form--inline .el-select,
 .common-subform.el-form--inline .el-select{
     --el-select-width: 200px;

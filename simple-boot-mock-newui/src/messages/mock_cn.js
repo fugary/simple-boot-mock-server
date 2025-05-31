@@ -78,7 +78,7 @@ mock.label.combineSingleGroup = '合并为单个组'
 mock.label.owner = '所属用户'
 mock.label.requestObject = '请求对象'
 mock.label.buildInFunctions = '内置函数'
-mock.label.clickToShowDetails = '点击查看详情'
+mock.label.clickToShowDetails = '点击查看帮助'
 
 mock.msg.configSetDefault = '确定要设为默认响应？'
 mock.msg.noExportData = '没有需要导出的数据'

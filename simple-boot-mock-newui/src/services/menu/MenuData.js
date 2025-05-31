@@ -89,6 +89,14 @@ export const ALL_MENUS = [
         closeOnClickModal: false
       })
     }
+  },
+  {
+    id: 96,
+    parentId: 9,
+    iconCls: 'QuestionFilled',
+    nameCn: '查看帮助',
+    nameEn: 'View Help',
+    menuUrl: '/mock/tips'
   }, {
     id: 99,
     parentId: 9,
