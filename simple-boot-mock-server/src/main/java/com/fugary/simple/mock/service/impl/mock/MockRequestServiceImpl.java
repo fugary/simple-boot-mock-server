@@ -129,7 +129,8 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     public List<MockData> loadAllDataByRequest(Integer requestId) {
         return mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)
-                .isNull(DB_MODIFY_FROM_KEY));
+                .isNull(DB_MODIFY_FROM_KEY)
+                .orderByAsc("status_code", "create_date"));
     }
 
     /**
