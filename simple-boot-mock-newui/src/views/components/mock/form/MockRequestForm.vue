@@ -7,6 +7,7 @@ import MockRequestFormUrl from '@/views/components/mock/form/MockRequestFormUrl.
 import MockRequestFormMatchPattern from '@/views/components/mock/form/MockRequestFormMatchPattern.vue'
 import { addParamsToURL, calcAffixOffset } from '@/utils'
 import { useDisableAffix } from '@/hooks/useDisableAffix'
+import { addRequestParamsToResult, processEvnParams } from '@/services/mock/MockCommonService'
 
 const props = defineProps({
   responseTarget: {
@@ -49,9 +50,12 @@ const requestUrl = computed(() => {
     reqUrl = reqUrl.replace(new RegExp(`:${pathParam.name}`, 'g'), pathParam.value)
       .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), pathParam.value)
   })
-  paramTarget.value?.requestParams?.filter(requestParam => !!requestParam.name && requestParam.enabled).forEach(requestParam => {
-    reqUrl = addParamsToURL(reqUrl, { [requestParam.name]: requestParam.value })
-  })
+  if (paramTarget.value?.method?.toLowerCase() === 'get') {
+    const calcReqParams = paramTarget.value?.requestParams?.filter(requestParam => !!requestParam.name && requestParam.enabled).reduce((results, item) => {
+      return addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value))
+    }, {})
+    reqUrl = addParamsToURL(reqUrl, calcReqParams)
+  }
   return reqUrl
 })
 

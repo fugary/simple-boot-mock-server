@@ -11,7 +11,8 @@ import MockRequestApi, { loadSchemas } from '@/api/mock/MockRequestApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { $i18nKey } from '@/messages'
 import { MOCK_DATA_MATCH_PATTERN_HEADER, MOCK_DATA_PATH_PARAMS_HEADER } from '@/consts/MockConstants'
-import { processEvnParams } from '@/services/mock/MockCommonService'
+import { addRequestParamsToResult, processEvnParams } from '@/services/mock/MockCommonService'
+import { toGetParams } from '@/utils'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -42,7 +43,7 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
 
 const doDataPreview = () => {
   const params = preProcessParams(paramTarget.value?.requestParams).reduce((results, item) => {
-    results[item.name] = processEvnParams(paramTarget.value.groupConfig, item.value)
+    addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value))
     return results
   }, {})
   const { data, hasBody } = calcRequestBody(paramTarget)
@@ -54,6 +55,7 @@ const doDataPreview = () => {
   const config = {
     loading: true,
     params,
+    paramsSerializer: toGetParams,
     data,
     headers
   }

@@ -88,7 +88,10 @@ export const toGetParams = (obj) => {
     obj = toFlatKeyValue(obj)
     return Object.keys(obj)
       .filter(key => !!obj[key])
-      .map(key => `${key}=${obj[key]}`).join('&')
+      .map(key => isArray(obj[key])
+        ? obj[key].map(val => `${key}=${val}`).join('&')
+        : `${key}=${obj[key]}`)
+      .join('&')
   }
 }
 /**

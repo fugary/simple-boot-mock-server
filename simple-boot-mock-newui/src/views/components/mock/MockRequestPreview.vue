@@ -14,7 +14,8 @@ import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
 import { cloneDeep, isArray } from 'lodash-es'
-import { calcPreviewHeaders, processEvnParams } from '@/services/mock/MockCommonService'
+import { addRequestParamsToResult, calcPreviewHeaders, processEvnParams } from '@/services/mock/MockCommonService'
+import { toGetParams } from '@/utils'
 
 const groupItem = ref()
 const requestItem = ref()
@@ -67,7 +68,7 @@ const doDataPreview = async () => {
     }
   })
   const params = preProcessParams(paramTarget.value?.requestParams).reduce((results, item) => {
-    results[item.name] = processEvnParams(paramTarget.value.groupConfig, item.value)
+    addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value))
     return results
   }, {})
   const { data, hasBody } = calcRequestBody(paramTarget)
@@ -79,6 +80,7 @@ const doDataPreview = async () => {
   const config = {
     loading: true,
     params,
+    paramsSerializer: toGetParams,
     data,
     headers
   }

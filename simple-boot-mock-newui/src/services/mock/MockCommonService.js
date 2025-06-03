@@ -5,6 +5,24 @@ import { XMLBuilder } from 'fast-xml-parser'
 import { isArray, isFunction, isString, cloneDeep } from 'lodash-es'
 import { ALL_CONTENT_TYPES } from '@/api/mock/MockDataApi'
 
+/**
+ * 添加数据
+ * @param results
+ * @param name
+ * @param value
+ */
+export const addRequestParamsToResult = (results, name, value) => {
+  if (results[name]) {
+    if (!isArray(results[name])) {
+      results[name] = [results[name]]
+    }
+    results[name].push(value)
+  } else {
+    results[name] = value
+  }
+  return results
+}
+
 export const generateSchemaSample = (schemaBody, type, spec) => {
   return $coreConfirm($i18nKey('common.msg.commonConfirm', 'common.label.generateData'))
     .then(() => {
