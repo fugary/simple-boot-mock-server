@@ -1,7 +1,7 @@
 <script setup>
 import { $i18nBundle } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { watch, computed } from 'vue'
+import { computed } from 'vue'
 import { showMockTips } from '@/utils/DynamicUtils'
 
 const paramTarget = defineModel('modelValue', {
@@ -25,6 +25,7 @@ const matchPatternOption = computed(() => {
       class: 'common-resize-vertical',
       defaultValue: paramTarget.value.matchPattern,
       'onUpdate:value': (value) => {
+        paramTarget.value.matchPattern = value
         contentRef.value = value
         languageRef.value = 'javascript'
       },
@@ -34,11 +35,6 @@ const matchPatternOption = computed(() => {
     }
   }
 })
-
-watch(contentRef, val => {
-  paramTarget.value.matchPattern = val
-})
-
 </script>
 
 <template>
