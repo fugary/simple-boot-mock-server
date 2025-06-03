@@ -55,7 +55,10 @@ const paramTarget = defineModel('modelValue', {
   default: () => ({})
 })
 
-const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, normalLanguageSelectOption, formatDocument, checkEditorLang } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, normalLanguageSelectOption, formatDocument, checkEditorLang } = useMonacoEditorOptions({
+  readOnly: false,
+  language: paramTarget.value.requestFormat
+})
 const codeHeight = '300px'
 contentRef.value = paramTarget.value?.requestBody
 languageRef.value = paramTarget.value?.requestFormat || languageRef.value

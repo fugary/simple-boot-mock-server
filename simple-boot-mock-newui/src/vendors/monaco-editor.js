@@ -124,7 +124,7 @@ export const processPasteCode = data => {
  */
 export const useMonacoEditorOptions = (config) => {
   const contentRef = ref('')
-  const languageRef = ref('')
+  const languageRef = ref(config?.language || '')
   const editorRef = ref()
   const monacoEditorOptions = defineMonacoOptions(config)
   const languageModel = ref({
