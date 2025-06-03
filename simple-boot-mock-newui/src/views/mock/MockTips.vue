@@ -76,7 +76,7 @@ const examples = [{
         code: 'success',
         data
     };
-}());
+}())
   `.trim()
 }, {
   label: 'Mock.js',
@@ -134,7 +134,7 @@ Mock.mock({
 }]
 
 const calcHeight = (text) => {
-  return text.split('\n').length * 18 + 'px'
+  return text.split('\n').length * 19 + 'px'
 }
 
 </script>
