@@ -68,6 +68,11 @@ public class MockGroupController {
                 .or().like("group_path", keyword)
                 .or().like("description", keyword));
         MockProject mockProject = mockProjectService.loadMockProject(queryUserName, projectCode);
+        if (mockProject == null && !queryVo.isPublicFlag()
+                && (SecurityUtils.isCurrentUser(queryUserName) || SecurityUtils.isAdminUser())
+                && StringUtils.isBlank(projectCode)) {
+            mockProject = mockProjectService.loadMockProject(queryUserName, MockConstants.MOCK_DEFAULT_PROJECT);
+        }
         String userName = SecurityUtils.getUserName(queryUserName);
         if (StringUtils.isBlank(userName) && queryVo.isPublicFlag()
                 && mockProject != null && mockProject.isEnabled() && Boolean.TRUE.equals(mockProject.getPublicFlag())) {

@@ -70,4 +70,12 @@ public class SecurityUtils {
         MockUser loginUser = getLoginUser();
         return loginUser != null ? loginUser.getUserName() : "";
     }
+
+    public static boolean isCurrentUser(String userName) {
+        return StringUtils.equalsIgnoreCase(userName, getLoginUserName());
+    }
+
+    public static boolean isAdminUser() {
+        return StringUtils.equalsIgnoreCase(getLoginUserName(), ADMIN_USER);
+    }
 }
