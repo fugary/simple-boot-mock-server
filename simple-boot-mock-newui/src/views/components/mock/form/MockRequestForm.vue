@@ -84,7 +84,7 @@ const responseExamples = computed(() => {
   const examples = schema.value?.responseExamples
   return examples ? JSON.parse(examples) : []
 })
-const sendButtonOffset = computed(() => calcAffixOffset(20))
+const sendButtonOffset = computed(() => calcAffixOffset(0))
 const { disableAffix, AffixToggleButton } = useDisableAffix()
 </script>
 
@@ -100,6 +100,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
             <el-col>
               <el-affix
                 v-disable-affix="!affixEnabled || disableAffix"
+                style="width: 100%"
                 :offset="sendButtonOffset"
               >
                 <el-row style="background: var(--el-bg-color)">
