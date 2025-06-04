@@ -28,11 +28,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -139,19 +141,33 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                 }
                 logBuilder.logData(SimpleMockUtils.logDataString(List.of(loginVo)));
             } else {
-                List<Object> argsList = Arrays.stream(args).filter(this::isValidParam).collect(Collectors.toList());
+                List<Object> argsList = Arrays.stream(args).map(this::processRequestBody).filter(this::isValidParam).collect(Collectors.toList());
                 logBuilder.logData(SimpleMockUtils.logDataString(argsList));
             }
             HttpServletResponse response = HttpRequestUtils.getCurrentResponse();
             if (response != null) {
                 String header = response.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
+                String userName = response.getHeader(MockConstants.MOCK_DATA_USER_HEADER);
                 if (StringUtils.isNotBlank(header)) {
                     logBuilder.dataId(header);
+                }
+                if (StringUtils.isNotBlank(userName)) {
+                    logBuilder.userName(userName).creator(userName);
                 }
             }
             MockLog mockLog = logBuilder.build();
             publishEvent(mockLog);
         }
+    }
+
+    private Object processRequestBody(Object arg) {
+        if (arg instanceof ContentCachingRequestWrapper) {
+            ContentCachingRequestWrapper contentCachingRequestWrapper = (ContentCachingRequestWrapper) arg;
+            if (contentCachingRequestWrapper.getContentAsByteArray().length > 0) {
+                return new String(contentCachingRequestWrapper.getContentAsByteArray(), StandardCharsets.UTF_8);
+            }
+        }
+        return arg;
     }
 
     private boolean isValidParam(Object target) {
