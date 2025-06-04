@@ -94,6 +94,12 @@ public class MockGroupController {
         if (mockGroup != null) {
             mockProject = mockProjectService.loadMockProject(mockGroup.getUserName(), mockGroup.getProjectCode());
         }
+        if (mockGroup == null || mockProject == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        if (!Boolean.TRUE.equals(mockProject.getPublicFlag()) && !SecurityUtils.validateUserUpdate(mockGroup.getUserName())) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+        }
         return SimpleResultUtils.createSimpleResult(mockGroup)
                 .addInfo("mockProject", mockProject);
     }
