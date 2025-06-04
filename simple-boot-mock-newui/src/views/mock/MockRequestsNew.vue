@@ -267,6 +267,14 @@ const calcMockCompareItems = (original, modified) => {
     const newTag = !original.id ? <ElTag class="margin-left1" type="warning">{ $i18nBundle('common.label.new') }</ElTag> : ''
     const currentFlag = modified.current ? <ElTag class="margin-left1" type="success" round={true}>{$i18nBundle('mock.label.current')}</ElTag> : ''
     const getDelFlagFormatter = (item) => () => <DelFlagTag v-model={item.status}/>
+    const getDisableMockFormatter = (item) => () => item.disableMock
+      ? <ElText type="danger"
+                  style="vertical-align: middle;"
+                  class="margin-left1 pointer"
+                  v-common-tooltip={$i18nBundle('mock.label.disabledMock')}>
+          <CommonIcon size={18} icon="DoDisturbFilled"/>
+        </ElText>
+      : ''
     const getMethodFormatter = (item) => () => methodFormatter(item)
     const getContentFormatter = (item, modFlag) => () => <ElText type={modFlag && original.matchPattern !== modified.matchPattern ? 'warning' : ''}>
       <CommonIcon icon="ArrowDownBold"/>
@@ -293,6 +301,14 @@ const calcMockCompareItems = (original, modified) => {
         key: 'status',
         originalFormatter: getDelFlagFormatter(original),
         modifiedFormatter: getDelFlagFormatter(modified)
+      }),
+      ...getMockCompareItem({
+        original,
+        modified,
+        labelKey: 'mock.label.disableMock',
+        key: 'disableMock',
+        originalFormatter: getDisableMockFormatter(original),
+        modifiedFormatter: getDisableMockFormatter(modified)
       }),
       ...getMockCompareItem({ original, modified, labelKey: 'mock.label.proxyUrl', key: 'proxyUrl', copy: true }),
       ...getMockCompareItem({ original, modified, labelKey: 'common.label.delay', key: 'delay' }),

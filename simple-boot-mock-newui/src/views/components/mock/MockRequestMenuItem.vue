@@ -154,18 +154,6 @@ const requestProxyUrl = computed(() => {
           click-to-toggle
           @toggle-value="changeStatus"
         />
-        <el-text
-          v-if="requestItem.disableMock"
-          v-common-tooltip="$t('mock.label.disabledMock')"
-          type="danger"
-          style="vertical-align: middle;"
-          class="margin-left1 pointer"
-        >
-          <common-icon
-            :size="18"
-            icon="DoDisturbFilled"
-          />
-        </el-text>
         <el-tag
           v-if="requestItem.dataCount"
           title="mock data count"
@@ -178,6 +166,18 @@ const requestProxyUrl = computed(() => {
         >
           {{ requestItem.dataCount }}
         </el-tag>
+        <el-text
+          v-if="requestItem.disableMock"
+          v-common-tooltip="$t('mock.label.disabledMock')"
+          type="danger"
+          style="vertical-align: bottom;"
+          class="margin-left1 pointer"
+        >
+          <common-icon
+            :size="18"
+            icon="DoDisturbFilled"
+          />
+        </el-text>
       </el-col>
       <el-col
         :span="10"
