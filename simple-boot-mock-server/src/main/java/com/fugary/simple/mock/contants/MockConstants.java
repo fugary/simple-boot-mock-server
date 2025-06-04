@@ -41,6 +41,8 @@ public class MockConstants {
 
     public static final String MOCK_DATA_ID_HEADER = "mock-data-id";
 
+    public static final String MOCK_DATA_USER_HEADER = "mock-data-user";
+
     public static final String MOCK_DATA_PREVIEW_HEADER = "mock-data-preview";
 
     public static final String MOCK_DATA_REDIRECT_HEADER = "mock-data-redirect";

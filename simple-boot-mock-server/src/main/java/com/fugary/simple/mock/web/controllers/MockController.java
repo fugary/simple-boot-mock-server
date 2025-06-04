@@ -88,10 +88,11 @@ public class MockController {
                 }
                 return ResponseEntity.status(data.getStatusCode()).headers(httpHeaders).header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
             }
+            response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
+            response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
             responseEntity = ResponseEntity.status(data.getStatusCode())
                     .headers(httpHeaders)
                     .header(HttpHeaders.CONTENT_TYPE, SimpleMockUtils.getContentType(data.getContentType(), data.getDefaultCharset()))
-                    .header(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()))
                     .body(data.getResponseBody());
             SimpleLogUtils.addResponseData(data.getResponseBody());
         } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
