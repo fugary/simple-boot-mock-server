@@ -4,7 +4,7 @@ import { $coreConfirm, $reload, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, { ALL_METHODS, loadHistoryDiff, searchHistories } from '@/api/mock/MockRequestApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
-import { defineFormOptions, defineTableColumns } from '@/components/utils'
+import { defineFormOptions, defineTableColumns, limitStr } from '@/components/utils'
 import { ref, computed, nextTick } from 'vue'
 import { useFormDelay, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
@@ -344,11 +344,7 @@ const toShowHistoryWindow = (current) => {
       property: 'matchPattern',
       minWidth: '200px',
       formatter (data) {
-        let showStr = data.matchPattern
-        if (data.matchPattern && data.matchPattern.length > 100) {
-          showStr = data.matchPattern.substring(0, 100) + '...'
-        }
-        return showStr
+        return limitStr(data.matchPattern, 100)
       }
     }, {
       labelKey: 'mock.label.proxyUrl',

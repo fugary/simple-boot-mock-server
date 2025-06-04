@@ -1,6 +1,6 @@
 <script setup lang="jsx">
 import { onMounted, ref, computed, watch } from 'vue'
-import { defineTableColumns, defineFormOptions, defineTableButtons } from '@/components/utils'
+import { defineTableColumns, defineFormOptions, defineTableButtons, limitStr } from '@/components/utils'
 import { $coreConfirm, checkShowColumn } from '@/utils'
 import MockDataApi, {
   ALL_STATUS_CODES,
@@ -98,10 +98,7 @@ const columns = computed(() => {
     labelKey: 'mock.label.matchPattern',
     minWidth: hasMatchPattern ? '150px' : '80px',
     formatter (data) {
-      let showStr = data.matchPattern
-      if (data.matchPattern && data.matchPattern.length > 100) {
-        showStr = data.matchPattern.substring(0, 100) + '...'
-      }
+      const showStr = limitStr(data.matchPattern, 60)
       return <ViewDataLink data={showStr} icon="RuleFilled" style="word-break: break-all;"
                              tooltip={$i18nKey('common.label.commonConfig', 'mock.label.matchPattern')}
                              onViewDataDetails={() => toTestMatchPattern(props.groupItem, requestItem.value, data)
@@ -131,10 +128,7 @@ const columns = computed(() => {
     property: 'responseBody',
     minWidth: '220px',
     formatter (data) {
-      let showStr = data.responseBody
-      if (data.responseBody && data.responseBody.length > 100) {
-        showStr = data.responseBody.substring(0, 100) + '...'
-      }
+      const showStr = limitStr(data.responseBody, 60)
       const status = data?.statusCode || 200
       const isRedirect = status >= 300 && status < 400 // redirect
       return <ViewDataLink data={showStr} style="word-break: break-all;"
@@ -487,11 +481,7 @@ const toShowHistoryWindow = (current) => {
       property: 'responseBody',
       minWidth: '200px',
       formatter (data) {
-        let showStr = data.responseBody
-        if (data.responseBody && data.responseBody.length > 100) {
-          showStr = data.responseBody.substring(0, 100) + '...'
-        }
-        return showStr
+        return limitStr(data.responseBody, 60)
       }
     }, {
       labelKey: 'common.label.modifyDate',
@@ -510,7 +500,10 @@ const toShowHistoryWindow = (current) => {
     }, {
       labelKey: 'mock.label.matchPattern',
       property: 'matchPattern',
-      minWidth: '100px'
+      minWidth: '150px',
+      formatter (data) {
+        return limitStr(data.matchPattern, 60)
+      }
     }, {
       label: 'Content Type',
       property: 'contentType',

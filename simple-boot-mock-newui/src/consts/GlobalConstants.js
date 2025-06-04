@@ -59,6 +59,9 @@ export const useFormDelay = (prop = 'delay') => {
     labelKey: 'common.label.delay',
     tooltip: $i18nBundle('mock.msg.delayTooltip'),
     type: 'input-number',
-    prop
+    prop,
+    attrs: {
+      min: 0
+    }
   }
 }

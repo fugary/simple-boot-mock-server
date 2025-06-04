@@ -154,6 +154,13 @@ export const proxyMethod = (targets = [], methodName) => {
   }
 }
 
+export const limitStr = (str, len) => {
+  if (str && str.length > len) {
+    return str.substring(0, len) + '...'
+  }
+  return str
+}
+
 export const calcSlotsResult = (config, data) => {
   const results = {}
   if (config?.slots) {
