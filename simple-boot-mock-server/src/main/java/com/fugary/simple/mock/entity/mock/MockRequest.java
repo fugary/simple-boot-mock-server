@@ -26,4 +26,5 @@ public class MockRequest extends MockBase{
     @TableField("data_version")
     private Integer version;
     private Integer modifyFrom;
+    private Boolean disableMock;
 }

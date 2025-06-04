@@ -19,5 +19,5 @@ public class MockGroup extends MockBase {
     private Integer delay;
     private String description;
     private String groupConfig;
-
+    private Boolean disableMock;
 }

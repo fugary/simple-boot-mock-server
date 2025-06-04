@@ -144,7 +144,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             mockGroup = getOne(Wrappers.<MockGroup>query()
                     .eq("group_path", requestGroupPath)
                     .eq(!testRequest,"status", 1));
-            if (mockGroup != null) {
+            if (mockGroup != null && !Boolean.TRUE.equals(mockGroup.getDisableMock())) {
                 if (checker != null && !checker.test(mockGroup)) {
                     return Triple.of(null, null, null);
                 }
@@ -161,7 +161,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     String configRequestPath = StringUtils.prependIfMissing(mockRequest.getRequestPath(), "/");
                     configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant path不支持:var格式，只支持{var}格式
                     String configPath = groupPath + configRequestPath;
-                    if (pathMatcher.match(configPath, requestPath)) {
+                    if (pathMatcher.match(configPath, requestPath) && !Boolean.TRUE.equals(mockRequest.getDisableMock())) {
                         try {
                             HttpRequestVo requestVo = calcRequestVo(request, configPath, requestPath);
                             MockJsUtils.setCurrentRequestVo(requestVo);
