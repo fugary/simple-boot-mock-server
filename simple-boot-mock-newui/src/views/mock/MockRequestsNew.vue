@@ -339,7 +339,19 @@ const toShowHistoryWindow = (current) => {
       labelKey: 'common.label.status',
       minWidth: '100px',
       formatter (data) {
-        return <DelFlagTag v-model={data.status} clickToToggle={false}/>
+        let disableMockStr = ''
+        if (data.disableMock) {
+          disableMockStr = <ElText type="danger"
+                                   style="vertical-align: middle;"
+                                   class="margin-left1 pointer"
+                                   v-common-tooltip={$i18nBundle('mock.label.disabledMock')}>
+            <CommonIcon size={18} icon="DoDisturbFilled"/>
+          </ElText>
+        }
+        return <>
+          <DelFlagTag v-model={data.status} clickToToggle={false}/>
+          {disableMockStr}
+        </>
       }
     }, {
       labelKey: 'common.label.modifyDate',
