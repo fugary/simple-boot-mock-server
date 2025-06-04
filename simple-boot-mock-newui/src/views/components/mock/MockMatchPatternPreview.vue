@@ -10,7 +10,11 @@ import MockDataApi, {
 import MockRequestApi, { loadSchemas } from '@/api/mock/MockRequestApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { $i18nKey } from '@/messages'
-import { MOCK_DATA_MATCH_PATTERN_HEADER, MOCK_DATA_PATH_PARAMS_HEADER } from '@/consts/MockConstants'
+import {
+  MOCK_DATA_MATCH_PATTERN_HEADER,
+  MOCK_DATA_PATH_PARAMS_HEADER,
+  MOCK_DATA_USER_HEADER
+} from '@/consts/MockConstants'
 import { addRequestParamsToResult, processEvnParams } from '@/services/mock/MockCommonService'
 import { toGetParams } from '@/utils'
 
@@ -52,6 +56,9 @@ const doDataPreview = () => {
       results[item.name] = processEvnParams(paramTarget.value.groupConfig, item.value)
       return results
     }, {}))
+  if (groupItem.value?.userName) {
+    headers[MOCK_DATA_USER_HEADER] = groupItem.value.userName
+  }
   const config = {
     loading: true,
     params,

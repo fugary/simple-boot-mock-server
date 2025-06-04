@@ -6,6 +6,8 @@ export const MOCK_REQUEST_ID_HEADER = 'mock-request-id'
 
 export const MOCK_DATA_ID_HEADER = 'mock-data-id'
 
+export const MOCK_DATA_USER_HEADER = 'mock-data-user'
+
 export const MOCK_DATA_PREVIEW_HEADER = 'mock-data-preview'
 
 export const MOCK_DATA_MATCH_PATTERN_HEADER = 'mock-data-match-pattern'

@@ -144,10 +144,12 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                 List<Object> argsList = Arrays.stream(args).map(this::processRequestBody).filter(this::isValidParam).collect(Collectors.toList());
                 logBuilder.logData(SimpleMockUtils.logDataString(argsList));
             }
+            HttpServletRequest request = HttpRequestUtils.getCurrentRequest();
             HttpServletResponse response = HttpRequestUtils.getCurrentResponse();
-            if (response != null) {
+            if (request != null && response != null) {
                 String header = response.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
-                String userName = response.getHeader(MockConstants.MOCK_DATA_USER_HEADER);
+                String userName = StringUtils.defaultIfBlank(response.getHeader(MockConstants.MOCK_DATA_USER_HEADER),
+                        request.getHeader(MockConstants.MOCK_DATA_USER_HEADER));
                 if (StringUtils.isNotBlank(header)) {
                     logBuilder.dataId(header);
                 }
