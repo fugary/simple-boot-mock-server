@@ -23,7 +23,7 @@ import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
 import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
-import { ElLink } from 'element-plus'
+import { ElLink, ElText } from 'element-plus'
 import MockProjectApi, { checkProjectEdit, useProjectEditHook, useSelectProjects } from '@/api/mock/MockProjectApi'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
@@ -133,8 +133,20 @@ const columns = computed(() => {
     labelKey: 'common.label.status',
     property: 'status',
     formatter (data) {
-      return <DelFlagTag v-model={data.status} clickToToggle={true}
-                         onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
+      let disableMockStr = ''
+      if (data.disableMock) {
+        disableMockStr = <ElText type="danger"
+                                 style="vertical-align: middle;"
+                                 class="margin-left1 pointer"
+                                 v-common-tooltip={$i18nBundle('mock.label.disabledMock')}>
+          <CommonIcon size={18} icon="DoDisturbFilled"/>
+        </ElText>
+      }
+      return <>
+        <DelFlagTag v-model={data.status} clickToToggle={true}
+                    onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
+        {disableMockStr}
+      </>
     },
     minWidth: '70px'
   }, {

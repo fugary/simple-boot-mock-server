@@ -80,6 +80,7 @@ mock.label.requestObject = 'Request Object'
 mock.label.buildInFunctions = 'Built-in Functions'
 mock.label.clickToShowDetails = 'Click to show help'
 mock.label.disableMock = 'Pause Mock'
+mock.label.disabledMock = 'Paused Mock'
 
 mock.msg.configSetDefault = 'Confirm to set as default?'
 mock.msg.noExportData = 'No data to export'
