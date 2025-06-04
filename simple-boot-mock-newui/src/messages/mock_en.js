@@ -79,6 +79,7 @@ mock.label.owner = 'Owner'
 mock.label.requestObject = 'Request Object'
 mock.label.buildInFunctions = 'Built-in Functions'
 mock.label.clickToShowDetails = 'Click to show help'
+mock.label.disableMock = 'Pause Mock'
 
 mock.msg.configSetDefault = 'Confirm to set as default?'
 mock.msg.noExportData = 'No data to export'
@@ -112,3 +113,4 @@ mock.msg.checkImageAccept = 'To debug image response, set request header "Accept
 mock.msg.delayTooltip = 'Delay time in milliseconds'
 mock.msg.combineSingleGroup = 'Whether to combine into a single group; by default, groups are based on OpenAPI tags.'
 mock.msg.functionTooltip = 'Note: You can use JavaScript self-invoking functions to generate result data'
+mock.msg.disableMockTooltip = 'Pause Mock requests or data. When paused, if a proxy URL is configured, the request will be forwarded to the proxy. Otherwise, it will return a 404, just like when disabled.'

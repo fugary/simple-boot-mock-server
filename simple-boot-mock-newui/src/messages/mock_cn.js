@@ -79,6 +79,7 @@ mock.label.owner = '所属用户'
 mock.label.requestObject = '请求对象'
 mock.label.buildInFunctions = '内置函数'
 mock.label.clickToShowDetails = '点击查看帮助'
+mock.label.disableMock = '暂停Mock'
 
 mock.msg.configSetDefault = '确定要设为默认响应？'
 mock.msg.noExportData = '没有需要导出的数据'
@@ -112,3 +113,4 @@ mock.msg.checkImageAccept = '要测试图片响应，请设置请求头Accept为
 mock.msg.delayTooltip = '延迟时间，单位：毫秒'
 mock.msg.combineSingleGroup = '是否合并为单个组，默认按照OpenAPI的tag分组'
 mock.msg.functionTooltip = '注意：可以使用Javascript自执行函数来生成结果数据'
+mock.msg.disableMockTooltip = '暂停Mock请求或数据，暂停后如果配置有代理地址将请求代理地址，如果没有将和禁用一样返回404'

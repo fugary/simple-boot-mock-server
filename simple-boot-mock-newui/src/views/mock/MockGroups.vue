@@ -17,7 +17,7 @@ import {
 } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle, $i18nKey } from '@/messages'
-import { useFormDelay, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
+import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
@@ -300,7 +300,7 @@ const editFormOptions = computed(() => defineFormOptions([{
       return !currentGroup.value?.proxyUrl || /^https?:\/\/.+/.test(currentGroup.value?.proxyUrl)
     }
   }]
-}, useFormStatus(), useFormDelay(), {
+}, useFormStatus(), useFormDisableMock(), useFormDelay(), {
   labelKey: 'common.label.description',
   prop: 'description',
   attrs: {

@@ -6,7 +6,7 @@ import MockRequestApi, { ALL_METHODS, loadHistoryDiff, searchHistories } from '@
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableColumns, limitStr } from '@/components/utils'
 import { ref, computed, nextTick } from 'vue'
-import { useFormDelay, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
+import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useDefaultPage } from '@/config'
 import { $i18nBundle } from '@/messages'
@@ -167,7 +167,7 @@ const editFormOptions = computed(() => {
         return !currentRequest.value?.proxyUrl || /^https?:\/\/.+/.test(currentRequest.value?.proxyUrl)
       }
     }]
-  }, useFormStatus(), useFormDelay(),
+  }, useFormStatus(), useFormDisableMock(), useFormDelay(),
   {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',

@@ -41,6 +41,21 @@ export const useFormStatus = (prop = 'status', activeValue = 1, inactiveValue = 
   }
 }
 
+export const useFormDisableMock = (prop = 'disableMock', activeValue = true, inactiveValue = false) => {
+  return {
+    labelKey: 'mock.label.disableMock',
+    prop,
+    type: 'switch',
+    tooltip: $i18nBundle('mock.msg.disableMockTooltip'),
+    attrs: {
+      activeValue,
+      inactiveValue,
+      activeText: $i18nBundle('common.label.yes'),
+      inactiveText: $i18nBundle('common.label.no')
+    }
+  }
+}
+
 export const useSearchStatus = ({ prop = 'status', activeValue = 1, inactiveValue = 0, change } = {}) => {
   return {
     labelKey: 'common.label.status',
