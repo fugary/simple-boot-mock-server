@@ -474,8 +474,8 @@ const toShowHistoryWindow = (current) => {
                   {{ $t('mock.label.mockRequests') }}
                   <el-tag
                     v-if="searchParam.page?.totalCount"
-                    title="filtered requests count"
-                    class="margin-left1"
+                    :title="$t('mock.label.mockRequestCount')"
+                    class="margin-left1 pointer"
                     type="primary"
                     size="small"
                     effect="plain"

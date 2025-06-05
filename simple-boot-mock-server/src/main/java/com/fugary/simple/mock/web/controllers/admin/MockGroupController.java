@@ -5,11 +5,10 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
-import com.fugary.simple.mock.entity.mock.MockGroup;
-import com.fugary.simple.mock.entity.mock.MockProject;
-import com.fugary.simple.mock.entity.mock.MockUser;
+import com.fugary.simple.mock.entity.mock.*;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
+import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
@@ -22,6 +21,7 @@ import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupQueryVo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -37,8 +37,12 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
 import static com.fugary.simple.mock.utils.security.SecurityUtils.getLoginUser;
 
 /**
@@ -55,6 +59,9 @@ public class MockGroupController {
 
     @Autowired
     private MockProjectService mockProjectService;
+
+    @Autowired
+    private MockRequestService mockRequestService;
 
     @GetMapping
     public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
@@ -83,8 +90,22 @@ public class MockGroupController {
         if (!emptyProjectCode) {
             queryWrapper.eq("project_code", projectCode);
         }
-        return SimpleResultUtils.createSimpleResult(mockGroupService.page(page, queryWrapper))
-                .addInfo("mockProject", mockProject);
+        Page<MockGroup> pageResult = mockGroupService.page(page, queryWrapper);
+        Map<Integer, Long> countMap = new HashMap<>();
+        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isNotEmpty(pageResult.getRecords())) {
+            List<Integer> groupIds = pageResult.getRecords().stream().map(MockGroup::getId)
+                    .collect(Collectors.toList());
+            QueryWrapper<MockRequest> countQuery = Wrappers.<MockRequest>query()
+                    .select("group_id as group_key", "count(0) as data_count")
+                    .in("group_id", groupIds).isNull(DB_MODIFY_FROM_KEY)
+                    .groupBy("group_id");
+            countMap = mockRequestService.listMaps(countQuery).stream().map(CountData::new)
+                    .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
+                            CountData::getDataCount));
+        }
+        return SimpleResultUtils.createSimpleResult(pageResult)
+                .addInfo("mockProject", mockProject)
+                .addInfo("countMap", countMap);
     }
 
     @GetMapping("/{id}")

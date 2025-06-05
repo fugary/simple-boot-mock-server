@@ -23,7 +23,7 @@ import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
 import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
-import { ElLink, ElText } from 'element-plus'
+import { ElLink, ElText, ElTag } from 'element-plus'
 import MockProjectApi, { checkProjectEdit, useProjectEditHook, useSelectProjects } from '@/api/mock/MockProjectApi'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
@@ -46,6 +46,10 @@ const mockProject = ref()
 const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
   .then(data => {
     mockProject.value = data.infos?.mockProject
+    const countMap = data.infos?.countMap || {}
+    tableData.value.forEach(group => {
+      group.requestCount = countMap[group.id] || 0
+    })
     return data
   })
 
@@ -133,19 +137,30 @@ const columns = computed(() => {
     labelKey: 'common.label.status',
     property: 'status',
     formatter (data) {
-      let disableMockStr = ''
-      if (data.disableMock) {
-        disableMockStr = <ElText type="danger"
-                                 style="vertical-align: middle;"
-                                 class="margin-left1 pointer"
-                                 v-common-tooltip={$i18nBundle('mock.label.disabledMock')}>
-          <CommonIcon size={18} icon="DoDisturbFilled"/>
-        </ElText>
-      }
       return <>
         <DelFlagTag v-model={data.status} clickToToggle={true}
                     onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
-        {disableMockStr}
+        {data.requestCount
+          ? <ElTag
+            title={$i18nBundle('mock.label.mockRequestCount')}
+            class="margin-left1 pointer"
+            type="primary"
+            size="small"
+            effect="plain"
+            style="height: 20px;"
+            round={true}
+        >
+          {data.requestCount}
+        </ElTag>
+          : ''}
+        {data.disableMock
+          ? <ElText type="danger"
+                                  style="vertical-align: middle;"
+                                  class="margin-left1 pointer"
+                                  v-common-tooltip={$i18nBundle('mock.label.disabledMock')}>
+          <CommonIcon size={18} icon="DoDisturbFilled"/>
+        </ElText>
+          : ''}
       </>
     },
     minWidth: '70px'
