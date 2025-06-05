@@ -115,7 +115,7 @@ const columns = computed(() => {
   }, {
     labelKey: 'mock.label.proxyUrl',
     property: 'proxyUrl',
-    minWidth: '130px',
+    minWidth: '120px',
     enabled: checkShowColumn(tableData.value, 'proxyUrl'),
     formatter (data) {
       if (data.proxyUrl) {
@@ -132,6 +132,7 @@ const columns = computed(() => {
   }, {
     labelKey: 'common.label.description',
     property: 'description',
+    minWidth: '120px',
     enabled: checkShowColumn(tableData.value, 'description')
   }, {
     labelKey: 'common.label.status',
@@ -163,7 +164,7 @@ const columns = computed(() => {
           : ''}
       </>
     },
-    minWidth: '70px'
+    minWidth: '100px'
   }, {
     labelKey: 'common.label.createDate',
     property: 'createDate',
@@ -171,20 +172,26 @@ const columns = computed(() => {
   }]
 })
 const buttons = computed(() => defineTableButtons([{
-  labelKey: 'common.label.edit',
+  tooltip: $i18nBundle('common.label.edit'),
+  icon: 'Edit',
+  round: true,
   type: 'primary',
   enabled: !!projectEditable.value,
   click: item => {
     newOrEdit(item.id)
   }
 }, {
-  labelKey: 'common.label.config',
+  tooltip: $i18nBundle('common.label.config'),
+  icon: 'Setting',
+  round: true,
   type: 'success',
   click: item => {
     $goto(`/mock/groups/${item.id}?backUrl=${route.fullPath}`)
   }
 }, {
-  labelKey: 'common.label.copy',
+  tooltip: $i18nBundle('common.label.copy'),
+  icon: 'FileCopyFilled',
+  round: true,
   type: 'warning',
   enabled: !!projectEditable.value,
   click: item => {
@@ -193,7 +200,9 @@ const buttons = computed(() => defineTableButtons([{
       .then(() => loadMockGroups())
   }
 }, {
-  labelKey: 'common.label.delete',
+  tooltip: $i18nBundle('common.label.delete'),
+  icon: 'DeleteFilled',
+  round: true,
   type: 'danger',
   enabled: !!projectEditable.value,
   click: item => deleteGroup(item)
@@ -464,7 +473,7 @@ const showImportWindow = ref(false)
       :data="tableData"
       :columns="columns"
       :buttons="buttons"
-      :buttons-column-attrs="{minWidth:'200px'}"
+      :buttons-column-attrs="{minWidth:'170px'}"
       :loading="loading"
       @page-size-change="loadMockGroups()"
       @current-page-change="loadMockGroups()"

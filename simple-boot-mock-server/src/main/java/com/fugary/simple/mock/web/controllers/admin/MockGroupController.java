@@ -73,6 +73,7 @@ public class MockGroupController {
                 .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
         queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("group_name", keyword)
                 .or().like("group_path", keyword)
+                .or().like("proxy_url", keyword)
                 .or().like("description", keyword));
         MockProject mockProject = mockProjectService.loadMockProject(queryUserName, projectCode);
         if (mockProject == null && !queryVo.isPublicFlag()

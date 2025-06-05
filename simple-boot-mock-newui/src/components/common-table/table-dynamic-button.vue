@@ -38,6 +38,7 @@ const button = computed(() => {
 <template>
   <el-button
     v-if="button.enabled!==false"
+    v-common-tooltip="button.tooltip"
     :type="button.type"
     :size="button.size||buttonSize"
     :disabled="button.disabled"
