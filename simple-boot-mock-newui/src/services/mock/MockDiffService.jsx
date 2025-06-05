@@ -1,5 +1,6 @@
 import { isString } from 'lodash-es'
 import { formatDate } from '@/utils'
+import { limitStr } from '@/components/utils'
 import { $i18nBundle } from '@/messages'
 import { ElText } from 'element-plus'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
@@ -29,15 +30,15 @@ export const getMockCompareItem = ({
   ...config
 }) => {
   modifiedKey = modifiedKey || key
-  const enabled = original[key] !== null || modified[modifiedKey] !== null
+  const enabled = config.enabled ?? (original[key] !== null || modified[modifiedKey] !== null)
   let originalValue = original[key]
   let modifiedValue = modified[modifiedKey]
   if (limit && limit > 0) {
     if (isString(originalValue) && originalValue && originalValue.length > limit) {
-      originalValue = originalValue.substring(0, limit) + '...'
+      originalValue = limitStr(originalValue, limit)
     }
     if (isString(modifiedValue) && modifiedValue && modifiedValue.length > limit) {
-      modifiedValue = modifiedValue.substring(0, limit) + '...'
+      modifiedValue = limitStr(modifiedValue, limit)
     }
   }
   return [{

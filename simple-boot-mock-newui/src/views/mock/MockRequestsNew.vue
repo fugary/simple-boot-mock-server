@@ -320,7 +320,8 @@ const calcMockCompareItems = (original, modified) => {
         labelKey: 'mock.label.matchPattern',
         key: 'matchPattern',
         originalFormatter: getContentFormatter(original),
-        modifiedFormatter: getContentFormatter(modified, true)
+        modifiedFormatter: getContentFormatter(modified, true),
+        enabled: true
       })]
   }
   return []

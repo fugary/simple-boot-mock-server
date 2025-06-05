@@ -451,7 +451,8 @@ const calcMockCompareItems = (original, modified) => {
         labelKey: 'mock.label.mockResponseBody',
         key: 'responseBody',
         originalFormatter: getResponseBodyFormatter(original),
-        modifiedFormatter: getResponseBodyFormatter(modified, true)
+        modifiedFormatter: getResponseBodyFormatter(modified, true),
+        enabled: true
       })]
   }
   return []
