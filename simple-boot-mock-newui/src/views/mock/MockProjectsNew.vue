@@ -14,7 +14,7 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import { useRoute } from 'vue-router'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useWindowSize } from '@vueuse/core'
-import { ElText } from 'element-plus'
+import { ElText, ElTag } from 'element-plus'
 
 const props = defineProps({
   publicFlag: {
@@ -104,14 +104,22 @@ const minWidth = '100px'
 const tableProjectItems = computed(() => {
   return tableData.value.map(project => {
     const defaultProject = isDefaultProject(project.projectCode)
+    const publicProject = !!project.publicFlag
     return {
       defaultProject,
       project,
       projectItems: [{
         labelKey: 'common.label.status',
         formatter () {
-          return <DelFlagTag v-model={project.status} clickToToggle={!defaultProject}
-                             onToggleValue={(status) => saveProjectItem({ ...project, status })} />
+          return <>
+            <DelFlagTag v-model={project.status} clickToToggle={!defaultProject}
+                               onToggleValue={(status) => saveProjectItem({ ...project, status })} />
+            {publicProject
+              ? <ElTag type="primary" class="margin-left1">
+                  {$i18nBundle('mock.label.public')}
+                </ElTag>
+              : ''}
+          </>
         }
       }, {
         labelKey: 'mock.label.projectCode',
