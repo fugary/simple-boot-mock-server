@@ -231,7 +231,21 @@ const searchFormOptions = computed(() => {
       loadMockGroups(1)
     }
   },
-  useSearchStatus({ change () { loadMockGroups(1) } }),
+  useSearchStatus({ change () { loadMockGroups(1) } }), {
+    labelKey: 'mock.label.hasMockData',
+    prop: 'hasRequest',
+    type: 'select',
+    children: [{
+      value: true,
+      label: $i18nBundle('common.label.yes')
+    }, {
+      value: false,
+      label: $i18nBundle('common.label.no')
+    }],
+    change () {
+      loadMockGroups(1)
+    }
+  },
   {
     labelKey: 'common.label.keywords',
     prop: 'keyword'

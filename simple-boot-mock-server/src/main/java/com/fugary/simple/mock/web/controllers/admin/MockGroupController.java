@@ -90,6 +90,12 @@ public class MockGroupController {
         if (!emptyProjectCode) {
             queryWrapper.eq("project_code", projectCode);
         }
+        if (queryVo.getHasRequest() != null) {
+            queryWrapper.exists(queryVo.getHasRequest(),
+                    "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
+            queryWrapper.notExists(!queryVo.getHasRequest(),
+                    "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
+        }
         Page<MockGroup> pageResult = mockGroupService.page(page, queryWrapper);
         Map<Integer, Long> countMap = new HashMap<>();
         if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isNotEmpty(pageResult.getRecords())) {
