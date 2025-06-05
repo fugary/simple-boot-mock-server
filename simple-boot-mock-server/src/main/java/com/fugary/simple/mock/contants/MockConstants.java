@@ -43,6 +43,8 @@ public class MockConstants {
 
     public static final String MOCK_DATA_USER_HEADER = "mock-data-user";
 
+    public static final String MOCK_PROXY_URL_HEADER = "mock-proxy-url";
+
     public static final String MOCK_DATA_PREVIEW_HEADER = "mock-data-preview";
 
     public static final String MOCK_DATA_REDIRECT_HEADER = "mock-data-redirect";

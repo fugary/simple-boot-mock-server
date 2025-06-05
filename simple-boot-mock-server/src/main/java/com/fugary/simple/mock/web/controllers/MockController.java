@@ -78,6 +78,7 @@ public class MockController {
         MockGroup mockGroup = dataPair.getLeft();
         long start = System.currentTimeMillis();
         ResponseEntity<?> responseEntity = ResponseEntity.notFound().build();
+        String proxyUrl;
         if (data != null) {
             HttpHeaders httpHeaders = SimpleMockUtils.calcHeaders(data.getHeaders());
             HttpStatus httpStatus = HttpStatus.resolve(data.getStatusCode());
@@ -95,9 +96,10 @@ public class MockController {
                     .header(HttpHeaders.CONTENT_TYPE, SimpleMockUtils.getContentType(data.getContentType(), data.getDefaultCharset()))
                     .body(data.getResponseBody());
             SimpleLogUtils.addResponseData(data.getResponseBody());
-        } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
+        } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(proxyUrl = SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
             // 所有request没有匹配上,但是有proxy地址
             responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
+            response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
             SimpleLogUtils.addResponseData(responseEntity);
         }
         mockGroupService.delayTime(start, mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight()));
