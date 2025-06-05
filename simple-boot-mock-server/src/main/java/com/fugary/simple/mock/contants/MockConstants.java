@@ -45,6 +45,8 @@ public class MockConstants {
 
     public static final String MOCK_PROXY_URL_HEADER = "mock-proxy-url";
 
+    public static final String MOCK_DELAY_TIME_HEADER = "mock-delay-time";
+
     public static final String MOCK_DATA_PREVIEW_HEADER = "mock-data-preview";
 
     public static final String MOCK_DATA_REDIRECT_HEADER = "mock-data-redirect";

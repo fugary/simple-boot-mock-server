@@ -102,7 +102,11 @@ public class MockController {
             response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
             SimpleLogUtils.addResponseData(responseEntity);
         }
-        mockGroupService.delayTime(start, mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight()));
+        Integer delayTime = mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight());
+        if (delayTime != null && delayTime > 0) {
+            response.setHeader(MockConstants.MOCK_DELAY_TIME_HEADER, String.valueOf(delayTime));
+        }
+        mockGroupService.delayTime(start, delayTime);
         return responseEntity;
     }
 
