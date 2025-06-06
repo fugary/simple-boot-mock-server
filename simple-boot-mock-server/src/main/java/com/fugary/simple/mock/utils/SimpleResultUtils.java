@@ -57,6 +57,17 @@ public class SimpleResultUtils {
     }
 
     /**
+     * 获取分页信息
+     *
+     * @param pageNumber
+     * @param pageSize
+     * @return
+     */
+    public static SimplePage getNewPage(long pageNumber, long pageSize) {
+        return new SimplePage(pageNumber, pageSize, 0L, 0L);
+    }
+
+    /**
      * 分页result对象
      *
      * @param data

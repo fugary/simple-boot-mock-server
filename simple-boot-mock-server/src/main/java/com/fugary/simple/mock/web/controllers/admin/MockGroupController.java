@@ -97,9 +97,10 @@ public class MockGroupController {
             queryWrapper.notExists(!queryVo.getHasRequest(),
                     "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
         }
+        boolean isExport = queryVo instanceof MockGroupExportParamVo;
         Page<MockGroup> pageResult = mockGroupService.page(page, queryWrapper);
         Map<Integer, Long> countMap = new HashMap<>();
-        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isNotEmpty(pageResult.getRecords())) {
+        if (!isExport && CollectionUtils.isNotEmpty(pageResult.getRecords())) {
             List<Integer> groupIds = pageResult.getRecords().stream().map(MockGroup::getId)
                     .collect(Collectors.toList());
             QueryWrapper<MockRequest> countQuery = Wrappers.<MockRequest>query()
@@ -185,8 +186,9 @@ public class MockGroupController {
     public SimpleResult checkExport(@RequestBody MockGroupExportParamVo queryVo) {
         List<MockGroup> groups = new ArrayList<>();
         if (queryVo.isExportAll()) {
-            groups = mockGroupService.list(Wrappers.<MockGroup>query().eq("user_name", SecurityUtils.getUserName(queryVo.getUserName()))
-                    .eq("project_code", StringUtils.defaultIfBlank(queryVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT)));
+            queryVo.setPage(SimpleResultUtils.getNewPage(1, MockConstants.MAX_EXPORT_COUNT));
+            SimpleResult<List<MockGroup>> simpleResult = this.search(queryVo);
+            groups = simpleResult.getResultData();
         } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
             groups = mockGroupService.listByIds(queryVo.getGroupIds());
         }
@@ -197,8 +199,9 @@ public class MockGroupController {
     public void export(@ModelAttribute MockGroupExportParamVo queryVo, HttpServletResponse response) throws IOException {
         List<MockGroup> groups = new ArrayList<>();
         if (queryVo.isExportAll()) {
-            groups = mockGroupService.list(Wrappers.<MockGroup>query().in("user_name", SecurityUtils.getUserName(queryVo.getUserName()))
-                    .eq("project_code", StringUtils.defaultIfBlank(queryVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT)));
+            queryVo.setPage(SimpleResultUtils.getNewPage(1, MockConstants.MAX_EXPORT_COUNT));
+            SimpleResult<List<MockGroup>> simpleResult = this.search(queryVo);
+            groups = simpleResult.getResultData();
         } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
             groups = mockGroupService.listByIds(queryVo.getGroupIds());
         }

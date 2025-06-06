@@ -81,4 +81,8 @@ public class MockConstants {
      * 数据库字段名
      */
     public static final String DB_MODIFY_FROM_KEY = "modify_from";
+    /**
+     * 最大导出条数
+     */
+    public static final Integer MAX_EXPORT_COUNT = 1000;
 }

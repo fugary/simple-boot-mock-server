@@ -365,10 +365,10 @@ const exportGroups = (groupIds) => {
   $coreConfirm($i18nBundle('mock.msg.exportConfirm')).then(() => {
     const exportConfig = {
       exportAll: !groupIds,
-      projectCode: searchParam.value.projectCode,
       groupIds,
-      userName: searchParam.value.userName
+      ...searchParam.value
     }
+    delete exportConfig.page
     checkExport(exportConfig, { loading: true, showErrorMessage: false }).then((data) => {
       if (data.success) {
         exportConfig.access_token = useLoginConfigStore().accessToken
@@ -441,7 +441,6 @@ const showImportWindow = ref(false)
           {{ $t('mock.label.import') }}
         </el-button>
         <el-dropdown
-          v-if="projectEditable"
           style="margin-left: 12px;"
         >
           <el-button type="success">
