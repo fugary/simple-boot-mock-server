@@ -115,7 +115,7 @@ const columns = computed(() => {
   }, {
     labelKey: 'mock.label.proxyUrl',
     property: 'proxyUrl',
-    minWidth: '120px',
+    minWidth: '150px',
     enabled: checkShowColumn(tableData.value, 'proxyUrl'),
     formatter (data) {
       if (data.proxyUrl) {
@@ -132,7 +132,7 @@ const columns = computed(() => {
   }, {
     labelKey: 'common.label.description',
     property: 'description',
-    minWidth: '120px',
+    minWidth: '100px',
     enabled: checkShowColumn(tableData.value, 'description')
   }, {
     labelKey: 'common.label.status',
@@ -156,7 +156,7 @@ const columns = computed(() => {
           : ''}
         {data.disableMock
           ? <ElText type="danger"
-                                  style="vertical-align: middle;"
+                                  style="vertical-align: bottom;"
                                   class="margin-left1 pointer"
                                   v-common-tooltip={$i18nBundle('mock.label.disabledMock')}>
           <CommonIcon size={18} icon="DoDisturbFilled"/>
@@ -395,16 +395,26 @@ const showImportWindow = ref(false)
     class="flex-column"
   >
     <el-page-header
-      v-if="publicFlag&&mockProject"
+      v-if="(publicFlag||route.params.projectCode)&&mockProject"
       class="margin-bottom3"
       @back="goBack"
     >
       <template #content>
         <span class="text-large font-600 mr-3">
           {{ mockProject.projectName }}
-          <el-text type="info">
+          <el-text
+            v-if="mockProject.userName"
+            type="info"
+          >
             ({{ $t('mock.label.owner') }}: {{ mockProject.userName }})
           </el-text>
+          <el-link
+            type="primary"
+            class="margin-left2"
+            @click="$goto('/mock/groups')"
+          >
+            {{ $i18nKey('common.label.commonBack','mock.label.mockGroups') }}
+          </el-link>
         </span>
       </template>
     </el-page-header>
@@ -422,6 +432,13 @@ const showImportWindow = ref(false)
           @click="newOrEdit()"
         >
           {{ $t('common.label.new') }}
+        </el-button>
+        <el-button
+          v-if="projectEditable"
+          type="warning"
+          @click="showImportWindow = true"
+        >
+          {{ $t('mock.label.import') }}
         </el-button>
         <el-dropdown
           v-if="projectEditable"
@@ -446,13 +463,6 @@ const showImportWindow = ref(false)
           </template>
         </el-dropdown>
         <el-button
-          v-if="projectEditable"
-          type="success"
-          @click="showImportWindow = true"
-        >
-          {{ $t('mock.label.import') }}
-        </el-button>
-        <el-button
           v-if="selectedRows?.length&&projectEditable"
           type="danger"
           @click="deleteGroups()"
@@ -473,7 +483,7 @@ const showImportWindow = ref(false)
       :data="tableData"
       :columns="columns"
       :buttons="buttons"
-      :buttons-column-attrs="{minWidth:'170px'}"
+      :buttons-column-attrs="{minWidth:'180px'}"
       :loading="loading"
       @page-size-change="loadMockGroups()"
       @current-page-change="loadMockGroups()"

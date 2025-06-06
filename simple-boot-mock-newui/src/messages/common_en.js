@@ -110,6 +110,7 @@ common.label.commonExpand = 'Expand {0}'
 common.label.commonCollapse = 'Collapse {0}'
 common.label.commonDelay = 'Delay {0}ms'
 common.label.commonGenerate = 'Generate {0}'
+common.label.commonBack = 'Back to {0}'
 
 //* =======================msg=====================//
 common.msg.nonNull = '{0} is required.'
