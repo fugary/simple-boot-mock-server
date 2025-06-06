@@ -1,14 +1,18 @@
-<script setup>
+<script setup lang="jsx">
+import { computed } from 'vue'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 import { useTabsViewStore } from '@/stores/TabsViewStore'
+import CommonIcon from '@/components/common-icon/index.vue'
 import { GlobalLayoutMode, GlobalLocales, LoadSaveParamMode } from '@/consts/GlobalConstants'
 import { I18N_ENABLED, REMEMBER_SEARCH_PARAM_ENABLED, THEME_ENABLED } from '@/config'
+import { defineFormOptions } from '@/components/utils'
+import { $i18nBundle } from '@/messages'
 const globalConfigStore = useGlobalConfigStore()
 const tabsViewStore = useTabsViewStore()
 /**
- * @type {[CommonFormOption]}
+ * 全局配置项
  */
-const options = [
+const options = computed(() => defineFormOptions([
   {
     labelKey: 'common.label.theme',
     prop: 'isDarkTheme',
@@ -21,33 +25,53 @@ const options = [
   },
   {
     labelKey: 'common.label.language',
-    type: 'select',
+    type: 'segmented',
     prop: 'currentLocale',
     enabled: I18N_ENABLED,
+    attrs: {
+      options: [{
+        label: $i18nBundle('common.label.langCn'),
+        value: GlobalLocales.CN
+      }, {
+        label: $i18nBundle('common.label.langEn'),
+        value: GlobalLocales.EN
+      }]
+    },
     change (val) {
       globalConfigStore.changeLocale(val)
-    },
-    children: [{
-      labelKey: 'common.label.langCn',
-      value: GlobalLocales.CN
-    }, {
-      labelKey: 'common.label.langEn',
-      value: GlobalLocales.EN
-    }]
+    }
   },
   {
     labelKey: 'common.label.layout',
-    slot: 'layout',
+    prop: 'layoutMode',
     change (val) {
       globalConfigStore.changeLayout(val)
     },
-    children: [{
-      labelKey: 'common.label.layoutLeft',
-      value: GlobalLayoutMode.LEFT
-    }, {
-      labelKey: 'common.label.layoutTop',
-      value: GlobalLayoutMode.TOP
-    }]
+    type: 'segmented',
+    slots: {
+      default: (scope) => {
+        const item = scope.item
+        return item?.value === 'left'
+          ? <CommonIcon
+                v-common-tooltip={item.label}
+                icon="VerticalSplitFilled"
+                size={25}/>
+          : <CommonIcon
+                v-common-tooltip={item.label}
+                icon="HorizontalSplitFilled"
+                size={25}
+            />
+      }
+    },
+    attrs: {
+      options: [{
+        label: $i18nBundle('common.label.layoutLeft'),
+        value: GlobalLayoutMode.LEFT
+      }, {
+        label: $i18nBundle('common.label.layoutTop'),
+        value: GlobalLayoutMode.TOP
+      }]
+    }
   },
   {
     labelKey: 'common.label.showMenuIcon',
@@ -105,7 +129,7 @@ const options = [
       value: LoadSaveParamMode.NEVER
     }]
   }
-]
+]))
 </script>
 
 <template>
@@ -123,38 +147,7 @@ const options = [
         :options="options"
         label-position="left"
         :model="globalConfigStore"
-      >
-        <template #layout="{option}">
-          <common-form-control
-            :model="globalConfigStore"
-            :option="option"
-          >
-            <el-radio-group
-              v-model="globalConfigStore.layoutMode"
-              size="small"
-            >
-              <el-radio-button
-                v-for="item in option.children"
-                :key="item.value"
-                :value="item.value"
-              >
-                <common-icon
-                  v-if="item.value==='left'"
-                  v-common-tooltip="$t(item.labelKey)"
-                  icon="VerticalSplitFilled"
-                  :size="16"
-                />
-                <common-icon
-                  v-if="item.value==='top'"
-                  v-common-tooltip="$t(item.labelKey)"
-                  icon="HorizontalSplitFilled"
-                  :size="16"
-                />
-              </el-radio-button>
-            </el-radio-group>
-          </common-form-control>
-        </template>
-      </common-form>
+      />
     </template>
     <template #footer>
       <div style="flex: auto">
