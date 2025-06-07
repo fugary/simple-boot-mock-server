@@ -89,7 +89,7 @@ contentRef2.value = paramTarget.value?.responseBody
 
 const codeHeight = '300px'
 
-const emit = defineEmits(['saveMockResponseBody'])
+const emit = defineEmits(['saveMockResponseBody', 'sendMockRequest'])
 
 const generateSample = async (schema) => {
   contentRef2.value = await generateSchemaSample(schema.schema, schema.type)
@@ -134,7 +134,20 @@ const redirectMockResponse = computed(() => {
         #add-icon
       >
         <div
-          v-if="responseTarget"
+          v-if="currentTabName==='mockResponseBody'"
+          style="display: flex; margin-top: -10px;"
+        >
+          <el-button
+            type="primary"
+            size="small"
+            class="margin-left2"
+            @click="$emit('sendMockRequest', paramTarget)"
+          >
+            {{ $t('mock.label.sendRequest') }}
+          </el-button>
+        </div>
+        <div
+          v-else-if="responseTarget"
           style="display: flex; margin-top: -7px;"
         >
           <el-text

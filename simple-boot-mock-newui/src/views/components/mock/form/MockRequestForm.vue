@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import MockRequestFormRes from '@/views/components/mock/form/MockRequestFormRes.vue'
 import MockRequestFormReq from '@/views/components/mock/form/MockRequestFormReq.vue'
@@ -60,7 +60,7 @@ const requestUrl = computed(() => {
 })
 
 const emit = defineEmits(['sendRequest', 'saveMockResponseBody'])
-
+const formRef = ref()
 const sendRequest = (form) => {
   form.validate(valid => {
     if (valid) {
@@ -91,6 +91,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
 <template>
   <el-container class="flex-column">
     <common-form
+      ref="formRef"
       :show-buttons="false"
       :model="paramTarget"
     >
@@ -194,6 +195,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
       :schema-spec="schemaSpec"
       :examples="responseExamples"
       @save-mock-response-body="emit('saveMockResponseBody', $event)"
+      @send-mock-request="sendRequest(formRef?.form)"
     />
   </el-container>
 </template>
