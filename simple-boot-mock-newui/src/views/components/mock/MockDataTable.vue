@@ -367,7 +367,7 @@ const saveMockData = (data) => {
   return MockDataApi.saveOrUpdate(dataItem)
     .then((data) => {
       if (data.success && data.resultData && selectDataItem.value?.id !== data.resultData.id) {
-        selectDataItem.value = data.resultData
+        onSelectDataItem(data.resultData)
       }
       loadMockData()
       return data
