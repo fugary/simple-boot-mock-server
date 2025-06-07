@@ -140,9 +140,11 @@ const doSaveMockParams = () => {
 const doSaveMockResponseBody = () => {
   if (previewData.value && checkDataChange()) {
     return MockDataApi.saveOrUpdate(previewData.value)
-      .then(() => {
-        ElMessage.success($i18nBundle('common.msg.saveSuccess'))
-        saveCallback?.(previewData.value)
+      .then((data) => {
+        if (data.success && data.resultData) {
+          ElMessage.success($i18nBundle('common.msg.saveSuccess'))
+          saveCallback?.(data.resultData)
+        }
       })
   }
 }
