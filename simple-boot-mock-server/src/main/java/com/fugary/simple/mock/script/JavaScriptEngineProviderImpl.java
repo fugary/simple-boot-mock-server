@@ -100,7 +100,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
             return scriptEngine.eval(script, context);
         } catch (Exception e) {
             log.error(MessageFormat.format("执行MockJs错误：{0}", script), e);
-            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, ExceptionUtils.getStackTrace(e));
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, ExceptionUtils.getMessage(e));
         } finally {
             if (scriptEngine != null && !isThreadEngine) {
                 scriptEnginePool.returnObject(scriptEngine);
