@@ -151,7 +151,7 @@ const doSaveMockResponseBody = () => {
 
 const checkDataChange = () => {
   let changed = false;
-  ['responseBody', 'responseFormat', 'contentType'].forEach(key => {
+  ['responseBody', 'responseFormat', 'contentType', 'defaultCharset'].forEach(key => {
     if (paramTarget.value[key] !== previewData.value[key]) {
       previewData.value[key] = paramTarget.value[key]
       changed = true

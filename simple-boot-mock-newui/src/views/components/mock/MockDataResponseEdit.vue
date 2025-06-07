@@ -107,7 +107,10 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
             :option="contentTypeOption"
           />
         </el-col>
-        <el-col :span="12">
+        <el-col
+          :span="12"
+          class="padding-left2"
+        >
           <common-form-control
             :model="currentMockData"
             :option="contentTypeOption.charsetOption"

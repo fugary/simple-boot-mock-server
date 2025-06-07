@@ -268,11 +268,23 @@ const redirectMockResponse = computed(() => {
           </el-badge>
         </template>
         <el-container class="flex-column">
-          <common-form-control
-            v-if="!redirectMockResponse"
-            :model="paramTarget"
-            :option="contentTypeOption"
-          />
+          <el-row v-if="!redirectMockResponse">
+            <el-col :span="12">
+              <common-form-control
+                :model="paramTarget"
+                :option="contentTypeOption"
+              />
+            </el-col>
+            <el-col
+              :span="12"
+              class="padding-left2"
+            >
+              <common-form-control
+                :model="paramTarget"
+                :option="contentTypeOption.charsetOption"
+              />
+            </el-col>
+          </el-row>
           <common-form-control
             :model="languageModel2"
             :option="langOption"

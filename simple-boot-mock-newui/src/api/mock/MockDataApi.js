@@ -170,7 +170,8 @@ export const calcParamTarget = (groupItem, requestItem, previewData, schemasConf
     responseStatusCode: previewData?.statusCode,
     responseBody: previewData?.responseBody,
     responseFormat: previewData?.responseFormat,
-    contentType: previewData?.contentType || 'application/json'
+    contentType: previewData?.contentType || 'application/json',
+    defaultCharset: previewData?.defaultCharset
   }
   if (value) {
     const pathParams = target.pathParams
