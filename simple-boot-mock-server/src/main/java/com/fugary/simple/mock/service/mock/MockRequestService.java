@@ -3,6 +3,7 @@ package com.fugary.simple.mock.service.mock;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 
 import java.util.List;
@@ -106,4 +107,12 @@ public interface MockRequestService extends IService<MockRequest> {
      * @return
      */
     boolean matchRequestPattern(String matchPattern);
+
+    /**
+     * 自定义保存
+     *
+     * @param entity
+     * @return
+     */
+    SimpleResult<MockRequest> newSaveOrUpdate(MockRequest entity);
 }

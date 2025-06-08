@@ -170,8 +170,7 @@ public class MockRequestController {
 
     @PostMapping
     public SimpleResult<MockRequest> save(@RequestBody MockRequest request) {
-        mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(request));
-        return SimpleResultUtils.createSimpleResult(request);
+        return mockRequestService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(request));
     }
 
     /**

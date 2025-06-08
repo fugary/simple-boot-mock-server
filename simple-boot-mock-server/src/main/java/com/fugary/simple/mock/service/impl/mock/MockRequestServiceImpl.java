@@ -2,6 +2,7 @@ package com.fugary.simple.mock.service.impl.mock;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockSchema;
@@ -11,6 +12,8 @@ import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
+import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -207,6 +210,11 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
 
     @Override
     public boolean saveOrUpdate(MockRequest entity) {
+        return newSaveOrUpdate(entity).isSuccess();
+    }
+
+    @Override
+    public SimpleResult<MockRequest> newSaveOrUpdate(MockRequest entity) {
         if (entity.getId() == null || entity.getVersion() == null) {
             entity.setVersion(1);
         }
@@ -230,9 +238,11 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             }
         }
         boolean result = true;
+        int code = MockErrorConstants.CODE_2000;
         if (needSave) {
             result = super.saveOrUpdate(entity);
+            code = result ? MockErrorConstants.CODE_0 : MockErrorConstants.CODE_1;
         }
-        return result;
+        return SimpleResultUtils.createSimpleResult(code, entity);
     }
 }
