@@ -9,7 +9,7 @@ import MockDataApi, {
 } from '@/api/mock/MockDataApi'
 import MockRequestApi, { loadSchemas } from '@/api/mock/MockRequestApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
-import { $i18nKey } from '@/messages'
+import { $i18nBundle, $i18nKey } from '@/messages'
 import {
   MOCK_DATA_MATCH_PATTERN_HEADER,
   MOCK_DATA_PATH_PARAMS_HEADER,
@@ -17,6 +17,7 @@ import {
 } from '@/consts/MockConstants'
 import { addRequestParamsToResult, processEvnParams } from '@/services/mock/MockCommonService'
 import { toGetParams } from '@/utils'
+import { ElMessage } from 'element-plus'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -94,11 +95,13 @@ const saveMatchPattern = () => {
     MockDataApi.saveOrUpdate(currentItem.value).then(() => {
       showWindow.value = false
       saveResolve?.(currentItem.value)
+      ElMessage.success($i18nBundle('common.msg.saveSuccess'))
     })
   } else {
     MockRequestApi.saveOrUpdate(currentItem.value).then(() => {
       showWindow.value = false
       saveResolve?.(currentItem.value)
+      ElMessage.success($i18nBundle('common.msg.saveSuccess'))
     })
   }
 }
