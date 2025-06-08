@@ -2,6 +2,7 @@ package com.fugary.simple.mock.service.mock;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fugary.simple.mock.entity.mock.MockData;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 
 import java.util.List;
 
@@ -43,4 +44,12 @@ public interface MockDataService extends IService<MockData> {
      * @return
      */
     boolean deleteMockDatas(List<Integer> ids);
+
+    /**
+     * 自定义保存逻辑
+     *
+     * @param entity
+     * @return
+     */
+    SimpleResult<MockData> newSaveOrUpdate(MockData entity);
 }

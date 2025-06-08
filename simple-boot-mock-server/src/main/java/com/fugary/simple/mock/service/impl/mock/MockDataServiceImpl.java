@@ -3,12 +3,15 @@ package com.fugary.simple.mock.service.impl.mock;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockSchema;
 import com.fugary.simple.mock.mapper.mock.MockDataMapper;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
+import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -90,6 +93,12 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
 
     @Override
     public boolean saveOrUpdate(MockData entity) {
+        SimpleResult<MockData> result = this.newSaveOrUpdate(entity);
+        return result.isSuccess();
+    }
+
+    @Override
+    public SimpleResult<MockData> newSaveOrUpdate(MockData entity) {
         if (entity.getId() == null || entity.getVersion() == null) {
             entity.setVersion(1);
         }
@@ -113,12 +122,14 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
             }
         }
         boolean result = true;
+        int code = MockErrorConstants.CODE_2000;
         if (needSave) {
             result = super.saveOrUpdate(entity);
-            if(result && SimpleMockUtils.isDefault(entity)){
+            if (result && SimpleMockUtils.isDefault(entity)) {
                 unMarkOtherDefault(entity);
             }
+            code = result ? MockErrorConstants.CODE_0 : MockErrorConstants.CODE_1;
         }
-        return result;
+        return SimpleResultUtils.createSimpleResult(code, entity);
     }
 }

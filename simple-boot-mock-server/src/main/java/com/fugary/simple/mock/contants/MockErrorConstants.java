@@ -27,6 +27,10 @@ public class MockErrorConstants {
 
     public static final int CODE_1001 = 1001; // 数据已经存在
     /**
+     * 数据没有变化
+     */
+    public static final int CODE_2000 = 2000;
+    /**
      * 用户不存在或密码不正确
      */
     public static final int CODE_2001 = 2001;
