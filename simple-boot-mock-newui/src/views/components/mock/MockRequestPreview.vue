@@ -144,6 +144,7 @@ const doSaveMockResponseBody = () => {
         if (data.success && data.resultData) {
           ElMessage.success($i18nBundle('common.msg.saveSuccess'))
           saveCallback?.(data.resultData)
+          previewData.value = data.resultData
         }
       })
   }
