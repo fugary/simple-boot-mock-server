@@ -33,7 +33,7 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
   showWindow.value = true
   paramTarget.value = calcParamTarget(groupItem.value, mockRequest, viewData, schemasConf.value)
   paramTarget.value.requestPath = '/mock/checkMatchPattern'
-  const matchPattern = viewData?.matchPattern || mockRequest?.matchPattern
+  const matchPattern = currentItem.value?.matchPattern
   if (matchPattern) {
     paramTarget.value.matchPattern = matchPattern
   }
