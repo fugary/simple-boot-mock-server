@@ -257,7 +257,11 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     protected void processMockData(MockData mockData, HttpRequestVo requestVo) {
         if (mockData != null) {
             String responseBody = StringUtils.trimToEmpty(mockData.getResponseBody());
-            responseBody = MockJsUtils.processResponseBody(responseBody, requestVo, paramKey -> scriptEngineProvider.eval(paramKey));
+            responseBody = MockJsUtils.processResponseBody(responseBody, requestVo, paramKey -> {
+                String parsedKey = StringUtils.trimToEmpty(paramKey);
+                parsedKey = parsedKey.endsWith(";") ? parsedKey.substring(0, parsedKey.length() - 1) : parsedKey;
+                return scriptEngineProvider.evalStr("mockStringify(" + parsedKey + ")");
+            });
             if ("javascript".equals(mockData.getResponseFormat())) {
                 responseBody = responseBody.endsWith(";") ? responseBody.substring(0, responseBody.length() - 1) : responseBody;
                 responseBody = scriptEngineProvider.evalStr("mockStringify(" + responseBody + ")");
