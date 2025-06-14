@@ -133,7 +133,7 @@ export const initXmlWithJs = (monaco) => {
         [/<!--/, 'comment.html', '@comment'],
         [/<\?/, 'metatag.html', '@processing'],
         [/<(([\w-]+:)?[\w-]+)/, { token: 'tag.html', next: '@tag.$1' }],
-        [/<\/(([\w-]+:)?[\w-]+)/, 'tag.html'],
+        [/<\/(([\w-]+:)?[\w-]+)>/, 'tag.html'],
         [/[^<{]+/, 'text.html']
       ],
       // ========== XML 专用状态 ==========
@@ -235,6 +235,106 @@ export const initXmlWithJs = (monaco) => {
       { open: '`', close: '`' }
     ]
   })
+
+  async function formatMixedContent (fullText) {
+    const jsBlocks = []
+    let placeholderIndex = 0
+    // 1. 抽取 {{}} 内 JS 代码，替换成占位符
+    const processedText = fullText.replace(/(\{\{[\s\S]*?\}\})/g, (match) => {
+      const placeholder = `__JS_PLACEHOLDER_${placeholderIndex++}__`
+      const content = match.slice(2, -2)
+      const hadLineBreak = content.includes('\n')
+      jsBlocks.push({ placeholder, content: content.trim(), hadLineBreak })
+      return placeholder
+    })
+    // 2. 先格式化 XML（带占位符）
+    const formattedXml = formatXmlWithIndent(processedText)
+    // 3. 格式化所有 JS 代码块
+    const formattedJsList = await Promise.all(
+      jsBlocks.map(block => formatJsCodeAndDecideBraces(block.content, block.hadLineBreak))
+    )
+    // 4. 替换回格式化后的 JS 代码块
+    let finalText = formattedXml
+    jsBlocks.forEach((block, i) => {
+      // 这里不加换行，保持JS格式器返回的格式
+      const formattedBlock = `{{${formattedJsList[i]}}}`
+      finalText = finalText.replace(new RegExp(block.placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), formattedBlock)
+    })
+    return finalText
+  }
+
+  // 简单的 XML 缩进实现，忽略占位符，不改动占位符文本
+  function formatXmlWithIndent (xml, indentSize = 2) {
+    let depth = 0
+    const lines = xml.split('\n').map(line => line.trim())
+    const formattedLines = []
+    for (const line of lines) {
+      if (!line) {
+        formattedLines.push('')
+        continue
+      }
+      if (line.match(/^__JS_PLACEHOLDER_\d+__$/)) {
+        // 占位符整行，按当前depth缩进
+        formattedLines.push(' '.repeat(depth * indentSize) + line)
+        continue
+      }
+      if (line.match(/^<\/[^>]+>/)) {
+        depth = Math.max(depth - 1, 0)
+      }
+      formattedLines.push(' '.repeat(depth * indentSize) + line)
+      if (line.match(/^<[^!?/][^>]*[^/]?>$/)) {
+        depth++
+      }
+    }
+    return formattedLines.join('\n')
+  }
+
+  async function formatJsCodeAndDecideBraces (code, hadLineBreak) {
+    return new Promise((resolve) => {
+      const jsModel = monaco.editor.createModel(code, 'javascript')
+      const tempEditor = monaco.editor.create(document.createElement('div'), {
+        model: jsModel,
+        tabSize: 2,
+        insertSpaces: true,
+        automaticLayout: false,
+        lineNumbers: 'off',
+        glyphMargin: false,
+        folding: false,
+        minimap: { enabled: false },
+        scrollbar: { vertical: 'hidden', horizontal: 'hidden' },
+        overviewRulerLanes: 0,
+        renderLineHighlight: 'none'
+      })
+      tempEditor.getAction('editor.action.formatDocument').run().then(() => {
+        let formatted = jsModel.getValue()
+        // 清理首尾空行
+        formatted = formatted.replace(/^\s*\n/, '').replace(/\n\s*$/, '')
+        const isMultiLine = formatted.includes('\n')
+        if (hadLineBreak) {
+          if (isMultiLine) {
+            formatted = `\n${formatted}\n`
+          }
+        } else {
+          if (isMultiLine) {
+            formatted = formatted.replace(/\n\s*/g, ' ')
+          }
+        }
+        jsModel.dispose()
+        tempEditor.dispose()
+        resolve(formatted)
+      })
+    })
+  }
+
+  monaco.languages.registerDocumentFormattingEditProvider(XML_WITH_JS_ID, {
+    async provideDocumentFormattingEdits (model) {
+      return [{
+        range: model.getFullModelRange(),
+        text: await formatMixedContent(model.getValue())
+      }]
+    }
+  })
+
   const baseXmlWithJsMatcher = (text) => {
     const left = text.match(/\{\{/g)
     const right = text.match(/}}/g)

@@ -84,7 +84,7 @@ const langCheckConfig = [{
 }]
 
 export const $checkLang = value => {
-  const val = value?.trim() || ''
+  const val = value?.trim?.() || ''
   if (val) {
     for (const langConfig of langCheckConfig) {
       const checkReg = langConfig.checkReg
