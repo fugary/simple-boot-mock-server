@@ -143,7 +143,9 @@ export const useContentTypeOption = (prop = 'contentType', charset = true) => {
     type: 'select',
     children: contentTypesOptions,
     attrs: {
-      clearable: false
+      clearable: false,
+      filterable: true,
+      allowCreate: true
     },
     charsetOption
   }

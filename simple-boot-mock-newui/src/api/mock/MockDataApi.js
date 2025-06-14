@@ -70,7 +70,9 @@ export const ALL_CONTENT_TYPES_LIST = [
   { contentType: 'image/gif', stream: true },
   { contentType: 'application/pdf', stream: true },
   { contentType: 'audio/mpeg', stream: true },
-  { contentType: 'video/mp4', stream: true }
+  { contentType: 'audio/ogg', stream: true },
+  { contentType: 'video/mp4', stream: true },
+  { contentType: 'video/ogg', stream: true }
 ]
 
 export const DEFAULT_CONTENT_TYPE = 'application/json'
