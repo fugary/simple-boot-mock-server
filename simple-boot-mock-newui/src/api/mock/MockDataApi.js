@@ -4,12 +4,12 @@ import axios from 'axios'
 import { $coreHideLoading, $coreShowLoading } from '@/utils'
 import { isArray, isString } from 'lodash-es'
 import {
-  FORM_URL_ENCODED,
   FORM_DATA,
+  FORM_URL_ENCODED,
+  LANG_TO_CONTENT_TYPES,
   MOCK_DATA_PREVIEW_HEADER,
   MOCK_META_DATA_REQ,
-  NONE,
-  LANG_TO_CONTENT_TYPES
+  NONE
 } from '@/consts/MockConstants'
 import { processEvnParams } from '@/services/mock/MockCommonService'
 
@@ -53,26 +53,6 @@ export const ALL_STATUS_CODES = [
   { code: 502, labelCn: '错误网关', labelEn: 'Bad Gateway' },
   { code: 503, labelCn: '服务不可用', labelEn: 'Service Unavailable' },
   { code: 504, labelCn: '网关超时', labelEn: 'Gateway Timeout' }
-]
-
-export const ALL_CONTENT_TYPES_LIST = [
-  { contentType: 'application/json' },
-  { contentType: 'application/xml' },
-  { contentType: 'text/html' },
-  { contentType: 'text/plain' },
-  { contentType: 'text/css' },
-  { contentType: 'application/javascript' },
-  { contentType: 'application/x-www-form-urlencoded', response: false },
-  { contentType: 'multipart/form-data', response: false },
-  { contentType: 'application/octet-stream', stream: true },
-  { contentType: 'image/jpeg', stream: true },
-  { contentType: 'image/png', stream: true },
-  { contentType: 'image/gif', stream: true },
-  { contentType: 'application/pdf', stream: true },
-  { contentType: 'audio/mpeg', stream: true },
-  { contentType: 'audio/ogg', stream: true },
-  { contentType: 'video/mp4', stream: true },
-  { contentType: 'video/ogg', stream: true }
 ]
 
 export const DEFAULT_CONTENT_TYPE = 'application/json'

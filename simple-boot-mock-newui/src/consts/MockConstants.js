@@ -49,7 +49,10 @@ export const LANG_TO_CONTENT_TYPES = {
   [FORM_URL_ENCODED]: 'application/x-www-form-urlencoded'
 }
 
-export const calcContentType = (lang, body) => {
+export const calcContentType = (lang, body, currentContentType) => {
+  if (isStreamContentType(currentContentType)) {
+    return currentContentType
+  }
   if (lang === 'html' && body?.includes('<!DOCTYPE html>')) {
     return 'text/html'
   }
@@ -79,3 +82,25 @@ export const AUTH_OPTIONS = [{
   value: AUTH_TYPE.JWT,
   labelKey: 'mock.label.authTypeJWT'
 }]
+
+export const ALL_CONTENT_TYPES_LIST = [
+  { contentType: 'application/json' },
+  { contentType: 'application/xml' },
+  { contentType: 'text/html' },
+  { contentType: 'text/plain' },
+  { contentType: 'text/css' },
+  { contentType: 'application/javascript' },
+  { contentType: 'application/x-www-form-urlencoded', response: false },
+  { contentType: 'multipart/form-data', response: false },
+  { contentType: 'application/octet-stream', stream: true },
+  { contentType: 'image/jpeg', stream: true },
+  { contentType: 'image/png', stream: true },
+  { contentType: 'image/gif', stream: true },
+  { contentType: 'application/pdf', stream: true },
+  { contentType: 'audio/mpeg', stream: true },
+  { contentType: 'audio/ogg', stream: true },
+  { contentType: 'video/mp4', stream: true },
+  { contentType: 'video/ogg', stream: true }
+]
+
+export const isStreamContentType = contentType => !!ALL_CONTENT_TYPES_LIST.find(content => content.contentType === contentType)?.stream

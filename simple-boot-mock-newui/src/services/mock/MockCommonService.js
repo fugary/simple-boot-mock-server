@@ -2,8 +2,8 @@ import { $coreConfirm, getSingleSelectOptions } from '@/utils'
 import { $i18nKey } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
-import { isArray, isFunction, isString, cloneDeep } from 'lodash-es'
-import { ALL_CONTENT_TYPES_LIST } from '@/api/mock/MockDataApi'
+import { cloneDeep, isArray, isFunction, isString } from 'lodash-es'
+import { ALL_CONTENT_TYPES_LIST, isStreamContentType } from '@/consts/MockConstants'
 
 /**
  * 添加数据
@@ -162,8 +162,6 @@ export const calcPreviewHeaders = (paramTarget, url, config) => {
     config.responseType = 'blob'
   }
 }
-
-export const isStreamContentType = contentType => !!ALL_CONTENT_TYPES_LIST.find(content => content.contentType === contentType)?.stream
 
 export const isMediaContentType = contentType => ['image', 'audio', 'video'].find(type => contentType?.includes(type))
 

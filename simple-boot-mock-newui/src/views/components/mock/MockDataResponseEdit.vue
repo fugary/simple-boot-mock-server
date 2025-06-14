@@ -72,7 +72,7 @@ const langOption = {
   change (val) {
     if (currentMockData.value) {
       currentMockData.value.responseFormat = val
-      currentMockData.value.contentType = calcContentType(val, currentMockData.value?.responseBody)
+      currentMockData.value.contentType = calcContentType(val, currentMockData.value?.responseBody, currentMockData.value.contentType)
     }
   }
 }

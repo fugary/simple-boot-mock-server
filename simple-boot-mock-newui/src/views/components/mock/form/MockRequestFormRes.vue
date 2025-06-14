@@ -133,7 +133,7 @@ const langOption = {
   change (language) {
     if (paramTarget.value) {
       paramTarget.value.responseFormat = language
-      paramTarget.value.contentType = calcContentType(language, paramTarget.value?.responseBody)
+      paramTarget.value.contentType = calcContentType(language, paramTarget.value?.responseBody, paramTarget.value.contentType)
     }
   }
 }

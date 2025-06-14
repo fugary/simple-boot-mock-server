@@ -330,7 +330,7 @@ const editFormOptions = computed(() => {
     change (val) {
       if (currentDataItem.value) {
         currentDataItem.value.responseFormat = val
-        currentDataItem.value.contentType = calcContentType(val, currentDataItem.value?.responseBody)
+        currentDataItem.value.contentType = calcContentType(val, currentDataItem.value?.responseBody, currentDataItem.value.contentType)
       }
     }
   }, {
