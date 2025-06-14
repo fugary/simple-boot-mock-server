@@ -51,6 +51,20 @@ public class SimpleMockUtils {
      */
     public static final Pattern PASSWORD_PATTERN = Pattern.compile("(?i)((password|secret)\\\\?\"):\\s*(\\\\?\")[^\"\\\\]+(\\\\?\")");
 
+    private static final List<String> STREAM_MEDIA_TYPES = Arrays.asList(
+            "application/octet-stream", // 通用二进制流
+            "application/pdf",
+            "application/zip",
+            "application/gzip",
+            "multipart/byteranges" // 分段流
+    );
+
+    private static final List<String> STREAM_MEDIA_TYPE_PREFIXES = Arrays.asList(
+            "video/", // 视频流，如 video/mp4
+            "audio/", // 音频流，如 audio/mpeg
+            "image/"  // 图片流，如 image/jpeg
+    );
+
     /**
      * 生成uuid
      *
@@ -359,10 +373,79 @@ public class SimpleMockUtils {
      */
     public static String getContentType(String contentType, String charset) {
         charset = StringUtils.defaultIfBlank(charset, StandardCharsets.UTF_8.name());
-        if (StringUtils.equalsIgnoreCase(charset, "none")) {
+        if (StringUtils.equalsIgnoreCase(charset, "none") || isStreamContentType(contentType)) {
             return contentType;
         }
         return contentType + ";charset=" + charset;
+    }
+
+    /**
+     * 是否是流mediaType
+     *
+     * @param mediaType
+     * @return
+     */
+    public static boolean isStreamMediaType(MediaType mediaType) {
+        if (mediaType == null) {
+            return false;
+        }
+        String type = mediaType.getType().toLowerCase();
+        String subtype = mediaType.getSubtype().toLowerCase();
+        String fullType = type + "/" + subtype;
+        // 检查是否为流式 MediaType
+        return STREAM_MEDIA_TYPES.contains(fullType) ||
+                STREAM_MEDIA_TYPE_PREFIXES.stream().anyMatch(fullType::startsWith);
+    }
+
+    /**
+     * 是否是流contentType
+     *
+     * @param contentType
+     * @return
+     */
+    public static boolean isStreamContentType(String contentType) {
+        if (StringUtils.isBlank(contentType)) {
+            return false;
+        }
+        try {
+            MediaType mediaType = MediaType.parseMediaType(contentType);
+            return isStreamMediaType(mediaType);
+        } catch (Exception e) {
+            return false; // 无效的 Content-Type
+        }
+    }
+
+    /**
+     * base64部分提取
+     *
+     * @param input
+     * @return
+     */
+    public static String extractBase64Data(String input) {
+        input = StringUtils.trimToEmpty(input);
+        if (StringUtils.isBlank(input)) {
+            return input;
+        }
+        // 检查是否为 Data URL（以 "data:" 开头）
+        if (input.startsWith("data:")) {
+            int commaIndex = input.indexOf(',');
+            if (commaIndex == -1) {
+                return null; // 无效的 Data URL
+            }
+            return input.substring(commaIndex + 1);
+        }
+        // 如果没有前缀，假设整个输入是 Base64 数据
+        return input;
+    }
+
+    /**
+     * 解析base64内容
+     * @param responseBody
+     * @return
+     */
+    public static byte[] getStreamResponseBody(String responseBody){
+        responseBody = extractBase64Data(responseBody);
+        return Base64.getDecoder().decode(responseBody);
     }
 
     /**

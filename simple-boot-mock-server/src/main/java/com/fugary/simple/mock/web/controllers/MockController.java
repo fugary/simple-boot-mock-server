@@ -94,7 +94,7 @@ public class MockController {
             responseEntity = ResponseEntity.status(data.getStatusCode())
                     .headers(httpHeaders)
                     .header(HttpHeaders.CONTENT_TYPE, SimpleMockUtils.getContentType(data.getContentType(), data.getDefaultCharset()))
-                    .body(data.getResponseBody());
+                    .body(SimpleMockUtils.isStreamContentType(data.getContentType()) ? SimpleMockUtils.getStreamResponseBody(data.getResponseBody()) : data.getResponseBody());
             SimpleLogUtils.addResponseData(data.getResponseBody());
         } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(proxyUrl = SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
             // 所有request没有匹配上,但是有proxy地址
