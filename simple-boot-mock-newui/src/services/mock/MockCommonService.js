@@ -149,19 +149,21 @@ export const useContentTypeOption = (prop = 'contentType', charset = true) => {
   }
 }
 
-export const checkImageAccept = headers => Object.keys(headers || {}).find(key => key.toLowerCase() === 'accept')
+export const checkImageAccept = headers => Object.entries(headers || {}).find(([key]) => key.toLowerCase() === 'accept')?.[1]
 
-export const isImageUrl = (url) => /\.(png|jpg|jpeg|gif|webp|bmp)(\?.*)?$/i.test(url)
+export const isMediaUrl = (url) => /\.(png|jpg|jpeg|gif|webp|bmp|mp3|mp4|ogg)(\?.*)?$/i.test(url)
 
 export const calcPreviewHeaders = (paramTarget, url, config) => {
-  const imageExt = isStreamContentType(paramTarget.contentType) || isImageUrl(url)
+  const imageExt = isStreamContentType(paramTarget.contentType) || isMediaUrl(url)
   const accept = checkImageAccept(config?.headers)
-  if (imageExt || (accept && config.headers[accept]?.includes('image'))) {
+  if (imageExt || (accept && (isStreamContentType(accept) || isMediaContentType(accept)))) {
     config.responseType = 'blob'
   }
 }
 
 export const isStreamContentType = contentType => !!ALL_CONTENT_TYPES_LIST.find(content => content.contentType === contentType)?.stream
+
+export const isMediaContentType = contentType => ['image', 'audio', 'video'].find(type => contentType?.includes(type))
 
 const defaultCheckFunc = schema => !schema?.__contentType || schema?.__contentType?.includes('json') || schema?.__contentType?.includes('*/*')
 

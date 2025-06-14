@@ -1,10 +1,15 @@
 <script setup>
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { computed, watch, ref } from 'vue'
+import { computed, watch, ref, onUnmounted, reactive } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nKey, $i18nBundle } from '@/messages'
-import { generateSampleCheckResults, generateSchemaSample, useContentTypeOption } from '@/services/mock/MockCommonService'
+import {
+  generateSampleCheckResults,
+  generateSchemaSample,
+  isMediaContentType,
+  useContentTypeOption
+} from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import { isString } from 'lodash-es'
 import { $coreError } from '@/utils'
@@ -50,17 +55,35 @@ const {
   languageModel, normalLanguageSelectOption, formatDocument
 } = useMonacoEditorOptions()
 
-const responseImg = ref()
+const mediaConfig = reactive({
+  responseImg: null,
+  responseAudio: null,
+  responseVideo: null
+})
+const clearMediaItems = () => {
+  for (const key in mediaConfig) {
+    document.getElementById(`${key}El`)?.remove()
+    mediaConfig[key] = null
+  }
+}
+
+onUnmounted(() => clearMediaItems())
 
 watch(() => props.responseTarget, async (responseTarget) => {
   currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
-  responseImg.value = null
-  const contentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type' && header.value?.includes('image'))
+  clearMediaItems()
+  const contentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type' && isMediaContentType(header.value))?.value
   if (responseTarget?.data && contentType) {
     if (isString(responseTarget.data)) {
       $coreError($i18nBundle('mock.msg.checkImageAccept'))
     } else {
-      responseImg.value = URL.createObjectURL(responseTarget.data)
+      if (contentType?.includes('image')) {
+        mediaConfig.responseImg = URL.createObjectURL(responseTarget.data)
+      } else if (contentType?.includes('audio')) {
+        mediaConfig.responseAudio = URL.createObjectURL(responseTarget.data)
+      } else if (contentType?.includes('video')) {
+        mediaConfig.responseVideo = URL.createObjectURL(responseTarget.data)
+      }
     }
   } else {
     let content = responseTarget?.data
@@ -189,12 +212,27 @@ const redirectMockResponse = computed(() => {
           </el-badge>
         </template>
         <el-container class="flex-column">
-          <template v-if="responseImg">
-            <img
-              :src="responseImg"
-              alt="response image"
-            >
-          </template>
+          <img
+            v-if="mediaConfig.responseImg"
+            :src="mediaConfig.responseImg"
+            alt="response image"
+          >
+          <audio
+            v-else-if="mediaConfig.responseAudio"
+            id="responseAudioEl"
+            :src="mediaConfig.responseAudio"
+            controls
+          >
+            Your browser does not support the audio element.
+          </audio>
+          <video
+            v-else-if="mediaConfig.responseVideo"
+            id="responseVideoEl"
+            controls
+            :src="mediaConfig.responseVideo"
+          >
+            Your browser does not support the video tag.
+          </video>
           <template v-else>
             <common-form-control
               :model="languageModel"
