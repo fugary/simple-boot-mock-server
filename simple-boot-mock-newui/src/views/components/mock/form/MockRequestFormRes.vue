@@ -52,7 +52,7 @@ const {
 
 const responseImg = ref()
 
-watch(() => props.responseTarget, (responseTarget) => {
+watch(() => props.responseTarget, async (responseTarget) => {
   currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
   responseImg.value = null
   const contentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type' && header.value?.includes('image'))
@@ -63,7 +63,11 @@ watch(() => props.responseTarget, (responseTarget) => {
       responseImg.value = URL.createObjectURL(responseTarget.data)
     }
   } else {
-    contentRef.value = responseTarget?.data
+    let content = responseTarget?.data
+    if (responseTarget?.data instanceof Blob) {
+      content = await responseTarget?.data.text()
+    }
+    contentRef.value = content
     const isRedirect = !!responseTarget?.responseHeaders?.find(header => header.name === 'mock-data-redirect')
     setTimeout(() => {
       isRedirect && (languageRef.value = 'text')

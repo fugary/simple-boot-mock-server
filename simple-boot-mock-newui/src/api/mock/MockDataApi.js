@@ -55,7 +55,25 @@ export const ALL_STATUS_CODES = [
   { code: 504, labelCn: '网关超时', labelEn: 'Gateway Timeout' }
 ]
 
-export const ALL_CONTENT_TYPES = ['application/json', 'application/xml', 'text/html', 'text/plain', 'text/css', 'application/javascript', 'application/x-www-form-urlencoded']
+export const ALL_CONTENT_TYPES_LIST = [
+  { contentType: 'application/json' },
+  { contentType: 'application/xml' },
+  { contentType: 'text/html' },
+  { contentType: 'text/plain' },
+  { contentType: 'text/css' },
+  { contentType: 'application/javascript' },
+  { contentType: 'application/x-www-form-urlencoded', response: false },
+  { contentType: 'multipart/form-data', response: false },
+  { contentType: 'application/octet-stream', stream: true },
+  { contentType: 'image/jpeg', stream: true },
+  { contentType: 'image/png', stream: true },
+  { contentType: 'image/gif', stream: true },
+  { contentType: 'application/pdf', stream: true },
+  { contentType: 'audio/mpeg', stream: true },
+  { contentType: 'video/mp4', stream: true }
+]
+
+export const DEFAULT_CONTENT_TYPE = 'application/json'
 
 export const generateJWT = function (data, config) {
   return $http(Object.assign({
@@ -170,7 +188,7 @@ export const calcParamTarget = (groupItem, requestItem, previewData, schemasConf
     responseStatusCode: previewData?.statusCode,
     responseBody: previewData?.responseBody,
     responseFormat: previewData?.responseFormat,
-    contentType: previewData?.contentType || 'application/json',
+    contentType: previewData?.contentType || DEFAULT_CONTENT_TYPE,
     defaultCharset: previewData?.defaultCharset
   }
   if (value) {

@@ -4,7 +4,7 @@ import { defineTableColumns, defineFormOptions, defineTableButtons, limitStr } f
 import { $coreConfirm, checkShowColumn } from '@/utils'
 import MockDataApi, {
   ALL_STATUS_CODES,
-  ALL_CONTENT_TYPES,
+  DEFAULT_CONTENT_TYPE,
   markDefault,
   copyMockData,
   searchHistories, loadHistoryDiff
@@ -241,7 +241,7 @@ const newDataItem = () => ({
   groupId: requestItem.value.groupId,
   status: 1,
   statusCode: ALL_STATUS_CODES[0].code,
-  contentType: ALL_CONTENT_TYPES[0],
+  contentType: DEFAULT_CONTENT_TYPE,
   headerParams: [],
   defaultCharset: 'UTF-8'
 })

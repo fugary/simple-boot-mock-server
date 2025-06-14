@@ -3,7 +3,7 @@ import { $i18nKey } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
 import { isArray, isFunction, isString, cloneDeep } from 'lodash-es'
-import { ALL_CONTENT_TYPES } from '@/api/mock/MockDataApi'
+import { ALL_CONTENT_TYPES_LIST } from '@/api/mock/MockDataApi'
 
 /**
  * 添加数据
@@ -123,6 +123,9 @@ export const processEvnParams = (groupConfig, dataValue) => {
 }
 
 export const useContentTypeOption = (prop = 'contentType', charset = true) => {
+  const contentTypesOptions = getSingleSelectOptions(...ALL_CONTENT_TYPES_LIST
+    .filter(type => type.response !== false)
+    .map(type => type.contentType))
   const charsetOption = charset
     ? {
         label: 'Charset',
@@ -138,7 +141,7 @@ export const useContentTypeOption = (prop = 'contentType', charset = true) => {
     label: 'Content Type',
     prop,
     type: 'select',
-    children: getSingleSelectOptions(...ALL_CONTENT_TYPES),
+    children: contentTypesOptions,
     attrs: {
       clearable: false
     },
@@ -150,13 +153,15 @@ export const checkImageAccept = headers => Object.keys(headers || {}).find(key =
 
 export const isImageUrl = (url) => /\.(png|jpg|jpeg|gif|webp|bmp)(\?.*)?$/i.test(url)
 
-export const calcPreviewHeaders = (url, config) => {
-  const imageExt = isImageUrl(url)
+export const calcPreviewHeaders = (paramTarget, url, config) => {
+  const imageExt = isStreamContentType(paramTarget.contentType) || isImageUrl(url)
   const accept = checkImageAccept(config?.headers)
   if (imageExt || (accept && config.headers[accept]?.includes('image'))) {
     config.responseType = 'blob'
   }
 }
+
+export const isStreamContentType = contentType => !!ALL_CONTENT_TYPES_LIST.find(content => content.contentType === contentType)?.stream
 
 const defaultCheckFunc = schema => !schema?.__contentType || schema?.__contentType?.includes('json') || schema?.__contentType?.includes('*/*')
 

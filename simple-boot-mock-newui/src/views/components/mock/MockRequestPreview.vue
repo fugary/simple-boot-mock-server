@@ -84,7 +84,7 @@ const doDataPreview = async () => {
     data,
     headers
   }
-  calcPreviewHeaders(requestUrl, config)
+  calcPreviewHeaders(paramTarget.value, requestUrl, config)
   requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)
   previewData.value?.id && (headers[MOCK_DATA_ID_HEADER] = previewData.value?.id)
   if (previewData.value?.id) {
