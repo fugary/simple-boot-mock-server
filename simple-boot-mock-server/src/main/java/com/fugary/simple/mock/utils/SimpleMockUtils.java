@@ -18,6 +18,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.entity.ContentType;
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -445,7 +447,32 @@ public class SimpleMockUtils {
      */
     public static byte[] getStreamResponseBody(String responseBody){
         responseBody = extractBase64Data(responseBody);
-        return Base64.getDecoder().decode(responseBody);
+        try {
+            return Base64.getDecoder().decode(responseBody);
+        } catch (Exception e) {
+            log.error("解码失败", e);
+        }
+        return null;
+    }
+
+    /**
+     * body处理
+     *
+     * @param data
+     * @return
+     */
+    public static Pair<String, Object> getMockResponseBody(MockData data) {
+        Object result = data.getResponseBody();
+        String contentType = SimpleMockUtils.getContentType(data.getContentType(), data.getDefaultCharset());
+        if (SimpleMockUtils.isStreamContentType(data.getContentType())) {
+            byte[] streamResponseBody = SimpleMockUtils.getStreamResponseBody(data.getResponseBody());
+            if (streamResponseBody != null) {
+                result = streamResponseBody;
+            } else {
+                contentType = ContentType.TEXT_PLAIN.getMimeType();
+            }
+        }
+        return Pair.of(contentType, result);
     }
 
     /**

@@ -21,6 +21,7 @@ import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -91,10 +92,11 @@ public class MockController {
             }
             response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
             response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
+            Pair<String, Object> bodyPair = SimpleMockUtils.getMockResponseBody(data);
             responseEntity = ResponseEntity.status(data.getStatusCode())
                     .headers(httpHeaders)
-                    .header(HttpHeaders.CONTENT_TYPE, SimpleMockUtils.getContentType(data.getContentType(), data.getDefaultCharset()))
-                    .body(SimpleMockUtils.isStreamContentType(data.getContentType()) ? SimpleMockUtils.getStreamResponseBody(data.getResponseBody()) : data.getResponseBody());
+                    .header(HttpHeaders.CONTENT_TYPE, bodyPair.getKey())
+                    .body(bodyPair.getValue());
             SimpleLogUtils.addResponseData(data.getResponseBody());
         } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(proxyUrl = SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
             // 所有request没有匹配上,但是有proxy地址
