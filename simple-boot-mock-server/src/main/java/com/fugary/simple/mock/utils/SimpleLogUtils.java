@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.http.ResponseEntity;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.function.Consumer;
 
 /**
@@ -57,11 +58,21 @@ public class SimpleLogUtils {
      * @param responseEntity
      */
     public static void addResponseData(ResponseEntity<?> responseEntity) {
-        if (responseEntity != null && responseEntity.getBody() != null) {
-            if(responseEntity.getBody() instanceof byte[]){
-                String responseBody = new String((byte[]) responseEntity.getBody(), StandardCharsets.UTF_8);
-                addResponseData(responseBody);
+        addLogData(logBuilder -> {
+            if (responseEntity != null && responseEntity.getBody() != null) {
+                Object body = responseEntity.getBody();
+                if (body instanceof String) {
+                    logBuilder.responseBody((String) body);
+                } else if (body instanceof byte[]) {
+                    String responseBody;
+                    if (responseEntity.getHeaders().getContentType() != null && SimpleMockUtils.isStreamContentType(responseEntity.getHeaders().getContentType().toString())) {
+                        responseBody = Base64.getEncoder().encodeToString((byte[]) body);
+                    } else {
+                        responseBody = new String((byte[]) body, StandardCharsets.UTF_8);
+                    }
+                    logBuilder.responseBody(responseBody);
+                }
             }
-        }
+        });
     }
 }
