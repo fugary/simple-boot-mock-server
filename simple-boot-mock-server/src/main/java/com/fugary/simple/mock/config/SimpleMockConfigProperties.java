@@ -19,4 +19,6 @@ public class SimpleMockConfigProperties {
     private Integer jwtExpire = 7;
 
     private boolean mockLogEnabled = true;
+
+    private boolean fetchEnabled = true;
 }

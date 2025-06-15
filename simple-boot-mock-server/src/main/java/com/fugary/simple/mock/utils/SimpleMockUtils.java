@@ -68,6 +68,23 @@ public class SimpleMockUtils {
     );
 
     /**
+     * 转byte数组
+     * @param list
+     * @return
+     */
+    public static byte[] listToByteArray(List<?> list) {
+        byte[] bytes = new byte[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            Object obj = list.get(i);
+            if (obj instanceof Number) {
+                Number num = (Number) obj;
+                bytes[i] = num.byteValue();
+            }
+        }
+        return bytes;
+    }
+
+    /**
      * 生成uuid
      *
      * @return

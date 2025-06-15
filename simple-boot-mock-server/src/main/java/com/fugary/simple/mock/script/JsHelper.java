@@ -1,6 +1,7 @@
 package com.fugary.simple.mock.script;
 
 import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -10,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,8 +27,16 @@ public class JsHelper {
      * @param input
      * @return
      */
-    public String btoa(String input) {
-        return Base64.getEncoder().encodeToString(input.getBytes());
+    public String btoa(Object input) {
+        if (input instanceof String) {
+            return Base64.getEncoder().encodeToString(((String) input).getBytes());
+        } else if (input instanceof byte[]) {
+            return Base64.getEncoder().encodeToString((byte[]) input);
+        } else if (input instanceof List) {
+            byte[] bytes = SimpleMockUtils.listToByteArray((List) input);
+            return Base64.getEncoder().encodeToString(bytes);
+        }
+        return input != null ? input.toString() : null;
     }
 
     /**

@@ -17,7 +17,10 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
 
-import javax.script.*;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import javax.script.SimpleScriptContext;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
@@ -39,6 +42,8 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
     private static final String FAST_MOCK_JS_PATH = "js/fastmock.js";
 
     private static final String FAST_MOCK_JS_CONTENT;
+
+    private boolean fetchEnabled;
 
     static {
         Resource fastMockJs = new ClassPathResource(FAST_MOCK_JS_PATH);
@@ -97,6 +102,9 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
                 scriptEngine = scriptEnginePool.borrowObject();
             }
             ScriptContext context = getScriptContext(scriptEngine);
+            if (isFetchEnabled()) {
+                return JsFetchUtils.internalEval(script, scriptEngine, context);
+            }
             return scriptEngine.eval(script, context);
         } catch (Exception e) {
             log.error(MessageFormat.format("执行MockJs错误：{0}", script), e);

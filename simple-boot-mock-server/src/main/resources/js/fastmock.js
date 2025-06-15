@@ -34,6 +34,9 @@
         if (typeof input === 'string') {
             return input;
         }
+        if (input instanceof Promise) {
+            return input.then(result => mockStringify(result, ...args));
+        }
         return JSON.stringify(input, ...args);
     }
 })(Mock, request)
