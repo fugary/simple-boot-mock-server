@@ -47,22 +47,25 @@
    2. 输出可以有`{"id": "{{request.parameters.id}}"}`
 4. 可以配置多个响应输出，指定一个作为默认输出。方便在不改变URL的情况下模拟成功、失败等多种情况
 5. 支持`mockjs`语法（直接使用`mockjs`解析执行）
-6. 快速复制URL、响应内容等
-7. 支持重定向链接
+6. 执行响应xml、json、html等，使用JavaScript生成响应数据
+7. 快速复制URL、响应内容，在线测试
+8. 支持重定向链接
    1. 响应里面配置重定向的URL
    2. 配置Status Code为302
-8. 支持作为反向代理，代理`URL`地址，可以只`mock`部分请求，其他请求发送给代理`url`地址获取响应
-9. 除了支持`URL`路径和请求方法匹配，新增支持匹配表达式，可以根据`request`内容匹配请求
-   1. `request.body`——`body`内容对象（仅`json`时会解析成对象）
-   2. `request.bodyStr`——`body`内容字符串
-   3. `request.headers`——头信息对象
-   4. `request.parameters`——请求参数对象
-   5. `request.pathParameters`——路径参数对象
-10. 支持匹配表达式测试功能，方便测试表达式是否正确
-11. 增加响应延迟，可以模拟延迟一段时间才响应数据
-12. 支持简单用户管理，默认账号：`admin/12345678`和`mock/mock`两个用户，支持修改密码，使用`SHA256`加密算法
-13. 各用户管理自己的`mock`分组数据，管理员可以看到其他人的数据
-14. 除了H2数据库，增加MySQL数据库支持
+9. 支持作为反向代理，代理`URL`地址，可以只`mock`部分请求，其他请求发送给代理`url`地址获取响应
+10. 除了支持`URL`路径和请求方法匹配，新增支持匹配表达式，可以根据`request`内容匹配请求
+    1. `request.body`——`body`内容对象（仅`json`时会解析成对象）
+    2. `request.bodyStr`——`body`内容字符串
+    3. `request.headers`——头信息对象
+    4. `request.parameters`——请求参数对象
+    5. `request.pathParameters`——路径参数对象
+    6. `request.params`——路径参数和请求合并对象
+11. 支持匹配表达式测试功能，方便测试表达式是否正确
+12. 增加响应延迟，可以模拟延迟一段时间才响应数据
+13. 支持简单用户管理，默认账号：`admin/12345678`和`mock/mock`两个用户，支持修改密码，使用`SHA256`加密算法
+14. 各用户管理自己的`mock`分组数据，管理员可以看到其他人的数据
+15. 除了H2数据库，增加MySQL数据库支持
+16. 支持通过内置函数，实现解密请求或加密响应
 
 ## 运行
 
@@ -73,6 +76,8 @@ Windows下`bin/start.bat`
 Linux下`bin/start.sh`
 
 Docker启动：`docker run -p 9086:9086 fugary/simple-boot-mock-server:latest`
+
+Docker地址： https://hub.docker.com/r/fugary/simple-boot-mock-server
 
 启动后在：http://localhost:9086/ 地址访问
 
