@@ -176,7 +176,7 @@ public class JsFetchUtils {
             client.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
                     .whenComplete((response, ex) -> {
                         log.info("fetch请求url完成:{}/{}", url, response, ex);
-                        try (Context asyncContext = Context.newBuilder().allowAllAccess(true).build()){
+                        try {
                             if (ex != null) {
                                 future.completeExceptionally(ex);
                             } else {
@@ -201,7 +201,7 @@ public class JsFetchUtils {
                                         // json() 返回 JSON 解析结果
                                         "json", (ProxyExecutable) ignored -> {
                                             try {
-                                                return asyncContext.eval("js", "JSON.parse").execute(responseText);
+                                                return context.eval("js", "JSON.parse").execute(responseText);
                                             } catch (Exception e) {
                                                 throw new RuntimeException("Invalid JSON in response");
                                             }
@@ -209,7 +209,7 @@ public class JsFetchUtils {
                                         // blob() 返回 Uint8Array
                                         "blob", (ProxyExecutable) ignored -> {
                                             // 先把字节数组转JS Uint8Array
-                                            Value uint8ArrayConstructor = asyncContext.eval("js", "Uint8Array");
+                                            Value uint8ArrayConstructor = context.eval("js", "Uint8Array");
                                             return uint8ArrayConstructor.newInstance(responseBytes);
                                         }
                                 ));
