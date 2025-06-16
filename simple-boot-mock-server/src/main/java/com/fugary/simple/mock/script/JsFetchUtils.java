@@ -22,10 +22,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.text.MessageFormat;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
@@ -34,10 +36,14 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class JsFetchUtils {
+
+    private static final ExecutorService fetchExecutor = Executors.newFixedThreadPool(16);
     /**
      * 内部http客户端
      */
-    private static final HttpClient client = HttpClient.newHttpClient();
+    private static final HttpClient client = HttpClient.newBuilder()
+            .executor(fetchExecutor)
+            .build();
 
     /**
      * 支持promise和fetch功能（使用反射比较多，谨慎选择）
@@ -62,19 +68,15 @@ public class JsFetchUtils {
                 Value value = polyglotContext.eval(source);
                 // 判断是否是 Promise
                 if (value.canInvokeMember("then")) {
-                    CountDownLatch latch = new CountDownLatch(1);
-                    final Object[] resultHolder = new Object[1];
+                    CompletableFuture<Object> future = new CompletableFuture<>();
                     value.invokeMember("then", (ProxyExecutable) (args) -> {
-                        resultHolder[0] = args[0].as(Object.class);
-                        latch.countDown();
+                        future.complete(args[0].as(Object.class));
                         return null;
                     }, (ProxyExecutable) (args) -> {
-                        resultHolder[0] = args[0].as(Object.class);
-                        latch.countDown();
+                        future.completeExceptionally(new ScriptException(args[0].toString()));
                         return null;
                     });
-                    latch.await();
-                    return resultHolder[0];
+                    return future.get();
                 }
                 return value.as(Object.class);
             } catch (PolyglotException e) {
@@ -85,6 +87,8 @@ public class JsFetchUtils {
             } catch (InterruptedException e) {
                 log.error("执行中断异常", e);
                 Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                log.error("执行未知异常", e);
             }
         }
         return null;
@@ -148,7 +152,7 @@ public class JsFetchUtils {
                     body = optionsValue.getMember("body").asString();
                 }
             }
-            HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url));
+            HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(30));
             switch (method) {
                 case "POST":
                     builder.POST(HttpRequest.BodyPublishers.ofString(body == null ? "" : body));
@@ -171,44 +175,48 @@ public class JsFetchUtils {
             CompletableFuture<Value> future = new CompletableFuture<>();
             client.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
                     .whenComplete((response, ex) -> {
-                        Context asyncContext = Context.newBuilder().allowAllAccess(true).build();
-                        if (ex != null) {
-                            future.completeExceptionally(ex);
-                        } else {
-                            byte[] responseBytes = response.body();
-                            String responseText = new String(responseBytes); // 简单用系统默认编码，按需改
-                            Map<String, Object> headerMap = response.headers()
-                                    .map()
-                                    .entrySet()
-                                    .stream()
-                                    .collect(Collectors.toMap(
-                                            Map.Entry::getKey,
-                                            e -> String.join(", ", e.getValue())
-                                    ));
-                            HttpStatus httpStatus = HttpStatus.resolve(response.statusCode());
-                            ProxyObject responseObj = ProxyObject.fromMap(Map.of(
-                                    "status", response.statusCode(),
-                                    "ok", response.statusCode() >= 200 && response.statusCode() < 300,
-                                    "statusText", httpStatus != null ? httpStatus.getReasonPhrase() : StringUtils.EMPTY,
-                                    "headers", ProxyObject.fromMap(headerMap),
-                                    // text() 返回字符串
-                                    "text", (ProxyExecutable) ignored -> Value.asValue(responseText),
-                                    // json() 返回 JSON 解析结果
-                                    "json", (ProxyExecutable) ignored -> {
-                                        try {
-                                            return asyncContext.eval("js", "JSON.parse").execute(responseText);
-                                        } catch (Exception e) {
-                                            throw new RuntimeException("Invalid JSON in response");
+                        try {
+                            Context asyncContext = Context.newBuilder().allowAllAccess(true).build();
+                            if (ex != null) {
+                                future.completeExceptionally(ex);
+                            } else {
+                                byte[] responseBytes = response.body();
+                                String responseText = new String(responseBytes); // 简单用系统默认编码，按需改
+                                Map<String, Object> headerMap = response.headers()
+                                        .map()
+                                        .entrySet()
+                                        .stream()
+                                        .collect(Collectors.toMap(
+                                                Map.Entry::getKey,
+                                                e -> String.join(", ", e.getValue())
+                                        ));
+                                HttpStatus httpStatus = HttpStatus.resolve(response.statusCode());
+                                ProxyObject responseObj = ProxyObject.fromMap(Map.of(
+                                        "status", response.statusCode(),
+                                        "ok", response.statusCode() >= 200 && response.statusCode() < 300,
+                                        "statusText", httpStatus != null ? httpStatus.getReasonPhrase() : StringUtils.EMPTY,
+                                        "headers", ProxyObject.fromMap(headerMap),
+                                        // text() 返回字符串
+                                        "text", (ProxyExecutable) ignored -> Value.asValue(responseText),
+                                        // json() 返回 JSON 解析结果
+                                        "json", (ProxyExecutable) ignored -> {
+                                            try {
+                                                return asyncContext.eval("js", "JSON.parse").execute(responseText);
+                                            } catch (Exception e) {
+                                                throw new RuntimeException("Invalid JSON in response");
+                                            }
+                                        },
+                                        // blob() 返回 Uint8Array
+                                        "blob", (ProxyExecutable) ignored -> {
+                                            // 先把字节数组转JS Uint8Array
+                                            Value uint8ArrayConstructor = asyncContext.eval("js", "Uint8Array");
+                                            return uint8ArrayConstructor.newInstance(responseBytes);
                                         }
-                                    },
-                                    // blob() 返回 Uint8Array
-                                    "blob", (ProxyExecutable) ignored -> {
-                                        // 先把字节数组转JS Uint8Array
-                                        Value uint8ArrayConstructor = asyncContext.eval("js", "Uint8Array");
-                                        return uint8ArrayConstructor.newInstance(responseBytes);
-                                    }
-                            ));
-                            future.complete(Value.asValue(responseObj));
+                                ));
+                                future.complete(Value.asValue(responseObj));
+                            }
+                        } catch (Exception e) {
+                            future.completeExceptionally(e);
                         }
                     });
 
@@ -218,7 +226,7 @@ public class JsFetchUtils {
                 Value reject = promiseArgs[1];
                 future.whenComplete((result, err) -> {
                     if (err != null) {
-                        reject.executeVoid(err.getMessage());
+                        reject.executeVoid(context.eval("js", "new Error").newInstance(err.getMessage()));
                     } else {
                         resolve.executeVoid(result);
                     }
