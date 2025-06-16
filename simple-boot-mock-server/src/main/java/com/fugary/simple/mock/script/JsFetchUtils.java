@@ -124,13 +124,12 @@ public class JsFetchUtils {
     public static void injectFetch(Context context) {
         if (context != null) {
             Value globalThis = context.eval("js", "globalThis");
-            ProxyExecutable fetchFunction = getFetchFunction();
+            ProxyExecutable fetchFunction = getFetchFunction(context);
             globalThis.putMember("fetch", fetchFunction);
         }
     }
 
-    private static ProxyExecutable getFetchFunction() {
-        Context context = Context.newBuilder().allowAllAccess(true).build();
+    private static ProxyExecutable getFetchFunction(Context context) {
         return args -> {
             if (args.length < 1) throw new IllegalArgumentException("fetch requires at least 1 argument");
             String url = args[0].asString();
@@ -173,10 +172,11 @@ public class JsFetchUtils {
             headers.forEach(builder::header);
             HttpRequest request = builder.build();
             CompletableFuture<Value> future = new CompletableFuture<>();
+            log.info("fetch请求url:{}", url);
             client.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
                     .whenComplete((response, ex) -> {
-                        try {
-                            Context asyncContext = Context.newBuilder().allowAllAccess(true).build();
+                        log.info("fetch请求url完成:{}/{}", url, response, ex);
+                        try (Context asyncContext = Context.newBuilder().allowAllAccess(true).build()){
                             if (ex != null) {
                                 future.completeExceptionally(ex);
                             } else {
@@ -215,7 +215,7 @@ public class JsFetchUtils {
                                 ));
                                 future.complete(Value.asValue(responseObj));
                             }
-                        } catch (Exception e) {
+                        } catch (Throwable e) {
                             future.completeExceptionally(e);
                         }
                     });
@@ -225,6 +225,7 @@ public class JsFetchUtils {
                 Value resolve = promiseArgs[0];
                 Value reject = promiseArgs[1];
                 future.whenComplete((result, err) -> {
+                    log.info("fetch请求构建Promise:{}/{}", url, result, err);
                     if (err != null) {
                         reject.executeVoid(context.eval("js", "new Error").newInstance(err.getMessage()));
                     } else {
