@@ -1,6 +1,8 @@
 package com.fugary.simple.mock.config.script;
 
 import com.fugary.simple.mock.config.SimpleMockConfigProperties;
+import com.fugary.simple.mock.push.DefaultScriptWithFetchProviderImpl;
+import com.fugary.simple.mock.push.ScriptWithFetchProvider;
 import com.fugary.simple.mock.script.JavaScriptEngineFactory;
 import com.fugary.simple.mock.script.JavaScriptEngineProviderImpl;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
@@ -26,6 +28,11 @@ public class ScriptEngineConfig {
     private SimpleMockConfigProperties simpleMockConfigProperties;
 
     @Bean
+    public ScriptWithFetchProvider scriptWithFetchProvider() {
+        return new DefaultScriptWithFetchProviderImpl();
+    }
+
+    @Bean
     public GenericObjectPool<ScriptEngine> scriptEnginePool() {
         GenericObjectPoolConfig<ScriptEngine> config = new GenericObjectPoolConfig<>();
         config.setMaxTotal(10); // 设置池中最大对象数
@@ -43,6 +50,7 @@ public class ScriptEngineConfig {
     public ScriptEngineProvider scriptEngineProvider() {
         JavaScriptEngineProviderImpl javaScriptEngineProvider = new JavaScriptEngineProviderImpl();
         javaScriptEngineProvider.setScriptEnginePool(scriptEnginePool());
+        javaScriptEngineProvider.setScriptWithFetchProvider(scriptWithFetchProvider());
         javaScriptEngineProvider.setFetchEnabled(simpleMockConfigProperties.isFetchEnabled());
         return javaScriptEngineProvider;
     }

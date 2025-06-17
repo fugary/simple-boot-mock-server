@@ -1,6 +1,7 @@
 package com.fugary.simple.mock.script;
 
 import com.fugary.simple.mock.contants.MockErrorConstants;
+import com.fugary.simple.mock.push.ScriptWithFetchProvider;
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
@@ -42,6 +43,8 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
     private static final String FAST_MOCK_JS_PATH = "js/fastmock.js";
 
     private static final String FAST_MOCK_JS_CONTENT;
+
+    private ScriptWithFetchProvider scriptWithFetchProvider;
 
     private boolean fetchEnabled;
 
@@ -103,7 +106,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
             }
             ScriptContext context = getScriptContext(scriptEngine);
             if (isFetchEnabled()) {
-                return JsFetchUtils.internalEval(script, scriptEngine, context);
+                return scriptWithFetchProvider.internalEval(script, scriptEngine, context);
             }
             return scriptEngine.eval(script, context);
         } catch (Exception e) {
