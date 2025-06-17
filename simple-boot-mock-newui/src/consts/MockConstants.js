@@ -84,23 +84,31 @@ export const AUTH_OPTIONS = [{
 }]
 
 export const ALL_CONTENT_TYPES_LIST = [
-  { contentType: 'application/json' },
-  { contentType: 'application/xml' },
-  { contentType: 'text/html' },
-  { contentType: 'text/plain' },
-  { contentType: 'text/css' },
-  { contentType: 'application/javascript' },
+  { contentType: 'application/json', text: true },
+  { contentType: 'application/xml', text: true },
+  { contentType: 'text/html', text: true },
+  { contentType: 'text/plain', text: true },
+  { contentType: 'text/css', text: true },
+  { contentType: 'application/javascript', text: true },
+  { contentType: 'text/javascript', text: true },
   { contentType: 'application/x-www-form-urlencoded', response: false },
   { contentType: 'multipart/form-data', response: false },
-  { contentType: 'application/octet-stream', stream: true },
-  { contentType: 'image/jpeg', stream: true },
-  { contentType: 'image/png', stream: true },
-  { contentType: 'image/gif', stream: true },
-  { contentType: 'application/pdf', stream: true },
-  { contentType: 'audio/mpeg', stream: true },
-  { contentType: 'audio/ogg', stream: true },
-  { contentType: 'video/mp4', stream: true },
-  { contentType: 'video/ogg', stream: true }
+  { contentType: 'image/png' },
+  { contentType: 'image/jpeg' },
+  { contentType: 'image/gif' },
+  { contentType: 'application/pdf' },
+  { contentType: 'application/zip' },
+  { contentType: 'audio/mpeg' },
+  { contentType: 'audio/ogg' },
+  { contentType: 'video/mp4' },
+  { contentType: 'video/ogg' },
+  { contentType: 'application/graphql', text: true },
+  { contentType: 'application/yaml', text: true },
+  { contentType: 'text/markdown', text: true },
+  { contentType: 'application/octet-stream' },
+  { contentType: 'application/vnd.ms-excel' },
+  { contentType: 'application/msword' },
+  { contentType: 'application/vnd.ms-powerpoint' }
 ]
 
-export const isStreamContentType = contentType => !!ALL_CONTENT_TYPES_LIST.find(content => content.contentType === contentType)?.stream
+export const isStreamContentType = contentType => !ALL_CONTENT_TYPES_LIST.find(content => content.contentType === contentType)?.text

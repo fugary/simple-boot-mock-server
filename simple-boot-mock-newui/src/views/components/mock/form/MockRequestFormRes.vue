@@ -14,8 +14,9 @@ import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.
 import { isString } from 'lodash-es'
 import { $coreError } from '@/utils'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
-import { calcContentType } from '@/consts/MockConstants'
+import { calcContentType, isStreamContentType } from '@/consts/MockConstants'
 import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
+import { downloadByLink } from '@/api/mock/MockGroupApi'
 
 const props = defineProps({
   responseTarget: {
@@ -71,21 +72,26 @@ onUnmounted(() => clearMediaItems(true))
 
 watch(() => props.responseTarget, async (responseTarget) => {
   currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
-  const contentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type' && isMediaContentType(header.value))?.value
+  const contentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type' &&
+      (isMediaContentType(header.value) || isStreamContentType(header.value)))?.value
   if (responseTarget?.data && contentType) {
     if (isString(responseTarget.data)) {
       $coreError($i18nBundle('mock.msg.checkImageAccept'))
     } else {
       clearMediaItems()
-      nextTick(() => {
-        if (contentType?.includes('image')) {
-          mediaConfig.responseImg = URL.createObjectURL(responseTarget.data)
-        } else if (contentType?.includes('audio')) {
-          mediaConfig.responseAudio = URL.createObjectURL(responseTarget.data)
-        } else if (contentType?.includes('video')) {
-          mediaConfig.responseVideo = URL.createObjectURL(responseTarget.data)
-        }
-      })
+      if (isMediaContentType(contentType)) {
+        nextTick(() => {
+          if (contentType?.includes('image')) {
+            mediaConfig.responseImg = URL.createObjectURL(responseTarget.data)
+          } else if (contentType?.includes('audio')) {
+            mediaConfig.responseAudio = URL.createObjectURL(responseTarget.data)
+          } else if (contentType?.includes('video')) {
+            mediaConfig.responseVideo = URL.createObjectURL(responseTarget.data)
+          }
+        })
+      } else {
+        downloadByLink(URL.createObjectURL(responseTarget.data))
+      }
     }
   } else {
     let content = responseTarget?.data

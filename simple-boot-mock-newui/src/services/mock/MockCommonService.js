@@ -153,7 +153,7 @@ export const useContentTypeOption = (prop = 'contentType', charset = true) => {
 
 export const checkImageAccept = headers => Object.entries(headers || {}).find(([key]) => key.toLowerCase() === 'accept')?.[1]
 
-export const isMediaUrl = (url) => /\.(png|jpg|jpeg|gif|webp|bmp|mp3|mp4|ogg)(\?.*)?$/i.test(url)
+export const isMediaUrl = (url) => /\.(png|jpg|jpeg|gif|webp|bmp|svg|mp3|wav|mp4|webm|ogg|pdf|zip|doc|docx|xls|xlsx|ppt|pptx)(\?.*)?$/i.test(url)
 
 export const calcPreviewHeaders = (paramTarget, url, config) => {
   const imageExt = isStreamContentType(paramTarget.contentType) || isMediaUrl(url)
