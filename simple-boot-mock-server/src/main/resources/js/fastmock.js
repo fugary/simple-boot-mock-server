@@ -37,6 +37,9 @@
         if (input instanceof Promise) {
             return input.then(result => mockStringify(result, ...args));
         }
+        if (input instanceof Uint8Array) { // 字节数组处理成base64
+            return btoa(input);
+        }
         return JSON.stringify(input, ...args);
     }
 })(Mock, request)
