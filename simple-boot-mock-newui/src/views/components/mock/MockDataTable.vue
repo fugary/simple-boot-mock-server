@@ -340,7 +340,8 @@ const editFormOptions = computed(() => {
     required: isRedirect,
     tooltipFunc: () => showMockTips(),
     attrs: {
-      defaultValue: currentDataItem.value?.responseBody,
+      class: 'common-resize-vertical',
+      value: currentDataItem.value?.responseBody,
       'onUpdate:value': (value) => {
         currentDataItem.value.responseBody = value
         contentRef.value = value
@@ -620,7 +621,7 @@ const toShowHistoryWindow = (current) => {
         </common-form-control>
       </template>
       <template #newContentType="{option}">
-        <el-row>
+        <el-row v-if="option.enabled!==false">
           <el-col :span="12">
             <common-form-control
               :model="currentDataItem"
