@@ -1,7 +1,7 @@
 <script setup>
 import { formatDate } from '@/utils'
-import { computed, useSlots } from 'vue'
-import { get } from 'lodash-es'
+import { computed, isVNode, useSlots } from 'vue'
+import { get, isFunction } from 'lodash-es'
 import { toLabelByKey } from '@/components/utils'
 import TableDynamicButton from '@/components/common-table/table-dynamic-button.vue'
 
@@ -51,6 +51,15 @@ const columnLabel = computed(() => {
   return props.column.label || toLabelByKey(props.column.labelKey)
 })
 
+const headerResult = computed(() => {
+  const column = props.column
+  if (isFunction(column.headerFormatter)) {
+    const header = column.headerFormatter(column)
+    return { header, vnode: isVNode(header) }
+  }
+  return null
+})
+
 </script>
 
 <template>
@@ -64,6 +73,19 @@ const columnLabel = computed(() => {
     v-bind="column.attrs"
     :formatter="formatter"
   >
+    <template
+      v-if="headerResult"
+      #header
+    >
+      <span
+        v-if="headerResult.header&&!headerResult.vnode"
+        v-html="headerResult.header"
+      />
+      <component
+        :is="headerResult.header"
+        v-if="headerResult.vnode"
+      />
+    </template>
     <template
       v-if="column.click"
       #default="scope"

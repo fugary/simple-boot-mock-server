@@ -1,7 +1,7 @@
 import { ButtonProps, LinkProps, TableProps, PaginationProps } from 'element-plus'
 import tableColumnProps from 'element-plus/es/components/table/src/table-column/defaults'
 import { CommonPage } from '../public'
-import { ExtractPropTypes } from 'vue'
+import { ExtractPropTypes, VNode } from 'vue'
 
 export type TableColumnProps = ExtractPropTypes<typeof tableColumnProps>
 
@@ -52,7 +52,9 @@ export interface CommonTableColumn {
     /** 点击事件 */
     click?: (data: any) => any;
     /** 格式化函数 */
-    formatter?: (data: any, scope: any) => string;
+    formatter?: (data: any, scope: any) => string|VNode;
+    /** header格式化 */
+    headerFormatter?: (data: any, scope: any) => string|VNode;
     /** 日期格式化 */
     dateFormat?: string
 }
