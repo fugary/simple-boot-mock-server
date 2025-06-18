@@ -1,6 +1,6 @@
 <script setup>
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { computed, watch, ref, onUnmounted, reactive, nextTick } from 'vue'
+import { computed, watch, ref, reactive, nextTick, useTemplateRef, onBeforeUnmount } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nKey, $i18nBundle } from '@/messages'
@@ -56,6 +56,7 @@ const {
   languageModel, normalLanguageSelectOption, formatDocument
 } = useMonacoEditorOptions()
 
+const currentElRef = useTemplateRef('currentElRef')
 const mediaConfig = reactive({
   responseImg: null,
   responseAudio: null,
@@ -63,12 +64,12 @@ const mediaConfig = reactive({
 })
 const clearMediaItems = (remove) => {
   for (const key in mediaConfig) {
-    remove && document.getElementById(`${key}El`)?.remove()
+    remove && currentElRef.value?.$el?.querySelector(`.${key}El`)?.remove()
     mediaConfig[key] = null
   }
 }
 
-onUnmounted(() => clearMediaItems(true))
+onBeforeUnmount(() => clearMediaItems(true))
 
 watch(() => props.responseTarget, async (responseTarget) => {
   currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
@@ -157,6 +158,7 @@ const redirectMockResponse = computed(() => {
 
 <template>
   <el-container
+    ref="currentElRef"
     class="flex-column padding-top2"
   >
     <el-tabs
@@ -227,7 +229,7 @@ const redirectMockResponse = computed(() => {
           >
           <audio
             v-else-if="mediaConfig.responseAudio"
-            id="responseAudioEl"
+            class="responseAudioEl"
             :src="mediaConfig.responseAudio"
             controls
           >
@@ -235,7 +237,7 @@ const redirectMockResponse = computed(() => {
           </audio>
           <video
             v-else-if="mediaConfig.responseVideo"
-            id="responseVideoEl"
+            class="responseVideoEl"
             controls
             :src="mediaConfig.responseVideo"
           >
