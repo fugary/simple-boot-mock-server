@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { onMounted, ref, computed, watch } from 'vue'
 import { defineTableColumns, defineFormOptions, defineTableButtons, limitStr } from '@/components/utils'
-import { $coreConfirm, checkShowColumn } from '@/utils'
+import { $coreConfirm, checkShowColumn, getSingleSelectOptions } from '@/utils'
 import MockDataApi, {
   ALL_STATUS_CODES,
   DEFAULT_CONTENT_TYPE,
@@ -11,10 +11,11 @@ import MockDataApi, {
 } from '@/api/mock/MockDataApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import CommonIcon from '@/components/common-icon/index.vue'
+import CommonFormControl from '@/components/common-form-control/index.vue'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { useFormDelay, useFormStatus } from '@/consts/GlobalConstants'
+import { useFormDelay, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { showMockTips, showCompareWindow, showHistoryListWindow, toTestMatchPattern } from '@/utils/DynamicUtils'
 import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
@@ -78,8 +79,21 @@ const columns = computed(() => {
   }, {
     labelKey: 'mock.label.statusCode',
     property: 'statusCode',
-    minWidth: '80px',
+    minWidth: '120px',
     formatter: getStatusCode,
+    headerFormatter () {
+      const statusCodeOption = {
+        prop: 'statusCode',
+        type: 'select',
+        children: getSingleSelectOptions('2XX', '3XX', '4XX', '5XX'),
+        attrs: {
+          filterable: true
+        },
+        change: loadMockData,
+        placeholder: $i18nBundle('mock.label.statusCode')
+      }
+      return <CommonFormControl class="no-form-label" option={statusCodeOption} model={searchParam.value}/>
+    },
     attrs: {
       align: 'center'
     }
@@ -106,23 +120,18 @@ const columns = computed(() => {
                                .then(() => loadMockData())}/>
     }
   }, {
-    labelKey: 'common.label.status',
-    minWidth: '80px',
+    minWidth: '100px',
     formatter (data) {
       return <DelFlagTag v-model={data.status} clickToToggle={true}
                          onToggleValue={(status) => saveMockData({ ...data, status })}/>
     },
-    attrs: {
-      align: 'center',
-      filterMultiple: false,
-      filters: [{
-        value: 1,
-        text: $i18nBundle('common.label.statusEnabled')
-      }, {
-        value: 0,
-        text: $i18nBundle('common.label.statusDisabled')
-      }],
-      filterMethod: (value, row) => value === row.status
+    headerFormatter () {
+      const statusOption = useSearchStatus({
+        change: loadMockData,
+        placeholder: $i18nBundle('common.label.status'),
+        labelKey: ''
+      })
+      return <CommonFormControl class="no-form-label" option={statusOption} model={searchParam.value}/>
     }
   }, {
     labelKey: 'mock.label.responseBody',

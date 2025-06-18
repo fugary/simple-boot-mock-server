@@ -12,4 +12,5 @@ public class MockDataQueryVo extends SimpleQueryVo {
 
     private static final long serialVersionUID = -8998529400117184588L;
     private Integer requestId;
+    private String statusCode;
 }

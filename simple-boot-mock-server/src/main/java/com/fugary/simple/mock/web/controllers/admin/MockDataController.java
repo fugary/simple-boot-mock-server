@@ -49,8 +49,10 @@ public class MockDataController {
         QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
                 .eq(queryVo.getStatus() != null, "status", queryVo.getStatus())
                 .isNull(DB_MODIFY_FROM_KEY);
-        if (queryVo.getRequestId() != null) {
-            queryWrapper.eq("request_id", queryVo.getRequestId());
+        queryWrapper.eq(queryVo.getRequestId() != null, "request_id", queryVo.getRequestId());
+        if (StringUtils.isNotBlank(queryVo.getStatusCode())) {
+            int statusCode = NumberUtils.toInt(queryVo.getStatusCode().substring(0, 1)) * 100;
+            queryWrapper.between("status_code", statusCode, statusCode + 99);
         }
         queryWrapper.orderByAsc("status_code", "create_date");
         Page<MockData> pageResult = mockDataService.page(page, queryWrapper);

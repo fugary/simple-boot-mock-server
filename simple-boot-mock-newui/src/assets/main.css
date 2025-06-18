@@ -463,6 +463,14 @@ html, body, #app, .index-container {
     border-left: 4px solid transparent;
 }
 
+.no-form-label .el-form-item__label {
+    display: none;
+}
+
+.no-form-label {
+    margin-bottom: 0
+}
+
 .common-split {
     display: flex;
     flex-direction: row;

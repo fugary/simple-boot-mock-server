@@ -56,7 +56,7 @@ export const useFormDisableMock = (prop = 'disableMock', activeValue = true, ina
   }
 }
 
-export const useSearchStatus = ({ prop = 'status', activeValue = 1, inactiveValue = 0, change } = {}) => {
+export const useSearchStatus = ({ prop = 'status', activeValue = 1, inactiveValue = 0, change, ...option } = {}) => {
   return {
     labelKey: 'common.label.status',
     prop,
@@ -65,7 +65,8 @@ export const useSearchStatus = ({ prop = 'status', activeValue = 1, inactiveValu
       { value: activeValue, label: $i18nBundle('common.label.statusEnabled') },
       { value: inactiveValue, label: $i18nBundle('common.label.statusDisabled') }
     ],
-    change
+    change,
+    ...option
   }
 }
 
