@@ -26,6 +26,7 @@ import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
 import { calcContentType, DEFAULT_HEADERS } from '@/consts/MockConstants'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import { getMockCompareItem } from '@/services/mock/MockDiffService'
+import { useDefaultPage } from '@/config'
 
 const props = defineProps({
   groupItem: {
@@ -145,7 +146,7 @@ const columns = computed(() => {
   }])
 })
 const { searchParam, tableData, loading, searchMethod: searchMockData } = useTableAndSearchForm({
-  defaultParam: { requestId: requestItem.value.id },
+  defaultParam: { requestId: requestItem.value.id, page: useDefaultPage() },
   searchMethod: MockDataApi.search,
   saveParam: false
 })
@@ -535,6 +536,11 @@ const toShowHistoryWindow = (current) => {
     }
   })
 }
+const pageAttrs = {
+  layout: 'prev, pager, next',
+  background: true,
+  hideOnSinglePage: true
+}
 </script>
 
 <template>
@@ -542,12 +548,16 @@ const toShowHistoryWindow = (current) => {
     <common-table
       ref="dataTableRef"
       :key="batchMode"
+      v-model:page="searchParam.page"
+      :page-attrs="pageAttrs"
       :data="tableData"
       :columns="columns"
       :loading="loading"
-      class="request-table margin-bottom3"
+      class="request-table"
       @selection-change="selectedRows=$event"
       @current-change="onSelectDataItem"
+      @current-page-change="loadMockData()"
+      @page-size-change="loadMockData()"
     >
       <template #buttonHeader>
         {{ $t('common.label.operation') }}
@@ -643,6 +653,7 @@ const toShowHistoryWindow = (current) => {
     />
     <mock-request-preview
       ref="mockPreviewRef"
+      class="margin-top2"
       affix-enabled
     />
   </el-container>
