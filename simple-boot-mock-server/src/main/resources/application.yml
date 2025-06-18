@@ -49,7 +49,7 @@ simple:
     jwt-password: ${MOCK_JWT_PASSWORD:}
     jwt-expire: ${MOCK_JWT_EXPIRE:7}
     mock-log-enabled: ${MOCK_LOG_ENABLED:true}
-    fetch-enabled: ${MOCK_FETCH_ENABLED:false}
+    fetch-enabled: ${MOCK_FETCH_ENABLED:true}
 dbs:
   type: ${MOCK_DB_TYPE:h2}
   h2:
