@@ -111,4 +111,11 @@ export const ALL_CONTENT_TYPES_LIST = [
   { contentType: 'application/vnd.ms-powerpoint' }
 ]
 
-export const isStreamContentType = contentType => contentType && !ALL_CONTENT_TYPES_LIST.find(content => contentType?.includes(content.contentType))?.text
+export const isStreamContentType = contentType => {
+  if (contentType) {
+    if (['text', '*', 'json'].find(keyword => contentType?.includes(keyword))) {
+      return false
+    }
+    return !ALL_CONTENT_TYPES_LIST.find(content => contentType?.includes(content.contentType))?.text
+  }
+}
