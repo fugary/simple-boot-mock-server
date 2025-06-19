@@ -68,7 +68,10 @@ export const useTabsViewStore = defineStore('tabsView', () => {
   }
 
   const findHistoryTab = (path) => {
-    const idx = historyTabs.value.findIndex(v => v.path === path)
+    let idx = historyTabs.value.findIndex(v => v.path === path)
+    if (idx === -1) {
+      idx = historyTabs.value.findIndex(v => v.fullPath === path)
+    }
     if (idx > -1) {
       return historyTabs.value[idx]
     }
@@ -99,13 +102,20 @@ export const useTabsViewStore = defineStore('tabsView', () => {
           // 可能是Proxy，需要解析出来
           isHomeTab(tab) ? historyTabs.value.unshift({ ...tab }) : historyTabs.value.push({ ...tab })
         }
+        tab.accessTime = Date.now()
         if (isNestedRoute(tab)) {
           addNestedParentTab(tab, replaceTab)
         } else {
           addCachedTab(tab, replaceTab)
         }
+      } else {
+        historyTabs.value[idx].accessTime = Date.now()
       }
     }
+  }
+
+  const findLastTab = () => {
+    return historyTabs.value.toSorted((a, b) => b.accessTime - a.accessTime)?.[0]
   }
 
   const removeHistoryTab = tab => {
@@ -116,7 +126,7 @@ export const useTabsViewStore = defineStore('tabsView', () => {
         // 删除tab
         historyTabs.value.splice(idx, 1)
       }
-      return historyTabs.value[historyTabs.value.length - 1]
+      return findLastTab()
     }
   }
 
@@ -227,5 +237,7 @@ export const useTabsViewStore = defineStore('tabsView', () => {
     hasCloseDropdown
   }
 }, {
-  persist: { serializer }
+  persist: {
+    serializer
+  }
 })
