@@ -53,18 +53,23 @@ public class SimpleMockUtils {
      */
     public static final Pattern PASSWORD_PATTERN = Pattern.compile("(?i)((password|secret)\\\\?\"):\\s*(\\\\?\")[^\"\\\\]+(\\\\?\")");
 
-    private static final List<String> STREAM_MEDIA_TYPES = Arrays.asList(
-            "application/octet-stream", // 通用二进制流
-            "application/pdf",
-            "application/zip",
-            "application/gzip",
-            "multipart/byteranges" // 分段流
+    private static final List<String> TEXT_CONTENT_TYPES = List.of(
+            "application/json",
+            "application/xml",
+            "text/html",
+            "text/plain",
+            "text/css",
+            "application/javascript",
+            "text/javascript",
+            "application/graphql",
+            "application/yaml",
+            "text/markdown"
     );
 
-    private static final List<String> STREAM_MEDIA_TYPE_PREFIXES = Arrays.asList(
-            "video/", // 视频流，如 video/mp4
-            "audio/", // 音频流，如 audio/mpeg
-            "image/"  // 图片流，如 image/jpeg
+    private static final List<String> TEXT_MEDIA_TYPE_KEYWORDS = Arrays.asList(
+            "json",
+            "*",
+            "text"
     );
 
     /**
@@ -411,9 +416,12 @@ public class SimpleMockUtils {
         String type = mediaType.getType().toLowerCase();
         String subtype = mediaType.getSubtype().toLowerCase();
         String fullType = type + "/" + subtype;
+        if (TEXT_MEDIA_TYPE_KEYWORDS.stream().anyMatch(fullType::contains)
+                || TEXT_CONTENT_TYPES.stream().anyMatch(fullType::contains)) {
+            return false;
+        }
         // 检查是否为流式 MediaType
-        return STREAM_MEDIA_TYPES.contains(fullType) ||
-                STREAM_MEDIA_TYPE_PREFIXES.stream().anyMatch(fullType::startsWith);
+        return true;
     }
 
     /**
