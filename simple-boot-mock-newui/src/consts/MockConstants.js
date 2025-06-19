@@ -1,3 +1,7 @@
+import { markRaw } from 'vue'
+import { InfoFilled } from '@element-plus/icons-vue'
+import { $i18nBundle } from '@/messages'
+
 export const MOCK_DEFAULT_PROJECT = 'default'
 
 export const SIMPLE_BOOT_MOCK_HEADER = 'simple-boot-mock'
@@ -117,5 +121,17 @@ export const isStreamContentType = contentType => {
       return false
     }
     return !ALL_CONTENT_TYPES_LIST.find(content => contentType?.includes(content.contentType))?.text
+  }
+}
+
+export const getMockConfirmConfig = (config) => {
+  return {
+    type: 'info',
+    icon: markRaw(InfoFilled),
+    cancelButtonClass: 'el-button--success',
+    confirmButtonText: $i18nBundle('mock.label.downloadAsFile'),
+    cancelButtonText: $i18nBundle('mock.label.previewAsText'),
+    distinguishCancelAndClose: true,
+    ...config
   }
 }

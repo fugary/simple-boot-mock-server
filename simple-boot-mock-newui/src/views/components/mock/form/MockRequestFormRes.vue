@@ -12,9 +12,9 @@ import {
 } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import { isString } from 'lodash-es'
-import { $coreError } from '@/utils'
+import { $coreConfirm, $coreError } from '@/utils'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
-import { calcContentType, isStreamContentType } from '@/consts/MockConstants'
+import { calcContentType, getMockConfirmConfig, isStreamContentType } from '@/consts/MockConstants'
 import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
 import { downloadByLink } from '@/api/mock/MockGroupApi'
 
@@ -91,7 +91,11 @@ watch(() => props.responseTarget, async (responseTarget) => {
           }
         })
       } else {
-        downloadByLink(URL.createObjectURL(responseTarget.data))
+        $coreConfirm($i18nBundle('mock.msg.previewStreamConfirm'), getMockConfirmConfig()).then(() => {
+          downloadByLink(URL.createObjectURL(responseTarget.data))
+        }, async () => {
+          contentRef.value = await responseTarget?.data?.text?.()
+        })
       }
     }
   } else {
