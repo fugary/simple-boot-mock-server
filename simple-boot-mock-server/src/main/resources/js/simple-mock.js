@@ -39,7 +39,7 @@
         if (typeof input === 'string') {
             return input;
         }
-        if (input instanceof Promise) {
+        if (typeof input?.then === 'function') {
             return input.then(result => mockStringify(result, ...args));
         }
         if (input instanceof Uint8Array) { // 字节数组处理成base64

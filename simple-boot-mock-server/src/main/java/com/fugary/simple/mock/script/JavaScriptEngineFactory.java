@@ -5,6 +5,7 @@ import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -98,7 +99,7 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
             scriptEngine.eval(MOCK_JS_CONTENT, bindings);
             scriptEngine.eval(DAY_JS_CONTENT, bindings);
             scriptEngine.eval(jsHelper.getInitStr(), bindings);
-            bindings.put("fetch", scriptWithFetchProvider.getFetchFunction(scriptEngine.getPolyglotContext()));
+            bindings.put("fetch", scriptWithFetchProvider.getFetchFunction((Context) MethodUtils.invokeMethod(bindings, "getContext")));
             bindings.put("__requireCache__", ProxyObject.fromMap(new HashMap<>()));
             scriptEngine.eval(SIMPLE_MOCK_CONTENT, bindings);
         } catch (ScriptException e) {
