@@ -30,17 +30,30 @@
         return Mock.__oriMock(mockData, ...args)
     };
     globalThis.Random = Mock.Random;
-    const requireCache = {};
+    const requireCache = globalThis.__requireCache__ || {};
+    /**
+     * require 支持，加载第三方库（CommonJS风格）
+     * 不支持 ESM 模块
+     * @param {string} url 第三方库的URL
+     * @returns {Promise} Promise，resolve 到模块导出的对象
+     */
     globalThis.require = function (url) {
         if (requireCache[url]) {
-            return requireCache[url];
+            return Promise.resolve(requireCache[url]);
         }
-        const response = fetch(url).then(res => res.text());
-        const module = {};
-        return response.then(script => {
-            const moduleWrapper = new Function("module", "exports", script);
-            module.exports = {};
-            moduleWrapper(module, module.exports);
+        return fetch(url).then(res => {
+            if (!res.ok) {
+                throw new Error("Failed to load module: " + url + " (" + res.status + ")");
+            }
+            return res.text();
+        }).then(script => {
+            const module = {exports: {}};
+            try {
+                const moduleWrapper = new Function("module", "exports", script);
+                moduleWrapper(module, module.exports);
+            } catch (e) {
+                throw new Error("Error evaluating module: " + url + " → " + e.message);
+            }
             requireCache[url] = module.exports;
             return module.exports;
         });

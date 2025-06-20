@@ -87,6 +87,7 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
             bindings.put("JsHelper", jsHelper);
             scriptEngine.eval(MOCK_JS_CONTENT, bindings);
             scriptEngine.eval(DAY_JS_CONTENT, bindings);
+            scriptEngine.eval("globalThis.__requireCache__ = {};", bindings);
             scriptEngine.eval(jsHelper.getInitStr(), bindings);
         } catch (ScriptException e) {
             log.error("执行MockJs错误", e);
