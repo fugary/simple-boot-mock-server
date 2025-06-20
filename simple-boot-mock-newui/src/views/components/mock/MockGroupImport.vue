@@ -34,7 +34,8 @@ const importModel = ref({
   userName: !isAdminUser() ? accountInfo?.userName : (props.defaultUser || accountInfo?.userName),
   type: 'simple',
   projectCode: props.defaultProject,
-  duplicateStrategy: IMPORT_DUPLICATE_STRATEGY[0].value
+  duplicateStrategy: IMPORT_DUPLICATE_STRATEGY[0].value,
+  singleGroup: true // 调整为默认为单个组
 })
 watch(() => props.defaultUser, (val) => {
   importModel.value.userName = !isAdminUser() ? accountInfo?.userName : (val || accountInfo?.userName)
