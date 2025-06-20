@@ -1,5 +1,8 @@
 package com.fugary.simple.mock.push;
 
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
+
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -12,7 +15,7 @@ import javax.script.ScriptException;
 public interface ScriptWithFetchProvider {
 
     /**
-     * fetch功能
+     * 支持Promise的执行功能
      *
      * @param script
      * @param scriptEngine
@@ -21,4 +24,11 @@ public interface ScriptWithFetchProvider {
      * @throws ScriptException
      */
     Object internalEval(String script, ScriptEngine scriptEngine, ScriptContext scriptContext) throws ScriptException;
+
+    /**
+     * fetch函数
+     * @param context
+     * @return
+     */
+    ProxyExecutable getFetchFunction(Context context);
 }

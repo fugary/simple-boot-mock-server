@@ -62,7 +62,6 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             Assert.notNull(engineBindings, "polyglot graal.js binding is null");
             Context polyglotContext = (Context) invokeMethod(engineBindings, getMethod(engineBindings.getClass(), "getContext"));
             Assert.notNull(polyglotContext, "polyglot context is null");
-            injectFetch(polyglotContext);
             invokeMethod(GraalJSScriptEngine.class, getMethod(GraalJSScriptEngine.class, "updateDelegatingIOStreams", Context.class, ScriptContext.class), polyglotContext, scriptContext);
             try {
                 invokeMethod(engineBindings, getMethod(engineBindings.getClass(), "importGlobalBindings", ScriptContext.class), scriptContext);
@@ -98,15 +97,8 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
         return null;
     }
 
-    protected void injectFetch(Context context) throws PolyglotException {
-        if (context != null) {
-            Value globalThis = context.eval("js", "globalThis");
-            ProxyExecutable fetchFunction = getFetchFunction(context);
-            globalThis.putMember("fetch", fetchFunction);
-        }
-    }
-
-    protected ProxyExecutable getFetchFunction(Context context) throws PolyglotException {
+    @Override
+    public ProxyExecutable getFetchFunction(Context context) {
         return args -> {
             if (args.length < 1) throw new IllegalArgumentException("fetch requires at least 1 argument");
             String url = args[0].asString();

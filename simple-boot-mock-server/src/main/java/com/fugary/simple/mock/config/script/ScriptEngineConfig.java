@@ -43,7 +43,9 @@ public class ScriptEngineConfig {
 
     @Bean
     public JavaScriptEngineFactory javaScriptEngineFactory(){
-        return new JavaScriptEngineFactory();
+        JavaScriptEngineFactory javaScriptEngineFactory = new JavaScriptEngineFactory();
+        javaScriptEngineFactory.setScriptWithFetchProvider(scriptWithFetchProvider());
+        return javaScriptEngineFactory;
     }
 
     @Bean
