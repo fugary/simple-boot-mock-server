@@ -30,11 +30,9 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
   requestItem.value = mockRequest
   previewData.value = viewData
   const requestDataPromise = MockRequestApi.getById(mockRequest.id)
-  loadSchemas({
+  schemasConf.value = await loadSchemas({
     requestId: mockRequest.id,
     dataId: viewData?.id
-  }).then(schemasData => {
-    schemasConf.value = schemasData
   })
   if (viewData?.id) {
     const viewDataPromise = MockDataApi.getById(viewData.id)

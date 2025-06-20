@@ -113,7 +113,8 @@ export const addParamsToURL = (url, params = {}) => {
   const hasParams = queryIndex > -1
   const getParams = hasParams ? fromGetParams(url.substring(queryIndex + 1)) : {}
   const baseUrl = hasParams ? url.substring(0, queryIndex) : url
-  return `${baseUrl}?${toGetParams({ ...getParams, ...params })}`
+  const getParamsStr = toGetParams({ ...getParams, ...params })
+  return `${baseUrl}${getParamsStr ? `?${getParamsStr}` : ''}`
 }
 
 /**
