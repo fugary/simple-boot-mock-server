@@ -2,7 +2,7 @@ import { useResourceApi } from '@/hooks/ApiHooks'
 import { $http, hasLoading } from '@/vendors/axios'
 import axios from 'axios'
 import { $coreHideLoading, $coreShowLoading } from '@/utils'
-import { isArray, isString } from 'lodash-es'
+import { isArray, isString, isObject } from 'lodash-es'
 import {
   FORM_DATA,
   FORM_URL_ENCODED,
@@ -211,13 +211,30 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
     const paramSchemas = JSON.parse(schemaContent)
     if (isArray(paramSchemas)) {
       return paramSchemas.filter(filter).map(param => {
+        const array = param.schema?.type === 'array'
+        const valueSuggestions = param.schema?.enum || []
+        let slots = null
+        if (!valueSuggestions.length && isObject(param.examples)) {
+          Object.values(param.examples).forEach(item => valueSuggestions.push(item))
+          slots = {
+            default: (data) => {
+              const item = data.item
+              return isObject(item) ? `${item.value} - ${item.description}` : item
+            }
+          }
+        }
         return {
           name: param.name,
           value: param.schema?.default || '',
           enabled: true,
+          array,
           valueRequired: param.required,
-          valueSuggestions: param.schema?.enum,
-          dynamicOption: () => ({ required: param.required })
+          valueSuggestions,
+          dynamicOption: () => ({
+            placeholder: param?.description || param.name,
+            required: param.required,
+            slots
+          })
         }
       })
     }

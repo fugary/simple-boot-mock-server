@@ -2,7 +2,7 @@ import { $coreConfirm, getSingleSelectOptions } from '@/utils'
 import { $i18nKey } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
-import { cloneDeep, isArray, isFunction, isString } from 'lodash-es'
+import { cloneDeep, isArray, isFunction, isObject, isString } from 'lodash-es'
 import { ALL_CONTENT_TYPES_LIST, isStreamContentType } from '@/consts/MockConstants'
 
 /**
@@ -73,8 +73,8 @@ export const calcSuggestionsFunc = (keySuggestions) => {
     return keySuggestions
   } else if (isArray(keySuggestions)) {
     return (queryString, cb) => {
-      const dataList = keySuggestions.filter(item => item.toLowerCase().includes(queryString?.toLowerCase()))
-        .map(value => ({ value }))
+      const dataList = keySuggestions.map(value => isObject(value) ? value : ({ value }))
+        .filter(item => item?.value?.toLowerCase?.().includes(queryString?.toLowerCase()))
       cb(dataList)
     }
   }

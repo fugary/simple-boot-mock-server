@@ -178,7 +178,7 @@ const paramsOptions = computed(() => {
       type: paramValueSuggestions ? 'autocomplete' : 'input',
       attrs: {
         fetchSuggestions: paramValueSuggestions,
-        triggerOnFocus: false,
+        triggerOnFocus: true,
         tabindex: 100 + index * 2 + 2
       },
       dynamicOption: (item, ...args) => {
@@ -237,6 +237,15 @@ const paramsOptions = computed(() => {
         :span="3"
         class="padding-left2 padding-top1"
       >
+        <el-button
+          v-if="item.array"
+          type="success"
+          size="small"
+          circle
+          @click="params.splice(index + 1, 0, item)"
+        >
+          <common-icon icon="Plus" />
+        </el-button>
         <el-button
           v-if="showRemoveButton"
           type="danger"
