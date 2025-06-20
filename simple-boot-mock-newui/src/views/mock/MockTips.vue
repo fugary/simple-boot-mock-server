@@ -16,6 +16,11 @@ const internalFunctions = [
   { method: 'Mock.mock(data)', desc: 'MockJS支持', descEn: 'MockJS support' },
   { method: 'dayjs(...args)', desc: 'dayjs支持', descEn: 'dayjs support' },
   { method: 'fetch(url, options)', desc: 'fetch支持，async/await异步函数支持', descEn: 'fetch support, async/await functions support' },
+  {
+    method: 'require(url)',
+    desc: '提供 CommonJS 风格的 require 方法，用于动态加载第三方库。支持 module.exports 和 exports 形式的模块导出，不支持 ESM 模块。',
+    descEn: 'Provides a CommonJS-style require method to dynamically load third-party libraries. Supports module.exports and exports-based modules. ESM modules are not supported.'
+  },
   { method: 'decodeHex(hex)', desc: '将十六进制字符串解码为普通字符串', descEn: 'Decode hexadecimal string to normal string' },
   { method: 'encodeHex(data)', desc: '将普通字符串编码为十六进制格式', descEn: 'Encode normal string to hexadecimal format' },
   { method: 'md5Hex(data)', desc: '对数据进行 MD5 加密，输出十六进制格式', descEn: 'MD5 encrypt data, output hexadecimal format' },
@@ -153,7 +158,7 @@ Mock.mock({
 }, {
   label: $i18nBundle('mock.label.fetchAndAsync'),
   examples: [{
-    label: 'Fetch JSON',
+    label: 'fetch JSON',
     content: `
 (async function () {
     const response = await fetch('https://httpbin.org/put', {
@@ -165,11 +170,25 @@ Mock.mock({
 }())
 `.trim()
   }, {
-    label: 'Fetch Image',
+    label: 'fetch Image',
     content: `
 (async function () {
     const response = await fetch('http://e.hiphotos.baidu.com/image/pic/item/a1ec08fa513d2697e542494057fbb2fb4316d81e.jpg');
     return await response.blob()
+}())
+`.trim()
+  }, {
+    label: 'require example',
+    content: `
+(async function () {
+    const CryptoJS = await require('https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js');
+    const message = "test-message";
+    const md5 = CryptoJS.MD5(message).toString(CryptoJS.enc.Hex);
+    const sha256 = CryptoJS.SHA256(message).toString(CryptoJS.enc.Hex);
+    return {
+        md5,
+        sha256
+    };
 }())
 `.trim()
   }]
