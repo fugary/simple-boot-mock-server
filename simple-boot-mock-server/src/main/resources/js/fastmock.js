@@ -30,6 +30,21 @@
         return Mock.__oriMock(mockData, ...args)
     };
     globalThis.Random = Mock.Random;
+    const requireCache = {};
+    globalThis.require = function (url) {
+        if (requireCache[url]) {
+            return requireCache[url];
+        }
+        const response = fetch(url).then(res => res.text());
+        const module = {};
+        return response.then(script => {
+            const moduleWrapper = new Function("module", "exports", script);
+            module.exports = {};
+            moduleWrapper(module, module.exports);
+            requireCache[url] = module.exports;
+            return module.exports;
+        });
+    };
     globalThis.mockStringify = (input, ...args) => {
         if (typeof input === 'string') {
             return input;
@@ -44,5 +59,5 @@
             return mockStringify(input());
         }
         return JSON.stringify(input, ...args);
-    }
+    };
 })(Mock, request)
