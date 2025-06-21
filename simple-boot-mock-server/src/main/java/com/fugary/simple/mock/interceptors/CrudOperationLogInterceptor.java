@@ -156,6 +156,11 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                 if (StringUtils.isNotBlank(userName)) {
                     logBuilder.userName(userName).creator(userName);
                 }
+                String proxyUrl = response.getHeader(MockConstants.MOCK_PROXY_URL_HEADER);
+                if (StringUtils.isNotBlank(proxyUrl)) {
+                    logBuilder.proxyUrl(proxyUrl);
+                }
+                logBuilder.responseHeaders(JsonUtils.toJson(HttpRequestUtils.getResponseHeadersMap(response)));
             }
             MockLog mockLog = logBuilder.build();
             publishEvent(mockLog);

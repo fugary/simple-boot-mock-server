@@ -29,10 +29,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author gary.fu
@@ -240,6 +237,19 @@ public class HttpRequestUtils {
 		while (reqHeaders.hasMoreElements()) {
 			String key = reqHeaders.nextElement();
 			requestHeaders.put(key, request.getHeader(key));
+		}
+		return requestHeaders;
+	}
+
+	/**
+	 * 请求头获取
+	 * @param response
+	 */
+	public static Map<String, String> getResponseHeadersMap(HttpServletResponse response){
+		Collection<String> resHeaders = response.getHeaderNames();
+		Map<String, String> requestHeaders = new HashMap<>();
+		for (String resHeader : resHeaders) {
+			requestHeaders.put(resHeader, response.getHeader(resHeader));
 		}
 		return requestHeaders;
 	}
