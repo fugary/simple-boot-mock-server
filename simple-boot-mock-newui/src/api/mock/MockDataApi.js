@@ -176,8 +176,6 @@ export const calcParamTarget = (groupItem, requestItem, previewData, schemasConf
   if (value) {
     const pathParams = target.pathParams
     const savedTarget = JSON.parse(value)
-    delete savedTarget.method
-    delete savedTarget.responseBody
     if (target.method === 'GET') {
       delete savedTarget.requestBody
     }

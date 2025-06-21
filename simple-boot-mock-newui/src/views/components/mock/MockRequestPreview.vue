@@ -13,7 +13,7 @@ import { ElMessage } from 'element-plus'
 import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
-import { cloneDeep, isArray } from 'lodash-es'
+import { cloneDeep, isArray, pickBy } from 'lodash-es'
 import { addRequestParamsToResult, calcPreviewHeaders, processEvnParams } from '@/services/mock/MockCommonService'
 import { toGetParams } from '@/utils'
 
@@ -108,17 +108,15 @@ const calcResponse = (response) => {
 
 const calcMockParams = () => {
   const paramTargetVal = cloneDeep(paramTarget.value)
-  delete paramTargetVal.responseBody
-  delete paramTargetVal.responseFormat
-  delete paramTargetVal.method
-  delete paramTargetVal.groupConfig
-  delete paramTargetVal.contentType
   paramTargetVal.formData?.forEach(nv => {
     if (isArray(nv.value)) {
       nv.value = []
     }
   })
-  return paramTargetVal
+  const keepKeys = ['formData', 'formUrlencoded', 'authContent']
+  return pickBy(paramTargetVal, (_, key) => {
+    return key.startsWith('request') || key.endsWith('Params') || keepKeys.includes(key)
+  })
 }
 
 const doSaveMockParams = () => {
