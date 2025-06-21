@@ -20,6 +20,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.entity.ContentType;
+import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,11 +30,16 @@ import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import javax.script.ScriptException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -562,5 +569,39 @@ public class SimpleMockUtils {
             }
         }
         return SimpleResultUtils.createSimpleResult(groups);
+    }
+
+    /**
+     * 获取执行的Value结果
+     *
+     * @param value
+     * @param timeout
+     * @return
+     * @throws ScriptException
+     */
+    public static Object executeValue(Value value, long timeout) throws ScriptException {
+        // 判断是否是 Promise
+        if (value.canInvokeMember("then")) {
+            CompletableFuture<Object> future = new CompletableFuture<>();
+            value.invokeMember("then", (ProxyExecutable) (args) -> {
+                future.complete(args[0].as(Object.class));
+                return null;
+            }, (ProxyExecutable) (args) -> {
+                future.completeExceptionally(new ScriptException(args[0].toString()));
+                return null;
+            });
+            try {
+                return future.get(timeout, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                log.error("执行中断异常", e);
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException | TimeoutException e) {
+                if (e.getCause() instanceof ScriptException) {
+                    throw (ScriptException) e.getCause();
+                }
+                throw new ScriptException((Exception) e.getCause());
+            }
+        }
+        return value.as(Object.class);
     }
 }

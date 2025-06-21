@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.push;
 
+import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
@@ -33,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -66,32 +66,12 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             try {
                 invokeMethod(engineBindings, getMethod(engineBindings.getClass(), "importGlobalBindings", ScriptContext.class), scriptContext);
                 Value value = polyglotContext.eval(source);
-                // 判断是否是 Promise
-                if (value.canInvokeMember("then")) {
-                    CompletableFuture<Object> future = new CompletableFuture<>();
-                    value.invokeMember("then", (ProxyExecutable) (args) -> {
-                        future.complete(args[0].as(Object.class));
-                        return null;
-                    }, (ProxyExecutable) (args) -> {
-                        future.completeExceptionally(new ScriptException(args[0].toString()));
-                        return null;
-                    });
-                    return future.get();
-                }
-                return value.as(Object.class);
+                return SimpleMockUtils.executeValue(value, 30);
             } catch (PolyglotException e) {
                 ScriptException scriptException = (ScriptException) invokeMethod(GraalJSScriptEngine.class, getMethod(GraalJSScriptEngine.class, "toScriptException", PolyglotException.class), e);
                 if (scriptException != null) {
                     throw scriptException;
                 }
-            } catch (InterruptedException e) {
-                log.error("执行中断异常", e);
-                Thread.currentThread().interrupt();
-            } catch (ExecutionException e) {
-                if (e.getCause() instanceof ScriptException) {
-                    throw (ScriptException) e.getCause();
-                }
-                throw new ScriptException((Exception) e.getCause());
             }
         }
         return null;
@@ -117,7 +97,12 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                     }
                 }
                 if (optionsValue.hasMember("body")) {
-                    body = optionsValue.getMember("body").asString();
+                    try {
+                        Value bodyValue = context.eval("js", "mockStringify").execute(optionsValue.getMember("body"));
+                        body = SimpleMockUtils.executeValue(bodyValue, 10).toString();
+                    } catch (ScriptException e) {
+                        body = optionsValue.getMember("body").asString();
+                    }
                 }
             }
             MockParamsVo mockParams = new MockParamsVo();
