@@ -91,7 +91,6 @@ public class MockController {
                 return ResponseEntity.status(data.getStatusCode()).headers(httpHeaders).header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
             }
             response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
-            response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
             Pair<String, Object> bodyPair = SimpleMockUtils.getMockResponseBody(data);
             responseEntity = ResponseEntity.status(data.getStatusCode())
                     .headers(httpHeaders)
@@ -107,6 +106,9 @@ public class MockController {
         Integer delayTime = mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight());
         if (delayTime != null && delayTime > 0) {
             response.setHeader(MockConstants.MOCK_DELAY_TIME_HEADER, String.valueOf(delayTime));
+        }
+        if (mockGroup != null) {
+            response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
         }
         mockGroupService.delayTime(start, delayTime);
         return responseEntity;
