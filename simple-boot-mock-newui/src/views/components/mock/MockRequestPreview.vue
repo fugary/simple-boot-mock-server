@@ -120,15 +120,13 @@ const calcMockParams = () => {
 }
 
 const doSaveMockParams = () => {
-  if (paramTarget.value) {
+  if (paramTarget.value && checkMockParamsChange(requestItem)) {
     const requestId = requestItem.value?.id
     const id = previewData.value?.id
-    const paramTargetVal = calcMockParams()
-    const mockParams = JSON.stringify(paramTargetVal)
     return saveMockParams({
       requestId,
       id,
-      mockParams
+      mockParams: requestItem.value.mockParams
     }, { loading: false })
   }
 }
@@ -154,12 +152,18 @@ const checkDataChange = () => {
       changed = true
     }
   })
-  const paramTargetVal = calcMockParams()
-  if (JSON.stringify(paramTargetVal) !== previewData.value.mockParams) {
-    previewData.value.mockParams = JSON.stringify(paramTargetVal)
+  if (checkMockParamsChange(previewData)) {
     changed = true
   }
   return changed
+}
+
+const checkMockParamsChange = (item) => {
+  const paramTargetStr = JSON.stringify(calcMockParams())
+  if (paramTargetStr !== item.value.mockParams) {
+    item.value.mockParams = paramTargetStr
+    return true
+  }
 }
 
 const clearParamsAndResponse = () => {
