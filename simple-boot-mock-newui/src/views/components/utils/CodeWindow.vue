@@ -13,7 +13,7 @@ const { contentRef: codeText, languageRef, languageModel, languageSelectOption, 
  */
 const codeConfig = reactive({
   title: $i18nBundle('common.label.info'),
-  width: '800px',
+  width: '1000px',
   height: '350px',
   fullEditor: false,
   closeOnClickModal: true,

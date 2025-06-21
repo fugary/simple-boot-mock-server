@@ -114,6 +114,20 @@ const buttons = computed(() => {
           click: () => {
             showCodeWindow(item.responseBody)
           }
+        }, {
+          enabled: !!item.headers,
+          label: $i18nKey('common.label.commonView', 'mock.label.requestHeaders'),
+          type: 'info',
+          click: () => {
+            showCodeWindow(item.headers)
+          }
+        }, {
+          enabled: !!item.responseHeaders,
+          label: $i18nKey('common.label.commonView', 'mock.label.responseHeaders'),
+          type: 'info',
+          click: () => {
+            showCodeWindow(item.responseHeaders)
+          }
         }]
       })
     }
