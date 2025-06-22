@@ -70,6 +70,18 @@ interface AESOptionsType {
 const request: RequestVoType
 
 /**
+ * 提供一个异步版的 CommonJS 风格 require 方法，用于动态加载第三方库。支持 module.exports 和 exports 形式的模块导出，不支持 ESM (export / import) 模块。返回 Promise，可用于异步获取远程或本地模块内容。
+ * @param url 需要加载的js资源路径
+ * @returns 异步Promise对象
+ */
+const require: (url) => Promise
+
+/**
+ * 清空 require 函数的缓存。默认情况下，require 函数会缓存已加载过的 URL 模块数据，避免重复加载。
+ */
+const clearRequireCache: () => void
+
+/**
  * 将十六进制字符串解码普通字符串
  * @param hex 十六进制字符串
  * @returns result 解码后的数据
