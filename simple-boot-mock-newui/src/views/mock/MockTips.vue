@@ -18,9 +18,15 @@ const internalFunctions = [
   { method: 'fetch(url, options)', desc: 'fetch支持，async/await异步函数支持', descEn: 'fetch support, async/await functions support' },
   {
     method: 'require(url)',
-    desc: '提供 CommonJS 风格的 require 方法，用于动态加载第三方库。支持 module.exports 和 exports 形式的模块导出，不支持 ESM 模块。',
-    descEn: 'Provides a CommonJS-style require method to dynamically load third-party libraries. Supports module.exports and exports-based modules. ESM modules are not supported.'
+    desc: '提供一个异步版的 CommonJS 风格 require 方法，用于动态加载第三方库。支持 module.exports 和 exports 形式的模块导出，不支持 ESM (export / import) 模块。返回 Promise，可用于异步获取远程或本地模块内容。',
+    descEn: 'Provides an asynchronous CommonJS-style require method for dynamically loading third-party libraries. Supports modules exported via module.exports and exports, but does not support ESM (export / import) modules. Returns a Promise that resolves to the loaded module’s exports.'
   },
+  {
+    method: 'clearRequireCache',
+    desc: '清空 require 函数的缓存。默认情况下，require 函数会缓存已加载过的 URL 模块数据，避免重复加载。',
+    descEn: 'Clears the cache of the require function. By default, the require function caches loaded module data by URL to avoid redundant requests.'
+  },
+  { method: 'decodeHex(hex)', desc: '将十六进制字符串解码为普通字符串', descEn: 'Decode hexadecimal string to normal string' },
   { method: 'decodeHex(hex)', desc: '将十六进制字符串解码为普通字符串', descEn: 'Decode hexadecimal string to normal string' },
   { method: 'encodeHex(data)', desc: '将普通字符串编码为十六进制格式', descEn: 'Encode normal string to hexadecimal format' },
   { method: 'md5Hex(data)', desc: '对数据进行 MD5 加密，输出十六进制格式', descEn: 'MD5 encrypt data, output hexadecimal format' },

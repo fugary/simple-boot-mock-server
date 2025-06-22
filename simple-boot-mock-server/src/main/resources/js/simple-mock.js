@@ -29,6 +29,16 @@
     };
 
     /**
+     * require缓存清空
+     */
+    globalThis.clearRequireCache = function () {
+        const requireCache = globalThis.__requireCache__
+        if (requireCache) {
+            Object.keys(requireCache).forEach(key => delete requireCache[key]);
+        }
+    };
+
+    /**
      * 字符串转换输出
      *
      * @param input
