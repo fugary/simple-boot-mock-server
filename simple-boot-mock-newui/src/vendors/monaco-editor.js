@@ -140,7 +140,8 @@ export const useMonacoEditorOptions = (config) => {
       { label: 'JavaScript', value: 'javascript' },
       { label: 'XML/HTML', value: 'html' },
       { label: 'XML+JS', value: 'xmlWithJs' },
-      { label: 'PlainText', value: 'text' }
+      { label: 'Text', value: 'text' },
+      { label: 'CSS', value: 'css' }
     ],
     attrs: {
       clearable: false
@@ -150,7 +151,7 @@ export const useMonacoEditorOptions = (config) => {
     return {
       ...languageSelectOption.value,
       children: languageSelectOption.value.children
-        .filter(item => ['json', 'html', 'text'].includes(item.value))
+        .filter(item => item.value !== 'xmlWithJs')
     }
   })
   const formatDocument = () => {

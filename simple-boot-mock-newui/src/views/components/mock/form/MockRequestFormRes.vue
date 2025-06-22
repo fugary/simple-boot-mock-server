@@ -14,7 +14,7 @@ import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.
 import { isString } from 'lodash-es'
 import { $coreConfirm, $coreError } from '@/utils'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
-import { calcContentType, getMockConfirmConfig, isStreamContentType } from '@/consts/MockConstants'
+import { calcContentLanguage, calcContentType, getMockConfirmConfig, isStreamContentType } from '@/consts/MockConstants'
 import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
 import { downloadByLink } from '@/api/mock/MockGroupApi'
 
@@ -73,8 +73,8 @@ onBeforeUnmount(() => clearMediaItems(true))
 
 watch(() => props.responseTarget, async (responseTarget) => {
   currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
-  const contentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type' &&
-      (isMediaContentType(header.value) || isStreamContentType(header.value)))?.value
+  const oriContentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type')?.value
+  const contentType = isMediaContentType(oriContentType) || isStreamContentType(oriContentType) ? oriContentType : undefined
   if (responseTarget?.data && contentType) {
     if (isString(responseTarget.data)) {
       $coreError($i18nBundle('mock.msg.checkImageAccept'))
@@ -106,7 +106,11 @@ watch(() => props.responseTarget, async (responseTarget) => {
     contentRef.value = content
     const isRedirect = !!responseTarget?.responseHeaders?.find(header => header.name === 'mock-data-redirect')
     setTimeout(() => {
-      isRedirect && (languageRef.value = 'text')
+      if (isRedirect) {
+        languageRef.value = 'text'
+      } else {
+        languageRef.value = calcContentLanguage(oriContentType) || languageRef.value
+      }
       formatDocument()
     })
   }

@@ -49,8 +49,19 @@ export const LANG_TO_CONTENT_TYPES = {
   html: 'application/xml',
   xmlWithJs: 'application/xml',
   text: 'text/plain',
+  css: 'text/css',
   [FORM_DATA]: 'multipart/form-data',
   [FORM_URL_ENCODED]: 'application/x-www-form-urlencoded'
+}
+
+export const CONTENT_TYPES_TO_LANG = {
+  'application/json': 'json',
+  'application/xml': 'html',
+  'application/javascript': 'javascript',
+  'text/javascript': 'javascript',
+  'text/html': 'html',
+  'text/plain': 'text',
+  'text/css': 'css'
 }
 
 export const calcContentType = (lang, body, currentContentType) => {
@@ -61,6 +72,16 @@ export const calcContentType = (lang, body, currentContentType) => {
     return 'text/html'
   }
   return LANG_TO_CONTENT_TYPES[lang]
+}
+
+export const calcContentLanguage = contentType => {
+  if (contentType) {
+    const charIndex = contentType?.indexOf(';')
+    if (charIndex > -1) {
+      contentType = contentType.substring(0, charIndex)
+    }
+    return CONTENT_TYPES_TO_LANG[contentType]
+  }
 }
 
 export const AUTH_TYPE = {
