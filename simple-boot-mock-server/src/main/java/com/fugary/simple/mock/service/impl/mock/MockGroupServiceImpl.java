@@ -257,6 +257,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     protected void processMockData(MockData mockData, HttpRequestVo requestVo) {
         if (mockData != null) {
             String responseBody = StringUtils.trimToEmpty(mockData.getResponseBody());
+            if (StringUtils.contains(mockData.getContentType(), "javascript")) { // contentType是javascript不能处理
+                return;
+            }
             responseBody = MockJsUtils.processResponseBody(responseBody, requestVo, paramKey -> {
                 String parsedKey = StringUtils.trimToEmpty(paramKey);
                 parsedKey = parsedKey.endsWith(";") ? parsedKey.substring(0, parsedKey.length() - 1) : parsedKey;
