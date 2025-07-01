@@ -193,6 +193,12 @@ export const useTabsViewStore = defineStore('tabsView', () => {
     }
   }
 
+  const reIndexHistoryTab = (fromIndex, toIndex) => {
+    const tabs = historyTabs.value
+    tabs.splice(toIndex, 0, tabs.splice(fromIndex, 1)[0]) // 插入到 toIndex 位置
+    console.log('新的tabs顺序：', fromIndex, toIndex, tabs.map(t => t.name))
+  }
+
   watch(currentTab, path => {
     currentTabItem.value = historyTabs.value.find(v => path && v.path === path)
   })
@@ -234,6 +240,7 @@ export const useTabsViewStore = defineStore('tabsView', () => {
     addHistoryTab,
     addCachedTab,
     removeCachedTab,
+    reIndexHistoryTab,
     hasCloseDropdown
   }
 }, {

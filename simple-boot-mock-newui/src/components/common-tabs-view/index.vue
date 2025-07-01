@@ -1,15 +1,19 @@
 <script setup>
 import { useTabsViewStore } from '@/stores/TabsViewStore'
 import { useRoute, useRouter } from 'vue-router'
-import { onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { isString } from 'lodash-es'
 import TabsViewItem from '@/components/common-tabs-view/tabs-view-item.vue'
 import { toGetParams } from '@/utils'
 import { isNestedRoute } from '@/route/RouteUtils'
+import { useGetDerivedNamespace } from 'element-plus'
+import Sortable from 'sortablejs'
 
 const router = useRouter()
 const route = useRoute()
 const tabsViewStore = useTabsViewStore()
+const tabRef = ref()
+let sortable = null
 watch(route, () => {
   if (route.path) {
     tabsViewStore.addHistoryTab(route)
@@ -22,6 +26,19 @@ onMounted(() => {
     tabsViewStore.addHistoryTab(route)
   }
   tabsViewStore.currentTab = route.path
+  if (tabRef.value?.tabNavRef) {
+    const ns = useGetDerivedNamespace().value
+    const { tabListRef } = tabRef.value.tabNavRef
+    sortable = new Sortable(tabListRef, {
+      animation: 150,
+      draggable: `.${ns}-tabs__item`,
+      filter: '.is-disabled',
+      onEnd (event) {
+        const { oldIndex, newIndex } = event
+        tabsViewStore.reIndexHistoryTab(oldIndex, newIndex)
+      }
+    })
+  }
 })
 
 const selectHistoryTab = path => {
@@ -64,18 +81,22 @@ const tabItems = ref()
 const onDropdownVisibleChange = (visible, tab) => {
   if (visible) {
     tabItems.value.forEach(({ dropdownRef }) => {
-      console.info(Object.assign({}, dropdownRef))
       if (dropdownRef.id !== tab.path) {
         dropdownRef.handleClose()
       }
     })
   }
 }
+onBeforeUnmount(() => {
+  sortable?.destroy()
+  sortable = null
+})
 
 </script>
 
 <template>
   <el-tabs
+    ref="tabRef"
     v-bind="$attrs"
     v-model="tabsViewStore.currentTab"
     class="common-tabs"
