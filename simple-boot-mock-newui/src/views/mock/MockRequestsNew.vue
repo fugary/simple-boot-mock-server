@@ -9,7 +9,7 @@ import { ref, computed, nextTick } from 'vue'
 import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useDefaultPage } from '@/config'
-import { $i18nBundle } from '@/messages'
+import { $i18nBundle, $i18nKey } from '@/messages'
 import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import {
@@ -434,6 +434,13 @@ const toShowHistoryWindow = (current) => {
     >
       <template #buttons>
         <el-button
+          v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockRequest')"
+          type="info"
+          @click="newOrEdit()"
+        >
+          {{ $t('common.label.new') }}
+        </el-button>
+        <el-button
           v-if="projectEditable"
           type="success"
           @click="editGroupEnvParams"
@@ -497,7 +504,7 @@ const toShowHistoryWindow = (current) => {
                       <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
                     </el-button>
                     <el-button
-                      v-common-tooltip="$t('common.label.new')"
+                      v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockRequest')"
                       round
                       type="primary"
                       size="small"
