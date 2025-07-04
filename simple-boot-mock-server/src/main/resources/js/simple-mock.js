@@ -3,14 +3,17 @@
      * require 支持，加载第三方库（CommonJS风格）
      * 不支持 ESM 模块
      * @param {string} url 第三方库的URL
+     * @param {{cache: boolean}} [options] 选项
      * @returns {Promise} Promise，resolve 到模块导出的对象
      */
-    globalThis.require = function (url) {
+    globalThis.require = function (url, options) {
+        const { cache, ...fetchOptions } = options || {};
+        const cacheEnabled = cache !== false;
         const requireCache = globalThis.__requireCache__ || {};
-        if (requireCache[url]) {
+        if (cacheEnabled && requireCache[url]) {
             return Promise.resolve(requireCache[url]);
         }
-        return fetch(url).then(res => {
+        return fetch(url, fetchOptions).then(res => {
             if (!res.ok) {
                 throw new Error("Failed to load module: " + url + " (" + res.status + ")");
             }
@@ -23,7 +26,7 @@
             } catch (e) {
                 throw new Error("Error evaluating module: " + url + " → " + e.message);
             }
-            requireCache[url] = module.exports;
+            cacheEnabled && (requireCache[url] = module.exports);
             return module.exports;
         });
     };
