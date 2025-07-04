@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { $i18nBundle, $i18nMsg } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
@@ -17,7 +17,7 @@ const internalFunctions = [
   { method: 'dayjs(...args)', desc: 'dayjs支持', descEn: 'dayjs support' },
   { method: 'fetch(url, options)', desc: 'fetch支持，async/await异步函数支持', descEn: 'fetch support, async/await functions support' },
   {
-    method: 'require(url)',
+    method: 'require(url, options)',
     desc: '提供一个异步版的 CommonJS 风格 require 方法，用于动态加载第三方库。支持 module.exports 和 exports 形式的模块导出，不支持 ESM (export / import) 模块。返回 Promise，可用于异步获取远程或本地模块内容。',
     descEn: 'Provides an asynchronous CommonJS-style require method for dynamically loading third-party libraries. Supports modules exported via module.exports and exports, but does not support ESM (export / import) modules. Returns a Promise that resolves to the loaded module’s exports.'
   },
@@ -66,13 +66,13 @@ const functionColumns = computed(() => {
 const { languageRef, monacoEditorOptions } = useMonacoEditorOptions({
   readOnly: true,
   scrollbar: {
-    vertical: 'hidden',
-    horizontal: 'hidden'
-  }
+    vertical: 'hidden'
+  },
+  wordWrap: 'off'
 })
 languageRef.value = 'javascript'
 
-const exampleGroups = computed(() => [{
+const exampleGroups = ref([{
   label: $i18nBundle('mock.label.basicExamples'),
   examples: [{
     label: 'JSON Content',
@@ -201,7 +201,7 @@ Mock.mock({
 }])
 
 const calcHeight = (text) => {
-  return text.split('\n').length * 19 + 'px'
+  return text.split('\n').length * 20 + 'px'
 }
 
 </script>

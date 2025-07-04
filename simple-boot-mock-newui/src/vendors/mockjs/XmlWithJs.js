@@ -50,10 +50,10 @@ export const initXmlWithJs = (monaco) => {
     detail: 'MockJS对象',
     desc: '生成假数据工具'
   }, {
-    label: 'fetch(url)',
+    label: 'fetch(url, options)',
     detail: 'fetch支持，async/await异步函数支持'
   }, {
-    label: 'require(url)',
+    label: 'require(url, options)',
     detail: '提供一个异步版的 CommonJS 风格 require 方法，用于动态加载第三方库。支持 module.exports 和 exports 形式的模块导出，不支持 ESM (export / import) 模块。返回 Promise，可用于异步获取远程或本地模块内容。'
   }, {
     label: 'clearRequireCache()',
