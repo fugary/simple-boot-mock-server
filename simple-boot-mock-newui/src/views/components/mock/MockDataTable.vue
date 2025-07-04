@@ -181,8 +181,8 @@ const loadMockData = (...args) => {
 onMounted(() => {
   loadMockData()
 })
-watch(() => requestItem.value?.id, requestId => {
-  searchParam.value.requestId = requestId
+watch(requestItem, () => {
+  searchParam.value.requestId = requestItem.value?.id
   loadMockData()
 })
 const buttons = computed(() => defineTableButtons([{

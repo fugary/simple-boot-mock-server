@@ -51,7 +51,8 @@ const loadMockRequests = (...args) => {
   return searchMockRequests(...args).then((result) => {
     nextTick(() => {
       if (tableData.value?.length) {
-        selectRequest.value = tableData.value.find(req => req.id === selectRequest.value?.id) || tableData.value[0]
+        selectRequest.value = tableData.value.find(req => req.id === selectRequestId.value) || tableData.value[0]
+        selectRequestId.value = selectRequest.value?.id
         requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
         const countMap = result.infos?.countMap || {}
         const historyMap = result.infos?.historyMap || {}
@@ -123,6 +124,7 @@ const newRequestItem = () => ({
 const showEditWindow = ref(false)
 const currentRequest = ref(newRequestItem())
 const selectRequest = ref()
+const selectRequestId = ref()
 const newOrEdit = async id => {
   if (id) {
     await MockRequestApi.getById(id).then(data => {
@@ -202,9 +204,8 @@ const editFormOptions = computed(() => {
 const saveMockRequest = item => {
   return MockRequestApi.saveOrUpdate(item)
     .then((data) => {
-      if (data.success && data.resultData && selectRequest.value?.id !== data.resultData.id) {
-        selectRequest.value = data.resultData
-        requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
+      if (data.success && data.resultData && selectRequestId.value !== data.resultData.id) {
+        selectRequestId.value = data.resultData?.id
       }
       loadMockRequests()
       return data
