@@ -581,7 +581,7 @@ const pageAttrs = {
           <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
         </el-button>
         <el-button
-          v-common-tooltip="$t('common.label.new')"
+          v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockData')"
           type="primary"
           size="small"
           round
