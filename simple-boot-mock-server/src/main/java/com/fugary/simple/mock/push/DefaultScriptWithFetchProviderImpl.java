@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -86,6 +87,7 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             String method = "GET";
             List<NameValue> headers = new ArrayList<>();
             String body = null;
+            Long timeout = null;
             if (optionsValue != null && optionsValue.hasMembers()) {
                 if (optionsValue.hasMember("method")) {
                     method = optionsValue.getMember("method").asString().toUpperCase();
@@ -104,6 +106,9 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                         body = optionsValue.getMember("body").asString();
                     }
                 }
+                if (optionsValue.hasMember("timeout")) {
+                    timeout = optionsValue.getMember("timeout").asLong();
+                }
             }
             MockParamsVo mockParams = new MockParamsVo();
             mockParams.setTargetUrl(url);
@@ -112,6 +117,9 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             mockParams.setRequestBody(body);
             mockParams.setHeaderParams(headers);
             CompletableFuture<Value> future = new CompletableFuture<>();
+            if (timeout != null) {
+                future.orTimeout(timeout, TimeUnit.MILLISECONDS);
+            }
             log.info("fetch请求url:{}", url);
             fetchExecutor.execute(() -> {
                 try {
@@ -166,7 +174,7 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                 future.whenComplete((result, err) -> {
                     log.info("fetch请求构建Promise:{}/{}", url, result, err);
                     if (err != null) {
-                        reject.executeVoid(context.eval("js", "new Error").newInstance(err.getMessage()));
+                        reject.executeVoid(Value.asValue(err));
                     } else {
                         resolve.executeVoid(result);
                     }
