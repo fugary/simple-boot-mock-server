@@ -92,7 +92,8 @@ watch(() => props.responseTarget, async (responseTarget) => {
         })
       } else {
         $coreConfirm($i18nBundle('mock.msg.previewStreamConfirm'), getMockConfirmConfig()).then(() => {
-          downloadByLink(URL.createObjectURL(responseTarget.data))
+          const urlSegments = responseTarget.requestInfo?.url?.split('/') || []
+          downloadByLink(URL.createObjectURL(responseTarget.data), urlSegments[urlSegments.length - 1])
         }, async () => {
           contentRef.value = await responseTarget?.data?.text?.()
         })

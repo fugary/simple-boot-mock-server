@@ -4,10 +4,10 @@ import { isArray } from 'lodash-es'
 
 export const MOCK_GROUP_URL = '/admin/groups'
 
-export const downloadByLink = (downloadUrl) => {
+export const downloadByLink = (downloadUrl, name) => {
   const downloadLink = document.createElement('a')
   downloadLink.href = downloadUrl
-  downloadLink.download = 'download'
+  downloadLink.download = name || 'download'
   downloadLink.click()
 }
 
