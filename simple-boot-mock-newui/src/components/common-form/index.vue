@@ -115,6 +115,9 @@ onMounted(() => {
   }
   if (props.submitByEnter) {
     removeEnterFn.value = onKeyStroke('Enter', (event) => {
+      if (event?.target?.tagName === 'TEXTAREA' || event?.target?.isContentEditable) {
+        return
+      }
       event?.stopImmediatePropagation()
       if (form.value) {
         console.info('=========================submitByEnter', formDiv.value)
