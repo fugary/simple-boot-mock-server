@@ -68,7 +68,7 @@ public class DefaultMockPushProcessorImpl implements MockPushProcessor {
             if (location != null) {
                 URI targetUri = UriComponentsBuilder.fromUri(location)
                         .queryParams(getQueryParams(mockParams))
-                        .build(true).toUri();
+                        .build().toUri();
                 responseEntity = restTemplate.exchange(targetUri,
                         Optional.ofNullable(HttpMethod.resolve(mockParams.getMethod())).orElse(HttpMethod.GET),
                         entity, byte[].class);
@@ -121,7 +121,7 @@ public class DefaultMockPushProcessorImpl implements MockPushProcessor {
         requestUrl = UriComponentsBuilder.fromUriString(baseUrl)
                 .path(requestUrl)
                 .queryParams(getQueryParams(mockParams))
-                .build(true).toUriString();
+                .build().toUriString();
         for (NameValue nv : mockParams.getPathParams()) {
             requestUrl = requestUrl.replace("{" + nv.getName() + "}", nv.getValue());
         }
