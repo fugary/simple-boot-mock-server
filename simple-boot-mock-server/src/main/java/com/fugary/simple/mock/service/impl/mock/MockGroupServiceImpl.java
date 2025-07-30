@@ -89,7 +89,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        groupPathPattern = Pattern.compile(getMockPrefix() + "/(\\w+).*");
+        groupPathPattern = Pattern.compile(getMockPrefix() + "/([^/]+)/?.*");
     }
 
     /**
