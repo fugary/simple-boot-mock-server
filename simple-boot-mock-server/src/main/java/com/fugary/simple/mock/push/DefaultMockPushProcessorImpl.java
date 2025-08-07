@@ -7,6 +7,7 @@ import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -117,14 +118,16 @@ public class DefaultMockPushProcessorImpl implements MockPushProcessor {
      */
     protected String getRequestUrl(String baseUrl, MockParamsVo mockParams) {
         String requestUrl = mockParams.getRequestPath();
-        requestUrl = requestUrl.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant path不支持:var格式，只支持{var}格式
+        if (CollectionUtils.isNotEmpty(mockParams.getPathParams())) {
+            requestUrl = requestUrl.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant path不支持:var格式，只支持{var}格式
+            for (NameValue nv : mockParams.getPathParams()) {
+                requestUrl = requestUrl.replace("{" + nv.getName() + "}", nv.getValue());
+            }
+        }
         requestUrl = UriComponentsBuilder.fromUriString(baseUrl)
                 .path(requestUrl)
                 .queryParams(getQueryParams(mockParams))
                 .build().toUriString();
-        for (NameValue nv : mockParams.getPathParams()) {
-            requestUrl = requestUrl.replace("{" + nv.getName() + "}", nv.getValue());
-        }
         return requestUrl;
     }
 
