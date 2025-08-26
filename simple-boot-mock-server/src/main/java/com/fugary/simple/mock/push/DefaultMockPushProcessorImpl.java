@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.MultiValueMapAdapter;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -50,8 +50,8 @@ public class DefaultMockPushProcessorImpl implements MockPushProcessor {
                     entity, byte[].class);
             responseEntity = processRedirect(responseEntity, mockParams, entity);
             return SimpleMockUtils.removeProxyHeaders(responseEntity);
-        } catch (HttpClientErrorException e) {
-            return SimpleMockUtils.removeProxyHeaders(ResponseEntity.status(e.getStatusCode())
+        } catch (RestClientResponseException e) {
+            return SimpleMockUtils.removeProxyHeaders(ResponseEntity.status(e.getRawStatusCode())
                     .headers(e.getResponseHeaders())
                     .body(e.getResponseBodyAsByteArray()));
         } catch (Exception e) {
