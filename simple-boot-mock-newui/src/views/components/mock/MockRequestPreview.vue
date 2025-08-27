@@ -13,7 +13,7 @@ import { ElMessage } from 'element-plus'
 import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
-import { cloneDeep, isArray, pickBy } from 'lodash-es'
+import { cloneDeep, isArray, pickBy, isString } from 'lodash-es'
 import { addRequestParamsToResult, calcPreviewHeaders, processEvnParams } from '@/services/mock/MockCommonService'
 import { toGetParams } from '@/utils'
 
@@ -81,6 +81,9 @@ const doDataPreview = async () => {
     paramsSerializer: toGetParams,
     data,
     headers
+  }
+  if (hasBody && isString(data)) { // 字符串不让axios处理，防止调试请求和postman有差异
+    config.transformRequest = req => req
   }
   calcPreviewHeaders(paramTarget.value, requestUrl, config)
   requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)

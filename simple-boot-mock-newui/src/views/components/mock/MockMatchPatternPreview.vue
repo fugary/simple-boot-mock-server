@@ -18,6 +18,7 @@ import {
 import { addRequestParamsToResult, processEvnParams } from '@/services/mock/MockCommonService'
 import { toGetParams } from '@/utils'
 import { ElMessage } from 'element-plus'
+import { isString } from 'lodash-es'
 
 const showWindow = ref(false)
 const groupItem = ref()
@@ -66,6 +67,9 @@ const doDataPreview = () => {
     paramsSerializer: toGetParams,
     data,
     headers
+  }
+  if (hasBody && isString(data)) { // 字符串不让axios处理，防止调试请求和postman有差异
+    config.transformRequest = req => req
   }
   if (paramTarget.value.pathParams?.length) {
     const pathParams = paramTarget.value.pathParams.map(param => {
