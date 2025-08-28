@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { $i18nBundle, $i18nMsg } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
@@ -72,7 +72,7 @@ const { languageRef, monacoEditorOptions } = useMonacoEditorOptions({
 })
 languageRef.value = 'javascript'
 
-const exampleGroups = ref([{
+const exampleGroups = computed(() => [{
   label: $i18nBundle('mock.label.basicExamples'),
   examples: [{
     label: 'JSON Content',
