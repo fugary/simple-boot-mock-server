@@ -74,7 +74,11 @@ export const calcSuggestionsFunc = (keySuggestions) => {
   } else if (isArray(keySuggestions)) {
     return (queryString, cb) => {
       const dataList = keySuggestions.map(value => isObject(value) ? value : ({ value }))
-        .filter(item => item?.value?.toLowerCase?.().includes(queryString?.toLowerCase()))
+        .filter(item => {
+          let valueStr = item?.value ?? ''
+          valueStr = isString(valueStr) ? valueStr : valueStr.toString()
+          return valueStr.toLowerCase?.().includes(queryString?.toLowerCase())
+        })
       cb(dataList)
     }
   }
