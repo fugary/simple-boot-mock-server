@@ -2,7 +2,12 @@
 import { useRoute } from 'vue-router'
 import { $coreConfirm, $reload, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
-import MockRequestApi, { ALL_METHODS, loadHistoryDiff, searchHistories } from '@/api/mock/MockRequestApi'
+import MockRequestApi, {
+  ALL_METHODS,
+  loadHistoryDiff,
+  recoverFromHistory,
+  searchHistories
+} from '@/api/mock/MockRequestApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableColumns, limitStr } from '@/components/utils'
 import { ref, computed, nextTick } from 'vue'
@@ -409,7 +414,8 @@ const toShowHistoryWindow = (current) => {
           language: 'javascript'
         }
       })
-    }
+    },
+    recoverFunc: recoverFromHistory
   })
 }
 

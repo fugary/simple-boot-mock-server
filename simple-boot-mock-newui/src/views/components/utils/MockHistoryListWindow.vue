@@ -3,7 +3,8 @@ import { ref, computed } from 'vue'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useDefaultPage } from '@/config'
 import { defineTableButtons } from '@/components/utils'
-import { checkShowColumn } from '@/utils'
+import { $coreConfirm, checkShowColumn } from '@/utils'
+import { $i18nBundle } from '@/messages'
 
 const props = defineProps({
   title: {
@@ -29,6 +30,10 @@ const props = defineProps({
   compareFunc: {
     type: Function,
     required: true
+  },
+  recoverFunc: {
+    type: Function,
+    default: null
   }
 })
 const showWindow = ref(false)
@@ -54,6 +59,17 @@ const buttons = defineTableButtons([{
   },
   click (item) {
     props.compareFunc?.(item, target.value)
+  }
+}, {
+  labelKey: 'mock.label.recover',
+  type: 'warning',
+  buttonIf (data) {
+    return !data.current && props.recoverFunc
+  },
+  click (item) {
+    $coreConfirm($i18nBundle('mock.msg.recoverFromHistory'))
+      .then(() => props.recoverFunc?.(item))
+      .then(() => searchHistories())
   }
 }, {
   labelKey: 'mock.label.viewChange',

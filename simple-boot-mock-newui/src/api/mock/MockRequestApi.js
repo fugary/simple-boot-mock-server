@@ -65,6 +65,14 @@ export const loadHistoryDiff = (data, config) => {
   }, config)).then(response => response.data)
 }
 
+export const recoverFromHistory = (data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_REQUEST_URL}/recoverFromHistory`,
+    method: 'POST',
+    data: { id: data.id }
+  }, config)).then(response => response.data)
+}
+
 export const loadSchemas = (params, config) => {
   return $http(Object.assign({
     url: `${MOCK_REQUEST_URL}/loadSchemas`,

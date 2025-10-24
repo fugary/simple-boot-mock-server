@@ -7,7 +7,7 @@ import MockDataApi, {
   DEFAULT_CONTENT_TYPE,
   markDefault,
   copyMockData,
-  searchHistories, loadHistoryDiff
+  searchHistories, loadHistoryDiff, recoverFromHistory
 } from '@/api/mock/MockDataApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import CommonIcon from '@/components/common-icon/index.vue'
@@ -542,7 +542,8 @@ const toShowHistoryWindow = (current) => {
         contentKey: 'responseBody',
         compareItems: calcMockCompareItems(original, modified)
       })
-    }
+    },
+    recoverFunc: recoverFromHistory
   })
 }
 const pageAttrs = {

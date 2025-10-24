@@ -96,6 +96,14 @@ export const loadHistoryDiff = (data, config) => {
   }, config)).then(response => response.data)
 }
 
+export const recoverFromHistory = (data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_DATA_URL}/recoverFromHistory`,
+    method: 'POST',
+    data: { id: data.id }
+  }, config)).then(response => response.data)
+}
+
 export const previewRequest = function (reqData, config) {
   const req = axios.create({
     baseURL: import.meta.env.VITE_APP_API_BASE_URL, // url = base url + request url
