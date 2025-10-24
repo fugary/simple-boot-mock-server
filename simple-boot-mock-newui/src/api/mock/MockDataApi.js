@@ -179,6 +179,9 @@ export const calcParamTarget = (groupItem, requestItem, previewData, schemasConf
     if (target.method === 'GET') {
       delete savedTarget.requestBody
     }
+    copyParamsDynamicOption(target.pathParams, savedTarget.pathParams)
+    copyParamsDynamicOption(target.requestParams, savedTarget.requestParams)
+    copyParamsDynamicOption(target.headerParams, savedTarget.headerParams)
     Object.assign(target, savedTarget || {})
     if (savedTarget.pathParams && savedTarget.pathParams.length) {
       const savePathParams = savedTarget.pathParams.reduce((result, item) => {
@@ -217,7 +220,7 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
           slots = {
             default: (data) => {
               const item = data.item
-              return isObject(item) ? `${item.value} - ${item.description}` : item
+              return isObject(item) ? `${item.value ?? ''} - ${item.description}` : item
             }
           }
         }
@@ -238,6 +241,17 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
     }
   }
   return []
+}
+
+export const copyParamsDynamicOption = (params, savedParams) => {
+  if (isArray(params) && isArray(savedParams)) {
+    savedParams.forEach(savedParam => {
+      const foundParam = params.find(param => param.name === savedParam.name)
+      if (foundParam) {
+        savedParam.dynamicOption = foundParam.dynamicOption
+      }
+    })
+  }
 }
 
 export const preProcessParams = (params = []) => {
