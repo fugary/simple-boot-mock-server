@@ -5,7 +5,7 @@ import { getSingleSelectOptions, toFlatKeyValue } from '@/utils'
 import { $i18nBundle } from '@/messages'
 import { ElMessage, ElButton } from 'element-plus'
 import { calcSuggestionsFunc, concatValueSuggestions } from '@/services/mock/MockCommonService'
-import { isFunction } from 'lodash-es'
+import { isFunction, cloneDeep } from 'lodash-es'
 
 const props = defineProps({
   formProp: {
@@ -242,7 +242,7 @@ const paramsOptions = computed(() => {
           type="success"
           size="small"
           circle
-          @click="params.splice(index + 1, 0, item)"
+          @click="params.splice(index + 1, 0, cloneDeep(item))"
         >
           <common-icon icon="Plus" />
         </el-button>
