@@ -103,6 +103,20 @@ public class MockDataController {
         }
     }
 
+    @PostMapping("/recoverFromHistory")
+    public SimpleResult<MockData> recoverFromHistory(@RequestBody MockHistoryVo historyVo) {
+        MockData history = mockDataService.getById(historyVo.getId());
+        MockData target = null;
+        if (history != null && history.getModifyFrom() != null) {
+            target = mockDataService.getById(history.getModifyFrom());
+        }
+        if (history == null || target == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        SimpleMockUtils.copyFromHistory(history, target);
+        return mockDataService.newSaveOrUpdate(target); // 更新
+    }
+
     @GetMapping("/{id}")
     public SimpleResult<MockData> get(@PathVariable("id") Integer id) {
         return SimpleResultUtils.createSimpleResult(mockDataService.getById(id));

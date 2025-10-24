@@ -521,6 +521,20 @@ public class SimpleMockUtils {
     }
 
     /**
+     * 从历史数据恢复
+     *
+     * @param history
+     * @param target
+     */
+    public static void copyFromHistory(HistoryBase history, HistoryBase target) {
+        HistoryBase tmpTarget = copy(target, target.getClass()); // 暂存
+        copy(history, target); // 用历史版本覆盖
+        target.setId(tmpTarget.getId()); // 还原不能修改的属性
+        target.setVersion(tmpTarget.getVersion());
+        target.setModifyFrom(tmpTarget.getModifyFrom());
+    }
+
+    /**
      * 数据相加
      *
      * @param mockVo1

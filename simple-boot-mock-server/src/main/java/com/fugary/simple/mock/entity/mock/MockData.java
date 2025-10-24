@@ -10,7 +10,7 @@ import lombok.Data;
  * @author gary.fu
  */
 @Data
-public class MockData extends MockBase {
+public class MockData extends MockBase implements HistoryBase {
 
     private static final long serialVersionUID = 8517817442841283836L;
     private Integer groupId;

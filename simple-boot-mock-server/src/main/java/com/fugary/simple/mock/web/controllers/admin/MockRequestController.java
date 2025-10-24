@@ -138,6 +138,20 @@ public class MockRequestController {
         }
     }
 
+    @PostMapping("/recoverFromHistory")
+    public SimpleResult<MockRequest> recoverFromHistory(@RequestBody MockHistoryVo historyVo) {
+        MockRequest history = mockRequestService.getById(historyVo.getId());
+        MockRequest target = null;
+        if (history != null && history.getModifyFrom() != null) {
+            target = mockRequestService.getById(history.getModifyFrom());
+        }
+        if (history == null || target == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        SimpleMockUtils.copyFromHistory(history, target);
+        return mockRequestService.newSaveOrUpdate(target); // 更新
+    }
+
     @GetMapping("/{id}")
     public SimpleResult<MockRequest> get(@PathVariable("id") Integer id) {
         return SimpleResultUtils.createSimpleResult(mockRequestService.getById(id));
