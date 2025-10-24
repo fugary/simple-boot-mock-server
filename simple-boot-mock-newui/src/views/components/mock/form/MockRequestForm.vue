@@ -59,7 +59,7 @@ const requestUrl = computed(() => {
   return reqUrl
 })
 
-const emit = defineEmits(['sendRequest', 'saveMockResponseBody'])
+const emit = defineEmits(['sendRequest', 'saveMockResponseBody', 'resetRequestForm'])
 const formRef = ref()
 const sendRequest = (form) => {
   form.validate(valid => {
@@ -182,6 +182,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
           :schema-body="schema?.requestBodySchema"
           :schema-spec="schemaSpec"
           :examples="requestExamples"
+          @reset-request-form="$emit('resetRequestForm')"
         />
       </template>
     </common-form>

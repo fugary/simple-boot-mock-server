@@ -48,6 +48,13 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
   })
 }
 
+const resetParamTarget = () => {
+  clearParamsAndResponse()
+  nextTick(() => {
+    paramTarget.value = calcParamTarget(groupItem.value, requestItem.value, previewData.value, schemasConf.value)
+  })
+}
+
 const requestPath = computed(() => {
   if (groupItem.value && requestItem.value) {
     return `/mock/${groupItem.value.groupPath}${requestItem.value.requestPath}`
@@ -194,6 +201,7 @@ defineExpose({
       v-bind="$attrs"
       @send-request="doDataPreview"
       @save-mock-response-body="doSaveMockResponseBody"
+      @reset-request-form="resetParamTarget"
     />
   </el-container>
 </template>

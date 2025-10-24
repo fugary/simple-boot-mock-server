@@ -60,8 +60,6 @@ const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, 
   language: paramTarget.value.requestFormat
 })
 const codeHeight = '300px'
-contentRef.value = paramTarget.value?.requestBody
-languageRef.value = paramTarget.value?.requestFormat || languageRef.value
 
 const customLanguageSelectOption = computed(() => {
   return {
@@ -99,11 +97,14 @@ watch(contentRef, val => {
 })
 
 const currentTabName = ref('requestParamsTab')
-const authContentModel = ref({
-  authType: AUTH_TYPE.NONE
-})
+const authContentModel = ref({})
 const paramList = ['requestBody', 'pathParams', 'requestParams', 'headerParams']
-if (paramTarget.value) {
+const initParamTarget = () => {
+  contentRef.value = paramTarget.value?.requestBody
+  languageRef.value = paramTarget.value?.requestFormat || languageRef.value
+  authContentModel.value = {
+    authType: AUTH_TYPE.NONE
+  }
   currentTabName.value = paramTarget.value.method !== 'GET' ? 'requestBodyTab' : 'requestParamsTab'
   for (const key of paramList) {
     if (paramTarget.value[key]?.length) {
@@ -117,6 +118,7 @@ if (paramTarget.value) {
     paramTarget.value.authContent = authContentModel.value
   }
 }
+initParamTarget()
 const authValid = ref(true)
 
 const generateSample = async (schema) => {
@@ -131,14 +133,32 @@ const selectExample = (example) => {
 const envSuggestions = computed(() => calcEnvSuggestions(paramTarget.value?.groupConfig))
 
 const supportedGenerates = computed(() => generateSampleCheckResults(props.schemaBody, props.schemaSpec, props.schemaType))
+
+const emit = defineEmits(['resetRequestForm'])
+const resetRequestForm = () => {
+  emit('resetRequestForm')
+  setTimeout(initParamTarget)
+}
 </script>
 
 <template>
   <el-tabs
     v-model="currentTabName"
     type="border-card"
-    class="form-edit-width-100"
+    class="form-edit-width-100 common-tabs"
+    addable
   >
+    <template
+      #add-icon
+    >
+      <el-link
+        type="primary"
+        style="margin-top: -11px"
+        @click="resetRequestForm"
+      >
+        {{ $t('common.label.reset') }}
+      </el-link>
+    </template>
     <el-tab-pane
       v-if="paramTarget.pathParams?.length"
       name="pathParamsTab"
