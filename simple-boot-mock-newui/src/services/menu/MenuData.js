@@ -62,6 +62,26 @@ export const ALL_MENUS = [
     checkEnabled: isAdminUser
   },
   {
+    id: 53,
+    parentId: 5,
+    iconCls: 'Coin',
+    nameCn: '数据库连接池',
+    nameEn: 'DB Pool',
+    menuUrl: '/admin/dbs',
+    checkEnabled: isAdminUser
+  },
+  {
+    id: 59,
+    parentId: 5,
+    iconCls: 'Coin',
+    nameCn: '数据库管理',
+    nameEn: 'Database',
+    dbConsole: true,
+    external: true,
+    menuUrl: dbUrl,
+    checkEnabled: isAdminUser
+  },
+  {
     id: 9,
     iconCls: 'BuildFilled',
     nameCn: '常用工具',
@@ -97,15 +117,5 @@ export const ALL_MENUS = [
     nameCn: '查看帮助',
     nameEn: 'View Help',
     menuUrl: '/mock/tips'
-  }, {
-    id: 99,
-    parentId: 9,
-    iconCls: 'Coin',
-    nameCn: '数据库管理',
-    nameEn: 'Database',
-    dbConsole: true,
-    external: true,
-    menuUrl: dbUrl,
-    checkEnabled: isAdminUser
   }
 ]

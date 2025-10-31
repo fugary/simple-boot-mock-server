@@ -30,4 +30,8 @@ export default [{
   path: `${BASE_PATH}/logs`,
   name: 'MockLogs',
   component: () => import('@/views/mock/MockLogs.vue')
+}, {
+  path: `${BASE_PATH}/dbs`,
+  name: 'SimpleDbs',
+  component: () => import('@/views/admin/SimpleDbs.vue')
 }]
