@@ -77,7 +77,7 @@ const copyIcon = (icon) => {
   height: 100%;
 }
 .icon-container {
-  height: calc(100% - 42px);
+  height: calc(100% - 70px);
 }
 .icon-container .el-input {
   width: 80%;

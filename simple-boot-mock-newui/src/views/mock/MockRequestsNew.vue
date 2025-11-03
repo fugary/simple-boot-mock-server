@@ -1,6 +1,6 @@
 <script setup lang="jsx">
 import { useRoute } from 'vue-router'
-import { $coreConfirm, $reload, useBackUrl } from '@/utils'
+import { $coreConfirm, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, {
   ALL_METHODS,
@@ -56,8 +56,7 @@ const loadMockRequests = (...args) => {
   return searchMockRequests(...args).then((result) => {
     nextTick(() => {
       if (tableData.value?.length) {
-        selectRequest.value = tableData.value.find(req => req.id === selectRequestId.value) || tableData.value[0]
-        selectRequestId.value = selectRequest.value?.id
+        onSelectRequest(tableData.value.find(req => req.id === selectRequestId.value) || tableData.value[0])
         requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
         const countMap = result.infos?.countMap || {}
         const historyMap = result.infos?.historyMap || {}
@@ -139,6 +138,10 @@ const newOrEdit = async id => {
     currentRequest.value = newRequestItem()
   }
   showEditWindow.value = true
+}
+const onSelectRequest = request => {
+  selectRequest.value = request
+  selectRequestId.value = request?.id
 }
 const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({
   readOnly: false,
@@ -254,7 +257,7 @@ const changeBatchMode = () => {
 
 const editGroupEnvParams = () => {
   toEditGroupEnvParams(groupItem.value?.id)
-    .then(() => $reload(route))
+    .then(() => loadMockRequests())
 }
 
 const projectEditable = computed(() => checkProjectEdit(mockProject.value))
@@ -482,7 +485,7 @@ const toShowHistoryWindow = (current) => {
                 @page-size-change="loadMockRequests()"
                 @current-page-change="loadMockRequests()"
                 @selection-change="selectedRows=$event"
-                @current-change="selectRequest=$event"
+                @current-change="onSelectRequest"
               >
                 <template #buttonHeader>
                   {{ $t('mock.label.mockRequests') }}
