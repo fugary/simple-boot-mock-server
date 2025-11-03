@@ -139,7 +139,7 @@ const paramsOptions = computed(() => {
       type: 'switch',
       colSpan: 2
     }, {
-      label: 'Key',
+      labelKey: 'common.label.name',
       prop: props.nameKey,
       required: props.nameReadOnly || props.nameRequired,
       disabled: props.nameReadOnly,
@@ -170,7 +170,7 @@ const paramsOptions = computed(() => {
         param[props.valueKey] = param.type === 'file' ? [] : ''
       }
     }, {
-      label: 'Value',
+      labelKey: 'common.label.value',
       prop: props.valueKey,
       required: props.nameReadOnly || props.valueRequired,
       colSpan: nvSpan,
@@ -187,7 +187,7 @@ const paramsOptions = computed(() => {
         }
       }
     }, {
-      label: 'Files',
+      labelKey: 'common.label.files',
       type: 'upload',
       enabled: props.fileFlag && param.type === 'file',
       attrs: {

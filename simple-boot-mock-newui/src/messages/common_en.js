@@ -91,6 +91,9 @@ common.label.generateJsonData = 'Generate JSON'
 common.label.codeEdit = 'Code Edit'
 common.label.newWindowEdit = 'Edit in new window'
 common.label.selection = 'Selection'
+common.label.name = 'Name'
+common.label.value = 'Value'
+common.label.files = 'Files'
 
 //= ============通用============
 common.label.commonConfig = 'Config {0}'

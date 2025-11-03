@@ -91,6 +91,9 @@ common.label.generateJsonData = '生成JSON'
 common.label.codeEdit = '代码编辑'
 common.label.newWindowEdit = '新窗口编辑'
 common.label.selection = '选中'
+common.label.name = '名称'
+common.label.value = '值'
+common.label.files = '文件'
 
 //= ============通用============
 common.label.commonCode = '{0}代码'
