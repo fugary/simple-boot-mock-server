@@ -22,6 +22,7 @@ import com.fugary.simple.mock.web.vo.query.MockGroupQueryVo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -184,6 +185,11 @@ public class MockGroupController {
 
     @PostMapping("/checkExport")
     public SimpleResult checkExport(@RequestBody MockGroupExportParamVo queryVo) {
+        List<MockGroup> groups = loadExportGroups(queryVo);
+        return SimpleResultUtils.createSimpleResult(!groups.isEmpty());
+    }
+
+    private List<MockGroup> loadExportGroups(MockGroupExportParamVo queryVo) {
         List<MockGroup> groups = new ArrayList<>();
         if (queryVo.isExportAll()) {
             queryVo.setPage(SimpleResultUtils.getNewPage(1, MockConstants.MAX_EXPORT_COUNT));
@@ -192,24 +198,17 @@ public class MockGroupController {
         } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
             groups = mockGroupService.listByIds(queryVo.getGroupIds());
         }
-        return SimpleResultUtils.createSimpleResult(!groups.isEmpty());
+        return groups;
     }
 
     @GetMapping("/export")
     public void export(@ModelAttribute MockGroupExportParamVo queryVo, HttpServletResponse response) throws IOException {
-        List<MockGroup> groups = new ArrayList<>();
-        if (queryVo.isExportAll()) {
-            queryVo.setPage(SimpleResultUtils.getNewPage(1, MockConstants.MAX_EXPORT_COUNT));
-            SimpleResult<List<MockGroup>> simpleResult = this.search(queryVo);
-            groups = simpleResult.getResultData();
-        } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
-            groups = mockGroupService.listByIds(queryVo.getGroupIds());
-        }
+        List<MockGroup> groups = loadExportGroups(queryVo);
         List<ExportGroupVo> groupVoList = mockGroupService.loadExportGroups(groups);
         ExportMockVo mockVo = new ExportMockVo();
         mockVo.setGroups(groupVoList);
         String json = JsonUtils.toJson(mockVo);
-        String fileName = "mock-groups-" + System.currentTimeMillis() + ".json";
+        String fileName = "mock-groups-" + DateFormatUtils.format(System.currentTimeMillis(), MockConstants.OUTPUT_FILE_NAME) + ".json";
         response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
         response.addHeader("Content-Disposition", "attachment; filename="
                 + URLEncoder.encode(fileName, StandardCharsets.UTF_8));

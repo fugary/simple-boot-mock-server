@@ -85,4 +85,8 @@ public class MockConstants {
      * 最大导出条数
      */
     public static final Integer MAX_EXPORT_COUNT = 1000;
+    /**
+     * 导出文件名
+     */
+    public static final String OUTPUT_FILE_NAME = "yyyyMMddHHmmss";
 }
