@@ -1,8 +1,8 @@
 <script setup lang="jsx">
 import { defineFormOptions } from '@/components/utils'
 import { computed, ref } from 'vue'
-import { getSingleSelectOptions, toFlatKeyValue } from '@/utils'
-import { $i18nBundle } from '@/messages'
+import { $copyText, getSingleSelectOptions, toFlatKeyValue } from '@/utils'
+import { $i18nBundle, $i18nKey } from '@/messages'
 import { ElMessage, ElButton } from 'element-plus'
 import { calcSuggestionsFunc, concatValueSuggestions } from '@/services/mock/MockCommonService'
 import { isFunction, cloneDeep } from 'lodash-es'
@@ -25,6 +25,10 @@ const props = defineProps({
     default: false
   },
   showAddButton: {
+    type: Boolean,
+    default: true
+  },
+  showCopyButton: {
     type: Boolean,
     default: true
   },
@@ -71,6 +75,12 @@ const addRequestParam = () => {
   })
 }
 
+const validParams = computed(() => {
+  return params.value.filter(param => !!param.name && param.type !== 'file')
+})
+
+const copyParams = () => $copyText(JSON.stringify(validParams.value))
+
 const calcPasteParams = value => {
   let calcParams = []
   if (value.startsWith('{')) { // json
@@ -89,6 +99,8 @@ const calcPasteParams = value => {
     } catch (e) {
       ElMessage.error(e.message)
     }
+  } else if (value.startsWith('[')) {
+    calcParams = JSON.parse(value)
   } else {
     if (value.indexOf('?') > -1) {
       value = value.slice(value.indexOf('?') + 1)
@@ -112,11 +124,15 @@ const inputTextOption = {
   tooltip: $i18nBundle('mock.msg.pasteToProcess'),
   prop: 'text',
   labelWidth: '40px',
+  attrs: {
+    type: 'textarea'
+  },
   change (value) {
     if (value) {
       const calcParams = calcPasteParams(value)
       params.value = [...calcParams]
       inputTextModel.value.text = ''
+      showTextModel.value = false
     }
   }
 }
@@ -141,7 +157,7 @@ const paramsOptions = computed(() => {
     }, {
       labelKey: 'common.label.name',
       prop: props.nameKey,
-      required: props.nameReadOnly || props.nameRequired,
+      required: props.nameReadOnly || props.nameRequired || param.nameRequired || param.valueRequired,
       disabled: props.nameReadOnly,
       colSpan: nvSpan,
       type: nameSuggestions ? 'autocomplete' : 'input',
@@ -162,7 +178,10 @@ const paramsOptions = computed(() => {
       value: 'text',
       children: getSingleSelectOptions('text', 'file'),
       attrs: {
-        clearable: false
+        clearable: false,
+        style: {
+          paddingTop: '2px'
+        }
       },
       enabled: props.fileFlag,
       colSpan: 3,
@@ -172,7 +191,7 @@ const paramsOptions = computed(() => {
     }, {
       labelKey: 'common.label.value',
       prop: props.valueKey,
-      required: props.nameReadOnly || props.valueRequired,
+      required: props.nameReadOnly || props.valueRequired || param.valueRequired,
       colSpan: nvSpan,
       enabled: param.type !== 'file',
       type: paramValueSuggestions ? 'autocomplete' : 'input',
@@ -265,8 +284,23 @@ const paramsOptions = computed(() => {
           size="small"
           @click="addRequestParam()"
         >
-          <common-icon icon="Plus" />
+          <common-icon
+            class="margin-right1"
+            icon="Plus"
+          />
           {{ $t('common.label.add') }}
+        </el-button>
+        <el-button
+          v-if="showCopyButton&&validParams?.length"
+          type="success"
+          size="small"
+          @click="copyParams()"
+        >
+          <common-icon
+            class="margin-right1"
+            icon="DocumentCopy"
+          />
+          {{ $i18nKey('common.label.commonCopy', 'mock.label.params') }}
         </el-button>
         <el-button
           v-if="showPasteButton"
@@ -274,12 +308,15 @@ const paramsOptions = computed(() => {
           size="small"
           @click="showTextModel=!showTextModel"
         >
-          <common-icon icon="ContentPasteGoFilled" />
+          <common-icon
+            class="margin-right1"
+            icon="ContentPasteGoFilled"
+          />
           {{ $t('common.label.paste') }}
         </el-button>
         <common-form-control
           v-if="showTextModel"
-          class="text-model-cls"
+          class="padding-top2"
           :model="inputTextModel"
           :option="inputTextOption"
         />
