@@ -49,7 +49,7 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
 
 const doDataPreview = () => {
   const params = preProcessParams(paramTarget.value?.requestParams).reduce((results, item) => {
-    addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value))
+    addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value, true))
     return results
   }, {})
   const { data, hasBody } = calcRequestBody(paramTarget)
@@ -75,7 +75,7 @@ const doDataPreview = () => {
     const pathParams = paramTarget.value.pathParams.map(param => {
       return {
         ...param,
-        value: processEvnParams(paramTarget.value.groupConfig, param.value)
+        value: processEvnParams(paramTarget.value.groupConfig, param.value, true)
       }
     })
     params[MOCK_DATA_PATH_PARAMS_HEADER] = encodeURIComponent(JSON.stringify(pathParams))

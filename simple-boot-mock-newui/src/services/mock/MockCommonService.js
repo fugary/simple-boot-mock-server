@@ -114,7 +114,7 @@ export const calcEnvSuggestions = (groupConfig) => {
   }
 }
 
-export const processEvnParams = (groupConfig, dataValue) => {
+export const processEvnParams = (groupConfig, dataValue, encode) => {
   if (groupConfig && isString(dataValue) && dataValue.includes('{{') && dataValue.includes('}}')) {
     groupConfig = groupConfig && isString(groupConfig) ? JSON.parse(groupConfig) : groupConfig
     if (groupConfig?.envParams?.length) {
@@ -122,6 +122,9 @@ export const processEvnParams = (groupConfig, dataValue) => {
         dataValue = dataValue.replace(`{{${item.name}}}`, (item.value || '').trim())
       })
     }
+  }
+  if (isString(dataValue) && encode) {
+    dataValue = encodeURIComponent(dataValue)
   }
   return dataValue
 }

@@ -66,14 +66,14 @@ const doDataPreview = async () => {
   console.log('========================paramTarget1', paramTarget.value)
   let requestUrl = requestPath.value
   paramTarget.value?.pathParams?.forEach(pathParam => {
-    const pathValue = processEvnParams(paramTarget.value.groupConfig, pathParam.value)
+    const pathValue = processEvnParams(paramTarget.value.groupConfig, pathParam.value, true)
     if (pathValue) {
       requestUrl = requestUrl.replace(new RegExp(`:${pathParam.name}`, 'g'), pathValue)
         .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), pathValue)
     }
   })
   const params = preProcessParams(paramTarget.value?.requestParams).reduce((results, item) => {
-    addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value))
+    addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value, true))
     return results
   }, {})
   const { data, hasBody } = calcRequestBody(paramTarget)
