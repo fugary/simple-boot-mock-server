@@ -127,3 +127,4 @@ mock.msg.functionTooltip = 'Note: You can use JavaScript self-invoking functions
 mock.msg.disableMockTooltip = 'Pause Mock requests or data. When paused, if a proxy URL is configured, the request will be forwarded to the proxy. Otherwise, it will return a 404, just like when disabled.'
 mock.msg.previewStreamConfirm = 'The Content-Type header indicates that this response is a data stream. Would you like to download it as a file or preview it as text?'
 mock.msg.recoverFromHistory = 'Would you like to use this version of the data as the latest one?'
+mock.msg.responseCharsetTooltip = 'Default charset is UTF-8, none for responding without charset'

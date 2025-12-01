@@ -1,5 +1,5 @@
 import { $coreConfirm, getSingleSelectOptions } from '@/utils'
-import { $i18nKey } from '@/messages'
+import { $i18nKey, $i18nBundle } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
 import { cloneDeep, isArray, isFunction, isObject, isString } from 'lodash-es'
@@ -138,7 +138,7 @@ export const useContentTypeOption = (prop = 'contentType', charset = true) => {
         label: 'Charset',
         prop: 'defaultCharset',
         type: 'autocomplete',
-        tooltip: 'Default charset is UTF-8, none for responding without charset',
+        tooltip: $i18nBundle('mock.msg.responseCharsetTooltip'),
         attrs: {
           fetchSuggestions: ['UTF-8', 'ISO-8859-1', 'GBK', 'GB2312', 'GB18030', 'UTF-16'].map(value => ({ value }))
         }

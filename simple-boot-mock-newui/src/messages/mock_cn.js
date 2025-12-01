@@ -127,3 +127,4 @@ mock.msg.functionTooltip = '注意：可以使用Javascript自执行函数来生
 mock.msg.disableMockTooltip = '暂停Mock请求或数据，暂停后如果配置有代理地址将请求代理地址，如果没有将和禁用一样返回404'
 mock.msg.previewStreamConfirm = '从Content-Type头信息判断此响应为数据流，响应下载为文件还是以文本方式预览？'
 mock.msg.recoverFromHistory = '是否要以此版本数据作为最新数据？'
+mock.msg.responseCharsetTooltip = '默认字符集是UTF-8, "none"表示没有响应不带字符集'
