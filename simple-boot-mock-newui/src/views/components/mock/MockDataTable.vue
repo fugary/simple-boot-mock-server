@@ -14,20 +14,25 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import CommonFormControl from '@/components/common-form-control/index.vue'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
-import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { useFormDelay, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { showMockTips, showCompareWindow, showHistoryListWindow, toTestMatchPattern } from '@/utils/DynamicUtils'
+import {
+  showMockTips,
+  showHistoryListWindow,
+  toTestMatchPattern,
+  showCompareWindowNew
+} from '@/utils/DynamicUtils'
 import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
-import { ElMessage, ElTag, ElText } from 'element-plus'
+import { ElMessage, ElTag } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
 import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
 import { calcContentType, DEFAULT_HEADERS } from '@/consts/MockConstants'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
-import { getMockCompareItem } from '@/services/mock/MockDiffService'
 import { useDefaultPage } from '@/config'
+import { getDataHistoryViewOptions } from '@/services/mock/NewMockDiffService'
+import { getStatusCode } from '@/services/mock/MockDiffService'
 
 const props = defineProps({
   groupItem: {
@@ -45,29 +50,6 @@ const requestItem = defineModel('requestItem', {
 })
 const selectedRows = ref([])
 const batchMode = ref(false)
-const getStatusCode = (data) => {
-  let type = 'danger'
-  if (data.statusCode < 300) {
-    type = 'success'
-  } else if (data.statusCode < 400) {
-    type = 'primary'
-  } else if (data.statusCode < 500) {
-    type = 'warning'
-  }
-  const status = ALL_STATUS_CODES.find(status => data.statusCode === status.code)
-  const statusLabel = status ? $i18nMsg(`${status.labelCn} - ${(status.labelEn)}`, `${status.labelEn} - ${(status.labelCn)}`) : ''
-  if (!status) {
-    return ''
-  }
-  return <ElText type="success">
-    {data.defaultFlag
-      ? <CommonIcon type="success"
-                      v-common-tooltip={$i18nBundle('mock.label.default')}
-                      icon="Flag"/>
-      : ''}
-    <ElTag v-common-tooltip={statusLabel} type={type} class={data.defaultFlag ? 'margin-left1' : ''}>{data.statusCode}</ElTag>
-  </ElText>
-}
 const columns = computed(() => {
   const hasMatchPattern = checkShowColumn(tableData.value, 'matchPattern')
   return defineTableColumns([{
@@ -414,60 +396,6 @@ const onSelectDataItem = (dataItem) => {
   }
 }
 
-const calcMockCompareItems = (original, modified) => {
-  if (original && modified) {
-    const newTag = !original.id ? <ElTag class="margin-left1" type="warning">{ $i18nBundle('common.label.new') }</ElTag> : ''
-    const currentFlag = modified.current ? <ElTag class="margin-left1" type="success" round={true}>{$i18nBundle('mock.label.current')}</ElTag> : ''
-    const getStatusCodeFormatter = (item) => {
-      item.statusDefaultFlag = item.defaultFlag + '-' + item.statusCode
-      return () => getStatusCode(item)
-    }
-    const getDelFlagFormatter = (item) => () => <DelFlagTag v-model={item.status}/>
-    const getResponseBodyFormatter = (item, modFlag) => () => <ElText type={modFlag && original.responseBody !== modified.responseBody ? 'warning' : ''}>
-      <CommonIcon icon="ArrowDownBold"/>
-      <MockUrlCopyLink showLink={!!item.responseBody} class="margin-left1" content={item.responseBody} />
-    </ElText>
-    return [
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.version', key: 'version', modifiedAppend: <>{newTag}{currentFlag}</> }),
-      ...getMockCompareItem({ original, modified, labelKey: 'common.label.modifyDate', key: 'modifyDate', date: true }),
-      ...getMockCompareItem({ original, modified, labelKey: 'common.label.modifier', key: 'modifier' }),
-      ...getMockCompareItem({
-        original,
-        modified,
-        labelKey: 'mock.label.statusCode',
-        key: 'statusDefaultFlag',
-        originalFormatter: getStatusCodeFormatter(original),
-        modifiedFormatter: getStatusCodeFormatter(modified)
-      }),
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.responseName', key: 'dataName', copy: true }),
-      ...getMockCompareItem({
-        original,
-        modified,
-        labelKey: 'common.label.status',
-        key: 'status',
-        originalFormatter: getDelFlagFormatter(original),
-        modifiedFormatter: getDelFlagFormatter(modified)
-      }),
-      ...getMockCompareItem({ original, modified, label: 'Content Type', key: 'contentType' }),
-      ...getMockCompareItem({ original, modified, label: 'Charset', key: 'defaultCharset' }),
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.matchPattern', key: 'matchPattern', copy: true }),
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.dataFormat', key: 'responseFormat' }),
-      ...getMockCompareItem({ original, modified, labelKey: 'common.label.delay', key: 'delay' }),
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.responseHeaders', key: 'headers', limit: 50, copy: true }),
-      ...getMockCompareItem({ original, modified, labelKey: 'common.label.description', key: 'description', copy: true }),
-      ...getMockCompareItem({ original, modified, labelKey: 'mock.label.queryParams', key: 'mockParams', limit: 50, copy: true }),
-      ...getMockCompareItem({
-        original,
-        modified,
-        labelKey: 'mock.label.mockResponseBody',
-        key: 'responseBody',
-        originalFormatter: getResponseBodyFormatter(original),
-        modifiedFormatter: getResponseBodyFormatter(modified, true),
-        enabled: true
-      })]
-  }
-  return []
-}
 const toShowHistoryWindow = (current) => {
   showHistoryListWindow({
     columns: defineTableColumns([{
@@ -536,11 +464,10 @@ const toShowHistoryWindow = (current) => {
       } else {
         modified = target
       }
-      showCompareWindow({
+      showCompareWindowNew({
         modified,
         original,
-        contentKey: 'responseBody',
-        compareItems: calcMockCompareItems(original, modified)
+        historyOptionsMethod: getDataHistoryViewOptions
       })
     },
     recoverFunc: recoverFromHistory

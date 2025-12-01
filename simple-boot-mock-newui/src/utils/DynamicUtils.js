@@ -9,6 +9,7 @@ const ShowUserInfo = () => import('@/views/components/user/ShowUserInfo.vue')
 const CodeWindow = () => import('@/views/components/utils/CodeWindow.vue')
 const MockHistoryListWindow = () => import('@/views/components/utils/MockHistoryListWindow.vue')
 const MockCompareWindow = () => import('@/views/components/utils/MockCompareWindow.vue')
+const MockCompareWindowNew = () => import('@/views/components/utils/MockCompareWindowNew.vue')
 const MockTipsWindow = () => import('@/views/components/utils/MockTipsWindow.vue')
 
 export const closeAllOnRouteChange = () => {
@@ -76,6 +77,15 @@ export const showCompareWindow = async (config) => {
     ...config
   })
   vnode.component?.exposed?.showCompareWindow()
+}
+
+export const showCompareWindowNew = async (config) => {
+  const dynamicHelper = new DynamicHelper()
+  const vnode = await dynamicHelper.createAndRender(MockCompareWindowNew, {
+    onClosed: () => dynamicHelper.destroy(),
+    ...config
+  })
+  vnode.component?.exposed?.showCompareWindowNew()
 }
 
 export const showMockTips = async () => {

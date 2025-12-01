@@ -47,6 +47,23 @@ export const formatDay = (date, format) => {
   }
   return ''
 }
+
+/**
+ * 格式化JSON
+ * @param str
+ * @returns {*|string}
+ */
+export const formatJsonStr = (str) => {
+  if (str) {
+    try {
+      return JSON.stringify(JSON.parse(str), null, 2)
+    } catch (e) {
+      console.error('解析json错误', e)
+    }
+  }
+  return str
+}
+
 /**
  * 数组转换成 key:value的对象，可以为a.b.c格式
  * @param item

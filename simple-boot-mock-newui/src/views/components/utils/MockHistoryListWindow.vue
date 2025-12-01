@@ -4,7 +4,7 @@ import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useDefaultPage } from '@/config'
 import { defineTableButtons } from '@/components/utils'
 import { $coreConfirm, checkShowColumn } from '@/utils'
-import { $i18nBundle } from '@/messages'
+import { $i18nBundle, $i18nMsg } from '@/messages'
 
 const props = defineProps({
   title: {
@@ -125,7 +125,7 @@ defineExpose({
         :data="tableData"
         :columns="calcColumns"
         :buttons="buttons"
-        :buttons-column-attrs="{minWidth:'220px',fixed:'right'}"
+        :buttons-column-attrs="{minWidth:$i18nMsg('220px','270px'),fixed:'right'}"
         :loading="loading"
         @page-size-change="searchHistories()"
         @current-page-change="searchHistories()"
