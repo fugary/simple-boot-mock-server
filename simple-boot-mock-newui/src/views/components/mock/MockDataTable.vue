@@ -429,6 +429,9 @@ const toShowHistoryWindow = (current) => {
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
       minWidth: '160px'
     }, {
+      labelKey: 'common.label.modifier',
+      formatter: item => item.modifier || item.creator
+    }, {
       labelKey: 'mock.label.version',
       minWidth: '120px',
       formatter (item) {
