@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { $i18nBundle, $i18nKey } from '@/messages'
+import { $coreConfirm } from '@/utils'
 
 const props = defineProps({
   typeConfig: {
@@ -26,6 +27,10 @@ const props = defineProps({
   clickToToggle: {
     type: Boolean,
     default: false
+  },
+  confirmBeforeToggle: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -78,7 +83,12 @@ const tooltip = computed(() => {
 const handleClick = $event => {
   $event.stopPropagation()
   if (props.clickToToggle) {
-    emit('toggleValue', reversedValue.value)
+    if (props.confirmBeforeToggle) {
+      $coreConfirm($i18nBundle('common.msg.commonConfirm', [valueConf.value[reversedValue.value]]))
+        .then(() => emit('toggleValue', reversedValue.value))
+    } else {
+      emit('toggleValue', reversedValue.value)
+    }
   }
 }
 
