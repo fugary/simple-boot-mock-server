@@ -509,3 +509,9 @@ html, body, #app, .index-container {
 .disable-affix .el-affix--fixed {
     position: unset;
 }
+
+.iframe-preview {
+    width: 100%;
+    height: v-bind(height);
+    border: 0;
+}

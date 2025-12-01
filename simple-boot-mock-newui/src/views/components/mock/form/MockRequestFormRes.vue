@@ -7,6 +7,7 @@ import { $i18nKey, $i18nBundle } from '@/messages'
 import {
   generateSampleCheckResults,
   generateSchemaSample,
+  isHtmlContentType,
   isMediaContentType,
   useContentTypeOption
 } from '@/services/mock/MockCommonService'
@@ -60,8 +61,10 @@ const currentElRef = useTemplateRef('currentElRef')
 const mediaConfig = reactive({
   responseImg: null,
   responseAudio: null,
-  responseVideo: null
+  responseVideo: null,
+  responseHtml: null
 })
+const previewHtml = ref(false)
 const clearMediaItems = (remove) => {
   for (const key in mediaConfig) {
     remove && currentElRef.value?.$el?.querySelector(`.${key}El`)?.remove()
@@ -74,10 +77,16 @@ onBeforeUnmount(() => clearMediaItems(true))
 watch(() => props.responseTarget, async (responseTarget) => {
   currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
   const oriContentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type')?.value
-  const contentType = isMediaContentType(oriContentType) || isStreamContentType(oriContentType) ? oriContentType : undefined
+  const contentType = isMediaContentType(oriContentType) || isStreamContentType(oriContentType) || isHtmlContentType(oriContentType) ? oriContentType : undefined
   if (responseTarget?.data && contentType) {
     if (isString(responseTarget.data)) {
-      $coreError($i18nBundle('mock.msg.checkImageAccept'))
+      if (isHtmlContentType(contentType)) {
+        previewHtml.value = true
+        mediaConfig.responseHtml = responseTarget.data
+        contentRef.value = responseTarget.data
+      } else {
+        $coreError($i18nBundle('mock.msg.checkImageAccept'))
+      }
     } else {
       clearMediaItems()
       if (isMediaContentType(contentType)) {
@@ -196,6 +205,18 @@ const redirectMockResponse = computed(() => {
           v-else-if="responseTarget"
           style="display: flex; margin-top: -7px;"
         >
+          <el-link
+            v-if="mediaConfig.responseHtml"
+            type="primary"
+            underline="never"
+            class="margin-right3"
+            @click="previewHtml=!previewHtml"
+          >
+            <common-icon
+              :size="previewHtml?40:20"
+              :icon="previewHtml?'HtmlFilled':'View'"
+            />
+          </el-link>
           <el-text
             v-common-tooltip="responseTarget?.error?.message"
             :type="requestInfo.status===200?'success':'danger'"
@@ -252,6 +273,12 @@ const redirectMockResponse = computed(() => {
           >
             Your browser does not support the video tag.
           </video>
+          <iframe
+            v-else-if="mediaConfig.responseHtml&&previewHtml"
+            class="iframe-preview"
+            :srcdoc="mediaConfig.responseHtml"
+            height="500px"
+          />
           <template v-else>
             <common-form-control
               :model="languageModel"

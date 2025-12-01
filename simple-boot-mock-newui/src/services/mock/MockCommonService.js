@@ -172,6 +172,8 @@ export const calcPreviewHeaders = (paramTarget, url, config) => {
 
 export const isMediaContentType = contentType => ['image', 'audio', 'video'].find(type => contentType?.includes(type))
 
+export const isHtmlContentType = contentType => ['text/html'].find(type => contentType?.includes(type))
+
 const defaultCheckFunc = schema => !schema?.__contentType || schema?.__contentType?.includes('json') || schema?.__contentType?.includes('*/*')
 
 export const generateSampleCheck = (schemaBody, schemaSpec, schemaType, checkFun = defaultCheckFunc) => {
