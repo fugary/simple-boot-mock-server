@@ -62,7 +62,8 @@ const mediaConfig = reactive({
   responseImg: null,
   responseAudio: null,
   responseVideo: null,
-  responseHtml: null
+  responseHtml: null,
+  responseStream: null
 })
 const previewHtml = ref(false)
 const clearMediaItems = (remove) => {
@@ -73,12 +74,24 @@ const clearMediaItems = (remove) => {
 }
 
 onBeforeUnmount(() => clearMediaItems(true))
-
+const mediaUrl = computed(() => {
+  for (const key in mediaConfig) {
+    if (mediaConfig[key] && key !== 'responseHtml') {
+      return mediaConfig[key]
+    }
+  }
+  return null
+})
+const downloadResponse = (url) => {
+  const urlSegments = props.responseTarget?.requestInfo?.url?.split('/') || []
+  downloadByLink(url, urlSegments[urlSegments.length - 1])
+}
 watch(() => props.responseTarget, async (responseTarget) => {
   currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
   const oriContentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type')?.value
   const contentType = isMediaContentType(oriContentType) || isStreamContentType(oriContentType) || isHtmlContentType(oriContentType) ? oriContentType : undefined
   if (responseTarget?.data && contentType) {
+    clearMediaItems()
     if (isString(responseTarget.data)) {
       if (isHtmlContentType(contentType)) {
         previewHtml.value = true
@@ -88,7 +101,6 @@ watch(() => props.responseTarget, async (responseTarget) => {
         $coreError($i18nBundle('mock.msg.checkImageAccept'))
       }
     } else {
-      clearMediaItems()
       if (isMediaContentType(contentType)) {
         nextTick(() => {
           if (contentType?.includes('image')) {
@@ -100,9 +112,9 @@ watch(() => props.responseTarget, async (responseTarget) => {
           }
         })
       } else {
+        const streamUrl = mediaConfig.responseStream = URL.createObjectURL(responseTarget.data)
         $coreConfirm($i18nBundle('mock.msg.previewStreamConfirm'), getMockConfirmConfig()).then(() => {
-          const urlSegments = responseTarget.requestInfo?.url?.split('/') || []
-          downloadByLink(URL.createObjectURL(responseTarget.data), urlSegments[urlSegments.length - 1])
+          downloadResponse(streamUrl)
         }, async () => {
           contentRef.value = await responseTarget?.data?.text?.()
         })
@@ -207,14 +219,28 @@ const redirectMockResponse = computed(() => {
         >
           <el-link
             v-if="mediaConfig.responseHtml"
+            v-common-tooltip="previewHtml?$i18nKey('common.label.commonView', 'common.label.code'):$t('common.label.preview')"
             type="primary"
             underline="never"
             class="margin-right3"
             @click="previewHtml=!previewHtml"
           >
             <common-icon
-              :size="previewHtml?40:20"
-              :icon="previewHtml?'HtmlFilled':'View'"
+              :size="previewHtml?20:18"
+              :icon="previewHtml?'CodeOutlined':'View'"
+            />
+          </el-link>
+          <el-link
+            v-if="mediaUrl"
+            v-common-tooltip="$t('mock.label.downloadAsFile')"
+            type="primary"
+            underline="never"
+            class="margin-right3"
+            @click="downloadResponse(mediaUrl)"
+          >
+            <common-icon
+              :size="18"
+              icon="DownloadFilled"
             />
           </el-link>
           <el-text
