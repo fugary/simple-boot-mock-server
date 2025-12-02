@@ -130,11 +130,6 @@ const columns = computed(() => {
     property: 'delay',
     enabled: checkShowColumn(tableData.value, 'delay')
   }, {
-    labelKey: 'common.label.description',
-    property: 'description',
-    minWidth: '100px',
-    enabled: checkShowColumn(tableData.value, 'description')
-  }, {
     labelKey: 'common.label.status',
     property: 'status',
     formatter (data) {
@@ -168,7 +163,13 @@ const columns = computed(() => {
   }, {
     labelKey: 'common.label.createDate',
     property: 'createDate',
-    dateFormat: 'YYYY-MM-DD HH:mm:ss'
+    dateFormat: 'YYYY-MM-DD HH:mm:ss',
+    minWidth: '140px'
+  }, {
+    labelKey: 'common.label.description',
+    property: 'description',
+    minWidth: '100px',
+    enabled: checkShowColumn(tableData.value, 'description')
   }]
 })
 const buttons = computed(() => defineTableButtons([{
@@ -482,7 +483,7 @@ const showImportWindow = ref(false)
       :data="tableData"
       :columns="columns"
       :buttons="buttons"
-      :buttons-column-attrs="{minWidth:'180px'}"
+      :buttons-column-attrs="{minWidth:'230px',fixed:'right'}"
       :loading="loading"
       @page-size-change="loadMockGroups()"
       @current-page-change="loadMockGroups()"
