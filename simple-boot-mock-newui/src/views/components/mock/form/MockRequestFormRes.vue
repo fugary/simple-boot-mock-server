@@ -95,7 +95,7 @@ watch(() => props.responseTarget, async (responseTarget) => {
     if (isString(responseTarget.data)) {
       if (isHtmlContentType(contentType)) {
         previewHtml.value = true
-        mediaConfig.responseHtml = responseTarget.data
+        mediaConfig.responseHtml = `data:text/html;charset=utf-8,${encodeURIComponent(responseTarget.data)}`
         contentRef.value = responseTarget.data
       } else {
         $coreError($i18nBundle('mock.msg.checkImageAccept'))
@@ -302,7 +302,7 @@ const redirectMockResponse = computed(() => {
           <iframe
             v-else-if="mediaConfig.responseHtml&&previewHtml"
             class="iframe-preview"
-            :srcdoc="mediaConfig.responseHtml"
+            :src="mediaConfig.responseHtml"
             height="500px"
           />
           <template v-else>
