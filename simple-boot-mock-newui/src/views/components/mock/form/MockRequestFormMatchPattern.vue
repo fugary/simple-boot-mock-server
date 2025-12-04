@@ -1,5 +1,5 @@
 <script setup>
-import { $i18nBundle } from '@/messages'
+import { $i18nBundle, $i18nKey } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { computed } from 'vue'
 import { showCodeWindow, showMockTips } from '@/utils/DynamicUtils'
@@ -22,6 +22,8 @@ const matchPatternOption = computed(() => {
       tooltip: $i18nBundle('common.label.newWindowEdit'),
       tooltipIcon: 'EditPen',
       tooltipFunc: () => showCodeWindow(paramTarget.value?.matchPattern, {
+        language: 'javascript',
+        title: $i18nKey('common.label.commonEdit', 'mock.label.matchPattern'),
         readOnly: false,
         change: (value, lang) => {
           paramTarget.value.matchPattern = value

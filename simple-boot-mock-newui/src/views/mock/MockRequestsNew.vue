@@ -187,6 +187,8 @@ const editFormOptions = computed(() => {
       tooltip: $i18nBundle('common.label.newWindowEdit'),
       tooltipIcon: 'EditPen',
       tooltipFunc: () => showCodeWindow(currentRequest.value?.matchPattern, {
+        language: 'javascript',
+        title: $i18nKey('common.label.commonEdit', 'mock.label.matchPattern'),
         readOnly: false,
         change: (value, lang) => {
           currentRequest.value.matchPattern = value
