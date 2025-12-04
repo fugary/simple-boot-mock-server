@@ -88,12 +88,12 @@ export const showCompareWindowNew = async (config) => {
   vnode.component?.exposed?.showCompareWindowNew()
 }
 
-export const showMockTips = async () => {
+export const showMockTips = async (...args) => {
   const dynamicHelper = new DynamicHelper()
   const vnode = await dynamicHelper.createAndRender(MockTipsWindow, {
     onClosed: () => dynamicHelper.destroy()
   })
-  vnode.component?.exposed?.showMockTips()
+  vnode.component?.exposed?.showMockTips(...args)
 }
 
 /**

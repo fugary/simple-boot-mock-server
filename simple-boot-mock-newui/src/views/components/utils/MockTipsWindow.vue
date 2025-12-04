@@ -1,11 +1,16 @@
 <script setup>
 import { ref } from 'vue'
 import MockTips from '@/views/mock/MockTips.vue'
+import { isString } from 'lodash-es'
 
 const showWindow = ref(false)
 
-const showMockTips = () => {
+const currentTab = ref()
+const showMockTips = (tab) => {
   showWindow.value = true
+  if (isString(tab)) {
+    currentTab.value = tab
+  }
 }
 defineExpose({
   showMockTips
@@ -24,7 +29,7 @@ defineExpose({
     append-to-body
     v-bind="$attrs"
   >
-    <mock-tips />
+    <mock-tips v-model="currentTab" />
   </common-window>
 </template>
 

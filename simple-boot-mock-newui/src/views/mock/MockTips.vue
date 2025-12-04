@@ -4,6 +4,11 @@ import { $i18nBundle, $i18nMsg } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 
+const currentTab = defineModel({
+  type: String,
+  default: 'basic'
+})
+
 const requestFields = [
   { field: 'request.body', desc: 'body内容对象', descEn: 'Body content object' },
   { field: 'request.bodyStr', desc: 'body内容字符串', descEn: 'Body content as a string' },
@@ -73,6 +78,7 @@ const { languageRef, monacoEditorOptions } = useMonacoEditorOptions({
 languageRef.value = 'javascript'
 
 const exampleGroups = computed(() => [{
+  name: 'basic',
   label: $i18nBundle('mock.label.basicExamples'),
   examples: [{
     label: 'JSON Content',
@@ -129,6 +135,7 @@ Mock.mock({
   }]
 }, {
   label: $i18nBundle('mock.label.xmlExamples'),
+  name: 'xmlExamples',
   examples: [{
     label: 'XML Content ( {{ dynamic js code }} is supported. )',
     language: 'xmlWithJs',
@@ -162,6 +169,7 @@ Mock.mock({
 `.trim()
   }]
 }, {
+  name: 'matchPattern',
   label: $i18nBundle('mock.label.matchPattern'),
   examples: [{
     label: 'Request parameters and headers matching',
@@ -184,6 +192,7 @@ Mock.mock({
 `.trim()
   }]
 }, {
+  name: 'fetch',
   label: $i18nBundle('mock.label.fetchAndAsync'),
   examples: [{
     label: 'fetch JSON',
@@ -230,10 +239,11 @@ const calcHeight = (text) => {
 
 <template>
   <el-container class="flex-column">
-    <el-tabs>
+    <el-tabs v-model="currentTab">
       <el-tab-pane
         lazy
         :label="$t('mock.label.requestObject')"
+        name="request"
       >
         <common-table
           :data="requestFields"
@@ -243,6 +253,7 @@ const calcHeight = (text) => {
       <el-tab-pane
         lazy
         :label="$t('mock.label.buildInFunctions')"
+        name="buildIn"
       >
         <common-table
           :data="internalFunctions"
@@ -255,6 +266,7 @@ const calcHeight = (text) => {
         lazy
         :label="$t('common.label.example')"
         class="prevent-scroll"
+        :name="exampleGroup.name"
       >
         <template #label>
           {{ exampleGroup.label }}

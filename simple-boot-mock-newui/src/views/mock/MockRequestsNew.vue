@@ -183,7 +183,7 @@ const editFormOptions = computed(() => {
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
     tooltip: $i18nBundle('mock.label.clickToShowDetails'),
-    tooltipFunc: () => showMockTips(),
+    tooltipFunc: () => showMockTips('matchPattern'),
     attrs: {
       class: 'common-resize-vertical',
       defaultValue: currentRequest.value?.matchPattern,
