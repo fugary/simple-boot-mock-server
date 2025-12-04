@@ -162,6 +162,28 @@ Mock.mock({
 `.trim()
   }]
 }, {
+  label: $i18nBundle('mock.label.matchPattern'),
+  examples: [{
+    label: 'Request parameters and headers matching',
+    language: 'javascript',
+    content: 'request.params.id==="1" || request.headers["custom-header-id"]==="test"'.trim()
+  }, {
+    label: 'Request body or bodyStr matching',
+    language: 'javascript',
+    content: 'request.body.id==="1" || request.bodyStr.includes("test")'.trim()
+  }, {
+    label: 'Match pattern function example',
+    language: 'javascript',
+    content: `
+(function () {
+    if (request.params.name==="admin" && request.params.password==="123456") {
+        return true;
+    }
+    return false;
+}())
+`.trim()
+  }]
+}, {
   label: $i18nBundle('mock.label.fetchAndAsync'),
   examples: [{
     label: 'fetch JSON',
