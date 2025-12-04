@@ -262,8 +262,9 @@ const formatResult = computed(() => {
       >
         <span>
           <el-link
-            v-bind="calcOption.tooltipLinkAttrs"
             underline="never"
+            :type="calcOption.tooltipFunc?'primary':'default'"
+            v-bind="calcOption.tooltipLinkAttrs"
             @click="calcOption.tooltipFunc"
           >&nbsp;
             <common-icon

@@ -94,6 +94,7 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
       <el-link
         v-common-tooltip="$t('mock.label.clickToShowDetails')"
         underline="never"
+        type="primary"
         @click="showMockTips"
       >
         <common-icon icon="QuestionFilled" />
