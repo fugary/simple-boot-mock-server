@@ -10,7 +10,7 @@ import MockRequestApi, {
 } from '@/api/mock/MockRequestApi'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableColumns, limitStr } from '@/components/utils'
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useDefaultPage } from '@/config'
@@ -55,18 +55,15 @@ const pageAttrs = {
 
 const loadMockRequests = (...args) => {
   return searchMockRequests(...args).then((result) => {
-    nextTick(() => {
-      if (tableData.value?.length) {
-        onSelectRequest(tableData.value.find(req => req.id === selectRequestId.value) || tableData.value[0])
-        requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
-        const countMap = result.infos?.countMap || {}
-        const historyMap = result.infos?.historyMap || {}
-        tableData.value.forEach(request => {
-          request.dataCount = countMap[request.id] || 0
-          request.historyCount = historyMap[request.id] || 0
-        })
-      }
-    })
+    if (tableData.value?.length) {
+      onSelectRequest(tableData.value.find(req => req.id === selectRequestId.value) || tableData.value[0])
+      const countMap = result.infos?.countMap || {}
+      const historyMap = result.infos?.historyMap || {}
+      tableData.value.forEach(request => {
+        request.dataCount = countMap[request.id] || 0
+        request.historyCount = historyMap[request.id] || 0
+      })
+    }
     return result
   })
 }
@@ -143,6 +140,7 @@ const newOrEdit = async id => {
 const onSelectRequest = request => {
   selectRequest.value = request
   selectRequestId.value = request?.id
+  requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
 }
 const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({
   readOnly: false,
@@ -229,7 +227,7 @@ const saveMockRequest = item => {
   return MockRequestApi.saveOrUpdate(item)
     .then((data) => {
       if (data.success && data.resultData && selectRequestId.value !== data.resultData.id) {
-        selectRequestId.value = data.resultData?.id
+        onSelectRequest(data.resultData)
       }
       loadMockRequests()
       return data

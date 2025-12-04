@@ -45,6 +45,19 @@ const tooltipFunc = ($event) => {
     :readonly="option.readonly"
     v-bind="option.attrs"
   >
+    <template
+      v-for="(slot, slotKey) in (option.slots||{})"
+      :key="slotKey"
+      #[slotKey]="scope"
+    >
+      <component
+        :is="scope[`__slotResult__${slotKey}`]"
+        v-if="isVNode(scope[`__slotResult__${slotKey}`] = slot(scope))"
+      />
+      <template v-else>
+        {{ scope[`__slotResult__${slotKey}`] }}
+      </template>
+    </template>
     {{ label }}
     <el-tooltip
       v-if="option.tooltip||option.tooltipFunc"
