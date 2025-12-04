@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, computed, isRef, toRaw } from 'vue'
+import { reactive, ref, computed, isRef, toRaw, watch } from 'vue'
 import { processPasteCode, useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
@@ -19,7 +19,8 @@ const codeConfig = reactive({
   closeOnClickModal: true,
   readOnly: true,
   showSelectButton: false,
-  buttons: []
+  buttons: [],
+  change: () => {}
 })
 
 let codeRef = null
@@ -28,7 +29,6 @@ let codeRef = null
  * @param config {CodeWindowConfig} 配置信息
  */
 const showCodeWindow = (code, config = {}) => {
-  codeText.value = code
   codeText.value = code
   if (isRef(code)) {
     codeRef = code
@@ -81,6 +81,10 @@ const calcButtons = computed(() => {
     }, ...buttons]
   }
   return buttons
+})
+
+watch(codeText, text => {
+  codeConfig.change(text, languageRef.value)
 })
 
 </script>

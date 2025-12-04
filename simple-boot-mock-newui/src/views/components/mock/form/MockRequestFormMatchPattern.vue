@@ -2,7 +2,7 @@
 import { $i18nBundle } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { computed } from 'vue'
-import { showMockTips } from '@/utils/DynamicUtils'
+import { showCodeWindow, showMockTips } from '@/utils/DynamicUtils'
 
 const paramTarget = defineModel('modelValue', {
   type: Object,
@@ -18,12 +18,25 @@ const matchPatternOption = computed(() => {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
-    tooltip: $i18nBundle('mock.label.clickToShowDetails'),
-    tooltipFunc: () => showMockTips('matchPattern'),
+    tooltips: [{
+      tooltip: $i18nBundle('common.label.newWindowEdit'),
+      tooltipIcon: 'EditPen',
+      tooltipFunc: () => showCodeWindow(paramTarget.value?.matchPattern, {
+        readOnly: false,
+        change: (value, lang) => {
+          paramTarget.value.matchPattern = value
+          languageRef.value = lang
+        }
+      })
+    }, {
+      tooltip: $i18nBundle('mock.label.clickToShowDetails'),
+      tooltipFunc: () => showMockTips('matchPattern')
+    }],
     required: true,
     attrs: {
       class: 'common-resize-vertical',
       defaultValue: paramTarget.value.matchPattern,
+      value: paramTarget.value.matchPattern,
       'onUpdate:value': (value) => {
         paramTarget.value.matchPattern = value
         contentRef.value = value

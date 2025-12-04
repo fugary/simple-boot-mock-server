@@ -75,6 +75,13 @@ const moreButtons = computed(() => {
         .then(() => emit('requestChanged', item, props.groupItem))
     }
   }, {
+    labelKey: 'mock.label.matchPattern',
+    icon: 'FactCheckFilled',
+    type: 'success',
+    click: (item) => {
+      emit('toTestMatchPattern', item, props.groupItem)
+    }
+  }, {
     labelKey: 'mock.label.modifyHistory',
     type: 'info',
     icon: 'AccessTimeFilled',

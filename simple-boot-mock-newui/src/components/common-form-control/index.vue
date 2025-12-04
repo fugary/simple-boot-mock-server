@@ -222,6 +222,15 @@ const formatResult = computed(() => {
   return null
 })
 
+const tooltips = computed(() => {
+  if (calcOption.value.tooltips?.length) {
+    return calcOption.value.tooltips
+  } else if (calcOption.value.tooltip || calcOption.value.tooltipFunc) {
+    return [calcOption.value]
+  }
+  return []
+})
+
 </script>
 
 <template>
@@ -251,24 +260,25 @@ const formatResult = computed(() => {
       />
       <slot name="afterLabel" />
       <el-tooltip
-        v-if="calcOption.tooltip||calcOption.tooltipFunc"
+        v-for="(tooltipOption, index) in tooltips"
+        :key="index"
         class="box-item common-el-tooltip"
         effect="dark"
-        :disabled="!calcOption.tooltip"
-        :content="calcOption.tooltip"
+        :disabled="!tooltipOption.tooltip"
+        :content="tooltipOption.tooltip"
         placement="top-start"
         raw-content
-        v-bind="calcOption.tooltipAttrs"
+        v-bind="tooltipOption.tooltipAttrs"
       >
         <span>
           <el-link
             underline="never"
-            :type="calcOption.tooltipFunc?'primary':'default'"
-            v-bind="calcOption.tooltipLinkAttrs"
-            @click="calcOption.tooltipFunc"
+            :type="tooltipOption.tooltipFunc?'primary':'default'"
+            v-bind="tooltipOption.tooltipLinkAttrs"
+            @click="tooltipOption.tooltipFunc"
           >&nbsp;
             <common-icon
-              :icon="calcOption.tooltipIcon||'QuestionFilled'"
+              :icon="tooltipOption.tooltipIcon||'QuestionFilled'"
             />
           </el-link>
         </span>

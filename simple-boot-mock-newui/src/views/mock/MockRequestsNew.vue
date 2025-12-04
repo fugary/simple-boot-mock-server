@@ -19,6 +19,7 @@ import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import {
   previewMockRequest,
+  showCodeWindow,
   showCompareWindowNew,
   showHistoryListWindow,
   showMockTips,
@@ -182,11 +183,24 @@ const editFormOptions = computed(() => {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
-    tooltip: $i18nBundle('mock.label.clickToShowDetails'),
-    tooltipFunc: () => showMockTips('matchPattern'),
+    tooltips: [{
+      tooltip: $i18nBundle('common.label.newWindowEdit'),
+      tooltipIcon: 'EditPen',
+      tooltipFunc: () => showCodeWindow(currentRequest.value?.matchPattern, {
+        readOnly: false,
+        change: (value, lang) => {
+          currentRequest.value.matchPattern = value
+          languageRef.value = lang
+        }
+      })
+    }, {
+      tooltip: $i18nBundle('mock.label.clickToShowDetails'),
+      tooltipFunc: () => showMockTips('matchPattern')
+    }],
     attrs: {
       class: 'common-resize-vertical',
       defaultValue: currentRequest.value?.matchPattern,
+      value: currentRequest.value?.matchPattern,
       'onUpdate:value': (value) => {
         currentRequest.value.matchPattern = value
         contentRef.value = value

@@ -20,6 +20,7 @@ import {
   showMockTips,
   showHistoryListWindow,
   toTestMatchPattern,
+  showCodeWindow,
   showCompareWindowNew
 } from '@/utils/DynamicUtils'
 import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
@@ -296,11 +297,24 @@ const editFormOptions = computed(() => {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
-    tooltip: $i18nBundle('mock.label.clickToShowDetails'),
-    tooltipFunc: () => showMockTips('matchPattern'),
+    tooltips: [{
+      tooltip: $i18nBundle('common.label.newWindowEdit'),
+      tooltipIcon: 'EditPen',
+      tooltipFunc: () => showCodeWindow(currentDataItem.value?.matchPattern, {
+        readOnly: false,
+        change: (value, lang) => {
+          currentDataItem.value.matchPattern = value
+          patternContentRef.value = lang
+        }
+      })
+    }, {
+      tooltip: $i18nBundle('mock.label.clickToShowDetails'),
+      tooltipFunc: () => showMockTips('matchPattern')
+    }],
     attrs: {
       class: 'common-resize-vertical',
       defaultValue: currentDataItem.value?.matchPattern,
+      value: currentDataItem.value?.matchPattern,
       'onUpdate:value': (value) => {
         currentDataItem.value.matchPattern = value
         patternContentRef.value = value
