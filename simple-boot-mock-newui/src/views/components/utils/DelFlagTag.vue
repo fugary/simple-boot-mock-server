@@ -12,10 +12,6 @@ const props = defineProps({
     type: Object,
     default: null
   },
-  modelValue: {
-    type: [Number, String],
-    default: ''
-  },
   effect: {
     type: String,
     default: 'light'
@@ -31,7 +27,16 @@ const props = defineProps({
   confirmBeforeToggle: {
     type: Boolean,
     default: true
+  },
+  switchMode: {
+    type: Boolean,
+    default: true
   }
+})
+
+const modelValue = defineModel({
+  type: [Number, String],
+  default: ''
 })
 
 const typeConf = computed(() => {
@@ -65,13 +70,13 @@ const valueConf = computed(() => {
 })
 
 const reversedValue = computed(() => {
-  return Object.keys(valueConf.value).find(key => key !== `${props.modelValue}`)
+  return Object.keys(valueConf.value).find(key => key !== `${modelValue.value}`)
 })
 
 const emit = defineEmits(['toggleValue'])
 const tooltip = computed(() => {
   let toValue = $i18nBundle('common.label.statusEnabled')
-  if (toValue === valueConf.value[props.modelValue]) {
+  if (toValue === valueConf.value[modelValue.value]) {
     toValue = $i18nBundle('common.label.statusDisabled')
   }
   return {
@@ -80,11 +85,10 @@ const tooltip = computed(() => {
   }
 })
 
-const handleClick = $event => {
-  $event.stopPropagation()
+const handleClick = () => {
   if (props.clickToToggle) {
     if (props.confirmBeforeToggle) {
-      $coreConfirm($i18nBundle('common.msg.commonConfirm', [valueConf.value[reversedValue.value]]))
+      return $coreConfirm($i18nBundle('common.msg.commonConfirm', [valueConf.value[reversedValue.value]]))
         .then(() => emit('toggleValue', reversedValue.value))
     } else {
       emit('toggleValue', reversedValue.value)
@@ -98,10 +102,20 @@ const handleClick = $event => {
   <el-link
     v-common-tooltip="tooltip"
     underline="never"
-    @click="handleClick"
+    @click.stop="!switchMode?handleClick($event):null"
   >
+    <el-switch
+      v-if="switchMode"
+      v-model="modelValue"
+      :disabled="!clickToToggle"
+      style="--el-switch-on-color: #67c23a; --el-switch-off-color: #f56c6c"
+      :active-value="Number(Object.keys(valueConf)[1])"
+      :inactive-value="Number(Object.keys(valueConf)[0])"
+      :before-change="handleClick"
+      @click.stop
+    />
     <el-tag
-      v-if="valueConf[modelValue]"
+      v-else-if="valueConf[modelValue]"
       :effect="effect"
       class="statusTag"
       :type="typeConf[modelValue]"
