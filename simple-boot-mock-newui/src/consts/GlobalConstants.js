@@ -35,6 +35,7 @@ export const useFormStatus = (prop = 'status', activeValue = 1, inactiveValue = 
     attrs: {
       activeValue,
       inactiveValue,
+      style: '--el-switch-on-color: #67c23a; --el-switch-off-color: #f56c6c',
       activeText: $i18nBundle('common.label.statusEnabled'),
       inactiveText: $i18nBundle('common.label.statusDisabled')
     }
