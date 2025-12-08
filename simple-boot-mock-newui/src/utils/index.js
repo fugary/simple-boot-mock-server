@@ -450,6 +450,11 @@ export const calcAffixOffset = (fix = 10) => {
   return initValue
 }
 
+export const getStyleGrow = flexGrow => ({
+  flexGrow,
+  minWidth: `calc(${flexGrow}0%)`
+})
+
 export default {
   install (app) {
     router = app.config.globalProperties.$router

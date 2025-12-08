@@ -1,6 +1,6 @@
 <script setup lang="jsx">
 import { useRoute } from 'vue-router'
-import { $coreConfirm, useBackUrl } from '@/utils'
+import { $coreConfirm, getStyleGrow, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, {
   ALL_METHODS,
@@ -150,21 +150,25 @@ const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions(
 const editFormOptions = computed(() => {
   return defineFormOptions([{
     labelKey: 'mock.label.requestPath',
-    prop: 'requestPath',
-    required: true,
-    change (val) {
-      if (val && !val.startsWith('/')) {
-        currentRequest.value.requestPath = `/${val.trim()}`
-      }
-    }
-  }, {
-    labelKey: 'mock.label.method',
+    style: getStyleGrow(3),
     prop: 'method',
     required: true,
     type: 'select',
     children: methodOptions,
     attrs: {
       clearable: false
+    }
+  }, {
+    labelKey: 'mock.label.requestPath',
+    prop: 'requestPath',
+    labelWidth: '10px',
+    showLabel: false,
+    style: getStyleGrow(7),
+    required: true,
+    change (val) {
+      if (val && !val.startsWith('/')) {
+        currentRequest.value.requestPath = `/${val.trim()}`
+      }
     }
   }, {
     labelKey: 'mock.label.proxyUrl',
@@ -176,11 +180,16 @@ const editFormOptions = computed(() => {
         return !currentRequest.value?.proxyUrl || /^https?:\/\/.+/.test(currentRequest.value?.proxyUrl)
       }
     }]
-  }, useFormStatus(), useFormDisableMock(), useFormDelay(),
+  }, { ...useFormStatus(), style: getStyleGrow(4) },
+  { ...useFormDisableMock(), style: getStyleGrow(6) },
+  useFormDelay(),
   {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
+    style: {
+      height: '100px'
+    },
     tooltips: [{
       tooltip: $i18nBundle('common.label.newWindowEdit'),
       tooltipIcon: 'EditPen',
@@ -504,7 +513,8 @@ const toShowHistoryWindow = (current) => {
       :form-options="editFormOptions"
       :name="$t('mock.label.mockRequests')"
       :save-current-item="saveMockRequest"
-      label-width="130px"
+      label-width="140px"
+      inline-auto-mode
     />
   </el-container>
 </template>

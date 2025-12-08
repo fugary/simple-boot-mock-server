@@ -1,6 +1,8 @@
 <script setup>
 import { $i18nBundle, $i18nKey } from '@/messages'
 import { ElMessage } from 'element-plus'
+import { computed } from 'vue'
+import { getStyleGrow } from '@/utils'
 
 const props = defineProps({
   formOptions: {
@@ -14,6 +16,10 @@ const props = defineProps({
   saveCurrentItem: {
     type: Function,
     default: () => {}
+  },
+  inlineAutoMode: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -39,6 +45,18 @@ const internalSaveCurrentItem = ({ form }) => {
   return false
 }
 
+const calcOptions = computed(() => {
+  if (props.inlineAutoMode) {
+    return props.formOptions.map(option => {
+      const style = { ...getStyleGrow(10), ...option.style || {} }
+      return {
+        ...option, style
+      }
+    })
+  }
+  return props.formOptions
+})
+
 </script>
 
 <template>
@@ -48,14 +66,17 @@ const internalSaveCurrentItem = ({ form }) => {
     :ok-click="internalSaveCurrentItem"
     append-to-body
     destroy-on-close
+    show-fullscreen
+    :close-on-click-modal="false"
   >
     <common-form
       v-if="currentItem"
       class="form-edit-width-100"
       :model="currentItem"
-      :options="formOptions"
+      :options="calcOptions"
       :show-buttons="false"
       v-bind="$attrs"
+      :class-name="inlineAutoMode?'common-form-auto':''"
     >
       <template
         v-for="(slot, slotKey) in $slots"
