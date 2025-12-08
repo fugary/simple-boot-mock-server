@@ -2,7 +2,7 @@
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { computed, watch, ref, reactive, nextTick, useTemplateRef, onBeforeUnmount } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { showCodeWindow } from '@/utils/DynamicUtils'
+import { showCodeWindow, showMockTips } from '@/utils/DynamicUtils'
 import { $i18nKey, $i18nBundle } from '@/messages'
 import {
   generateSampleCheckResults,
@@ -393,6 +393,15 @@ const redirectMockResponse = computed(() => {
           >
             {{ $t(redirectMockResponse?'mock.label.redirectUrl':'mock.label.mockResponseBody') }}
           </el-badge>
+          <el-link
+            v-common-tooltip="$t('mock.label.clickToShowDetails')"
+            underline="never"
+            type="primary"
+            class="margin-left1"
+            @click="showMockTips"
+          >
+            <common-icon icon="QuestionFilled" />
+          </el-link>
         </template>
         <el-container class="flex-column">
           <el-row v-if="!redirectMockResponse">

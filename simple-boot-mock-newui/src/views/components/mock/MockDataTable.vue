@@ -117,7 +117,7 @@ const columns = computed(() => {
       return <CommonFormControl class="no-form-label" option={statusOption} model={searchParam.value}/>
     }
   }, {
-    labelKey: 'mock.label.responseBody',
+    labelKey: 'mock.label.mockResponseBody',
     property: 'responseBody',
     minWidth: '220px',
     formatter (data) {
@@ -346,7 +346,7 @@ const editFormOptions = computed(() => {
       }
     }
   }, {
-    labelKey: isRedirect ? 'mock.label.redirectUrl' : 'mock.label.responseBody',
+    labelKey: isRedirect ? 'mock.label.redirectUrl' : 'mock.label.mockResponseBody',
     type: 'vue-monaco-editor',
     prop: 'responseBody',
     required: isRedirect,
