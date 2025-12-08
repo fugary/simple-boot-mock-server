@@ -180,9 +180,9 @@ const editFormOptions = computed(() => {
         return !currentRequest.value?.proxyUrl || /^https?:\/\/.+/.test(currentRequest.value?.proxyUrl)
       }
     }]
-  }, { ...useFormStatus(), style: getStyleGrow(4) },
-  { ...useFormDisableMock(), style: getStyleGrow(6) },
-  useFormDelay(),
+  }, { ...useFormStatus(), style: getStyleGrow(3) },
+  { ...useFormDisableMock(), style: getStyleGrow(3) },
+  { ...useFormDelay(), style: getStyleGrow(3) },
   {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',

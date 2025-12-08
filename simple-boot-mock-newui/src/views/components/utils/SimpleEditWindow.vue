@@ -13,6 +13,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  width: {
+    type: String,
+    default: '1000px'
+  },
   saveCurrentItem: {
     type: Function,
     default: () => {}
@@ -68,6 +72,7 @@ const calcOptions = computed(() => {
     destroy-on-close
     show-fullscreen
     :close-on-click-modal="false"
+    :width="width"
   >
     <common-form
       v-if="currentItem"

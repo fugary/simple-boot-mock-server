@@ -1,7 +1,7 @@
 import { useResourceApi } from '@/hooks/ApiHooks'
 import { computed, ref } from 'vue'
 import { $http } from '@/vendors/axios'
-import { isAdminUser, isCurrentUser, useCurrentUserName } from '@/utils'
+import { getStyleGrow, isAdminUser, isCurrentUser, useCurrentUserName } from '@/utils'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { defineFormOptions } from '@/components/utils'
 import { $i18nBundle } from '@/messages'
@@ -106,11 +106,12 @@ export const useProjectEditHook = (searchParam, userOptions) => {
     labelKey: 'mock.label.projectName',
     prop: 'projectName',
     required: true
-  }, {
+  }, { ...useFormStatus(), style: getStyleGrow(3) }, {
     labelKey: 'mock.label.publicMockProject',
+    style: getStyleGrow(6),
     prop: 'publicFlag',
     type: 'switch'
-  }, useFormStatus(), {
+  }, {
     labelKey: 'common.label.description',
     prop: 'description',
     attrs: {

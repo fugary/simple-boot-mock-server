@@ -322,6 +322,7 @@ const pageAttrs = {
       :name="$t('mock.label.mockProjects')"
       :save-current-item="saveProjectItem"
       label-width="130px"
+      inline-auto-mode
     />
   </el-container>
 </template>

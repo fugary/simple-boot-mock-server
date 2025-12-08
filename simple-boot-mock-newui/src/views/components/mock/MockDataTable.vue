@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { onMounted, ref, computed, watch } from 'vue'
 import { defineTableColumns, defineFormOptions, defineTableButtons, limitStr } from '@/components/utils'
-import { $coreConfirm, checkShowColumn, getSingleSelectOptions } from '@/utils'
+import { $coreConfirm, checkShowColumn, getSingleSelectOptions, getStyleGrow } from '@/utils'
 import MockDataApi, {
   ALL_STATUS_CODES,
   DEFAULT_CONTENT_TYPE,
@@ -283,9 +283,10 @@ const editFormOptions = computed(() => {
   }, {
     labelKey: 'mock.label.responseName',
     prop: 'dataName'
-  }, {
+  }, { ...useFormStatus(), style: getStyleGrow(3) }, {
     labelKey: 'mock.label.default',
     prop: 'defaultFlag',
+    style: getStyleGrow(3),
     type: 'switch',
     attrs: {
       activeValue: 1,
@@ -293,10 +294,13 @@ const editFormOptions = computed(() => {
       activeText: $i18nBundle('common.label.yes'),
       inactiveText: $i18nBundle('common.label.no')
     }
-  }, useFormStatus(), useFormDelay(), {
+  }, { ...useFormDelay(), style: getStyleGrow(3) }, {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
+    style: {
+      height: '100px'
+    },
     tooltips: [{
       tooltip: $i18nBundle('common.label.newWindowEdit'),
       tooltipIcon: 'EditPen',
@@ -347,6 +351,9 @@ const editFormOptions = computed(() => {
     prop: 'responseBody',
     required: isRedirect,
     tooltipFunc: () => showMockTips(),
+    style: {
+      height: '200px'
+    },
     attrs: {
       class: 'common-resize-vertical',
       value: currentDataItem.value?.responseBody,
@@ -572,7 +579,7 @@ const pageAttrs = {
       :name="$t('mock.label.mockData')"
       label-width="140px"
       :save-current-item="saveMockData"
-      show-fullscreen
+      inline-auto-mode
     >
       <template #headerParams="{option}">
         <common-form-control

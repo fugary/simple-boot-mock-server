@@ -13,6 +13,7 @@ import {
   $coreError,
   toGetParams,
   useCurrentUserName,
+  getStyleGrow,
   useBackUrl
 } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
@@ -351,7 +352,9 @@ const editFormOptions = computed(() => defineFormOptions([{
       return !currentGroup.value?.proxyUrl || /^https?:\/\/.+/.test(currentGroup.value?.proxyUrl)
     }
   }]
-}, useFormStatus(), useFormDisableMock(), useFormDelay(), {
+}, { ...useFormStatus(), style: getStyleGrow(3) },
+{ ...useFormDisableMock(), style: getStyleGrow(3) },
+{ ...useFormDelay(), style: getStyleGrow(3) }, {
   labelKey: 'common.label.description',
   prop: 'description',
   attrs: {
@@ -495,6 +498,7 @@ const showImportWindow = ref(false)
       :form-options="editFormOptions"
       :name="$t('mock.label.mockGroups')"
       :save-current-item="saveGroupItem"
+      inline-auto-mode
     />
     <simple-edit-window
       v-model="currentProject"
