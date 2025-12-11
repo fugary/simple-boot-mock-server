@@ -1,5 +1,5 @@
 <script setup lang="jsx">
-import { computed, onBeforeUnmount, shallowRef } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef } from 'vue'
 import { $i18nBundle } from '@/messages'
 import { isFunction } from 'lodash-es'
 
@@ -19,6 +19,10 @@ const props = defineProps({
   historyOptionsMethod: {
     type: Function,
     default: () => []
+  },
+  height: {
+    type: [Number, String],
+    default: '500px'
   }
 })
 
@@ -62,11 +66,15 @@ defineExpose({
   showCompareWindowNew
 })
 
+const fullscreen = ref(false)
+const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 150px)' : props.height)
+
 </script>
 
 <template>
   <common-window
     v-model="showWindow"
+    v-model:fullscreen="fullscreen"
     :title="title||$t('mock.label.compare')"
     width="1000px"
     show-fullscreen
@@ -81,7 +89,7 @@ defineExpose({
         :modified="fieldConfig.modifiedContent"
         language="markdown"
         :options="diffOptions"
-        style="height:500px;"
+        :height="codeHeight"
         @mount="handleMount"
       >
         <div v-loading="true" />
