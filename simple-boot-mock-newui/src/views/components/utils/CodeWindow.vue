@@ -52,8 +52,8 @@ const showCodeWindow = (code, config = {}) => {
   }
   showWindow.value = true
   monacoEditorOptions.readOnly = config.readOnly ?? monacoEditorOptions.readOnly
-  diffOptions.readOnly = config.readOnly ?? diffOptions.readOnly
-  diffOptions.originalEditable = !diffOptions.readOnly
+  diffOptions.value.readOnly = config.readOnly ?? diffOptions.value.readOnly
+  diffOptions.value.originalEditable = !diffOptions.value.readOnly
   fullscreen.value = codeConfig.fullscreen
   if (config.language) {
     languageRef.value = config.language
@@ -187,6 +187,7 @@ watch([originalContent, modifiedContent], ([original, modified]) => {
       <vue-monaco-diff-editor
         v-if="codeConfig.diffEditor"
         theme="vs-dark"
+        :language="codeConfig.language"
         :original="originalContent"
         :modified="modifiedContent"
         :options="diffOptions"

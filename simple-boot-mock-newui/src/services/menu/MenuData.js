@@ -117,7 +117,7 @@ export const ALL_MENUS = [
     nameCn: '对比编辑器',
     nameEn: 'Diff Editor',
     click: () => {
-      showCodeWindow(editorContent, {
+      showCodeWindow({
         title: $i18nBundle('mock.label.compare'),
         diffEditor: true,
         readOnly: false,

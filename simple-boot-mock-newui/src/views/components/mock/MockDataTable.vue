@@ -20,8 +20,7 @@ import {
   showMockTips,
   showHistoryListWindow,
   toTestMatchPattern,
-  showCodeWindow,
-  showCompareWindowNew
+  showCodeWindow
 } from '@/utils/DynamicUtils'
 import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
 import { ElMessage, ElTag } from 'element-plus'
@@ -32,7 +31,7 @@ import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
 import { calcContentType, DEFAULT_HEADERS } from '@/consts/MockConstants'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import { useDefaultPage } from '@/config'
-import { getDataHistoryViewOptions } from '@/services/mock/NewMockDiffService'
+import { getDataHistoryViewOptions, showCompareWindowNew } from '@/services/mock/NewMockDiffService'
 import { getStatusCode } from '@/services/mock/MockDiffService'
 
 const props = defineProps({

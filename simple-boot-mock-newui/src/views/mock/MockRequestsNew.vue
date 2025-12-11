@@ -20,7 +20,6 @@ import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import {
   previewMockRequest,
   showCodeWindow,
-  showCompareWindowNew,
   showHistoryListWindow,
   showMockTips,
   toEditGroupEnvParams,
@@ -32,7 +31,7 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import { checkProjectEdit } from '@/api/mock/MockProjectApi'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { ElTag, ElText } from 'element-plus'
-import { getRequestHistoryViewOptions } from '@/services/mock/NewMockDiffService'
+import { getRequestHistoryViewOptions, showCompareWindowNew } from '@/services/mock/NewMockDiffService'
 
 const route = useRoute()
 const groupId = route.params.groupId

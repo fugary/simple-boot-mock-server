@@ -1,5 +1,7 @@
 import { $i18nBundle, $i18nKey } from '@/messages'
 import { formatDate, formatJsonStr } from '@/utils'
+import { isFunction } from 'lodash-es'
+import { showCodeWindow } from '@/utils/DynamicUtils'
 
 export const getRequestHistoryViewOptions = (request, history) => {
   return [
@@ -44,4 +46,28 @@ export const getDataHistoryViewOptions = (data, history) => {
     { labelKey: 'common.label.description', prop: 'description' },
     { label: $i18nKey('common.label.commonTest', 'mock.label.queryParams'), prop: () => formatJsonStr(data.mockParams) }
   ]
+}
+
+export const calcHistoryContent = (historyOptionsMethod, doc, history) => {
+  const options = historyOptionsMethod(doc, history).filter(item => item.enabled !== false)
+  return options.map(option => {
+    const propValue = isFunction(option.prop) ? option.prop(doc, history) : doc[option.prop]
+    return `[${option.labelKey ? $i18nBundle(option.labelKey) : option.label}]
+${propValue ?? ''}`
+  }).join('\n\n')
+}
+
+export const showCompareWindowNew = ({ original, modified, historyOptionsMethod, ...config }) => {
+  const originalContent = calcHistoryContent(historyOptionsMethod, original, true)
+  const modifiedContent = calcHistoryContent(historyOptionsMethod, modified)
+  return showCodeWindow({
+    title: $i18nBundle('mock.label.compare'),
+    language: 'markdown',
+    diffEditor: true,
+    readOnly: true,
+    closeOnClickModal: false,
+    originalContent,
+    modifiedContent,
+    ...config
+  })
 }
