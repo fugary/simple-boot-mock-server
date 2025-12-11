@@ -1,12 +1,16 @@
 <script setup>
 import { reactive, ref, computed, isRef, toRaw, watch } from 'vue'
-import { processPasteCode, useMonacoEditorOptions } from '@/vendors/monaco-editor'
+import { processPasteCode, useMonacoEditorOptions, useMonacoDiffEditorOptions } from '@/vendors/monaco-editor'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { showCodeWindow as dynamicShowCodeWindow } from '@/utils/DynamicUtils'
+import { isObject } from 'lodash-es'
+import { $copyText } from '@/utils'
 
 const showWindow = ref(false)
 const { contentRef: codeText, languageRef, languageModel, languageSelectOption, normalLanguageSelectOption, formatDocument, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
+
+const { diffOptions, diffChanged, handleMount, originalContent, modifiedContent } = useMonacoDiffEditorOptions()
 
 /**
  * @typedef {{copyAndClose?: boolean, showCopy?: boolean, width?: string, title?: string, height?: string, closeOnClickModal?: boolean, readOnly?: boolean}} CodeWindowConfig
@@ -19,6 +23,9 @@ const codeConfig = reactive({
   closeOnClickModal: true,
   readOnly: true,
   showSelectButton: false,
+  diffEditor: false,
+  showCopy: true,
+  copyAndClose: false,
   buttons: [],
   change: () => {}
 })
@@ -29,20 +36,29 @@ let codeRef = null
  * @param config {CodeWindowConfig} 配置信息
  */
 const showCodeWindow = (code, config = {}) => {
+  if (isObject(code) && !isRef(code)) {
+    config = code
+    code = config.content
+  }
   codeText.value = code
   if (isRef(code)) {
     codeRef = code
     codeText.value = code.value
   }
   Object.assign(codeConfig, config)
+  if (codeConfig.diffEditor) {
+    originalContent.value = config.originalContent
+    modifiedContent.value = config.modifiedContent
+  }
   showWindow.value = true
   monacoEditorOptions.readOnly = config.readOnly ?? monacoEditorOptions.readOnly
+  diffOptions.readOnly = config.readOnly ?? diffOptions.readOnly
+  diffOptions.originalEditable = !diffOptions.readOnly
+  fullscreen.value = codeConfig.fullscreen
   if (config.language) {
     languageRef.value = config.language
   }
-  setTimeout(() => {
-    formatDocument()
-  })
+  setTimeout(formatDocument)
 }
 
 defineExpose({
@@ -51,7 +67,10 @@ defineExpose({
 
 const fullscreen = ref(false)
 
-const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 190px)' : codeConfig.height)
+const codeHeight = computed(() => {
+  const offset = codeConfig.diffEditor ? 150 : 190
+  return fullscreen.value ? `calc(100dvh - ${offset}px)` : codeConfig.height
+})
 
 const langOption = computed(() => {
   if (codeConfig.language) {
@@ -80,11 +99,48 @@ const calcButtons = computed(() => {
       }
     }, ...buttons]
   }
-  return buttons
+  return [{
+    labelKey: 'common.label.copy',
+    type: 'success',
+    enabled: codeConfig.showCopy && !codeConfig.diffEditor,
+    click () {
+      $copyText(codeText.value)
+      if (codeConfig.copyAndClose) {
+        showWindow.value = false
+      }
+    }
+  }, {
+    label: $i18nKey('common.label.commonCopy', 'common.label.originalContent'),
+    type: 'success',
+    enabled: codeConfig.showCopy && codeConfig.diffEditor,
+    click () {
+      $copyText(originalContent.value)
+      if (codeConfig.copyAndClose) {
+        showWindow.value = false
+      }
+    }
+  }, {
+    label: $i18nKey('common.label.commonCopy', 'common.label.modifiedContent'),
+    type: 'info',
+    enabled: codeConfig.showCopy && codeConfig.diffEditor,
+    click () {
+      $copyText(modifiedContent.value)
+      if (codeConfig.copyAndClose) {
+        showWindow.value = false
+      }
+    }
+  }, ...buttons]
 })
 
 watch(codeText, text => {
-  codeConfig.change(text, languageRef.value)
+  if (!codeConfig.diffEditor) {
+    codeConfig.change(text, languageModel.value)
+  }
+})
+watch([originalContent, modifiedContent], ([original, modified]) => {
+  if (codeConfig.diffEditor) {
+    codeConfig.change(original, modified)
+  }
 })
 
 </script>
@@ -105,6 +161,7 @@ watch(codeText, text => {
   >
     <el-container class="flex-column">
       <common-form-control
+        v-if="!codeConfig.diffEditor"
         :model="languageModel"
         :option="langOption"
       >
@@ -127,7 +184,20 @@ watch(codeText, text => {
           </el-link>
         </template>
       </common-form-control>
+      <vue-monaco-diff-editor
+        v-if="codeConfig.diffEditor"
+        theme="vs-dark"
+        :original="originalContent"
+        :modified="modifiedContent"
+        :options="diffOptions"
+        :height="codeHeight"
+        @mount="handleMount"
+        @change="diffChanged"
+      >
+        <div v-loading="true" />
+      </vue-monaco-diff-editor>
       <vue-monaco-editor
+        v-else
         v-model:value="codeText"
         :language="languageRef"
         :height="codeHeight"

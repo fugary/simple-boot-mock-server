@@ -1,5 +1,5 @@
 import VueMonacoEditor, { loader, VueMonacoDiffEditor } from '@guolao/vue-monaco-editor'
-import { ref, watch, toRaw, h, withDirectives, resolveDirective, computed } from 'vue'
+import { ref, watch, toRaw, h, withDirectives, resolveDirective, computed, shallowRef, onBeforeUnmount } from 'vue'
 import * as monaco from 'monaco-editor'
 import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
@@ -212,6 +212,36 @@ const fixEditorSetValue = (props, context) => {
     onMountFunc(instance)
   }
   return { ...props, [onMountKey]: newOnMount }
+}
+
+export const useMonacoDiffEditorOptions = (config) => {
+  const diffOptions = ref({
+    automaticLayout: true,
+    formatOnType: true,
+    formatOnPaste: true,
+    originalEditable: true,
+    readOnly: false,
+    ...config
+  })
+  const diffEditorRef = shallowRef()
+  const handleMount = diffEditor => (diffEditorRef.value = diffEditor)
+  onBeforeUnmount(() => {
+    diffEditorRef.value?.dispose()
+  })
+  const originalContent = ref('')
+  const modifiedContent = ref('')
+  const diffChanged = () => {
+    originalContent.value = diffEditorRef.value.getOriginalEditor().getValue() || ''
+    modifiedContent.value = diffEditorRef.value.getModifiedEditor().getValue() || ''
+  }
+  return {
+    originalContent,
+    modifiedContent,
+    diffOptions,
+    diffEditorRef,
+    handleMount,
+    diffChanged
+  }
 }
 
 export default {

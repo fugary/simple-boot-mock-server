@@ -94,6 +94,8 @@ common.label.selection = '选中'
 common.label.name = '名称'
 common.label.value = '值'
 common.label.files = '文件'
+common.label.originalContent = '原文'
+common.label.modifiedContent = '对比'
 
 //= ============通用============
 common.label.commonCode = '{0}代码'

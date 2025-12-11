@@ -113,6 +113,21 @@ export const ALL_MENUS = [
   {
     id: 96,
     parentId: 9,
+    iconCls: 'DifferenceFilled',
+    nameCn: '对比编辑器',
+    nameEn: 'Diff Editor',
+    click: () => {
+      showCodeWindow(editorContent, {
+        title: $i18nBundle('mock.label.compare'),
+        diffEditor: true,
+        readOnly: false,
+        closeOnClickModal: false
+      })
+    }
+  },
+  {
+    id: 97,
+    parentId: 9,
     iconCls: 'QuestionFilled',
     nameCn: '查看帮助',
     nameEn: 'View Help',
