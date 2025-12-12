@@ -32,6 +32,7 @@
         <js.dayjs.version>1.11.12</js.dayjs.version>
         <hutool.version>5.8.37</hutool.version>
         <bouncycastle.version>1.79</bouncycastle.version>
+        <postman4j-models.version>0.0.5-alpha</postman4j-models.version>
     </properties>
 
     <dependencyManagement>
@@ -97,6 +98,11 @@
                 <version>${hutool.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>dev.jora.postman4j</groupId>
+                <artifactId>postman4j-models</artifactId>
+                <version>${postman4j-models.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

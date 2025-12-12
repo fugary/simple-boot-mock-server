@@ -37,6 +37,9 @@ export const IMPORT_TYPES = [{
   value: 'swagger',
   labelKey: 'mock.label.importTypeSwagger'
 }, {
+  value: 'postman',
+  labelKey: 'mock.label.importTypePostman'
+}, {
   value: 'fastmock',
   labelKey: 'mock.label.importTypeFastMock'
 }]
