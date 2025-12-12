@@ -103,7 +103,7 @@ const formOptions = computed(() => {
     labelKey: 'mock.label.combineSingleGroup',
     prop: 'singleGroup',
     type: 'switch',
-    enabled: importModel.value.type === 'swagger',
+    enabled: ['swagger', 'postman'].includes(importModel.value.type),
     tooltip: $i18nBundle('mock.msg.combineSingleGroup'),
     attrs: {
       activeValue: true,

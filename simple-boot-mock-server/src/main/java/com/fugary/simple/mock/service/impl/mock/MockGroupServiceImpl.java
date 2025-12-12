@@ -352,7 +352,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             if (!strategyResult.isSuccess()) {
                 return strategyResult;
             }
-            if ("swagger".equals(importVo.getType()) && BooleanUtils.isTrue(importVo.getSingleGroup())
+            if (Set.of("swagger", "postman").contains(importVo.getType()) && BooleanUtils.isTrue(importVo.getSingleGroup())
                     && CollectionUtils.size(mockVo.getGroups()) > 1) {
                 ExportGroupVo groupVo = mockVo.getGroups().get(0);
                 ExportGroupVo newGroup = SimpleMockUtils.copy(groupVo, ExportGroupVo.class);
