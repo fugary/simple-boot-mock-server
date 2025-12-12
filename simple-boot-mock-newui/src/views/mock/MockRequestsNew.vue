@@ -186,9 +186,6 @@ const editFormOptions = computed(() => {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
-    style: {
-      height: '100px'
-    },
     tooltips: [{
       tooltip: $i18nBundle('common.label.newWindowEdit'),
       tooltipIcon: 'EditPen',

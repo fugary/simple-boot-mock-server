@@ -297,9 +297,6 @@ const editFormOptions = computed(() => {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
-    style: {
-      height: '100px'
-    },
     tooltips: [{
       tooltip: $i18nBundle('common.label.newWindowEdit'),
       tooltipIcon: 'EditPen',
@@ -350,9 +347,6 @@ const editFormOptions = computed(() => {
     prop: 'responseBody',
     required: isRedirect,
     tooltipFunc: () => showMockTips(),
-    style: {
-      height: '200px'
-    },
     attrs: {
       class: 'common-resize-vertical',
       value: currentDataItem.value?.responseBody,

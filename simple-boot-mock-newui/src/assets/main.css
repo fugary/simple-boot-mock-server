@@ -379,10 +379,6 @@ html, body, #app, .index-container {
     flex-basis: 0;
 }
 
-.common-form-auto .el-form-item__content {
-    height: 32px;
-}
-
 .common-form-auto .el-form--inline .el-input,
 .common-form-auto.el-form--inline .el-input,
 .common-form-auto .el-form--inline .el-select,
