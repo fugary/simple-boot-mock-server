@@ -268,6 +268,7 @@ const newColumns = computed(() => {
                                   onToEditDelay={() => { newOrEdit(data.id) }}
                                   onRequestChanged={() => loadMockRequests()}
                                   onSaveMockRequest={(item) => saveMockRequest(item)}
+                                  onDblclick={() => newOrEdit(data.id)}
                                   group-item={groupItem.value} />
     },
     minWidth: '150px'
