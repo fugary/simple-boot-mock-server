@@ -157,11 +157,6 @@ public class MockRequestController {
         return SimpleResultUtils.createSimpleResult(mockRequestService.getById(id));
     }
 
-    @GetMapping("/getDefaultData/{requestId}")
-    public SimpleResult<MockData> getDefaultData(@PathVariable("requestId") Integer requestId) {
-        return SimpleResultUtils.createSimpleResult(mockRequestService.findMockData(requestId, null));
-    }
-
     @PostMapping("/saveMockParams")
     public SimpleResult saveMockParams(@RequestBody MockData data) {
         return SimpleResultUtils.createSimpleResult(mockRequestService.saveMockParams(data));

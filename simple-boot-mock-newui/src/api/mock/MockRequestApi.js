@@ -27,13 +27,6 @@ export const getMockUrl = (path) => {
 
 const MOCK_REQUEST_URL = '/admin/requests'
 
-export const getDefaultData = (id, config) => {
-  return $http(Object.assign({
-    url: `${MOCK_REQUEST_URL}/getDefaultData/${id}`,
-    method: 'get'
-  }, config)).then(response => response.data)
-}
-
 export const copyMockRequest = (id, config) => {
   return $http(Object.assign({
     url: `${MOCK_REQUEST_URL}/copyMockRequest/${id}`,

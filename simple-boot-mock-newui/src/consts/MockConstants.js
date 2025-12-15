@@ -91,6 +91,12 @@ export const AUTH_TYPE = {
   JWT: 'jwt'
 }
 
+export const MOCK_LOAD_BALANCE_TYPE = {
+  AUTO: 'auto',
+  RANDOM: 'random',
+  ROUND_ROBIN: 'round_robin'
+}
+
 export const AUTH_PARAM_NAMES = [AUTHORIZATION_KEY, 'accessToken', 'access_token', 'token', 'jwt_token', 'api_key', 'X-API-Key']
 export const AUTH_PREFIX_NAMES = [BEARER_KEY, 'Basic']
 
@@ -106,6 +112,17 @@ export const AUTH_OPTIONS = [{
 }, {
   value: AUTH_TYPE.JWT,
   labelKey: 'mock.label.authTypeJWT'
+}]
+
+export const MOCK_LOAD_BALANCE_OPTIONS = [{
+  value: MOCK_LOAD_BALANCE_TYPE.AUTO,
+  labelKey: 'mock.label.loadBalanceAuto'
+}, {
+  value: MOCK_LOAD_BALANCE_TYPE.RANDOM,
+  labelKey: 'mock.label.loadBalanceRandom'
+}, {
+  value: MOCK_LOAD_BALANCE_TYPE.ROUND_ROBIN,
+  labelKey: 'mock.label.loadBalanceRoundRobin'
 }]
 
 export const ALL_CONTENT_TYPES_LIST = [

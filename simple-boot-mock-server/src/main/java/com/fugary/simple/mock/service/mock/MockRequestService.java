@@ -47,15 +47,6 @@ public interface MockRequestService extends IService<MockRequest> {
     boolean copyMockRequest(Integer requestId, Integer newGroupId);
 
     /**
-     * 根据请求获取对应的响应数据，优先取默认响应或者第一条响应
-     *
-     * @param requestId
-     * @param defaultId
-     * @return
-     */
-    MockData findMockData(Integer requestId, Integer defaultId);
-
-    /**
      * 加载请求下面的可用数据
      * @param requestId
      */
@@ -70,10 +61,11 @@ public interface MockRequestService extends IService<MockRequest> {
     /**
      * 查询默认可用MockData
      *
+     * @param mockRequest
      * @param mockDataList
      * @return
      */
-    MockData findMockData(List<MockData> mockDataList);
+    MockData findMockData(MockRequest mockRequest, List<MockData> mockDataList);
 
     /**
      * 查找指定的MockData

@@ -32,6 +32,7 @@ import { checkProjectEdit } from '@/api/mock/MockProjectApi'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { ElTag, ElText } from 'element-plus'
 import { getRequestHistoryViewOptions, showCompareWindowNew } from '@/services/mock/NewMockDiffService'
+import { MOCK_LOAD_BALANCE_OPTIONS } from '@/consts/MockConstants'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -215,6 +216,12 @@ const editFormOptions = computed(() => {
       height: '100px',
       options: monacoEditorOptions
     }
+  }, {
+    labelKey: 'mock.label.loadBalanceType',
+    prop: 'loadBalancer',
+    type: 'select',
+    children: MOCK_LOAD_BALANCE_OPTIONS,
+    tooltip: $i18nBundle('mock.msg.loadBalanceTips')
   }, {
     labelKey: 'mock.label.requestName',
     prop: 'requestName',

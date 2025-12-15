@@ -25,6 +25,12 @@ public class MockConstants {
 
     public static final String MOCK_DEFAULT_PROJECT = "default";
 
+    public static final String MOCK_REQUEST_LOAD_BALANCE_AUTO = "auto";
+
+    public static final String MOCK_REQUEST_LOAD_BALANCE_RANDOM = "random";
+
+    public static final String MOCK_REQUEST_LOAD_BALANCE_ROUND_ROBIN = "round_robin";
+
     public static final String MOCK_USER_KEY = "simple-mock-user";
 
     public static final String MOCK_LOCALE_KEY = "locale";

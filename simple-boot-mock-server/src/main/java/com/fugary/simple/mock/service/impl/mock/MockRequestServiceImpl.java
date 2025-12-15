@@ -2,6 +2,7 @@ package com.fugary.simple.mock.service.impl.mock;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
@@ -23,6 +24,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
@@ -35,6 +39,9 @@ import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
 @Slf4j
 @Service
 public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockRequest> implements MockRequestService {
+
+    // 每组 mock request 独立轮询
+    private static final Map<String, AtomicInteger> RR_COUNTER = new ConcurrentHashMap<>();
 
     @Autowired
     private MockDataService mockDataService;
@@ -108,19 +115,6 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     }
 
     @Override
-    public MockData findMockData(Integer requestId, Integer defaultId) {
-        List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query()
-                .eq("request_id", requestId)
-                .eq("status", 1)
-                .isNull(DB_MODIFY_FROM_KEY));
-        MockData mockData = findForceMockData(mockDataList, defaultId);
-        if (mockData != null) {
-            return mockData;
-        }
-        return findMockData(mockDataList);
-    }
-
-    @Override
     public List<MockData> loadDataByRequest(Integer requestId) {
         return mockDataService.list(Wrappers.<MockData>query()
                 .eq("request_id", requestId)
@@ -136,22 +130,46 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
                 .orderByAsc("status_code", "create_date"));
     }
 
-    /**
-     * 查询默认可用MockData
-     *
-     * @param mockDataList
-     * @return
-     */
-    public MockData findMockData(List<MockData> mockDataList) {
-        MockData result = null;
+    @Override
+    public MockData findMockData(MockRequest mockRequest, List<MockData> mockDataList) {
         // 默认数据从没有matchPattern的数据中查找，默认和匹配规则有冲突
         mockDataList = mockDataList.stream().filter(md -> StringUtils.isBlank(md.getMatchPattern())).collect(Collectors.toList());
-        for (MockData mockData : mockDataList) {
-            if (result == null || (!SimpleMockUtils.isDefault(result) && SimpleMockUtils.isDefault(mockData))) {
+        if (mockDataList.isEmpty()) {
+            return null;
+        }
+        if (mockDataList.size() == 1) {
+            return mockDataList.get(0);
+        }
+        String loadBalancer = StringUtils.defaultIfBlank(mockRequest.getLoadBalancer(), MockConstants.MOCK_REQUEST_LOAD_BALANCE_AUTO);
+        switch (loadBalancer) {
+            case MockConstants.MOCK_REQUEST_LOAD_BALANCE_RANDOM:
+                return random(mockDataList);
+            case MockConstants.MOCK_REQUEST_LOAD_BALANCE_ROUND_ROBIN:
+                return roundRobin(String.valueOf(mockRequest.getId()), mockDataList);
+            default:
+                return firstOrDefault(mockDataList);
+        }
+    }
+
+    private MockData firstOrDefault(List<MockData> list) {
+        MockData result = null;
+        for (MockData mockData : list) {
+            if (result == null ||
+                    (!SimpleMockUtils.isDefault(result) && SimpleMockUtils.isDefault(mockData))) {
                 result = mockData;
             }
         }
         return result;
+    }
+
+    private MockData random(List<MockData> list) {
+        return list.get(ThreadLocalRandom.current().nextInt(list.size()));
+    }
+
+    private MockData roundRobin(String mockKey, List<MockData> list) {
+        AtomicInteger index = RR_COUNTER.computeIfAbsent(mockKey, k -> new AtomicInteger(0));
+        int i = Math.abs(index.getAndIncrement());
+        return list.get(i % list.size());
     }
 
     @Override
