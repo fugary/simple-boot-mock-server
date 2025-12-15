@@ -129,7 +129,12 @@ const requestProxyUrl = computed(() => {
   <el-container class="flex-column">
     <el-row class="margin-bottom1">
       <el-col>
-        {{ requestItem.requestPath }}
+        <mock-url-copy-link
+          class="margin-left1"
+          :url-path="fullPath"
+        >
+          {{ requestItem.requestPath }}
+        </mock-url-copy-link>
         <mock-url-copy-link
           v-if="requestProxyUrl"
           :tooltip="`${$t('mock.label.proxyUrl')}: ${requestProxyUrl}`"
@@ -140,10 +145,6 @@ const requestProxyUrl = computed(() => {
             icon="Link"
           />
         </mock-url-copy-link>
-        <mock-url-copy-link
-          class="margin-left1"
-          :url-path="fullPath"
-        />
       </el-col>
     </el-row>
     <el-row class="margin-bottom1">
