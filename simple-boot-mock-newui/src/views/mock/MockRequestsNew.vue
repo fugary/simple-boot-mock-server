@@ -14,7 +14,7 @@ import { ref, computed } from 'vue'
 import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useDefaultPage } from '@/config'
-import { $i18nBundle, $i18nKey } from '@/messages'
+import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
 import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import {
@@ -179,7 +179,7 @@ const editFormOptions = computed(() => {
         return !currentRequest.value?.proxyUrl || /^https?:\/\/.+/.test(currentRequest.value?.proxyUrl)
       }
     }]
-  }, { ...useFormStatus(), style: getStyleGrow(3) },
+  }, { ...useFormStatus(), style: $i18nMsg(getStyleGrow(3), getStyleGrow(4)) },
   { ...useFormDisableMock(), style: getStyleGrow(3) },
   { ...useFormDelay(), style: getStyleGrow(3) },
   {
@@ -506,6 +506,7 @@ const toShowHistoryWindow = (current) => {
     <simple-edit-window
       v-model="currentRequest"
       v-model:show-edit-window="showEditWindow"
+      width="900px"
       :form-options="editFormOptions"
       :name="$t('mock.label.mockRequests')"
       :save-current-item="saveMockRequest"

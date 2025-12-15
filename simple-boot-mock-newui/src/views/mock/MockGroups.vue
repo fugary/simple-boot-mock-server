@@ -17,7 +17,7 @@ import {
   useBackUrl
 } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
-import { $i18nBundle, $i18nKey } from '@/messages'
+import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
 import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
@@ -352,7 +352,7 @@ const editFormOptions = computed(() => defineFormOptions([{
       return !currentGroup.value?.proxyUrl || /^https?:\/\/.+/.test(currentGroup.value?.proxyUrl)
     }
   }]
-}, { ...useFormStatus(), style: getStyleGrow(3) },
+}, { ...useFormStatus(), style: $i18nMsg(getStyleGrow(3), getStyleGrow(4)) },
 { ...useFormDisableMock(), style: getStyleGrow(3) },
 { ...useFormDelay(), style: getStyleGrow(3) }, {
   labelKey: 'common.label.description',
