@@ -2,12 +2,12 @@ import { $i18nBundle, $i18nKey } from '@/messages'
 import { formatDate, formatJsonStr } from '@/utils'
 import { isFunction } from 'lodash-es'
 import { showCodeWindow } from '@/utils/DynamicUtils'
-import { MOCK_LOAD_BALANCE_OPTIONS, MOCK_LOAD_BALANCE_TYPE } from '@/consts/MockConstants'
+import { MOCK_LOAD_BALANCE_OPTIONS } from '@/consts/MockConstants'
 
 export const getLoadBalancerLabel = (request) => {
-  const loadBalancer = request.loadBalancer || MOCK_LOAD_BALANCE_TYPE.AUTO
+  const loadBalancer = request.loadBalancer
   const labelKey = MOCK_LOAD_BALANCE_OPTIONS.find(opt => opt.value === loadBalancer)?.labelKey
-  return $i18nBundle(labelKey) || loadBalancer
+  return labelKey ? $i18nBundle(labelKey) : loadBalancer
 }
 
 export const getRequestHistoryViewOptions = (request, history) => {
@@ -25,7 +25,7 @@ export const getRequestHistoryViewOptions = (request, history) => {
     },
     { labelKey: 'common.label.delay', prop: 'delay' },
     { labelKey: 'mock.label.matchPattern', prop: 'matchPattern' },
-    { labelKey: 'mock.label.loadBalanceType', prop: () => getLoadBalancerLabel(request) },
+    { labelKey: 'mock.label.loadBalanceType', prop: () => request.loadBalancer ? getLoadBalancerLabel(request) : '' },
     { labelKey: 'mock.label.requestName', prop: 'requestName' },
     { labelKey: 'common.label.description', prop: 'description' },
     { label: $i18nKey('common.label.commonTest', 'mock.label.queryParams'), prop: () => formatJsonStr(request.mockParams) }
