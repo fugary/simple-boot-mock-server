@@ -106,7 +106,7 @@ export const useProjectEditHook = (searchParam, userOptions) => {
     labelKey: 'mock.label.projectName',
     prop: 'projectName',
     required: true
-  }, { ...useFormStatus(), style: getStyleGrow(3) }, {
+  }, { ...useFormStatus(), style: getStyleGrow(4) }, {
     labelKey: 'mock.label.publicMockProject',
     style: getStyleGrow(6),
     prop: 'publicFlag',

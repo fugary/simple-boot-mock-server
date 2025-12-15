@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { ref, computed, watch } from 'vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
-import { $coreAlert, $coreError, isAdminUser } from '@/utils'
+import { $coreAlert, $coreError, getStyleGrow, isAdminUser } from '@/utils'
 import { defineFormOptions } from '@/components/utils'
 import { ElButton } from 'element-plus'
 import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, uploadFiles } from '@/api/mock/MockGroupApi'
@@ -102,6 +102,7 @@ const formOptions = computed(() => {
   }, {
     labelKey: 'mock.label.combineSingleGroup',
     prop: 'singleGroup',
+    style: getStyleGrow(4),
     type: 'switch',
     enabled: ['swagger', 'postman'].includes(importModel.value.type),
     tooltip: $i18nBundle('mock.msg.combineSingleGroup'),
@@ -111,6 +112,11 @@ const formOptions = computed(() => {
       activeText: $i18nBundle('common.label.yes'),
       inactiveText: $i18nBundle('common.label.no')
     }
+  }, {
+    labelKey: 'mock.label.groupName',
+    enabled: ['swagger', 'postman'].includes(importModel.value.type) && importModel.value.singleGroup,
+    prop: 'groupName',
+    style: getStyleGrow(6)
   }, {
     labelKey: 'mock.label.importFile',
     type: 'upload',
@@ -142,7 +148,10 @@ const formOptions = computed(() => {
         </>
       }
     }
-  }])
+  }]).map(option => {
+    const style = { ...getStyleGrow(10), ...option.style || {} }
+    return { ...option, style }
+  })
 })
 const emit = defineEmits(['import-success', 'updateProjects', 'changedUser'])
 const doImportGroups = () => {
@@ -177,6 +186,7 @@ const doImportGroups = () => {
       <common-form
         label-width="150px"
         class="form-edit-width-90"
+        class-name="common-form-auto"
         :options="formOptions"
         :show-buttons="false"
         :model="importModel"
@@ -185,6 +195,7 @@ const doImportGroups = () => {
       <simple-edit-window
         v-model="currentProject"
         v-model:show-edit-window="showEditProjectWindow"
+        inline-auto-mode
         :form-options="editProjectFormOptions"
         :name="$t('mock.label.mockProjects')"
         :save-current-item="saveProjectItem"

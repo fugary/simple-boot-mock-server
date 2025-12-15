@@ -359,6 +359,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 newGroup.setRequests(mockVo.getGroups().stream().flatMap(group -> group.getRequests().stream())
                         .collect(Collectors.toList()));
                 mockVo.setGroups(List.of(newGroup));
+                if (StringUtils.isNotBlank(importVo.getGroupName())) {
+                    newGroup.setGroupName(importVo.getGroupName());
+                }
             }
             List<ExportGroupVo> importGroups = mockVo.getGroups();
             List<MockGroup> existGroups = checkGroupsExists(importGroups);

@@ -12,9 +12,11 @@ import java.io.Serializable;
 @Data
 public class MockGroupImportParamVo implements Serializable {
 
+    private static final long serialVersionUID = -6908379166190422653L;
     private String userName;
     private String type;
     private Integer duplicateStrategy;
     private String projectCode;
     private Boolean singleGroup; // 合并到单个组
+    private String groupName;
 }
