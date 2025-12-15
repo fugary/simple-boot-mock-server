@@ -134,7 +134,7 @@ const calcButtons = computed(() => {
 
 watch(codeText, text => {
   if (!codeConfig.diffEditor) {
-    codeConfig.change(text, languageModel.value)
+    codeConfig.change(text, languageRef.value)
   }
 })
 watch([originalContent, modifiedContent], ([original, modified]) => {
