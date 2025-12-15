@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -63,7 +64,7 @@ public class PostmanImporterImpl implements MockGroupImporter {
                     Information info = postmanCollection.getInfo();
                     rootGroup.setStatus(1);
                     rootGroup.setGroupName(info.getName());
-                    rootGroup.setGroupPath(DigestUtils.md5Hex(JsonUtils.toJson(postmanCollection.getItem())));
+                    rootGroup.setGroupPath(DigestUtils.md5Hex(rootGroup.getGroupName() + "#" + JsonUtils.toJson(postmanCollection.getItem())));
                     rootGroup.setDescription(info.getDescription() != null ? info.getDescription().stringValue : "");
                     rootGroup.setRequests(new ArrayList<>());
                     groups.add(rootGroup);
@@ -87,7 +88,7 @@ public class PostmanImporterImpl implements MockGroupImporter {
             if (parentGroup != null) {
                 group.setGroupName(StringUtils.join(List.of(parentGroup.getGroupName(), item.getName()), "/"));
             }
-            group.setGroupPath(DigestUtils.md5Hex(JsonUtils.toJson(item.getItem())));
+            group.setGroupPath(DigestUtils.md5Hex(group.getGroupName() + "#" + JsonUtils.toJson(item.getItem())));
             group.setDescription(item.getDescription() != null ? item.getDescription().stringValue : "");
             group.setStatus(1);
             group.setRequests(new ArrayList<>());
@@ -121,7 +122,11 @@ public class PostmanImporterImpl implements MockGroupImporter {
 
     private String getRequestPath(URL url) {
         if (url.getUrlClassValue() != null) {
-            return "/" + StringUtils.join(url.getUrlClassValue().getPath().unionArrayValue, "/");
+            Optional<URLPath> pathOptional = Optional.ofNullable(url.getUrlClassValue().getPath());
+            if (pathOptional.isPresent()) {
+                return "/" + StringUtils.join(url.getUrlClassValue().getPath().unionArrayValue, "/");
+            }
+            return "/";
         } else if (StringUtils.isNotBlank(url.getStringValue())) {
             try {
                 return new java.net.URL(url.getStringValue()).getPath();
