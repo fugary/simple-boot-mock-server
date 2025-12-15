@@ -31,7 +31,11 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import { checkProjectEdit } from '@/api/mock/MockProjectApi'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { ElTag, ElText } from 'element-plus'
-import { getRequestHistoryViewOptions, showCompareWindowNew } from '@/services/mock/NewMockDiffService'
+import {
+  getLoadBalancerLabel,
+  getRequestHistoryViewOptions,
+  showCompareWindowNew
+} from '@/services/mock/NewMockDiffService'
 import { MOCK_LOAD_BALANCE_OPTIONS } from '@/consts/MockConstants'
 
 const route = useRoute()
@@ -350,6 +354,9 @@ const toShowHistoryWindow = (current) => {
       formatter (data) {
         return limitStr(data.matchPattern, 100)
       }
+    }, {
+      labelKey: 'mock.label.loadBalanceType',
+      formatter: getLoadBalancerLabel
     }, {
       labelKey: 'mock.label.proxyUrl',
       property: 'proxyUrl',
