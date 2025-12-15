@@ -18,6 +18,11 @@ public class SimpleMockConfigProperties {
 
     private Integer jwtExpire = 7;
 
+    /**
+     * 上传大小
+     */
+    private long maxUploadSize = 10 * 1024 * 1024;
+
     private boolean mockLogEnabled = true;
 
     private boolean fetchEnabled = true;

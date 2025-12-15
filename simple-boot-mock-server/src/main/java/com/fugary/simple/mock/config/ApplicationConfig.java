@@ -5,6 +5,7 @@ import com.fugary.simple.mock.security.UserSecurityInterceptor;
 import com.fugary.simple.mock.utils.http.SimpleHttpClientUtils;
 import com.fugary.simple.mock.web.filters.MockMetaDataFilter;
 import com.fugary.simple.mock.web.filters.locale.CustomHeaderLocaleContextResolver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -40,10 +41,13 @@ import static com.fugary.simple.mock.contants.MockConstants.*;
 @EnableConfigurationProperties({SimpleMockConfigProperties.class})
 public class ApplicationConfig implements WebMvcConfigurer {
 
+    @Autowired
+    private SimpleMockConfigProperties simpleMockConfigProperties;
+
     @Bean
     public CommonsMultipartResolver multipartResolver() {
         CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver();
-        multipartResolver.setMaxUploadSize(5 * 1024 * 1024); // 5MB
+        multipartResolver.setMaxUploadSize(simpleMockConfigProperties.getMaxUploadSize()); // 文件大小限制
         multipartResolver.setDefaultEncoding(StandardCharsets.UTF_8.name());
         return multipartResolver;
     }
