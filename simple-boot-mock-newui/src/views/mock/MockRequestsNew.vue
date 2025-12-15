@@ -216,7 +216,7 @@ const editFormOptions = computed(() => {
         contentRef.value = value
         languageRef.value = 'javascript'
       },
-      language: languageRef.value,
+      language: languageRef.value || 'javascript',
       height: '100px',
       options: monacoEditorOptions
     }
