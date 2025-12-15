@@ -15,7 +15,7 @@ const props = defineProps({
   },
   width: {
     type: String,
-    default: '1000px'
+    default: '800px'
   },
   saveCurrentItem: {
     type: Function,
