@@ -164,7 +164,7 @@ const requestProxyUrl = computed(() => {
         />
         <el-tag
           v-if="requestItem.dataCount"
-          :title="$t('mock.label.mockDataCount')"
+          v-common-tooltip="$t('mock.label.mockDataCount')"
           class="margin-left1 pointer"
           type="success"
           size="small"

@@ -17,7 +17,7 @@ import {
   useBackUrl
 } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
-import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
+import { $i18nBundle, $i18nKey } from '@/messages'
 import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
@@ -121,8 +121,7 @@ const columns = computed(() => {
     formatter (data) {
       if (data.proxyUrl) {
         return <>
-          <span>{data.proxyUrl}</span>
-          <MockUrlCopyLink class="margin-left1" urlPath={data.proxyUrl}/>
+          <MockUrlCopyLink class="margin-left1" urlPath={data.proxyUrl}>{data.proxyUrl}</MockUrlCopyLink>
         </>
       }
     }
@@ -134,24 +133,27 @@ const columns = computed(() => {
     labelKey: 'common.label.status',
     property: 'status',
     formatter (data) {
+      const confirmDisableMock = () => $coreConfirm($i18nKey('common.msg.commonConfirm', 'mock.label.resumeMock'))
+        .then(() => saveGroupItem({ ...data, disableMock: false }))
       return <>
         <DelFlagTag v-model={data.status} clickToToggle={true}
                     onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
         {data.requestCount
           ? <ElTag
-            title={$i18nBundle('mock.label.mockRequestCount')}
+            v-common-tooltip={$i18nBundle('mock.label.mockRequestCount')}
             class="margin-left1 pointer"
             type="primary"
             size="small"
             effect="plain"
             style="height: 20px;"
             round={true}
+            onClick={() => $goto(`/mock/groups/${data.id}?backUrl=${route.fullPath}`)}
         >
           {data.requestCount}
         </ElTag>
           : ''}
         {data.disableMock
-          ? <ElText type="danger"
+          ? <ElText type="danger" onClick={confirmDisableMock}
                                   style="vertical-align: bottom;"
                                   class="margin-left1 pointer"
                                   v-common-tooltip={$i18nBundle('mock.label.disabledMock')}>
@@ -352,7 +354,7 @@ const editFormOptions = computed(() => defineFormOptions([{
       return !currentGroup.value?.proxyUrl || /^https?:\/\/.+/.test(currentGroup.value?.proxyUrl)
     }
   }]
-}, { ...useFormStatus(), style: $i18nMsg(getStyleGrow(3), getStyleGrow(4)) },
+}, { ...useFormStatus(), style: getStyleGrow(4) },
 { ...useFormDisableMock(), style: getStyleGrow(3) },
 { ...useFormDelay(), style: getStyleGrow(3) }, {
   labelKey: 'common.label.description',
@@ -491,6 +493,7 @@ const showImportWindow = ref(false)
       @page-size-change="loadMockGroups()"
       @current-page-change="loadMockGroups()"
       @selection-change="selectedRows=$event"
+      @row-dblclick="newOrEdit($event.id)"
     />
     <simple-edit-window
       v-model="currentGroup"
