@@ -133,7 +133,7 @@ const columns = computed(() => {
     labelKey: 'common.label.status',
     property: 'status',
     formatter (data) {
-      const confirmDisableMock = () => $coreConfirm($i18nKey('common.msg.commonConfirm', 'mock.label.resumeMock'))
+      const confirmResumeMock = () => $coreConfirm($i18nKey('common.msg.commonConfirm', 'mock.label.resumeMock'))
         .then(() => saveGroupItem({ ...data, disableMock: false }))
       return <>
         <DelFlagTag v-model={data.status} clickToToggle={true}
@@ -153,8 +153,8 @@ const columns = computed(() => {
         </ElTag>
           : ''}
         {data.disableMock
-          ? <ElText type="danger" onClick={confirmDisableMock}
-                                  style="vertical-align: bottom;"
+          ? <ElText type="danger" onClick={confirmResumeMock}
+                                  style="vertical-align: sub;"
                                   class="margin-left1 pointer"
                                   v-common-tooltip={$i18nBundle('mock.label.disabledMock')}>
           <CommonIcon size={18} icon="DoDisturbFilled"/>

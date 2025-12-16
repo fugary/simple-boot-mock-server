@@ -6,7 +6,7 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { defineTableButtons } from '@/components/utils'
 import { $coreConfirm } from '@/utils'
-import { $i18nBundle, $i18nConcat } from '@/messages'
+import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
 const props = defineProps({
   groupItem: {
     type: Object,
@@ -114,6 +114,9 @@ const changeStatus = (status) => {
     })
 }
 
+const confirmResumeMock = () => $coreConfirm($i18nKey('common.msg.commonConfirm', 'mock.label.resumeMock'))
+  .then(() => emit('saveMockRequest', { ...requestItem.value, disableMock: false }))
+
 const requestProxyUrl = computed(() => {
   let proxyUrl = requestItem.value.proxyUrl || props.groupItem.proxyUrl
   if (proxyUrl) { // 去掉末尾的斜杠
@@ -178,8 +181,9 @@ const requestProxyUrl = computed(() => {
           v-if="requestItem.disableMock"
           v-common-tooltip="$t('mock.label.disabledMock')"
           type="danger"
-          style="vertical-align: bottom;"
+          style="vertical-align: sub;"
           class="margin-left1 pointer"
+          @click="confirmResumeMock"
         >
           <common-icon
             :size="18"
