@@ -406,9 +406,7 @@ const mockPreviewRef = ref()
 const onSelectDataItem = (dataItem) => {
   selectDataItem.value = dataItem
   if (dataItem) {
-    mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, (newItem) => {
-      Object.assign(dataItem, newItem)
-    })
+    mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, () => loadMockData())
   }
 }
 
