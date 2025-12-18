@@ -144,7 +144,7 @@ const { searchParam, tableData, loading, searchMethod: searchMockData } = useTab
 
 const loadMockData = (...args) => {
   const lastId = selectDataItem.value?.id
-  searchMockData(...args)
+  return searchMockData(...args)
     .then((result) => {
       requestItem.value.dataCount = tableData.value?.length || 0
       if (!tableData.value?.length) {
