@@ -10,7 +10,7 @@ import { $copyText } from '@/utils'
 const showWindow = ref(false)
 const { contentRef: codeText, languageRef, languageModel, languageSelectOption, normalLanguageSelectOption, formatDocument, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
 
-const { diffOptions, diffChanged, handleMount, originalContent, modifiedContent } = useMonacoDiffEditorOptions()
+const { gotoDiffPosition, diffOptions, diffChanged, handleMount, originalContent, modifiedContent } = useMonacoDiffEditorOptions()
 
 /**
  * @typedef {{copyAndClose?: boolean, showCopy?: boolean, width?: string, title?: string, height?: string, closeOnClickModal?: boolean, readOnly?: boolean}} CodeWindowConfig
@@ -153,12 +153,40 @@ watch([originalContent, modifiedContent], ([original, modified]) => {
     :show-cancel="false"
     :ok-label="$t('common.label.close')"
     destroy-on-close
-    :title="codeConfig.title"
     append-to-body
     show-fullscreen
     :buttons="calcButtons"
     :close-on-click-modal="codeConfig.closeOnClickModal"
   >
+    <template #header>
+      {{ codeConfig.title }}
+      <template v-if="codeConfig.diffEditor">
+        <el-link
+          v-common-tooltip="'Previous'"
+          underline="never"
+          class="margin-left3"
+          @click.stop="gotoDiffPosition(true)"
+          @dblclick.stop
+        >
+          <common-icon
+            :size="20"
+            icon="ArrowUpwardFilled"
+          />
+        </el-link>
+        <el-link
+          v-common-tooltip="'Next'"
+          underline="never"
+          class="margin-left1"
+          @click.stop="gotoDiffPosition();"
+          @dblclick.stop
+        >
+          <common-icon
+            :size="20"
+            icon="ArrowDownwardFilled"
+          />
+        </el-link>
+      </template>
+    </template>
     <el-container class="flex-column">
       <common-form-control
         v-if="!codeConfig.diffEditor"

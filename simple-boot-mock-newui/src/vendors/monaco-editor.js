@@ -234,12 +234,16 @@ export const useMonacoDiffEditorOptions = (config) => {
     originalContent.value = diffEditorRef.value.getOriginalEditor().getValue() || ''
     modifiedContent.value = diffEditorRef.value.getModifiedEditor().getValue() || ''
   }
+  const gotoDiffPosition = prev => {
+    diffEditorRef.value.goToDiff(prev ? 'previous' : 'next')
+  }
   return {
     originalContent,
     modifiedContent,
     diffOptions,
     diffEditorRef,
     handleMount,
+    gotoDiffPosition,
     diffChanged
   }
 }
