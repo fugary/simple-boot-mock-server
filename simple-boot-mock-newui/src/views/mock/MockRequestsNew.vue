@@ -42,7 +42,7 @@ const route = useRoute()
 const groupId = route.params.groupId
 
 const { goBack } = useBackUrl('/mock/groups')
-const { groupItem, mockProject, groupUrl, loadSuccess } = useMockGroupItem(groupId)
+const { groupItem, loadGroup, mockProject, groupUrl, loadSuccess } = useMockGroupItem(groupId)
 
 const { tableData, loading, searchParam, searchMethod: searchMockRequests } = useTableAndSearchForm({
   defaultParam: { groupId, page: useDefaultPage(10) },
@@ -288,6 +288,7 @@ const changeBatchMode = () => {
 
 const editGroupEnvParams = () => {
   toEditGroupEnvParams(groupItem.value?.id)
+    .then(() => loadGroup())
     .then(() => loadMockRequests())
 }
 
