@@ -515,9 +515,20 @@ const pageAttrs = {
     >
       <template #buttonHeader>
         {{ $t('common.label.operation') }}
+        <el-tag
+          v-if="searchParam.page?.totalCount"
+          :title="$t('mock.label.mockDataCount')"
+          class="margin-left1 pointer"
+          type="primary"
+          size="small"
+          effect="plain"
+          round
+        >
+          <span v-if="selectedRows.length">{{ selectedRows.length }}/</span><span>{{ searchParam.page?.totalCount }}</span>
+        </el-tag>
         <el-button
           v-common-tooltip="$t('common.label.batchMode')"
-          class="margin-left1"
+          class="margin-left2"
           round
           :type="batchMode?'success':'default'"
           size="small"
@@ -526,6 +537,7 @@ const pageAttrs = {
           <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
         </el-button>
         <el-button
+          v-if="!batchMode"
           v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockData')"
           type="primary"
           size="small"
