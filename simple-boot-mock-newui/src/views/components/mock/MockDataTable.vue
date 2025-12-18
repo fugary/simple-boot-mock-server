@@ -98,13 +98,13 @@ const columns = computed(() => {
       const showStr = limitStr(data.matchPattern, 60)
       return <ViewDataLink data={showStr} icon="RuleFilled" style="word-break: break-all;"
                              tooltip={$i18nKey('common.label.commonConfig', 'mock.label.matchPattern')}
-                             onViewDataDetails={() => toTestMatchPattern(props.groupItem, requestItem.value, data)
+                             onViewDataDetails={() => toTestMatchPattern(props.groupItem, requestItem.value, data, props.editable)
                                .then(() => loadMockData())}/>
     }
   }, {
     minWidth: '100px',
     formatter (data) {
-      return <DelFlagTag v-model={data.status} clickToToggle={true}
+      return <DelFlagTag v-model={data.status} clickToToggle={props.editable}
                          onToggleValue={(status) => saveMockData({ ...data, status })}/>
     },
     headerFormatter () {
@@ -487,7 +487,7 @@ const toShowHistoryWindow = (current) => {
         historyOptionsMethod: getDataHistoryViewOptions
       })
     },
-    recoverFunc: recoverFromHistory
+    recoverFunc: props.editable ? recoverFromHistory : null
   })
 }
 const pageAttrs = {
@@ -526,36 +526,38 @@ const pageAttrs = {
         >
           <span v-if="selectedRows.length">{{ selectedRows.length }}/</span><span>{{ searchParam.page?.totalCount }}</span>
         </el-tag>
-        <el-button
-          v-common-tooltip="$t('common.label.batchMode')"
-          class="margin-left2"
-          round
-          :type="batchMode?'success':'default'"
-          size="small"
-          @click="changeBatchMode"
-        >
-          <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
-        </el-button>
-        <el-button
-          v-if="!batchMode"
-          v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockData')"
-          type="primary"
-          size="small"
-          round
-          @click="newOrEdit()"
-        >
-          <common-icon icon="Plus" />
-        </el-button>
-        <el-button
-          v-if="selectedRows.length"
-          v-common-tooltip="$t('common.label.delete')"
-          type="danger"
-          size="small"
-          round
-          @click="deleteDataList()"
-        >
-          <common-icon icon="DeleteFilled" />
-        </el-button>
+        <template v-if="editable">
+          <el-button
+            v-common-tooltip="$t('common.label.batchMode')"
+            class="margin-left2"
+            round
+            :type="batchMode?'success':'default'"
+            size="small"
+            @click="changeBatchMode"
+          >
+            <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
+          </el-button>
+          <el-button
+            v-if="!batchMode"
+            v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockData')"
+            type="primary"
+            size="small"
+            round
+            @click="newOrEdit()"
+          >
+            <common-icon icon="Plus" />
+          </el-button>
+          <el-button
+            v-if="selectedRows.length"
+            v-common-tooltip="$t('common.label.delete')"
+            type="danger"
+            size="small"
+            round
+            @click="deleteDataList()"
+          >
+            <common-icon icon="DeleteFilled" />
+          </el-button>
+        </template>
       </template>
       <template #buttons="{item}">
         <template v-for="(button, index) in buttons">
@@ -583,6 +585,7 @@ const pageAttrs = {
       label-width="140px"
       :save-current-item="saveMockData"
       inline-auto-mode
+      :editable="editable"
     >
       <template #headerParams="{option}">
         <common-form-control
@@ -615,10 +618,12 @@ const pageAttrs = {
     </simple-edit-window>
     <mock-data-response-edit
       ref="dataResponseEditRef"
+      :editable="editable"
       @save-data-response="saveDataResponse"
     />
     <mock-request-preview
       ref="mockPreviewRef"
+      :mock-response-editable="editable"
       class="margin-top2"
       affix-enabled
     />

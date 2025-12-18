@@ -266,7 +266,7 @@ const newColumns = computed(() => {
       return <MockRequestMenuItem v-model={data}
                                   editable={projectEditable.value}
                                   onToTestMockRequest={() => previewMockRequest(groupItem.value, data)}
-                                  onToTestMatchPattern={() => { toTestMatchPattern(groupItem.value, data) }}
+                                  onToTestMatchPattern={() => { toTestMatchPattern(groupItem.value, data, null, projectEditable.value) }}
                                   onToEditMockRequest={() => { newOrEdit(data.id) }}
                                   onToShowRequestHistory={() => toShowHistoryWindow(data)}
                                   onToEditDelay={() => { newOrEdit(data.id) }}
@@ -388,7 +388,7 @@ const toShowHistoryWindow = (current) => {
         historyOptionsMethod: getRequestHistoryViewOptions
       })
     },
-    recoverFunc: recoverFromHistory
+    recoverFunc: projectEditable.value ? recoverFromHistory : null
   })
 }
 
@@ -414,6 +414,7 @@ const toShowHistoryWindow = (current) => {
     >
       <template #buttons>
         <el-button
+          v-if="projectEditable"
           v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockRequest')"
           type="info"
           @click="newOrEdit()"
@@ -529,6 +530,7 @@ const toShowHistoryWindow = (current) => {
       :save-current-item="saveMockRequest"
       label-width="140px"
       inline-auto-mode
+      :editable="projectEditable"
     />
   </el-container>
 </template>

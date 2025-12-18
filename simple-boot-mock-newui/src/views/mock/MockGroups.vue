@@ -149,7 +149,7 @@ const columns = computed(() => {
       const confirmResumeMock = () => $coreConfirm($i18nKey('common.msg.commonConfirm', 'mock.label.resumeMock'))
         .then(() => saveGroupItem({ ...data, disableMock: false }))
       return <>
-        <DelFlagTag v-model={data.status} clickToToggle={true}
+        <DelFlagTag v-model={data.status} clickToToggle={projectEditable.value}
                     onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
         {data.requestCount
           ? <ElTag

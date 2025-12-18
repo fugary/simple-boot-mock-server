@@ -5,6 +5,10 @@ import { computed } from 'vue'
 import { getStyleGrow } from '@/utils'
 
 const props = defineProps({
+  editable: {
+    type: Boolean,
+    default: true
+  },
   formOptions: {
     type: Array,
     default: () => []
@@ -68,6 +72,7 @@ const calcOptions = computed(() => {
     v-model="showEditWindow"
     :title="currentItem?.id?$i18nKey('common.label.commonEdit', name):$i18nKey('common.label.commonAdd', name)"
     :ok-click="internalSaveCurrentItem"
+    :show-ok="editable"
     append-to-body
     destroy-on-close
     show-fullscreen

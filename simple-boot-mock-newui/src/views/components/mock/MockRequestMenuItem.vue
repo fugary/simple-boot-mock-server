@@ -162,7 +162,7 @@ const requestProxyUrl = computed(() => {
         <del-flag-tag
           v-model="requestItem.status"
           class="margin-left1"
-          click-to-toggle
+          :click-to-toggle="editable"
           @toggle-value="changeStatus"
         />
         <el-tag

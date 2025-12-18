@@ -26,14 +26,16 @@ const currentItem = ref()
 const paramTarget = ref()
 const responseTarget = ref()
 const schemasConf = ref({})
+const editable = ref(true)
 
 let saveResolve
-const toTestMatchPattern = (mockGroup, mockRequest, viewData) => {
+const toTestMatchPattern = (mockGroup, mockRequest, viewData, isEditable = true) => {
   groupItem.value = mockGroup
   currentItem.value = viewData || mockRequest // 当前预览的是request还是data
   showWindow.value = true
   paramTarget.value = calcParamTarget(groupItem.value, mockRequest, viewData, schemasConf.value)
   paramTarget.value.requestPath = '/mock/checkMatchPattern'
+  editable.value = isEditable
   const matchPattern = currentItem.value?.matchPattern
   if (matchPattern) {
     paramTarget.value.matchPattern = matchPattern
@@ -123,6 +125,7 @@ defineExpose({
     :ok-label="$i18nKey('common.label.commonSave', 'mock.label.matchPattern')"
     show-fullscreen
     :ok-click="saveMatchPattern"
+    :show-ok="editable"
     destroy-on-close
     :close-on-click-modal="false"
   >

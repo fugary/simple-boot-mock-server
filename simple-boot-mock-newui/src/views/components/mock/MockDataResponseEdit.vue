@@ -18,6 +18,13 @@ const schemas = ref([])
 const componentsSpec = ref()
 const isRedirect = ref(false)
 
+defineProps({
+  editable: {
+    type: Boolean,
+    default: true
+  }
+})
+
 const toEditDataResponse = (mockData) => {
   currentMockData.value = cloneDeep(mockData)
   contentRef.value = mockData.responseBody
@@ -88,6 +95,7 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
     show-fullscreen
     append-to-body
     :ok-click="saveDataResponse"
+    :show-ok="editable"
   >
     <template #header>
       {{ $i18nKey('common.label.commonEdit', isRedirect?'mock.label.redirectUrl':'mock.label.responseBody1') }}
