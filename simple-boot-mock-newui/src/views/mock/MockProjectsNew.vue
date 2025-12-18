@@ -105,6 +105,7 @@ const tableProjectItems = computed(() => {
   return tableData.value.map(project => {
     const defaultProject = isDefaultProject(project.projectCode)
     const publicProject = !!project.publicFlag
+    const editable = !defaultProject && checkProjectEdit(project)
     return {
       defaultProject,
       project,
@@ -112,7 +113,7 @@ const tableProjectItems = computed(() => {
         labelKey: 'common.label.status',
         formatter () {
           return <>
-            <DelFlagTag v-model={project.status} clickToToggle={!defaultProject}
+            <DelFlagTag v-model={project.status} clickToToggle={editable}
                                onToggleValue={(status) => saveProjectItem({ ...project, status })} />
             {publicProject
               ? <ElTag type="primary" class="margin-left1">

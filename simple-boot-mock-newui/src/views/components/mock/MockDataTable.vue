@@ -519,7 +519,7 @@ const pageAttrs = {
           v-if="searchParam.page?.totalCount"
           :title="$t('mock.label.mockDataCount')"
           class="margin-left1 pointer"
-          type="primary"
+          type="success"
           size="small"
           effect="plain"
           round
