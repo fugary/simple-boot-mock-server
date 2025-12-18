@@ -85,6 +85,19 @@ const columns = computed(() => {
   }, {
     labelKey: 'mock.label.groupName',
     minWidth: '130px',
+    headerFormatter () {
+      return <>
+        {$i18nBundle('mock.label.groupName')}
+        {searchParam.value.page?.totalCount
+          ? <ElTag class="margin-left1 pointer" type="primary" size="small" effect="plain" round={true}>
+              {selectedRows.value.length
+                ? <span>{selectedRows.value.length}/</span>
+                : ''}<span>{searchParam.value.page?.totalCount}</span>
+            </ElTag>
+          : ''
+        }
+      </>
+    },
     formatter (data) {
       const url = `/mock/groups/${data.id}?backUrl=${route.fullPath}`
       let projectInfo = ''

@@ -468,7 +468,7 @@ const toShowHistoryWindow = (current) => {
                     effect="plain"
                     round
                   >
-                    {{ searchParam.page?.totalCount }}
+                    <span v-if="selectedRows.length">{{ selectedRows.length }}/</span><span>{{ searchParam.page?.totalCount }}</span>
                   </el-tag>
                   <div
                     v-if="projectEditable"
@@ -484,6 +484,7 @@ const toShowHistoryWindow = (current) => {
                       <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
                     </el-button>
                     <el-button
+                      v-if="!batchMode"
                       v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockRequest')"
                       round
                       type="primary"
