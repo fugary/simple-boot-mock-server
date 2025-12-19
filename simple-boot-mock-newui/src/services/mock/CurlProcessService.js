@@ -20,6 +20,7 @@ export function curl2Json (curlCmd) {
   const clean = curlCmd
     .replace(/\\\r?\n/g, '')
     .replace(/\s+/g, ' ')
+    .replace(/\^/g, '')
     .trim()
 
   const tokens = clean.match(/('[^']*'|"[^"]*"|\S+)/g) || []
