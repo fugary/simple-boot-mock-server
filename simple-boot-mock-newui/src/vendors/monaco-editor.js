@@ -21,6 +21,7 @@ const defaultConfig = {
   wordWrap: 'on',
   readOnly: true,
   language: 'javascript',
+  autoCheckLang: true,
   fixedOverflowWidgets: true,
   formatOnPaste: true,
   internalPasteProcess: false
@@ -78,6 +79,9 @@ const langCheckConfig = [{
 }, {
   type: 'json',
   checkReg: /(^\{[\s\S]*})|(^\[[\s\S]*])/
+}, {
+  type: 'shell',
+  checkReg: /^\s*(curl|wget|ls|cd|export|source|bash|sh|cat|echo|grep|tail|head|chmod|chown|kill|ps|sudo)\b/i
 }, {
   type: 'sql',
   checkReg: /(SELECT\s.*?\bFROM\b)|(INSERT\s.*?\bINTO\b)|(UPDATE\s.*?\bSET\b)|(DELETE\s.*?\bFROM\b)/i
@@ -160,7 +164,7 @@ export const useMonacoEditorOptions = (config) => {
     }
   }
   const checkEditorLang = (lang) => {
-    languageRef.value = lang || $checkLang(contentRef.value) || monacoEditorOptions.language
+    languageRef.value = lang || (monacoEditorOptions.autoCheckLang && $checkLang(contentRef.value)) || monacoEditorOptions.language
     if (contentRef.value && editorRef.value) {
       formatDocument()
     }

@@ -25,8 +25,10 @@ const codeConfig = reactive({
   showSelectButton: false,
   diffEditor: false,
   showCopy: true,
+  showCancel: false,
   copyAndClose: false,
   buttons: [],
+  ok: () => {},
   change: () => {}
 })
 
@@ -52,6 +54,7 @@ const showCodeWindow = (code, config = {}) => {
   }
   showWindow.value = true
   monacoEditorOptions.readOnly = config.readOnly ?? monacoEditorOptions.readOnly
+  monacoEditorOptions.formatOnPaste = config.formatOnPaste ?? monacoEditorOptions.formatOnPaste
   diffOptions.value.readOnly = config.readOnly ?? diffOptions.value.readOnly
   diffOptions.value.originalEditable = !diffOptions.value.readOnly
   fullscreen.value = codeConfig.fullscreen
@@ -74,10 +77,13 @@ const codeHeight = computed(() => {
 
 const langOption = computed(() => {
   if (codeConfig.language) {
+    const langChildren = languageSelectOption.value.children.filter(item => item.value === codeConfig.language)
+    if (!langChildren.length) {
+      langChildren.push({ label: codeConfig.language.toUpperCase(), value: codeConfig.language })
+    }
     return {
       ...languageSelectOption.value,
-      children: languageSelectOption.value.children
-        .filter(item => item.value === codeConfig.language)
+      children: langChildren
     }
   }
   return codeConfig.fullEditor ? languageSelectOption.value : normalLanguageSelectOption.value
@@ -150,8 +156,9 @@ watch([originalContent, modifiedContent], ([original, modified]) => {
     v-model="showWindow"
     v-model:fullscreen="fullscreen"
     :width="codeConfig.width"
-    :show-cancel="false"
-    :ok-label="$t('common.label.close')"
+    :show-cancel="codeConfig.showCancel"
+    :ok-label="codeConfig.okLabel||$t('common.label.close')"
+    :ok-click="() => codeConfig.ok?.(codeText, languageRef)"
     destroy-on-close
     append-to-body
     show-fullscreen

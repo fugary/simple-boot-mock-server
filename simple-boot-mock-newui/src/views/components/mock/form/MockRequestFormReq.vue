@@ -14,7 +14,7 @@ import {
   DEFAULT_HEADERS
 } from '@/consts/MockConstants'
 import MockRequestFormAuthorization from '@/views/components/mock/form/MockRequestFormAuthorization.vue'
-import { $i18nKey } from '@/messages'
+import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
 import { getSingleSelectOptions } from '@/utils'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { isString } from 'lodash-es'
@@ -22,6 +22,7 @@ import { calcEnvSuggestions, generateSampleCheckResults, generateSchemaSample } 
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
+import { extendCurlParams, isGetMethod } from '@/services/mock/CurlProcessService'
 
 const props = defineProps({
   showAuthorization: {
@@ -84,7 +85,7 @@ const requestHeaderLength = computed(() => {
 })
 
 const showRequestBody = computed(() => {
-  return paramTarget.value?.method !== 'GET'
+  return !isGetMethod(paramTarget.value?.method)
 })
 
 watch(languageRef, lang => {
@@ -139,6 +140,21 @@ const resetRequestForm = () => {
   emit('resetRequestForm')
   setTimeout(initParamTarget)
 }
+const curlContent = ref('')
+const processCurlWindow = () => {
+  showCodeWindow(curlContent, {
+    title: $i18nConcat($i18nBundle('common.label.paste'), 'CURL'),
+    showCancel: true,
+    readOnly: false,
+    language: 'shell',
+    okLabel: $i18nBundle('common.label.confirm'),
+    ok (str) {
+      extendCurlParams(paramTarget, str)
+      initParamTarget()
+    }
+  })
+}
+
 </script>
 
 <template>
@@ -151,6 +167,14 @@ const resetRequestForm = () => {
     <template
       #add-icon
     >
+      <el-link
+        type="primary"
+        style="margin-top: -11px"
+        class="margin-right2"
+        @click="processCurlWindow"
+      >
+        CURL
+      </el-link>
       <el-link
         type="primary"
         style="margin-top: -11px"
