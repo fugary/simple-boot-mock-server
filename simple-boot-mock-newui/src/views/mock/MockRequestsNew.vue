@@ -265,7 +265,7 @@ const newColumns = computed(() => {
     formatter (data) {
       return <MockRequestMenuItem v-model={data}
                                   editable={projectEditable.value}
-                                  onToTestMockRequest={() => previewMockRequest(groupItem.value, data)}
+                                  onToTestMockRequest={() => previewMockRequest(groupItem.value, data, null, () => loadMockRequests())}
                                   onToTestMatchPattern={() => { toTestMatchPattern(groupItem.value, data, null, projectEditable.value) }}
                                   onToEditMockRequest={() => { newOrEdit(data.id) }}
                                   onToShowRequestHistory={() => toShowHistoryWindow(data)}

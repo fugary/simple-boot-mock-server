@@ -138,6 +138,10 @@ const doSaveMockParams = () => {
       id,
       mockParams: requestItem.value.mockParams
     }, { loading: false })
+      .then((data) => {
+        console.log('=========================data', data)
+        return saveCallback?.(data.resultData)
+      })
   }
 }
 
