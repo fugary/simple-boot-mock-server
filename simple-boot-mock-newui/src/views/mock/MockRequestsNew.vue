@@ -46,7 +46,7 @@ const { goBack } = useBackUrl('/mock/groups')
 const { groupItem, loadGroup, mockProject, groupUrl, loadSuccess } = useMockGroupItem(groupId)
 
 const { tableData, loading, searchParam, searchMethod: searchMockRequests } = useTableAndSearchForm({
-  defaultParam: { groupId, page: useDefaultPage(10) },
+  defaultParam: { groupId, page: useDefaultPage(8) },
   searchMethod: (param) => MockRequestApi.search(param, { loading: true }),
   saveParam: false
 })

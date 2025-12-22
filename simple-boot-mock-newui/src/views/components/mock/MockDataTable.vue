@@ -137,7 +137,7 @@ const columns = computed(() => {
   }])
 })
 const { searchParam, tableData, loading, searchMethod: searchMockData } = useTableAndSearchForm({
-  defaultParam: { requestId: requestItem.value.id, page: useDefaultPage() },
+  defaultParam: { requestId: requestItem.value.id, page: useDefaultPage(5) },
   searchMethod: MockDataApi.search,
   saveParam: false
 })
