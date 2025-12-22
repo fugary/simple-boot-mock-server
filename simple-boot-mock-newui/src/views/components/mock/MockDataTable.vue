@@ -346,7 +346,26 @@ const editFormOptions = computed(() => {
     type: 'vue-monaco-editor',
     prop: 'responseBody',
     required: isRedirect,
-    tooltipFunc: () => showMockTips(),
+    tooltips: [{
+      tooltip: $i18nBundle('common.label.newWindowEdit'),
+      tooltipIcon: 'EditPen',
+      tooltipFunc: () => showCodeWindow(currentDataItem.value?.responseBody, {
+        language: currentDataItem.value?.responseFormat,
+        forceLanguage: false,
+        autoCheckLang: false,
+        title: $i18nKey('common.label.commonEdit', isRedirect ? 'mock.label.redirectUrl' : 'mock.label.mockResponseBody'),
+        readOnly: false,
+        change: (value, lang) => {
+          currentDataItem.value.responseBody = value
+          console.log('===============================value,lang', value, lang)
+          currentDataItem.value.responseFormat = lang
+          languageRef.value = lang
+        }
+      })
+    }, {
+      tooltip: $i18nBundle('mock.label.clickToShowDetails'),
+      tooltipFunc: () => showMockTips()
+    }],
     attrs: {
       class: 'common-resize-vertical',
       value: currentDataItem.value?.responseBody,

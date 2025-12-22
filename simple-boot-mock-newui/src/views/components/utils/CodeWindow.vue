@@ -27,6 +27,7 @@ const codeConfig = reactive({
   showCopy: true,
   showCancel: false,
   copyAndClose: false,
+  forceLanguage: true,
   buttons: [],
   ok: () => {},
   change: () => {}
@@ -55,11 +56,12 @@ const showCodeWindow = (code, config = {}) => {
   showWindow.value = true
   monacoEditorOptions.readOnly = config.readOnly ?? monacoEditorOptions.readOnly
   monacoEditorOptions.formatOnPaste = config.formatOnPaste ?? monacoEditorOptions.formatOnPaste
+  monacoEditorOptions.autoCheckLang = config.autoCheckLang ?? monacoEditorOptions.autoCheckLang
   diffOptions.value.readOnly = config.readOnly ?? diffOptions.value.readOnly
   diffOptions.value.originalEditable = !diffOptions.value.readOnly
   fullscreen.value = codeConfig.fullscreen
   if (config.language) {
-    languageRef.value = config.language
+    monacoEditorOptions.language = languageRef.value = config.language
   }
   setTimeout(formatDocument)
 }
@@ -77,7 +79,10 @@ const codeHeight = computed(() => {
 
 const langOption = computed(() => {
   if (codeConfig.language) {
-    const langChildren = languageSelectOption.value.children.filter(item => item.value === codeConfig.language)
+    let langChildren = [...languageSelectOption.value.children]
+    if (codeConfig.forceLanguage) {
+      langChildren = languageSelectOption.value.children.filter(item => item.value === codeConfig.language)
+    }
     if (!langChildren.length) {
       langChildren.push({ label: codeConfig.language.toUpperCase(), value: codeConfig.language })
     }
@@ -138,9 +143,9 @@ const calcButtons = computed(() => {
   }, ...buttons]
 })
 
-watch(codeText, text => {
+watch([codeText, languageRef], ([text, lang]) => {
   if (!codeConfig.diffEditor) {
-    codeConfig.change(text, languageRef.value)
+    codeConfig.change(text, lang)
   }
 })
 watch([originalContent, modifiedContent], ([original, modified]) => {
