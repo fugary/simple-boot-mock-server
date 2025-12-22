@@ -11,6 +11,7 @@ export function curl2Json (curlCmd) {
   const result = {
     method: 'GET',
     url: '',
+    path: '',
     query: [], // 数组结构
     headers: [], // 数组结构
     body: null,
@@ -42,6 +43,7 @@ export function curl2Json (curlCmd) {
   const urlObj = new URL(rawUrl)
 
   result.url = `${urlObj.origin}${urlObj.pathname}`
+  result.path = urlObj.pathname
 
   // --------- query 变成数组 ----------
   urlObj.searchParams.forEach((v, k) => {
@@ -95,9 +97,23 @@ export const extendCurlParams = (paramTarget, curlStr) => {
   const curlObj = curl2Json(curlStr)
   console.log('===============================curl', curlObj, curlStr)
   if (paramTarget.value) {
-    paramTarget.value.requestBody = !isGetMethod(paramTarget.value.method) ? curlObj.bodyStr : undefined
+    paramTarget.value.requestBody = !isGetMethod(paramTarget.value.method || curlObj.method) ? curlObj.bodyStr : undefined
     paramTarget.value.requestParams = curlObj.query || []
     paramTarget.value.headerParams = curlObj.headers || []
   }
   return curlObj
+}
+
+export const pasteCurl2Request = (request, curlStr) => {
+  if (curlStr?.trim()?.match(/^curl\s+/ig)) { // curl格式
+    const mockParams = request.mockParams
+      ? JSON.parse(request.mockParams)
+      : {}
+    const curlObj = extendCurlParams({
+      value: mockParams
+    }, curlStr)
+    request.method = curlObj.method
+    request.requestPath = curlObj.path || request.requestPath
+    request.mockParams = request.mockParams || JSON.stringify(mockParams)
+  }
 }

@@ -37,6 +37,7 @@ import {
   showCompareWindowNew
 } from '@/services/mock/NewMockDiffService'
 import { MOCK_LOAD_BALANCE_OPTIONS } from '@/consts/MockConstants'
+import { pasteCurl2Request } from '@/services/mock/CurlProcessService'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -172,6 +173,7 @@ const editFormOptions = computed(() => {
     change (val) {
       if (val && !val.startsWith('/')) {
         currentRequest.value.requestPath = `/${val.trim()}`
+        pasteCurl2Request(currentRequest.value, val)
       }
     }
   }, {
