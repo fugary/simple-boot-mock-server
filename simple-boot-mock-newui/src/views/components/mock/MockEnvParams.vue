@@ -68,6 +68,7 @@ const saveGroupConfig = ({ form }) => {
         name-required
         value-required
         :name-suggestions="DEFAULT_HEADERS"
+        :base-tab-index="1000"
       />
     </common-form>
   </common-window>

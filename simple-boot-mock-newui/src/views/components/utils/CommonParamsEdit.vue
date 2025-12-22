@@ -59,6 +59,10 @@ const props = defineProps({
   fileFlag: {
     type: Boolean,
     default: false
+  },
+  baseTabIndex: {
+    type: Number,
+    default: 0
   }
 })
 
@@ -164,7 +168,7 @@ const paramsOptions = computed(() => {
       attrs: {
         fetchSuggestions: nameSuggestions,
         triggerOnFocus: false,
-        tabindex: index * 2 + 1
+        tabindex: props.tabindex + index * 2 + 1
       },
       dynamicOption: (item, ...args) => {
         if (isFunction(item.dynamicOption)) {
@@ -198,7 +202,7 @@ const paramsOptions = computed(() => {
       attrs: {
         fetchSuggestions: paramValueSuggestions,
         triggerOnFocus: true,
-        tabindex: 100 + index * 2 + 2
+        tabindex: props.tabindex + 100 + index * 2 + 2
       },
       dynamicOption: (item, ...args) => {
         if (isFunction(item.dynamicOption)) {
