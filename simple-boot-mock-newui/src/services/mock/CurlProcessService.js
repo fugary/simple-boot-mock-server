@@ -11,6 +11,7 @@ export function curl2Json (curlCmd) {
   const result = {
     method: 'GET',
     url: '',
+    origin: '',
     path: '',
     query: [], // 数组结构
     headers: [], // 数组结构
@@ -43,6 +44,7 @@ export function curl2Json (curlCmd) {
   const urlObj = new URL(rawUrl)
 
   result.url = `${urlObj.origin}${urlObj.pathname}`
+  result.origin = urlObj.origin
   result.path = urlObj.pathname
 
   // --------- query 变成数组 ----------
@@ -114,6 +116,7 @@ export const pasteCurl2Request = (request, curlStr) => {
     }, curlStr)
     request.method = curlObj.method
     request.requestPath = curlObj.path || request.requestPath
+    request.proxyUrl = curlObj.origin || request.proxyUrl
     request.mockParams = request.mockParams || JSON.stringify(mockParams)
   }
 }
