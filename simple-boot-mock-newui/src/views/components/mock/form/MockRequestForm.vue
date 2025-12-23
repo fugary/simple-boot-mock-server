@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import MockRequestFormRes from '@/views/components/mock/form/MockRequestFormRes.vue'
 import MockRequestFormReq from '@/views/components/mock/form/MockRequestFormReq.vue'
-import MockRequestFormUrl from '@/views/components/mock/form/MockRequestFormUrl.vue'
 import MockRequestFormMatchPattern from '@/views/components/mock/form/MockRequestFormMatchPattern.vue'
 import { addParamsToURL, calcAffixOffset } from '@/utils'
 import { useDisableAffix } from '@/hooks/useDisableAffix'
@@ -153,7 +152,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
         <template v-else>
           <el-row>
             <el-col :span="20">
-              <mock-request-form-url v-model="paramTarget" />
+              <mock-request-form-match-pattern v-model="paramTarget" />
             </el-col>
             <el-col
               :span="4"
@@ -166,11 +165,6 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
               >
                 {{ $t('mock.label.sendRequest') }}
               </el-button>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col>
-              <mock-request-form-match-pattern v-model="paramTarget" />
             </el-col>
           </el-row>
         </template>
