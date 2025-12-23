@@ -390,7 +390,8 @@ const toShowHistoryWindow = (current) => {
         historyOptionsMethod: getRequestHistoryViewOptions
       })
     },
-    recoverFunc: projectEditable.value ? recoverFromHistory : null
+    recoverFunc: projectEditable.value ? recoverFromHistory : null,
+    onUpdateHistory: () => loadMockRequests()
   })
 }
 

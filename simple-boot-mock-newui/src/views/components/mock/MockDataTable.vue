@@ -506,7 +506,8 @@ const toShowHistoryWindow = (current) => {
         historyOptionsMethod: getDataHistoryViewOptions
       })
     },
-    recoverFunc: props.editable ? recoverFromHistory : null
+    recoverFunc: props.editable ? recoverFromHistory : null,
+    onUpdateHistory: () => loadMockData()
   })
 }
 const pageAttrs = {

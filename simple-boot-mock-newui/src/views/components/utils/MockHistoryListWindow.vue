@@ -51,6 +51,7 @@ const searchHistories = (...args) => {
       tableData.value = [target.value, ...tableData.value]
     })
 }
+const emit = defineEmits(['updateHistory'])
 const buttons = defineTableButtons([{
   labelKey: 'mock.label.compare',
   type: 'primary',
@@ -70,6 +71,7 @@ const buttons = defineTableButtons([{
     $coreConfirm($i18nBundle('mock.msg.recoverFromHistory'))
       .then(() => props.recoverFunc?.(item))
       .then(() => searchHistories())
+      .then(() => emit('updateHistory', target.value))
   }
 }, {
   labelKey: 'mock.label.viewChange',
