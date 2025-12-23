@@ -110,6 +110,7 @@ const saveMatchPattern = () => {
       ElMessage.success($i18nBundle('common.msg.saveSuccess'))
     })
   }
+  showWindow.value = false
 }
 
 defineExpose({
@@ -123,6 +124,7 @@ defineExpose({
     v-model="showWindow"
     width="1100px"
     :ok-label="$i18nKey('common.label.commonSave', 'mock.label.matchPattern')"
+    :cancel-label="$t('common.label.close')"
     show-fullscreen
     :ok-click="saveMatchPattern"
     :show-ok="editable"
@@ -142,7 +144,9 @@ defineExpose({
         match-pattern-mode
         :schemas="schemasConf.schemas"
         :schema-spec="schemasConf.componentSpec"
+        :match-pattern-editable="editable"
         @send-request="doDataPreview"
+        @save-match-pattern="saveMatchPattern"
       />
     </el-container>
   </common-window>

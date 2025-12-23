@@ -29,6 +29,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  matchPatternEditable: {
+    type: Boolean,
+    default: false
+  },
   schemas: {
     type: Array,
     default: () => []
@@ -58,7 +62,7 @@ const requestUrl = computed(() => {
   return reqUrl
 })
 
-const emit = defineEmits(['sendRequest', 'saveMockResponseBody', 'resetRequestForm'])
+const emit = defineEmits(['sendRequest', 'saveMockResponseBody', 'saveMatchPattern', 'resetRequestForm'])
 const formRef = ref()
 const sendRequest = (form) => {
   form.validate(valid => {
@@ -151,11 +155,11 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
         </template>
         <template v-else>
           <el-row>
-            <el-col :span="20">
+            <el-col :span="18">
               <mock-request-form-match-pattern v-model="paramTarget" />
             </el-col>
             <el-col
-              :span="4"
+              :span="6"
               class="flex-center-col padding-left2"
             >
               <el-button
@@ -164,6 +168,14 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
                 @click="sendRequest(form)"
               >
                 {{ $t('mock.label.sendRequest') }}
+              </el-button>
+              <el-button
+                v-if="matchPatternEditable"
+                type="success"
+                style="margin-top: -15px;"
+                @click="emit('saveMatchPattern')"
+              >
+                {{ $t('common.label.save') }}
               </el-button>
             </el-col>
           </el-row>
