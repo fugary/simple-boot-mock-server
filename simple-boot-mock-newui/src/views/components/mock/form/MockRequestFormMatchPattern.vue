@@ -61,19 +61,20 @@ const matchPatternOptions = computed(() => {
   }, {
     labelKey: 'mock.label.matchResult',
     type: 'common-form-label',
-    enabled: !!props.responseTarget,
     formatter () {
-      const data = JSON.parse(props.responseTarget.data)
-      console.log('==========================responseData', data)
-      if (data.success) {
-        const resultData = data.resultData
-        const isBool = isBoolean(resultData)
-        return <>
-          <ElTag type={resultData ? 'success' : 'danger'}>{String(!!resultData)}</ElTag>
-          {!isBool ? <ElText class="margin-left1" type="info">[{resultData}]</ElText> : ''}
-        </>
+      if (props.responseTarget && props.responseTarget.data) {
+        const data = JSON.parse(props.responseTarget.data)
+        if (data.success) {
+          const resultData = data.resultData
+          const isBool = isBoolean(resultData)
+          return <>
+            <ElTag type={resultData ? 'success' : 'danger'}>{String(!!resultData)}</ElTag>
+            {!isBool ? <ElText class="margin-left1" type="info">[{resultData}]</ElText> : ''}
+          </>
+        }
+        return <ElText type="danger">{data.message}：{String(data.resultData)}</ElText>
       }
-      return <ElText type="danger">{data.message}：{String(data.resultData)}</ElText>
+      return '——'
     }
   }])
 })
