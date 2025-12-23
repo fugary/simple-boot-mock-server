@@ -1,6 +1,5 @@
 package com.fugary.simple.mock.service.impl.mock;
 
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.contants.MockErrorConstants;
@@ -13,6 +12,7 @@ import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -63,6 +63,10 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
             Integer oldRequestId = data.getId();
             Integer oldDataId = data.getId();
             data.setId(null);
+            data.setDefaultFlag(null); // 不复制默认标记
+            if (StringUtils.isNotBlank(data.getDataName())) {
+                data.setDataName(StringUtils.join(data.getDataName(), "-copy"));
+            }
             boolean saved = saveOrUpdate(data);
             if (saved) {
                 List<MockSchema> schemas = mockSchemaService.list(Wrappers.<MockSchema>query()
