@@ -9,7 +9,7 @@ import MockDataApi, {
 } from '@/api/mock/MockDataApi'
 import MockRequestApi, { loadSchemas } from '@/api/mock/MockRequestApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
-import { $i18nBundle, $i18nKey } from '@/messages'
+import { $i18nBundle } from '@/messages'
 import {
   MOCK_DATA_MATCH_PATTERN_HEADER,
   MOCK_DATA_PATH_PARAMS_HEADER,
@@ -123,7 +123,7 @@ defineExpose({
   <common-window
     v-model="showWindow"
     width="1100px"
-    :ok-label="$i18nKey('common.label.commonSave', 'mock.label.matchPattern')"
+    :ok-label="$t('mock.label.savePattern')"
     :cancel-label="$t('common.label.close')"
     show-fullscreen
     :ok-click="saveMatchPattern"

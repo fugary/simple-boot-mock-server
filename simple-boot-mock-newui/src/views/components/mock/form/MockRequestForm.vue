@@ -156,7 +156,10 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
         <template v-else>
           <el-row>
             <el-col :span="18">
-              <mock-request-form-match-pattern v-model="paramTarget" />
+              <mock-request-form-match-pattern
+                v-model="paramTarget"
+                :response-target="responseTarget"
+              />
             </el-col>
             <el-col
               :span="6"
@@ -175,7 +178,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
                 style="margin-top: -15px;"
                 @click="emit('saveMatchPattern')"
               >
-                {{ $t('common.label.save') }}
+                {{ $t('mock.label.savePattern') }}
               </el-button>
             </el-col>
           </el-row>

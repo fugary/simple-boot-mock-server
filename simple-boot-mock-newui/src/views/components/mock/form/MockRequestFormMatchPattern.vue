@@ -1,8 +1,18 @@
-<script setup>
+<script setup lang="jsx">
 import { $i18nBundle, $i18nKey } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { computed } from 'vue'
 import { showCodeWindow, showMockTips } from '@/utils/DynamicUtils'
+import { defineFormOptions } from '@/components/utils'
+import { ElTag, ElText } from 'element-plus'
+import { isBoolean } from 'lodash-es'
+
+const props = defineProps({
+  responseTarget: {
+    type: Object,
+    default: null
+  }
+})
 
 const paramTarget = defineModel('modelValue', {
   type: Object,
@@ -13,8 +23,8 @@ const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions(
 
 languageRef.value = 'javascript'
 
-const matchPatternOption = computed(() => {
-  return {
+const matchPatternOptions = computed(() => {
+  return defineFormOptions([{
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
@@ -48,16 +58,40 @@ const matchPatternOption = computed(() => {
       height: '100px',
       options: monacoEditorOptions
     }
-  }
+  }, {
+    labelKey: 'mock.label.matchResult',
+    type: 'common-form-label',
+    enabled: !!props.responseTarget,
+    formatter () {
+      const data = JSON.parse(props.responseTarget.data)
+      console.log('==========================responseData', data)
+      if (data.success) {
+        const resultData = data.resultData
+        const isBool = isBoolean(resultData)
+        return <>
+          <ElTag type={resultData ? 'success' : 'danger'}>{String(!!resultData)}</ElTag>
+          {!isBool ? <ElText class="margin-left1" type="info">[{resultData}]</ElText> : ''}
+        </>
+      }
+      return <ElText type="danger">{data.message}：{String(data.resultData)}</ElText>
+    }
+  }])
 })
 </script>
 
 <template>
-  <common-form-control
-    :model="paramTarget"
-    label-width="180px"
-    :option="matchPatternOption"
-  />
+  <el-container class="flex-column">
+    <template
+      v-for="(option, index) in matchPatternOptions"
+      :key="index"
+    >
+      <common-form-control
+        :model="paramTarget"
+        label-width="180px"
+        :option="option"
+      />
+    </template>
+  </el-container>
 </template>
 
 <style scoped>
