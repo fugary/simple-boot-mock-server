@@ -19,6 +19,7 @@ public class MockLogQueryVo extends SimpleQueryVo {
     private String logType;
     private String logResult;
     private String ipAddress;
+    private String mockGroupPath;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date startDate;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")

@@ -40,6 +40,7 @@ public class MockLogController {
                 .eq(StringUtils.isNotBlank(queryVo.getLogType()), "log_type", StringUtils.trimToEmpty(queryVo.getLogType()))
                 .eq(StringUtils.isNotBlank(queryVo.getLogResult()), "log_result", StringUtils.trimToEmpty(queryVo.getLogResult()))
                 .eq(StringUtils.isNotBlank(queryVo.getIpAddress()), "ip_address", StringUtils.trimToEmpty(queryVo.getIpAddress()))
+                .eq(StringUtils.isNotBlank(queryVo.getMockGroupPath()), "mock_group_path", StringUtils.trimToEmpty(queryVo.getMockGroupPath()))
                 .ge(queryVo.getStartDate() != null, "create_date", queryVo.getStartDate())
                 .le(queryVo.getEndDate() != null, "create_date", queryVo.getEndDate())
                 .like(StringUtils.isNotBlank(queryVo.getLogName()), "log_name", StringUtils.trimToEmpty(queryVo.getLogName()))

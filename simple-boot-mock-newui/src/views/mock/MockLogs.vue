@@ -93,44 +93,44 @@ const columns = computed(() => {
   }]
 })
 
+const showLogDetail = item => showCodeWindow(JSON.stringify(item), {
+  showSelectButton: true,
+  buttons: [{
+    enabled: !!item.logData,
+    type: 'info',
+    label: $i18nKey('common.label.commonView', 'mock.label.requestBody1'),
+    click: () => {
+      showCodeWindow(item.logData)
+    }
+  }, {
+    enabled: !!item.responseBody,
+    label: $i18nKey('common.label.commonView', 'mock.label.responseBody1'),
+    type: 'info',
+    click: () => {
+      showCodeWindow(item.responseBody)
+    }
+  }, {
+    enabled: !!item.headers,
+    label: $i18nKey('common.label.commonView', 'mock.label.requestHeaders'),
+    type: 'info',
+    click: () => {
+      showCodeWindow(item.headers)
+    }
+  }, {
+    enabled: !!item.responseHeaders,
+    label: $i18nKey('common.label.commonView', 'mock.label.responseHeaders'),
+    type: 'info',
+    click: () => {
+      showCodeWindow(item.responseHeaders)
+    }
+  }]
+})
+
 const buttons = computed(() => {
   return [{
     labelKey: 'common.label.view',
     type: 'primary',
-    click: item => {
-      showCodeWindow(JSON.stringify(item), {
-        showSelectButton: true,
-        buttons: [{
-          enabled: !!item.logData,
-          type: 'info',
-          label: $i18nKey('common.label.commonView', 'mock.label.requestBody1'),
-          click: () => {
-            showCodeWindow(item.logData)
-          }
-        }, {
-          enabled: !!item.responseBody,
-          label: $i18nKey('common.label.commonView', 'mock.label.responseBody1'),
-          type: 'info',
-          click: () => {
-            showCodeWindow(item.responseBody)
-          }
-        }, {
-          enabled: !!item.headers,
-          label: $i18nKey('common.label.commonView', 'mock.label.requestHeaders'),
-          type: 'info',
-          click: () => {
-            showCodeWindow(item.headers)
-          }
-        }, {
-          enabled: !!item.responseHeaders,
-          label: $i18nKey('common.label.commonView', 'mock.label.responseHeaders'),
-          type: 'info',
-          click: () => {
-            showCodeWindow(item.responseHeaders)
-          }
-        }]
-      })
-    }
+    click: showLogDetail
   }]
 })
 //* ************搜索框**************//
@@ -161,6 +161,9 @@ const searchFormOptions = computed(() => {
   }, {
     labelKey: 'mock.label.ipAddress',
     prop: 'ipAddress'
+  }, {
+    labelKey: 'mock.label.pathId',
+    prop: 'mockGroupPath'
   }, {
     model: dateParam.value,
     labelKey: 'common.label.createDate',
@@ -196,7 +199,7 @@ const searchFormOptions = computed(() => {
       :loading="loading"
       @page-size-change="loadApiLogs()"
       @current-page-change="loadApiLogs()"
-      @row-dblclick="showCodeWindow($event.logData)"
+      @row-dblclick="showLogDetail($event)"
     />
   </el-container>
 </template>
