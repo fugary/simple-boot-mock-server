@@ -2,6 +2,7 @@ package com.fugary.simple.mock.service.mock;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fugary.simple.mock.entity.mock.MockData;
+import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 
 import java.util.List;
@@ -25,9 +26,10 @@ public interface MockDataService extends IService<MockData> {
      * 复制一份数据
      *
      * @param dataId
+     * @param newRequest
      * @return
      */
-    boolean copyMockData(Integer dataId);
+    boolean copyMockData(Integer dataId, MockRequest newRequest);
 
     /**
      * 删除mock数据

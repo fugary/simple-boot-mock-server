@@ -139,7 +139,7 @@ public class MockDataController {
 
     @PostMapping("/copyMockData/{dataId}")
     public SimpleResult copyMockData(@PathVariable("dataId") Integer id) {
-        return SimpleResultUtils.createSimpleResult(mockDataService.copyMockData(id));
+        return SimpleResultUtils.createSimpleResult(mockDataService.copyMockData(id, null));
     }
 
     @PostMapping("/markDefault")

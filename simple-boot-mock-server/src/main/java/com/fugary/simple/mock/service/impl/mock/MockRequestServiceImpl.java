@@ -91,6 +91,10 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             mockRequest.setId(null);
             if (newGroupId != null) {
                 mockRequest.setGroupId(newGroupId);
+            } else {
+                if (StringUtils.isNotBlank(mockRequest.getRequestName())) {
+                    mockRequest.setRequestName(StringUtils.join(mockRequest.getRequestName(), "-copy"));
+                }
             }
             saveOrUpdate(mockRequest);
             List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query()
@@ -101,10 +105,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             mockSchemaService.saveCopySchemas(schemaMap, requestId, null, mockRequest.getGroupId(), mockRequest.getId(), null);
             dataList.forEach(data -> {
                 Integer oldDataId = data.getId();
-                data.setId(null);
-                data.setGroupId(mockRequest.getGroupId());
-                data.setRequestId(mockRequest.getId());
-                boolean saved = mockDataService.saveOrUpdate(data);
+                boolean saved = mockDataService.copyMockData(oldDataId, mockRequest);
                 if (saved) {
                     mockSchemaService.saveCopySchemas(schemaMap, requestId, oldDataId, mockRequest.getGroupId(), mockRequest.getId(), data.getId());
                 }

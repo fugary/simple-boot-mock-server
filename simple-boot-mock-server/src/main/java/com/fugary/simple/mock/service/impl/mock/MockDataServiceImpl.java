@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
+import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockSchema;
 import com.fugary.simple.mock.mapper.mock.MockDataMapper;
 import com.fugary.simple.mock.service.mock.MockDataService;
@@ -57,17 +58,23 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
     }
 
     @Override
-    public boolean copyMockData(Integer dataId) {
+    public boolean copyMockData(Integer dataId, MockRequest newRequest) {
         MockData data = getById(dataId);
+        boolean saved = false;
         if (data != null) {
             Integer oldRequestId = data.getId();
             Integer oldDataId = data.getId();
             data.setId(null);
-            data.setDefaultFlag(null); // 不复制默认标记
-            if (StringUtils.isNotBlank(data.getDataName())) {
-                data.setDataName(StringUtils.join(data.getDataName(), "-copy"));
+            if (newRequest != null) {
+                data.setRequestId(newRequest.getId());
+                data.setGroupId(newRequest.getGroupId());
+            } else {
+                data.setDefaultFlag(null); // 不复制默认标记
+                if (StringUtils.isNotBlank(data.getDataName())) {
+                    data.setDataName(StringUtils.join(data.getDataName(), "-copy"));
+                }
             }
-            boolean saved = saveOrUpdate(data);
+            saved = saveOrUpdate(data);
             if (saved) {
                 List<MockSchema> schemas = mockSchemaService.list(Wrappers.<MockSchema>query()
                         .eq("request_id", oldRequestId)
@@ -75,7 +82,7 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
                 mockSchemaService.saveCopySchemas(schemas, data.getGroupId(), data.getRequestId(), data.getId());
             }
         }
-        return true;
+        return saved;
     }
 
     @Override
