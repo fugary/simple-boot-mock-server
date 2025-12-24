@@ -90,6 +90,21 @@ export function curl2Json (curlCmd) {
   return result
 }
 
+export const calcUrl = rawUrl => {
+  if (/^https?:\/\//.test(rawUrl)) {
+    try {
+      return new URL(rawUrl)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+  if (rawUrl) {
+    return {
+      pathname: rawUrl
+    }
+  }
+}
+
 export const isGetMethod = method => {
   method = (method || 'GET').toUpperCase()
   return method === 'GET'
@@ -118,5 +133,6 @@ export const pasteCurl2Request = (request, curlStr) => {
     request.requestPath = curlObj.path || request.requestPath
     request.proxyUrl = curlObj.origin || request.proxyUrl
     request.mockParams = request.mockParams || JSON.stringify(mockParams)
+    return true
   }
 }

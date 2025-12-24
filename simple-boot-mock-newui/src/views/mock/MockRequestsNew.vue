@@ -14,7 +14,7 @@ import { ref, computed } from 'vue'
 import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useDefaultPage } from '@/config'
-import { $i18nBundle, $i18nKey } from '@/messages'
+import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
 import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import {
@@ -37,7 +37,7 @@ import {
   showCompareWindowNew
 } from '@/services/mock/NewMockDiffService'
 import { MOCK_LOAD_BALANCE_OPTIONS } from '@/consts/MockConstants'
-import { pasteCurl2Request } from '@/services/mock/CurlProcessService'
+import { calcUrl, pasteCurl2Request } from '@/services/mock/CurlProcessService'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -170,11 +170,18 @@ const editFormOptions = computed(() => {
     showLabel: false,
     style: getStyleGrow(7),
     required: true,
+    trim: true,
+    placeholder: `${$i18nKey('common.msg.commonInput', 'mock.label.requestPath')}, ${$i18nConcat($i18nBundle('common.label.paste'), 'CURL')}`,
     change (val) {
-      if (val && !val.startsWith('/')) {
-        currentRequest.value.requestPath = `/${val.trim()}`
-        pasteCurl2Request(currentRequest.value, val)
+      if (pasteCurl2Request(currentRequest.value, val)) { // curl格式处理
+        return
       }
+      const urlObj = calcUrl(val)
+      val = urlObj?.pathname
+      if (urlObj?.origin) {
+        currentRequest.value.proxyUrl = urlObj.origin
+      }
+      currentRequest.value.requestPath = val && !val.startsWith('/') ? `/${val.trim()}` : val
     }
   }, {
     labelKey: 'mock.label.proxyUrl',
