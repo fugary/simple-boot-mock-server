@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router'
 import { useThemeAndLocaleMenus } from '@/services/menu/MenuService'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { ElMessage } from 'element-plus'
+import { APP_VERSION } from '@/config'
+import { formatDate } from '@/utils'
 
 const router = useRouter()
 const loginConfigStore = useLoginConfigStore()
@@ -56,7 +58,7 @@ const formRef = ref()
 </script>
 
 <template>
-  <el-container>
+  <el-container class="flex-column">
     <el-card class="login-form">
       <template #header>
         <div class="card-header">
@@ -95,6 +97,11 @@ const formRef = ref()
         </el-button>
       </template>
     </el-card>
+    <el-container class="text-center padding-10 flex-center">
+      <span>
+        <el-text>Copyright © {{ formatDate(new Date(), 'YYYY') }} Version: {{ APP_VERSION }}</el-text>
+      </span>
+    </el-container>
   </el-container>
 </template>
 

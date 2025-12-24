@@ -10,6 +10,7 @@ import { useMenuConfigStore } from '@/stores/MenuConfigStore'
 import { useBreadcrumbConfigStore } from '@/stores/BreadcrumbConfigStore'
 import { APP_VERSION } from '@/config'
 import { useTabModeScrollSaver, getParentRootKey } from '@/route/RouteUtils'
+import { formatDate } from '@/utils'
 
 const globalConfigStore = useGlobalConfigStore()
 const tabsViewStore = useTabsViewStore()
@@ -76,7 +77,7 @@ useMenuConfigStore().loadBusinessMenus()
         </router-view>
         <el-container class="text-center padding-10 flex-center">
           <span>
-            <el-text>Copyright © 2024 Version: {{ APP_VERSION }}</el-text>
+            <el-text>Copyright © {{ formatDate(new Date(), 'YYYY') }} Version: {{ APP_VERSION }}</el-text>
           </span>
         </el-container>
         <el-backtop
