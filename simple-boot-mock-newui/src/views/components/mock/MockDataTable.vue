@@ -532,6 +532,7 @@ const pageAttrs = {
       @current-change="onSelectDataItem"
       @current-page-change="loadMockData()"
       @page-size-change="loadMockData()"
+      @row-dblclick="newOrEdit($event.id)"
     >
       <template #buttonHeader>
         {{ $t('common.label.operation') }}

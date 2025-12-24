@@ -126,6 +126,7 @@ const doSearch = form => {
       :loading="loading"
       @page-size-change="loadUsers()"
       @current-page-change="loadUsers()"
+      @row-dblclick="isAdminUser()?$goto(`/admin/users/edit/${$event.id}`):showUserInfo($event.id)"
     />
   </el-container>
 </template>

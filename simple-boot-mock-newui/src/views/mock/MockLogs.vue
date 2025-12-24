@@ -196,6 +196,7 @@ const searchFormOptions = computed(() => {
       :loading="loading"
       @page-size-change="loadApiLogs()"
       @current-page-change="loadApiLogs()"
+      @row-dblclick="showCodeWindow($event.logData)"
     />
   </el-container>
 </template>

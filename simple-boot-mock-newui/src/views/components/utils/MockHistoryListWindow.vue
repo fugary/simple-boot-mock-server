@@ -131,6 +131,7 @@ defineExpose({
         :loading="loading"
         @page-size-change="searchHistories()"
         @current-page-change="searchHistories()"
+        @row-dblclick="compareFunc?.($event, target)"
       />
     </el-container>
   </common-window>
