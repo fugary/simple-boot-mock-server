@@ -14,6 +14,7 @@ import {
   toGetParams,
   useCurrentUserName,
   getStyleGrow,
+  formatDate,
   useBackUrl
 } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
@@ -48,8 +49,10 @@ const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
   .then(data => {
     mockProject.value = data.infos?.mockProject
     const countMap = data.infos?.countMap || {}
+    const accessDateMap = data.infos?.accessDateMap || {}
     tableData.value.forEach(group => {
       group.requestCount = countMap[group.id] || 0
+      group.lastAccessDate = accessDateMap[group.groupPath]
     })
     return data
   })
@@ -175,12 +178,24 @@ const columns = computed(() => {
           : ''}
       </>
     },
-    minWidth: '100px'
+    minWidth: '120px'
   }, {
     labelKey: 'common.label.createDate',
-    property: 'createDate',
-    dateFormat: 'YYYY-MM-DD HH:mm:ss',
-    minWidth: '140px'
+    minWidth: '180px',
+    formatter (item) {
+      return <>
+        <span class="pointer" v-common-tooltip={$i18nBundle('common.label.createDate')}>
+          <CommonIcon icon="CalendarMonthFilled" size={20} class="margin-left1" style="top: 4px;"/>
+          {formatDate(item.createDate)}
+        </span>
+        { item.lastAccessDate
+          ? <div class="pointer">
+              <CommonIcon icon="View" size={20} class="margin-left1" style="top: 4px;"/>
+              <span v-common-tooltip={$i18nBundle('common.label.accessDate')}>{formatDate(item.lastAccessDate)}</span>
+            </div>
+          : ''}
+      </>
+    }
   }, {
     labelKey: 'common.label.description',
     property: 'description',

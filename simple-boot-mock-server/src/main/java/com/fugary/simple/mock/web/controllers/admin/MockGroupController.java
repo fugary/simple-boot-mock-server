@@ -7,6 +7,7 @@ import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.*;
 import com.fugary.simple.mock.service.mock.MockGroupService;
+import com.fugary.simple.mock.service.mock.MockLogService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.utils.JsonUtils;
@@ -37,10 +38,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
@@ -63,6 +61,9 @@ public class MockGroupController {
 
     @Autowired
     private MockRequestService mockRequestService;
+
+    @Autowired
+    private MockLogService mockLogService;
 
     @GetMapping
     public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
@@ -112,9 +113,21 @@ public class MockGroupController {
                     .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
                             CountData::getDataCount));
         }
+        Map<String, Date> accessDateMap = new HashMap<>();
+        if (!isExport && CollectionUtils.isNotEmpty(pageResult.getRecords())) {
+            List<String> groupPaths = pageResult.getRecords().stream().map(MockGroup::getGroupPath)
+                    .collect(Collectors.toList());
+            QueryWrapper<MockLog> countQuery = Wrappers.<MockLog>query()
+                    .select("mock_group_path as group_key", "MAX(create_date) AS group_value")
+                    .in("mock_group_path", groupPaths)
+                    .groupBy("mock_group_path");
+            accessDateMap = mockLogService.listMaps(countQuery).stream().map(map -> new GroupByData<>(map, Date.class))
+                    .collect(Collectors.toMap(GroupByData::getGroupKey, GroupByData::getGroupValue));
+        }
         return SimpleResultUtils.createSimpleResult(pageResult)
                 .addInfo("mockProject", mockProject)
-                .addInfo("countMap", countMap);
+                .addInfo("countMap", countMap)
+                .addInfo("accessDateMap", accessDateMap);
     }
 
     @GetMapping("/{id}")
