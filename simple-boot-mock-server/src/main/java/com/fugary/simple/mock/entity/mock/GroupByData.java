@@ -4,6 +4,9 @@ import lombok.Data;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 
@@ -28,6 +31,9 @@ public class GroupByData<T> implements Serializable {
         Object dataCountObj = getGroupValueObj(countMap);
         if (clazz.isInstance(dataCountObj)) {
             this.groupValue = clazz.cast(dataCountObj);
+        } else if (Date.class.isAssignableFrom(clazz) && dataCountObj instanceof LocalDateTime) {
+            LocalDateTime value = (LocalDateTime) dataCountObj;
+            this.groupValue = (T) Date.from(value.atZone(ZoneId.systemDefault()).toInstant());
         }
     }
 
