@@ -199,7 +199,7 @@ const buttons = computed(() => defineTableButtons([{
   type: 'primary',
   icon: 'Flag',
   buttonIf (item) {
-    return !item.defaultFlag && !item.matchPattern
+    return !item.defaultFlag && !item.matchPattern && props.editable
   },
   click: item => {
     $coreConfirm($i18nBundle('mock.msg.configSetDefault'))
