@@ -37,7 +37,7 @@ const columns = [{
 }, {
   labelKey: 'common.label.status',
   formatter (data) {
-    const clickToToggle = !isUserAdmin(data.userName)
+    const clickToToggle = !isUserAdmin(data.userName) && isAdminUser()
     const enableOrDisable = (status) => {
       if (clickToToggle) {
         return saveUser({ ...data, status })
