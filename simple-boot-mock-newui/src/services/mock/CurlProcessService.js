@@ -110,7 +110,12 @@ export const isGetMethod = method => {
   return method === 'GET'
 }
 
+export const isCURLStr = curlStr => curlStr?.trim()?.match(/^curl\s+/ig)
+
 export const extendCurlParams = (paramTarget, curlStr) => {
+  if (!isCURLStr(curlStr)) { // curl格式
+    return
+  }
   const curlObj = curl2Json(curlStr)
   console.log('===============================curl', curlObj, curlStr)
   if (paramTarget.value) {
@@ -122,7 +127,7 @@ export const extendCurlParams = (paramTarget, curlStr) => {
 }
 
 export const pasteCurl2Request = (request, curlStr) => {
-  if (curlStr?.trim()?.match(/^curl\s+/ig)) { // curl格式
+  if (isCURLStr(curlStr)) { // curl格式
     const mockParams = request.mockParams
       ? JSON.parse(request.mockParams)
       : {}
