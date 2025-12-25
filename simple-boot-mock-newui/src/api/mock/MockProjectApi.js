@@ -130,10 +130,11 @@ export const checkProjectEdit = (project) => {
   return project && (isAdminUser() || isCurrentUser(project.userName) || isDefaultProject(project.projectCode))
 }
 
-export const copyMockProject = (id, config) => {
+export const copyMockProject = (data, config) => {
   return $http(Object.assign({
-    url: `${MOCK_PROJECT_URL}/copyMockProject/${id}`,
-    method: 'POST'
+    url: `${MOCK_PROJECT_URL}/copyMockProject/${data.projectId}`,
+    method: 'POST',
+    data
   }, config)).then(response => response.data)
 }
 

@@ -81,7 +81,7 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
     }
 
     @Override
-    public SimpleResult<MockProject> copyMockProject(Integer projectId) {
+    public SimpleResult<MockProject> copyMockProject(Integer projectId, String userName) {
         MockProject mockProject = getById(projectId);
         if (mockProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
@@ -89,6 +89,10 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
         MockProject oldProject = SimpleMockUtils.copy(mockProject, MockProject.class);
         mockProject.setId(null);
         mockProject.setProjectCode(SimpleMockUtils.uuid()); // 新Project代码
+        if (StringUtils.isNotBlank(userName) && !userName.equals(oldProject.getUserName())) {
+           mockProject.setUserName(userName);
+           mockProject.setPublicFlag(false);
+        }
         mockProject.setProjectName(StringUtils.join(mockProject.getProjectName(), "-copy"));
         saveOrUpdate(mockProject);
         List<MockGroup> mockGroups = mockGroupService.list(Wrappers.<MockGroup>query()

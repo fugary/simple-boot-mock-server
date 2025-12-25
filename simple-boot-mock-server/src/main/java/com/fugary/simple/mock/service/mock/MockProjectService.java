@@ -58,9 +58,10 @@ public interface MockProjectService extends IService<MockProject> {
      * 复制一份数据
      *
      * @param projectId
+     * @param userName
      * @return
      */
-    SimpleResult<MockProject> copyMockProject(Integer projectId);
+    SimpleResult<MockProject> copyMockProject(Integer projectId, String userName);
 
     /**
      * 保存项目信息

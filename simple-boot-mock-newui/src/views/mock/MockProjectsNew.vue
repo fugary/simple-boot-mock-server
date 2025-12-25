@@ -1,12 +1,12 @@
 <script setup lang="jsx">
-import { computed, onMounted, onActivated } from 'vue'
+import { computed, onMounted, onActivated, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import MockProjectApi, { checkProjectEdit, copyMockProject, useProjectEditHook } from '@/api/mock/MockProjectApi'
 import { $coreConfirm, $goto, formatDate, isAdminUser, useCurrentUserName } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
-import { $i18nBundle } from '@/messages'
+import { $i18nBundle, $i18nConcat } from '@/messages'
 import { useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { chunk } from 'lodash-es'
@@ -170,10 +170,34 @@ const dataRows = computed(() => {
 
 const selectedRows = computed(() => tableProjectItems.value.map(item => item.project).filter(project => project?.selected))
 
-const toCopyProject = (project, $event) => {
-  $event?.stopPropagation()
-  $coreConfirm($i18nBundle('common.msg.confirmCopy'))
-    .then(() => copyMockProject(project.id, { loading: true }))
+const copyToModel = ref({})
+const showCopyToWindow = ref(false)
+const copyToOptions = computed(() => {
+  return [{
+    label: $i18nConcat($i18nBundle('common.label.copyTo'), $i18nBundle('common.label.user')),
+    prop: 'userName',
+    type: 'select',
+    required: true,
+    enabled: isAdminUser(),
+    children: userOptions.value,
+    attrs: {
+      filterable: true,
+      clearable: false
+    }
+  }]
+})
+const toCopyProject = (project) => {
+  copyToModel.value.projectId = project.id
+  copyToModel.value.userName = useCurrentUserName()
+  if (isAdminUser()) {
+    showCopyToWindow.value = true
+  } else {
+    $coreConfirm($i18nBundle('common.msg.confirmCopy'))
+      .then(() => saveCopyProject())
+  }
+}
+const saveCopyProject = () => {
+  return copyMockProject(copyToModel.value, { loading: true })
     .then(() => loadMockProjects())
 }
 const { width } = useWindowSize()
@@ -197,11 +221,9 @@ const pageAttrs = {
       :submit-label="$t('common.label.search')"
       @submit-form="loadMockProjects"
     >
-      <template
-        v-if="!publicFlag"
-        #buttons
-      >
+      <template #buttons>
         <el-button
+          v-if="!publicFlag"
           type="info"
           @click="newOrEdit()"
         >
@@ -265,9 +287,9 @@ const pageAttrs = {
                     {{ project.projectCode===MOCK_DEFAULT_PROJECT?$t('mock.label.defaultProject'):project.projectName }}
                   </el-text>
                 </el-checkbox>
-                <template v-if="checkProjectEdit(project)&&project.showOperations">
+                <template v-if="project.showOperations">
                   <el-button
-                    v-if="!defaultProject"
+                    v-if="checkProjectEdit(project)&&!defaultProject"
                     v-common-tooltip="$t('common.label.edit')"
                     type="primary"
                     size="small"
@@ -282,12 +304,12 @@ const pageAttrs = {
                     type="warning"
                     size="small"
                     round
-                    @click="toCopyProject(project, $event)"
+                    @click.stop="toCopyProject(project)"
                   >
                     <common-icon icon="FileCopyFilled" />
                   </el-button>
                   <el-button
-                    v-if="!defaultProject"
+                    v-if="checkProjectEdit(project)&&!defaultProject"
                     v-common-tooltip="$t('common.label.delete')"
                     type="danger"
                     size="small"
@@ -324,6 +346,14 @@ const pageAttrs = {
       :save-current-item="saveProjectItem"
       label-width="130px"
       inline-auto-mode
+    />
+    <simple-edit-window
+      v-model="copyToModel"
+      v-model:show-edit-window="showCopyToWindow"
+      width="500px"
+      :form-options="copyToOptions"
+      :title="$i18nConcat($i18nBundle('common.label.copyTo'), $i18nBundle('common.label.user'))"
+      :save-current-item="saveCopyProject"
     />
   </el-container>
 </template>

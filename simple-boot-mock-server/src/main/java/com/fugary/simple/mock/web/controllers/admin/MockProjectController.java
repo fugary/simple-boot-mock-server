@@ -70,8 +70,9 @@ public class MockProjectController {
     }
 
     @PostMapping("/copyMockProject/{projectId}")
-    public SimpleResult<MockProject> copyMockProject(@PathVariable("projectId") Integer id) {
-        return mockProjectService.copyMockProject(id);
+    public SimpleResult<MockProject> copyMockProject(@PathVariable("projectId") Integer id,
+                                                     @RequestBody MockProjectQueryVo copyVo) {
+        return mockProjectService.copyMockProject(id, copyVo.getUserName());
     }
 
     @PostMapping
