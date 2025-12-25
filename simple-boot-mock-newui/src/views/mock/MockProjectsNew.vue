@@ -124,34 +124,34 @@ const tableProjectItems = computed(() => {
         }
       }, {
         labelKey: 'mock.label.projectCode',
-        value: project.projectCode
-      }, {
-        enabled: !!project.userName && project.userName !== useCurrentUserName(),
-        labelFormatter () {
-          return <ElText type="primary" tag="b">
-            {$i18nBundle('mock.label.owner')}
-          </ElText>
-        },
         formatter () {
-          return <ElText type="primary">
-            {project.userName}
-          </ElText>
+          let userNameStr = ''
+          if (!!project.userName && project.userName !== useCurrentUserName()) {
+            userNameStr = <ElText class="margin-left1" type="primary" tag="b"
+                                  v-common-tooltip={$i18nBundle('mock.label.owner')}>({project.userName})</ElText>
+          }
+          return <>
+          {project.projectCode}
+          {userNameStr}
+          </>
         }
       }, {
-        labelKey: 'common.label.modifyDate',
+        labelKey: 'common.label.createDate',
         enabled: !!project.createDate || !!project.modifyDate,
         formatter () {
           let modifyStr = ''
           const format = 'YYYY-MM-DD HH:mm'
           if (project.modifyDate) {
-            modifyStr = <>
+            modifyStr = <span v-common-tooltip={$i18nBundle('common.label.modifyDate')}>
               <CommonIcon icon="EditCalendarFilled" size={20} class="margin-left1" style="top: 4px;"/>
               {formatDate(project.modifyDate, format)}
-            </>
+            </span>
           }
           return <>
+            <span v-common-tooltip={$i18nBundle('common.label.createDate')}>
             <CommonIcon icon="CalendarMonthFilled" size={20} style="top: 4px;"/>
             {formatDate(project.createDate, format)}
+            </span>
             {modifyStr}
           </>
         }
