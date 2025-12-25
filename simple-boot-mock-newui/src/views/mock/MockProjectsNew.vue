@@ -6,7 +6,7 @@ import { useAllUsers } from '@/api/mock/MockUserApi'
 import MockProjectApi, { checkProjectEdit, copyMockProject, useProjectEditHook } from '@/api/mock/MockProjectApi'
 import { $coreConfirm, $goto, formatDate, isAdminUser, useCurrentUserName } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
-import { $i18nBundle, $i18nConcat } from '@/messages'
+import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
 import { useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { chunk } from 'lodash-es'
@@ -14,7 +14,7 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import { useRoute } from 'vue-router'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useWindowSize } from '@vueuse/core'
-import { ElText, ElTag } from 'element-plus'
+import { ElText, ElTag, ElLink } from 'element-plus'
 
 const props = defineProps({
   publicFlag: {
@@ -214,6 +214,24 @@ const pageAttrs = {
   <el-container
     class="flex-column"
   >
+    <el-page-header
+      v-if="publicFlag"
+      class="margin-bottom3"
+      @back="$goto('/mock/projects')"
+    >
+      <template #content>
+        <span class="text-large font-600 mr-3">
+          {{ $t('mock.label.publicMockProjects') }}
+          <el-link
+            type="primary"
+            class="margin-left2"
+            @click="$goto('/mock/projects')"
+          >
+            {{ $i18nKey('common.label.commonBack','mock.label.mockProjects') }}
+          </el-link>
+        </span>
+      </template>
+    </el-page-header>
     <common-form
       inline
       :model="searchParam"
