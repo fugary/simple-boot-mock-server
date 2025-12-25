@@ -95,7 +95,7 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
                 .eq("user_name", oldProject.getUserName())
                 .eq("project_code", oldProject.getProjectCode()));
         for (MockGroup mockGroup : mockGroups) {
-            mockGroupService.copyMockGroup(mockGroup.getId(), mockProject.getProjectCode());
+            mockGroupService.copyMockGroup(mockGroup.getId(), mockProject);
         }
         return SimpleResultUtils.createSimpleResult(mockProject);
     }

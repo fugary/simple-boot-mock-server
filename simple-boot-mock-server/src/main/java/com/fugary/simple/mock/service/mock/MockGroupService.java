@@ -3,6 +3,7 @@ package com.fugary.simple.mock.service.mock;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
+import com.fugary.simple.mock.entity.mock.MockProject;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
@@ -103,8 +104,8 @@ public interface MockGroupService extends IService<MockGroup> {
      * 复制一份数据
      *
      * @param groupId
-     * @param newProjectCode
+     * @param newProject
      * @return
      */
-    SimpleResult<MockGroup> copyMockGroup(Integer groupId, String newProjectCode);
+    SimpleResult<MockGroup> copyMockGroup(Integer groupId, MockProject newProject);
 }

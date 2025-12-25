@@ -3,7 +3,7 @@ import { computed, onActivated, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
-import MockGroupApi, { checkExport, copyMockGroup, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
+import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import {
   $coreConfirm,
@@ -30,6 +30,7 @@ import MockProjectApi, { checkProjectEdit, useProjectEditHook, useSelectProjects
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
 import CommonIcon from '@/components/common-icon/index.vue'
+import { toCopyGroupTo } from '@/utils/DynamicUtils'
 
 const props = defineProps({
   publicFlag: {
@@ -225,11 +226,12 @@ const buttons = computed(() => defineTableButtons([{
   icon: 'FileCopyFilled',
   round: true,
   type: 'warning',
-  enabled: !!projectEditable.value,
   click: item => {
-    $coreConfirm($i18nBundle('common.msg.confirmCopy'))
-      .then(() => copyMockGroup(item.id, { loading: true }))
-      .then(() => loadMockGroups())
+    toCopyGroupTo(item, {
+      onCopySuccess: () => {
+        loadMockGroups()
+      }
+    })
   }
 }, {
   tooltip: $i18nBundle('common.label.delete'),

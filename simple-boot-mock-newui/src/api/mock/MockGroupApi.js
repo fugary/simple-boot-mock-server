@@ -55,10 +55,11 @@ export const uploadFiles = (files, params = {}, config = {}) => {
     formData, Object.assign({ headers: { 'Content-Type': 'multipart/form-data' }, loading: true }, config))
 }
 
-export const copyMockGroup = (id, config) => {
+export const copyMockGroup = (data, config) => {
   return $http(Object.assign({
-    url: `${MOCK_GROUP_URL}/copyMockGroup/${id}`,
-    method: 'POST'
+    url: `${MOCK_GROUP_URL}/copyMockGroup/${data.groupId}`,
+    method: 'POST',
+    data
   }, config)).then(response => response.data)
 }
 

@@ -5,6 +5,7 @@ import { h, defineComponent, defineAsyncComponent } from 'vue'
 const MockRequestPreviewWindow = () => import('@/views/components/mock/MockRequestPreviewWindow.vue')
 const MockMatchPatternPreview = () => import('@/views/components/mock/MockMatchPatternPreview.vue')
 const MockEnvParams = () => import('@/views/components/mock/MockEnvParams.vue')
+const MockGroupCopyToWindow = () => import('@/views/components/mock/MockGroupCopyToWindow.vue')
 const ShowUserInfo = () => import('@/views/components/user/ShowUserInfo.vue')
 const CodeWindow = () => import('@/views/components/utils/CodeWindow.vue')
 const MockHistoryListWindow = () => import('@/views/components/utils/MockHistoryListWindow.vue')
@@ -47,6 +48,15 @@ export const toEditGroupEnvParams = async (...args) => {
     onClosed: () => dynamicHelper.destroy()
   })
   return vnode.component?.exposed?.toEditGroupEnvParams(...args)
+}
+
+export const toCopyGroupTo = async (group, config) => {
+  const dynamicHelper = new DynamicHelper()
+  const vnode = await dynamicHelper.createAndRender(MockGroupCopyToWindow, {
+    onClosed: () => dynamicHelper.destroy(),
+    ...config
+  })
+  return vnode.component?.exposed?.toCopyGroupTo(group)
 }
 
 /**
