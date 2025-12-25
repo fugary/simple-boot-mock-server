@@ -425,7 +425,7 @@ const mockPreviewRef = ref()
 const onSelectDataItem = (dataItem) => {
   selectDataItem.value = dataItem
   if (dataItem) {
-    mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, () => loadMockData())
+    mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, () => loadMockData(), props.editable)
   }
 }
 

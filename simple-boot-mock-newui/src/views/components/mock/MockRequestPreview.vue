@@ -23,9 +23,11 @@ const previewData = ref()
 const paramTarget = ref()
 const responseTarget = ref()
 const schemasConf = ref({})
+const editable = ref(true)
 
 let saveCallback
-const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback) => {
+const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback, isEditable = true) => {
+  editable.value = isEditable
   groupItem.value = mockGroup
   requestItem.value = mockRequest
   previewData.value = viewData
@@ -95,10 +97,12 @@ const doDataPreview = async () => {
   calcPreviewHeaders(paramTarget.value, requestUrl, config)
   requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)
   previewData.value?.id && (headers[MOCK_DATA_ID_HEADER] = previewData.value?.id)
-  if (previewData.value?.id) {
-    await doSaveMockResponseBody()// data保存
-  } else {
-    await doSaveMockParams() // request mockParams保存
+  if (editable.value) {
+    if (previewData.value?.id) {
+      await doSaveMockResponseBody()// data保存
+    } else {
+      await doSaveMockParams() // request mockParams保存
+    }
   }
   const authContent = paramTarget.value.authContent
   if (authContent) {
@@ -140,6 +144,7 @@ const doSaveMockParams = () => {
     }, { loading: false })
       .then((data) => {
         console.log('=========================data', data)
+        ElMessage.success($i18nBundle('common.msg.saveSuccess'))
         return saveCallback?.(data.resultData)
       })
   }
