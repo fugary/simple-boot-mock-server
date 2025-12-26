@@ -179,7 +179,7 @@ public class MockGroupController {
     }
 
     @PostMapping("/copyMockGroup/{groupId}")
-    public SimpleResult<MockGroup> copyMockGroup(@PathVariable("groupId") Integer id,
+    public SimpleResult<MockGroup> copyMockGroup(@PathVariable("groupId") String groupIdsStr,
                                                  @RequestBody MockGroupQueryVo copyVo) {
         MockProject existsProject = mockProjectService.loadMockProject(copyVo.getUserName(), copyVo.getProjectCode());
         if (existsProject == null) {
@@ -188,7 +188,12 @@ public class MockGroupController {
         if (MockConstants.MOCK_DEFAULT_PROJECT.equals(existsProject.getProjectCode())) {
             existsProject.setUserName(copyVo.getUserName());
         }
-        return mockGroupService.copyMockGroup(id, existsProject);
+        String[] groupIds = groupIdsStr.split("\\s*,\\s*");
+        SimpleResult<MockGroup> result = null;
+        for (String groupId : groupIds) {
+            result = mockGroupService.copyMockGroup(NumberUtils.toInt(groupId), existsProject);
+        }
+        return result;
     }
 
     @PostMapping("/import")

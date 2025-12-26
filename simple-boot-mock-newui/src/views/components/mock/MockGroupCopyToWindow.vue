@@ -8,6 +8,7 @@ import { ElMessage, ElText } from 'element-plus'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { copyMockGroup } from '@/api/mock/MockGroupApi'
+import { isArray } from 'lodash-es'
 
 const showWindow = ref(false)
 const searchParam = ref({
@@ -16,10 +17,10 @@ const searchParam = ref({
 })
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, true)
-const currentGroup = ref(null)
+const currentGroups = ref([])
 const toCopyGroupTo = async (group) => {
-  currentGroup.value = group
-  searchParam.value.groupId = group.id
+  currentGroups.value = isArray(group) ? group : [group]
+  searchParam.value.groupId = currentGroups.value.map(grp => grp.id).join(',')
   searchParam.value.userName = isAdminUser() ? group.userName : useCurrentUserName()
   searchParam.value.projectCode = isAdminUser() || isCurrentUser(group.userName) ? group.projectCode : MOCK_DEFAULT_PROJECT
   await loadUsersAndRefreshOptions()
@@ -33,9 +34,12 @@ const options = computed(() => {
     type: 'common-form-label',
     formatter () {
       return <>
-        {currentGroup.value.groupName}
+        {currentGroups.value.map(currentGroup => {
+          return <>{currentGroup.groupName}
         <ElText class="margin-left1" type="primary" tag="b"
-                v-common-tooltip={$i18nBundle('mock.label.owner')}>({currentGroup.value.userName})</ElText>
+                v-common-tooltip={$i18nBundle('mock.label.owner')}>({currentGroup.userName})</ElText>
+        <br/></>
+        })}
       </>
     }
   }, {

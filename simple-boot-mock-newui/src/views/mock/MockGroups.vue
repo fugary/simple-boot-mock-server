@@ -204,6 +204,11 @@ const columns = computed(() => {
     enabled: checkShowColumn(tableData.value, 'description')
   }]
 })
+const toCopyGroups = (group) => {
+  return toCopyGroupTo(group, {
+    onCopySuccess: () => loadMockGroups()
+  })
+}
 const buttons = computed(() => defineTableButtons([{
   tooltip: $i18nBundle('common.label.edit'),
   icon: 'Edit',
@@ -226,13 +231,7 @@ const buttons = computed(() => defineTableButtons([{
   icon: 'FileCopyFilled',
   round: true,
   type: 'warning',
-  click: item => {
-    toCopyGroupTo(item, {
-      onCopySuccess: () => {
-        loadMockGroups()
-      }
-    })
-  }
+  click: toCopyGroups
 }, {
   tooltip: $i18nBundle('common.label.delete'),
   icon: 'DeleteFilled',
@@ -497,6 +496,13 @@ const showImportWindow = ref(false)
             </el-dropdown-menu>
           </template>
         </el-dropdown>
+        <el-button
+          v-if="selectedRows?.length>1&&projectEditable"
+          type="warning"
+          @click="toCopyGroups(selectedRows)"
+        >
+          {{ $t('common.label.copy') }}
+        </el-button>
         <el-button
           v-if="selectedRows?.length&&projectEditable"
           type="danger"
