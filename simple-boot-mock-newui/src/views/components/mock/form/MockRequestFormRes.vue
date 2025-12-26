@@ -2,7 +2,7 @@
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { computed, watch, ref, reactive, nextTick, useTemplateRef, onBeforeUnmount } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { showCodeWindow, showMockTips } from '@/utils/DynamicUtils'
+import { showCodeWindow, showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
 import { $i18nKey, $i18nBundle } from '@/messages'
 import {
   generateSampleCheckResults,
@@ -338,6 +338,17 @@ const redirectMockResponse = computed(() => {
                   <common-icon
                     :size="40"
                     icon="RawOnFilled"
+                  />
+                </el-link>
+                <el-link
+                  type="primary"
+                  underline="never"
+                  class="margin-left3"
+                  @click="showJsonDataWindow(responseTarget?.data)"
+                >
+                  <common-icon
+                    :size="18"
+                    icon="TableRowsFilled"
                   />
                 </el-link>
               </template>

@@ -205,3 +205,37 @@ export const generateSampleCheckResults = (schemaBody, schemaSpec, schemaType) =
   }
   return results
 }
+
+/**
+ * 查找：
+ * 1. 第一个数组的值
+ * 2. key 为 x.x.x 形式（作为 lodash.get 路径）
+ */
+export function findArrayAndPath (obj) {
+  let arrayData
+  const arrayPath = []
+  const dotKeyRegex = /^[^.]+\.[^.]+\.[^.]+$/
+  function traverse (current, path = []) {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) return
+    for (const key of Object.keys(current)) {
+      const value = current[key]
+      const currentPath = [...path, key]
+      // 第一个数组
+      if (arrayData === undefined && Array.isArray(value)) {
+        arrayData = value
+      }
+      // key 本身是 x.x.x，把它当成 lodash 路径
+      if (dotKeyRegex.test(key)) {
+        arrayPath.push(key)
+      }
+      traverse(value, currentPath)
+    }
+  }
+
+  traverse(obj)
+
+  return {
+    arrayData,
+    arrayPath
+  }
+}

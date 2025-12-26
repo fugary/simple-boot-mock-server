@@ -12,6 +12,7 @@ const MockHistoryListWindow = () => import('@/views/components/utils/MockHistory
 const MockCompareWindow = () => import('@/views/components/utils/MockCompareWindow.vue')
 const MockCompareWindowNew = () => import('@/views/components/utils/MockCompareWindowNew.vue')
 const MockTipsWindow = () => import('@/views/components/utils/MockTipsWindow.vue')
+const SimpleJsonDataWindow = () => import('@/views/components/utils/SimpleJsonDataWindow.vue')
 
 export const closeAllOnRouteChange = () => {
   document.querySelectorAll('.el-overlay:not([style*="display: none"]) .common-window .el-dialog__headerbtn:not(.dialog-fullscreen-btn)')
@@ -104,6 +105,14 @@ export const showMockTips = async (...args) => {
     onClosed: () => dynamicHelper.destroy()
   })
   vnode.component?.exposed?.showMockTips(...args)
+}
+
+export const showJsonDataWindow = async (...args) => {
+  const dynamicHelper = new DynamicHelper()
+  const vnode = await dynamicHelper.createAndRender(SimpleJsonDataWindow, {
+    onClosed: () => dynamicHelper.destroy()
+  })
+  vnode.component?.exposed?.showJsonDataWindow(...args)
 }
 
 /**
