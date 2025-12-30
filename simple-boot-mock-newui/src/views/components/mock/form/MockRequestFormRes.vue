@@ -397,6 +397,35 @@ const jsonResponseData = computed(() => isJson(props.responseTarget?.data))
         </el-descriptions>
       </el-tab-pane>
       <el-tab-pane
+        v-if="responseTarget"
+        name="requestHeaders"
+      >
+        <template #label>
+          <el-badge
+            type="primary"
+            :value="responseTarget.requestHeaders?.length"
+            :show-zero="false"
+          >
+            {{ $t('mock.label.requestHeaders') }}
+          </el-badge>
+        </template>
+        <el-descriptions
+          v-if="responseTarget"
+          :column="1"
+          class="form-edit-width-100 margin-top3"
+          border
+        >
+          <el-descriptions-item
+            v-for="info in responseTarget.requestHeaders"
+            :key="info.name"
+            :label="info.name"
+            min-width="150px"
+          >
+            {{ info.value }}
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-tab-pane>
+      <el-tab-pane
         v-if="mockResponseEditable"
         name="mockResponseBody"
       >

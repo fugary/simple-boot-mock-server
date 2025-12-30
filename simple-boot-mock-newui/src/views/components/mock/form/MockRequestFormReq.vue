@@ -81,7 +81,7 @@ const isFormData = computed(() => FORM_DATA === languageRef.value)
 const isFormUrlEncoded = computed(() => FORM_URL_ENCODED === languageRef.value)
 
 const requestHeaderLength = computed(() => {
-  return (paramTarget.value?.headerParams?.length || 0) + (props.responseTarget?.requestHeaders?.length || 0)
+  return (paramTarget.value?.headerParams?.length || 0)
 })
 
 const showRequestBody = computed(() => {
@@ -238,21 +238,6 @@ const processCurlWindow = () => {
         :name-suggestions="DEFAULT_HEADERS"
         :value-suggestions="envSuggestions"
       />
-      <el-descriptions
-        v-if="responseTarget"
-        :column="1"
-        class="form-edit-width-100 margin-top3"
-        border
-      >
-        <el-descriptions-item
-          v-for="info in responseTarget.requestHeaders"
-          :key="info.name"
-          :label="info.name"
-          min-width="150px"
-        >
-          {{ info.value }}
-        </el-descriptions-item>
-      </el-descriptions>
     </el-tab-pane>
     <el-tab-pane
       v-if="showRequestBody"
