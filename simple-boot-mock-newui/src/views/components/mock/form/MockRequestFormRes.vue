@@ -397,7 +397,7 @@ const jsonResponseData = computed(() => isJson(props.responseTarget?.data))
         </el-descriptions>
       </el-tab-pane>
       <el-tab-pane
-        v-if="responseTarget"
+        v-if="responseTarget?.requestHeaders?.length"
         name="requestHeaders"
       >
         <template #label>
