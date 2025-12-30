@@ -1,63 +1,112 @@
 <script setup lang="jsx">
 import { isString, isArray, get, isPlainObject } from 'lodash-es'
 import { computed, ref } from 'vue'
-import { findArrayAndPath } from '@/services/mock/MockCommonService'
+import { checkArrayAndPath } from '@/services/mock/MockCommonService'
+import { showCodeWindow } from '@/utils/DynamicUtils'
+import { limitStr } from '@/components/utils'
+import { checkShowColumn } from '@/utils'
+
 const props = defineProps({
   data: {
     type: [Array, String, Object],
     default: () => []
   },
   columns: {
-    type: [Array, String],
+    type: Array,
     default: () => undefined
   }
 })
 
+const dataPathConfig = computed(() => checkArrayAndPath(props.data))
+
 const tableData = computed(() => {
-  let data = props.data
-  if (isString(props.data)) {
-    data = JSON.parse(props.data)
-  }
+  let data = dataPathConfig.value.data
   if (isArray(data)) {
     return data
   }
   if (formModel.value?.dataKey) {
-    return get(data, formModel.value?.dataKey)
+    const dataKey = dataPathConfig.value.arrayPath?.find(path => path.join('.') === formModel.value?.dataKey) || formModel.value?.dataKey
+    data = get(data, dataKey)
+    return isArray(data) ? data : [data]
   }
-  const { arrayData } = findArrayAndPath(data)
+  const arrayData = dataPathConfig.value.arrayData
   if (arrayData) {
     return arrayData
   }
   return [data]
 })
 
-const limit = 6
+const selectedColumns = computed(() => {
+  if (formModel.value.columns?.length) {
+    return tableColumns.value.filter(column => formModel.value.columns.includes(column.value))
+  }
+  return tableColumns.value
+})
+
 const tableColumns = computed(() => {
   if (isArray(props.columns)) {
     return props.columns
   }
-  let columns = formModel.value.columns
-  const oneData = tableData.value?.[0]
-  if (!columns && oneData) {
-    columns = Object.keys(oneData).filter(key => {
-      const value = oneData[key]
-      return !isPlainObject(value) && !isArray(value)
-    }).splice(0, limit).join(',')
-  }
+  const columns = Object.keys(tableData.value?.[0] || {})
   if (columns) {
-    return columns.split(/\s*,\s*/).map(column => {
+    return columns.map(column => {
       return {
-        label: column, property: column
+        value: column,
+        label: column,
+        minWidth: '150px',
+        enabled: checkShowColumn(tableData.value, column),
+        formatter (item) {
+          let value = get(item, column)
+          if (isPlainObject(value) || isArray(value)) {
+            value = JSON.stringify(value)
+          }
+          if (isString(value)) {
+            return limitStr(value, 40)
+          }
+          return value
+        }
       }
     })
   }
   return []
 })
+const tableButtons = computed(() => {
+  return [{
+    labelKey: 'common.label.view',
+    type: 'primary',
+    click: item => {
+      showCodeWindow(JSON.stringify(item))
+    }
+  }]
+})
 const formModel = ref({})
 const formOptions = computed(() => {
+  const defaultDataKey = dataPathConfig.value.arrayPath?.[0]?.join('.')
   return [
-    { label: 'Data Key', prop: 'dataKey' },
-    { label: 'Data Columns', prop: 'columns', defaultValue: isString(props.columns) ? props.columns : '' }
+    {
+      labelKey: 'mock.label.dataProperty',
+      prop: 'dataKey',
+      type: 'autocomplete',
+      value: defaultDataKey,
+      attrs: {
+        fetchSuggestions: (queryString, cb) => {
+          const dataList = dataPathConfig.value.arrayPath?.map(path => path.join('.'))
+            .filter(item => item?.toLowerCase().includes(queryString?.toLowerCase()))
+            .map(value => ({ value }))
+          cb(dataList)
+        }
+      }
+    },
+    {
+      labelKey: 'mock.label.dataColumns',
+      type: 'select',
+      prop: 'columns',
+      children: tableColumns.value,
+      attrs: {
+        multiple: true,
+        style: { width: '40vw' }
+      }
+    }
   ]
 })
 </script>
@@ -68,10 +117,14 @@ const formOptions = computed(() => {
       :options="formOptions"
       :model="formModel"
       :show-buttons="false"
+      inline
     />
     <common-table
       :data="tableData"
-      :columns="tableColumns"
+      :columns="selectedColumns"
+      :buttons="tableButtons"
+      :buttons-column-attrs="{fixed:'right'}"
+      frontend-paging
     />
   </el-container>
 </template>

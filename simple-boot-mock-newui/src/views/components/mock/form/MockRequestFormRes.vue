@@ -8,6 +8,7 @@ import {
   generateSampleCheckResults,
   generateSchemaSample,
   isHtmlContentType,
+  isJson,
   isMediaContentType,
   useContentTypeOption
 } from '@/services/mock/MockCommonService'
@@ -184,6 +185,7 @@ const redirectMockResponse = computed(() => {
   const status = paramTarget.value?.responseStatusCode || 200
   return status >= 300 && status < 400
 })
+const jsonResponseData = computed(() => isJson(props.responseTarget?.data))
 </script>
 
 <template>
@@ -341,6 +343,8 @@ const redirectMockResponse = computed(() => {
                   />
                 </el-link>
                 <el-link
+                  v-if="jsonResponseData"
+                  v-common-tooltip="$t('mock.label.viewAsTable')"
                   type="primary"
                   underline="never"
                   class="margin-left3"

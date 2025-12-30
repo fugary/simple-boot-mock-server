@@ -2,7 +2,7 @@ import { $coreConfirm, getSingleSelectOptions } from '@/utils'
 import { $i18nKey, $i18nBundle } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
-import { cloneDeep, isArray, isFunction, isObject, isString } from 'lodash-es'
+import { cloneDeep, isArray, isFunction, isObject, isPlainObject, isString } from 'lodash-es'
 import { ALL_CONTENT_TYPES_LIST, isStreamContentType } from '@/consts/MockConstants'
 
 /**
@@ -206,6 +206,14 @@ export const generateSampleCheckResults = (schemaBody, schemaSpec, schemaType) =
   return results
 }
 
+export const isJson = str => {
+  if (isString(str)) {
+    str = str.trim()
+    return str.startsWith('{') || str.startsWith('[')
+  }
+  return false
+}
+
 /**
  * 查找：
  * 1. 第一个数组的值
@@ -214,28 +222,40 @@ export const generateSampleCheckResults = (schemaBody, schemaSpec, schemaType) =
 export function findArrayAndPath (obj) {
   let arrayData
   const arrayPath = []
-  const dotKeyRegex = /^[^.]+\.[^.]+\.[^.]+$/
+
   function traverse (current, path = []) {
-    if (!current || typeof current !== 'object' || Array.isArray(current)) return
+    if (!current || typeof current !== 'object') return
+    if (Array.isArray(current)) return
     for (const key of Object.keys(current)) {
       const value = current[key]
       const currentPath = [...path, key]
-      // 第一个数组
-      if (arrayData === undefined && Array.isArray(value)) {
-        arrayData = value
+      if (Array.isArray(value) && isPlainObject(value[0])) {
+        arrayPath.push(currentPath)
+        if (arrayData === undefined) {
+          arrayData = value
+        }
+      } else {
+        traverse(value, currentPath)
       }
-      // key 本身是 x.x.x，把它当成 lodash 路径
-      if (dotKeyRegex.test(key)) {
-        arrayPath.push(key)
-      }
-      traverse(value, currentPath)
     }
   }
 
   traverse(obj)
 
   return {
+    data: obj,
     arrayData,
     arrayPath
   }
+}
+
+export function checkArrayAndPath (jsonStr) {
+  if (isJson(jsonStr)) {
+    try {
+      return findArrayAndPath(JSON.parse(jsonStr))
+    } catch (e) {
+      console.error('解析json错误', e)
+    }
+  }
+  return {}
 }
