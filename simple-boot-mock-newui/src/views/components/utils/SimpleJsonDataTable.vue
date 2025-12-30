@@ -63,7 +63,7 @@ const tableColumns = computed(() => {
           if (isString(value)) {
             return limitStr(value, 40)
           }
-          return value
+          return value !== undefined ? String(value) : ''
         }
       }
     })
