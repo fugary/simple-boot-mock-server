@@ -21,7 +21,7 @@ defineExpose({
     :show-cancel="false"
     :ok-label="$t('common.label.close')"
     destroy-on-close
-    :title="config.title||$t('common.label.info')"
+    :title="config.title||$t('mock.label.viewAsTable')"
     append-to-body
     show-fullscreen
     v-bind="$attrs"

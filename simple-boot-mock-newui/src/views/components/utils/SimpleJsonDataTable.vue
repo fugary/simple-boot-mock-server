@@ -8,8 +8,8 @@ import { checkShowColumn } from '@/utils'
 
 const props = defineProps({
   data: {
-    type: [Array, String, Object],
-    default: () => []
+    type: String,
+    default: ''
   },
   columns: {
     type: Array,
@@ -38,10 +38,33 @@ const tableData = computed(() => {
 
 const selectedColumns = computed(() => {
   if (formModel.value.columns?.length) {
-    return tableColumns.value.filter(column => formModel.value.columns.includes(column.value))
+    const calcColumns = tableColumns.value.filter(column => formModel.value.columns.includes(column.value))
+    const existsColumns = calcColumns.map(value => value)
+    return calcColumns.concat(formModel.value.columns
+      .filter(column => !existsColumns.includes(column)))
+      .map(str2Column)
   }
   return tableColumns.value
 })
+
+const str2Column = column => {
+  return {
+    value: column,
+    label: column,
+    minWidth: '150px',
+    enabled: checkShowColumn(tableData.value, column),
+    formatter (item) {
+      let value = get(item, column)
+      if (isPlainObject(value) || isArray(value)) {
+        value = JSON.stringify(value)
+      }
+      if (isString(value)) {
+        return limitStr(value, 40)
+      }
+      return value !== undefined ? String(value) : ''
+    }
+  }
+}
 
 const tableColumns = computed(() => {
   if (isArray(props.columns)) {
@@ -49,24 +72,7 @@ const tableColumns = computed(() => {
   }
   const columns = Object.keys(tableData.value?.[0] || {})
   if (columns) {
-    return columns.map(column => {
-      return {
-        value: column,
-        label: column,
-        minWidth: '150px',
-        enabled: checkShowColumn(tableData.value, column),
-        formatter (item) {
-          let value = get(item, column)
-          if (isPlainObject(value) || isArray(value)) {
-            value = JSON.stringify(value)
-          }
-          if (isString(value)) {
-            return limitStr(value, 40)
-          }
-          return value !== undefined ? String(value) : ''
-        }
-      }
-    })
+    return columns.map(column => str2Column(column))
   }
   return []
 })
@@ -86,15 +92,14 @@ const formOptions = computed(() => {
     {
       labelKey: 'mock.label.dataProperty',
       prop: 'dataKey',
-      type: 'autocomplete',
+      type: 'select',
       value: defaultDataKey,
+      children: dataPathConfig.value.arrayPath?.map(path => path.join('.')).map(value => ({ value, label: value })),
       attrs: {
-        fetchSuggestions: (queryString, cb) => {
-          const dataList = dataPathConfig.value.arrayPath?.map(path => path.join('.'))
-            .filter(item => item?.toLowerCase().includes(queryString?.toLowerCase()))
-            .map(value => ({ value }))
-          cb(dataList)
-        }
+        clearable: true,
+        filterable: true,
+        allowCreate: true,
+        style: { width: '20vw' }
       }
     },
     {
@@ -104,6 +109,9 @@ const formOptions = computed(() => {
       children: tableColumns.value,
       attrs: {
         multiple: true,
+        clearable: true,
+        filterable: true,
+        allowCreate: true,
         style: { width: '40vw' }
       }
     }
@@ -125,6 +133,7 @@ const formOptions = computed(() => {
       :buttons="tableButtons"
       :buttons-column-attrs="{fixed:'right'}"
       frontend-paging
+      @row-dblclick="showCodeWindow(JSON.stringify($event))"
     />
   </el-container>
 </template>
