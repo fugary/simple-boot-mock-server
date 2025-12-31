@@ -1,23 +1,15 @@
 <script setup lang="jsx">
 import { isString, isArray, get, isPlainObject } from 'lodash-es'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { checkArrayAndPath } from '@/services/mock/MockCommonService'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { limitStr } from '@/components/utils'
 import { checkShowColumn } from '@/utils'
 
-const props = defineProps({
-  data: {
-    type: String,
-    default: ''
-  },
-  columns: {
-    type: Array,
-    default: () => undefined
-  }
-})
+const vModel = defineModel({ type: String, default: '' })
+const formModel = defineModel('tableConfig', { type: Object })
 
-const dataPathConfig = computed(() => checkArrayAndPath(props.data))
+const dataPathConfig = computed(() => checkArrayAndPath(vModel.value))
 
 const tableData = computed(() => {
   let data = dataPathConfig.value.data
@@ -67,9 +59,6 @@ const str2Column = column => {
 }
 
 const tableColumns = computed(() => {
-  if (isArray(props.columns)) {
-    return props.columns
-  }
   const columns = Object.keys(tableData.value?.[0] || {})
   if (columns) {
     return columns.map(column => str2Column(column))
@@ -85,9 +74,10 @@ const tableButtons = computed(() => {
     }
   }]
 })
-const formModel = ref({})
 const formOptions = computed(() => {
-  const defaultDataKey = dataPathConfig.value.arrayPath?.[0]?.join('.')
+  const defaultDataKey = dataPathConfig.value.arrayPath?.map(path => path.join('.'))
+    ?.find(pathKey => pathKey === formModel.value.dataKey) ||
+      dataPathConfig.value.arrayPath?.[0]?.join('.')
   return [
     {
       labelKey: 'mock.label.dataProperty',

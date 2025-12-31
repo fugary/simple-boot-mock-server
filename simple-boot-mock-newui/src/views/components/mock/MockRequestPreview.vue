@@ -127,7 +127,7 @@ const calcMockParams = () => {
       nv.value = []
     }
   })
-  const keepKeys = ['formData', 'formUrlencoded', 'authContent']
+  const keepKeys = ['formData', 'formUrlencoded', 'authContent', 'tableConfig']
   return pickBy(paramTargetVal, (_, key) => {
     return key.startsWith('request') || key.endsWith('Params') || keepKeys.includes(key)
   })

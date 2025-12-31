@@ -107,12 +107,13 @@ export const showMockTips = async (...args) => {
   vnode.component?.exposed?.showMockTips(...args)
 }
 
-export const showJsonDataWindow = async (...args) => {
+export const showJsonDataWindow = async (data, config) => {
   const dynamicHelper = new DynamicHelper()
   const vnode = await dynamicHelper.createAndRender(SimpleJsonDataWindow, {
-    onClosed: () => dynamicHelper.destroy()
+    onClosed: () => dynamicHelper.destroy(),
+    ...config
   })
-  vnode.component?.exposed?.showJsonDataWindow(...args)
+  vnode.component?.exposed?.showJsonDataWindow(data)
 }
 
 /**

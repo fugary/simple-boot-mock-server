@@ -186,6 +186,13 @@ const redirectMockResponse = computed(() => {
   return status >= 300 && status < 400
 })
 const jsonResponseData = computed(() => isJson(props.responseTarget?.data))
+const toShowJsonDataWindow = () => {
+  paramTarget.value.tableConfig = paramTarget.value.tableConfig || {}
+  return showJsonDataWindow(props.responseTarget?.data, {
+    tableConfig: paramTarget.value.tableConfig,
+    'onUpdate:tableConfig': (value) => (paramTarget.value.tableConfig = value)
+  })
+}
 </script>
 
 <template>
@@ -348,7 +355,7 @@ const jsonResponseData = computed(() => isJson(props.responseTarget?.data))
                   type="primary"
                   underline="never"
                   class="margin-left3"
-                  @click="showJsonDataWindow(responseTarget?.data)"
+                  @click="toShowJsonDataWindow()"
                 >
                   <common-icon
                     :size="18"
