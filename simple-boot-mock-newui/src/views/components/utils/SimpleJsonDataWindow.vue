@@ -16,7 +16,7 @@ defineProps({
   }
 })
 const vModel = defineModel({ type: String, default: '' })
-const tableConfig = defineModel('tableConfig', { type: Object })
+const tableConfig = defineModel('tableConfig', { type: Object, default: () => ({}) })
 defineEmits(['update:tableConfig'])
 
 const formModel = ref({})
