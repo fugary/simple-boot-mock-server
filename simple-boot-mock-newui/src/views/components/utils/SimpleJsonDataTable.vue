@@ -5,7 +5,7 @@ import { checkArrayAndPath } from '@/services/mock/MockCommonService'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { limitStr } from '@/components/utils'
 import { checkShowColumn } from '@/utils'
-import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
+import { $i18nBundle, $i18nConcat } from '@/messages'
 
 defineProps({
   editable: {
@@ -19,7 +19,7 @@ defineProps({
 })
 
 const vModel = defineModel({ type: String, default: '' })
-const formModel = defineModel('tableConfig', { type: Object })
+const formModel = defineModel('tableConfig', { type: Object, default: () => ({}) })
 
 const dataPathConfig = computed(() => checkArrayAndPath(vModel.value))
 
@@ -147,7 +147,7 @@ const customPageAttrs = {
         type="success"
         @click="showCodeWindow(vModel, {language: 'json'})"
       >
-        {{ $i18nKey('common.label.commonView', 'common.label.originalContent') }}
+        {{ $i18nBundle('common.label.commonView', [$i18nConcat('JSON', $i18nBundle('common.label.originalContent'))]) }}
       </el-button>
       <el-button
         v-if="xmlContent"

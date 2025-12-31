@@ -3,9 +3,10 @@ import { reactive, ref, computed, isRef, toRaw, watch } from 'vue'
 import { processPasteCode, useMonacoEditorOptions, useMonacoDiffEditorOptions } from '@/vendors/monaco-editor'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { showCodeWindow as dynamicShowCodeWindow } from '@/utils/DynamicUtils'
+import { showCodeWindow as dynamicShowCodeWindow, showJsonDataWindow } from '@/utils/DynamicUtils'
 import { isObject } from 'lodash-es'
 import { $copyText } from '@/utils'
+import { isJson, isXml } from '@/services/mock/MockCommonService'
 
 const showWindow = ref(false)
 const { contentRef: codeText, languageRef, languageModel, languageSelectOption, normalLanguageSelectOption, formatDocument, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
@@ -28,6 +29,7 @@ const codeConfig = reactive({
   showCancel: false,
   copyAndClose: false,
   forceLanguage: true,
+  viewAsTable: false,
   buttons: [],
   ok: () => {},
   change: () => {}
@@ -111,6 +113,7 @@ const calcButtons = computed(() => {
       }
     }, ...buttons]
   }
+  const isJsonOrXmlContent = isJson(codeText.value) || isXml(codeText.value)
   return [{
     labelKey: 'common.label.copy',
     type: 'success',
@@ -120,6 +123,13 @@ const calcButtons = computed(() => {
       if (codeConfig.copyAndClose) {
         showWindow.value = false
       }
+    }
+  }, {
+    labelKey: 'mock.label.viewAsTable',
+    type: 'success',
+    enabled: codeConfig.viewAsTable && !codeConfig.diffEditor && isJsonOrXmlContent,
+    click () {
+      showJsonDataWindow(codeText.value)
     }
   }, {
     label: $i18nKey('common.label.commonCopy', 'common.label.originalContent'),
