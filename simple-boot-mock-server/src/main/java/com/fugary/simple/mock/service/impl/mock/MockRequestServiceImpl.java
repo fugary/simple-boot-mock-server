@@ -201,17 +201,19 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         if (mockData.getId() != null) {
             MockData savedMockData = mockDataService.getById(mockData.getId());
             if (savedMockData != null) {
+                savedMockData = SimpleMockUtils.copy(savedMockData, MockData.class);
                 savedMockData.setMockParams(mockData.getMockParams());
                 SimpleMockUtils.addAuditInfo(savedMockData);
-                mockDataService.updateById(savedMockData);
+                mockDataService.newSaveOrUpdate(savedMockData);
             }
         }
         if (saveToRequest && mockData.getRequestId() != null) {
             MockRequest savedMockRequest = getById(mockData.getRequestId());
             if (savedMockRequest != null) {
+                savedMockRequest = SimpleMockUtils.copy(savedMockRequest, MockRequest.class);
                 savedMockRequest.setMockParams(mockData.getMockParams());
                 SimpleMockUtils.addAuditInfo(savedMockRequest);
-                updateById(savedMockRequest);
+                newSaveOrUpdate(savedMockRequest);
             }
         }
         return true;
