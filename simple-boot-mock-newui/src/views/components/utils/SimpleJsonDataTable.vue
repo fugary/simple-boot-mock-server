@@ -70,7 +70,7 @@ const tableButtons = computed(() => {
     labelKey: 'common.label.view',
     type: 'primary',
     click: item => {
-      showCodeWindow(JSON.stringify(item))
+      showCodeWindow(JSON.stringify(item), { language: 'json' })
     }
   }]
 })
@@ -108,6 +108,11 @@ const formOptions = computed(() => {
   ]
 })
 defineEmits(['saveTableConfig'])
+const customPageAttrs = {
+  layout: 'total, sizes, prev, pager, next',
+  pageSizes: [5, 10, 20, 50],
+  background: true
+}
 </script>
 
 <template>
@@ -124,8 +129,10 @@ defineEmits(['saveTableConfig'])
       :columns="selectedColumns"
       :buttons="tableButtons"
       :buttons-column-attrs="{fixed:'right'}"
+      :frontend-page-size="5"
+      :page-attrs="customPageAttrs"
       frontend-paging
-      @row-dblclick="showCodeWindow(JSON.stringify($event))"
+      @row-dblclick="showCodeWindow(JSON.stringify($event), {language: 'json'})"
     />
   </el-container>
 </template>
