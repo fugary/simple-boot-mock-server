@@ -102,11 +102,12 @@ const formOptions = computed(() => {
         clearable: true,
         filterable: true,
         allowCreate: true,
-        style: { width: '40vw' }
+        style: { width: '30vw' }
       }
     }
   ]
 })
+defineEmits(['saveTableConfig'])
 </script>
 
 <template>
@@ -114,8 +115,9 @@ const formOptions = computed(() => {
     <common-form
       :options="formOptions"
       :model="formModel"
-      :show-buttons="false"
       inline
+      :submit-label="$t('common.label.save')"
+      @submit-form="$emit('saveTableConfig', formModel)"
     />
     <common-table
       :data="tableData"

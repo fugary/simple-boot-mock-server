@@ -1,6 +1,7 @@
 <script setup lang="js">
 import { ref } from 'vue'
 import SimpleJsonDataTable from '@/views/components/utils/SimpleJsonDataTable.vue'
+import { cloneDeep } from 'lodash-es'
 const showWindow = ref(false)
 defineProps({
   title: {
@@ -9,10 +10,13 @@ defineProps({
   }
 })
 const vModel = defineModel({ type: String, default: '' })
-const formModel = defineModel('tableConfig', { type: Object })
+const tableConfig = defineModel('tableConfig', { type: Object })
+defineEmits(['update:tableConfig'])
 
+const formModel = ref({})
 const showJsonDataWindow = (data) => {
   vModel.value = data
+  formModel.value = cloneDeep(tableConfig.value)
   showWindow.value = true
 }
 defineExpose({
@@ -35,6 +39,7 @@ defineExpose({
     <simple-json-data-table
       v-model:table-config="formModel"
       v-model="vModel"
+      @save-table-config="tableConfig=cloneDeep(formModel)"
     />
   </common-window>
 </template>

@@ -97,13 +97,7 @@ const doDataPreview = async () => {
   calcPreviewHeaders(paramTarget.value, requestUrl, config)
   requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)
   previewData.value?.id && (headers[MOCK_DATA_ID_HEADER] = previewData.value?.id)
-  if (editable.value) {
-    if (previewData.value?.id) {
-      await doSaveMockResponseBody()// data保存
-    } else {
-      await doSaveMockParams() // request mockParams保存
-    }
-  }
+  await doSaveMockResponseBody()// mock请求数据保存
   const authContent = paramTarget.value.authContent
   if (authContent) {
     await AUTH_OPTION_CONFIG[authContent.authType]?.parseAuthInfo(authContent, headers, params, paramTarget)
@@ -133,36 +127,36 @@ const calcMockParams = () => {
   })
 }
 
-const doSaveMockParams = () => {
-  if (paramTarget.value && checkMockParamsChange(requestItem)) {
-    const requestId = requestItem.value?.id
-    const id = previewData.value?.id
-    return saveMockParams({
-      requestId,
-      id,
-      mockParams: requestItem.value.mockParams
-    }, { loading: false })
-      .then((data) => {
-        console.log('=========================data', data)
-        ElMessage.success($i18nBundle('common.msg.saveSuccess'))
-        return saveCallback?.(data.resultData)
-      })
-  }
-}
-
 const doSaveMockResponseBody = () => {
-  if (previewData.value && checkDataChange()) {
-    return MockDataApi.saveOrUpdate(previewData.value)
-      .then((data) => {
-        if (data.success && data.resultData) {
+  if (editable.value) {
+    if (previewData.value?.id) {
+      if (previewData.value && checkDataChange()) {
+        return MockDataApi.saveOrUpdate(previewData.value)
+          .then((data) => {
+            if (data.success && data.resultData) {
+              ElMessage.success($i18nBundle('common.msg.saveSuccess'))
+              previewData.value = data.resultData
+              return saveCallback?.(data.resultData)
+            }
+          }, error => {
+            console.log('saveError', error)
+            return error
+          })
+      }
+    } else if (paramTarget.value && checkMockParamsChange(requestItem)) {
+      const requestId = requestItem.value?.id
+      const id = previewData.value?.id
+      return saveMockParams({
+        requestId,
+        id,
+        mockParams: requestItem.value.mockParams
+      }, { loading: false })
+        .then((data) => {
+          console.log('=========================data', data)
           ElMessage.success($i18nBundle('common.msg.saveSuccess'))
-          previewData.value = data.resultData
           return saveCallback?.(data.resultData)
-        }
-      }, error => {
-        console.log('saveError', error)
-        return error
-      })
+        })
+    }
   }
 }
 

@@ -190,7 +190,10 @@ const toShowJsonDataWindow = () => {
   paramTarget.value.tableConfig = paramTarget.value.tableConfig || {}
   return showJsonDataWindow(props.responseTarget?.data, {
     tableConfig: paramTarget.value.tableConfig,
-    'onUpdate:tableConfig': (value) => (paramTarget.value.tableConfig = value)
+    'onUpdate:tableConfig': (value) => {
+      paramTarget.value.tableConfig = value
+      emit('saveMockResponseBody', paramTarget.value)
+    }
   })
 }
 </script>
