@@ -159,6 +159,9 @@ const doSaveMockResponseBody = () => {
           previewData.value = data.resultData
           return saveCallback?.(data.resultData)
         }
+      }, error => {
+        console.log('saveError', error)
+        return error
       })
   }
 }
@@ -166,7 +169,7 @@ const doSaveMockResponseBody = () => {
 const checkDataChange = () => {
   let changed = false;
   ['responseBody', 'responseFormat', 'contentType', 'defaultCharset'].forEach(key => {
-    if (paramTarget.value[key] !== previewData.value[key]) {
+    if ((paramTarget.value[key] || '') !== (previewData.value[key] || '')) {
       previewData.value[key] = paramTarget.value[key]
       changed = true
     }
