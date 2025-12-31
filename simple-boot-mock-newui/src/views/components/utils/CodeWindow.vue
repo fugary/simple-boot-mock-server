@@ -62,6 +62,7 @@ const showCodeWindow = (code, config = {}) => {
   fullscreen.value = codeConfig.fullscreen
   if (config.language) {
     monacoEditorOptions.language = languageRef.value = config.language
+    monacoEditorOptions.autoCheckLang = config.autoCheckLang ?? false
   }
   setTimeout(formatDocument)
 }
