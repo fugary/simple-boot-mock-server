@@ -29,7 +29,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  matchPatternEditable: {
+  editable: {
     type: Boolean,
     default: false
   },
@@ -173,7 +173,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
                 {{ $t('mock.label.sendRequest') }}
               </el-button>
               <el-button
-                v-if="matchPatternEditable"
+                v-if="editable"
                 type="success"
                 style="margin-top: -15px;"
                 @click="emit('saveMatchPattern')"
@@ -199,6 +199,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
       v-if="responseTarget||mockResponseEditable"
       v-model="paramTarget"
       :mock-response-editable="mockResponseEditable"
+      :editable="editable"
       :response-target="responseTarget"
       :schema-type="schema?.responseMediaType"
       :schema-body="schema?.responseBodySchema"

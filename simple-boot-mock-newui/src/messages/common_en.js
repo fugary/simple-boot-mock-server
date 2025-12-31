@@ -96,8 +96,8 @@ common.label.selection = 'Selection'
 common.label.name = 'Name'
 common.label.value = 'Value'
 common.label.files = 'Files'
-common.label.originalContent = '原文'
-common.label.modifiedContent = '对比'
+common.label.originalContent = 'Original Content'
+common.label.modifiedContent = 'Modified Content'
 
 //= ============通用============
 common.label.commonConfig = 'Config {0}'

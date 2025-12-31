@@ -144,7 +144,7 @@ defineExpose({
         match-pattern-mode
         :schemas="schemasConf.schemas"
         :schema-spec="schemasConf.componentSpec"
-        :match-pattern-editable="editable"
+        :editable="editable"
         @send-request="doDataPreview"
         @save-match-pattern="saveMatchPattern"
       />

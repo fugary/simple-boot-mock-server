@@ -30,6 +30,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  editable: {
+    type: Boolean,
+    default: false
+  },
   schemaType: {
     type: String,
     default: 'json'
@@ -190,6 +194,7 @@ const jsonResponseData = computed(() => isJson(props.responseTarget?.data) || is
 const toShowJsonDataWindow = () => {
   paramTarget.value.tableConfig = paramTarget.value.tableConfig || {}
   return showJsonDataWindow(props.responseTarget?.data, {
+    editable: props.editable,
     tableConfig: paramTarget.value.tableConfig,
     'onUpdate:tableConfig': (value) => {
       paramTarget.value.tableConfig = value

@@ -202,6 +202,7 @@ defineExpose({
       :request-path="requestPath"
       :response-target="responseTarget"
       :mock-response-editable="!!previewData"
+      :editable="editable"
       :schemas="schemasConf.schemas"
       :schema-spec="schemasConf.componentSpec"
       v-bind="$attrs"

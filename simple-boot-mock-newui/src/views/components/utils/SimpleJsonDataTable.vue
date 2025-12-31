@@ -5,6 +5,18 @@ import { checkArrayAndPath } from '@/services/mock/MockCommonService'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { limitStr } from '@/components/utils'
 import { checkShowColumn } from '@/utils'
+import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
+
+defineProps({
+  editable: {
+    type: Boolean,
+    default: false
+  },
+  xmlContent: {
+    type: String,
+    default: ''
+  }
+})
 
 const vModel = defineModel({ type: String, default: '' })
 const formModel = defineModel('tableConfig', { type: Object })
@@ -121,9 +133,30 @@ const customPageAttrs = {
       :options="formOptions"
       :model="formModel"
       inline
-      :submit-label="$t('common.label.save')"
-      @submit-form="$emit('saveTableConfig', formModel)"
+      :show-buttons="false"
     />
+    <el-container class="flex-center margin-bottom2">
+      <el-button
+        v-if="editable"
+        type="primary"
+        @click="$emit('saveTableConfig', formModel)"
+      >
+        {{ $t('common.label.save') }}
+      </el-button>
+      <el-button
+        type="success"
+        @click="showCodeWindow(vModel, {language: 'json'})"
+      >
+        {{ $i18nKey('common.label.commonView', 'common.label.originalContent') }}
+      </el-button>
+      <el-button
+        v-if="xmlContent"
+        type="success"
+        @click="showCodeWindow(xmlContent, {language: 'xml'})"
+      >
+        {{ $i18nBundle('common.label.commonView', [$i18nConcat('XML', $i18nBundle('common.label.originalContent'))]) }}
+      </el-button>
+    </el-container>
     <common-table
       :data="tableData"
       :columns="selectedColumns"

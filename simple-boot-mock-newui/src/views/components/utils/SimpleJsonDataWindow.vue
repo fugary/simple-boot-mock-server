@@ -9,6 +9,10 @@ defineProps({
   title: {
     type: String,
     default: ''
+  },
+  editable: {
+    type: Boolean,
+    default: false
   }
 })
 const vModel = defineModel({ type: String, default: '' })
@@ -16,8 +20,11 @@ const tableConfig = defineModel('tableConfig', { type: Object })
 defineEmits(['update:tableConfig'])
 
 const formModel = ref({})
+const xmlContent = ref()
 const showJsonDataWindow = async (data) => {
+  xmlContent.value = null
   if (isXml(data)) {
+    xmlContent.value = data
     data = await xml2Json({ keyword: data }).then(data => data.resultData)
   }
   vModel.value = data
@@ -44,6 +51,8 @@ defineExpose({
     <simple-json-data-table
       v-model:table-config="formModel"
       v-model="vModel"
+      :editable="editable"
+      :xml-content="xmlContent"
       @save-table-config="tableConfig=cloneDeep(formModel)"
     />
   </common-window>
