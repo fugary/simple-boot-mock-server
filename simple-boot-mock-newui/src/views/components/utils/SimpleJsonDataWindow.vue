@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import SimpleJsonDataTable from '@/views/components/utils/SimpleJsonDataTable.vue'
 import { cloneDeep } from 'lodash-es'
+import { xml2Json } from '@/api/mock/MockDataApi'
+import { isXml } from '@/services/mock/MockCommonService'
 const showWindow = ref(false)
 defineProps({
   title: {
@@ -14,7 +16,10 @@ const tableConfig = defineModel('tableConfig', { type: Object })
 defineEmits(['update:tableConfig'])
 
 const formModel = ref({})
-const showJsonDataWindow = (data) => {
+const showJsonDataWindow = async (data) => {
+  if (isXml(data)) {
+    data = await xml2Json({ keyword: data }).then(data => data.resultData)
+  }
   vModel.value = data
   formModel.value = cloneDeep(tableConfig.value)
   showWindow.value = true

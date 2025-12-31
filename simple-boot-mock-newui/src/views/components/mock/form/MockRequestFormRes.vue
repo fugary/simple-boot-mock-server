@@ -9,6 +9,7 @@ import {
   generateSchemaSample,
   isHtmlContentType,
   isJson,
+  isXml,
   isMediaContentType,
   useContentTypeOption
 } from '@/services/mock/MockCommonService'
@@ -185,7 +186,7 @@ const redirectMockResponse = computed(() => {
   const status = paramTarget.value?.responseStatusCode || 200
   return status >= 300 && status < 400
 })
-const jsonResponseData = computed(() => isJson(props.responseTarget?.data))
+const jsonResponseData = computed(() => isJson(props.responseTarget?.data) || isXml(props.responseTarget?.data))
 const toShowJsonDataWindow = () => {
   paramTarget.value.tableConfig = paramTarget.value.tableConfig || {}
   return showJsonDataWindow(props.responseTarget?.data, {

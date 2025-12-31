@@ -11,12 +11,12 @@ import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.CountData;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.service.mock.MockDataService;
-import com.fugary.simple.mock.utils.SimpleMockUtils;
-import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.utils.*;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.MockDataQueryVo;
 import com.fugary.simple.mock.web.vo.query.MockHistoryVo;
 import com.fugary.simple.mock.web.vo.query.MockJwtParamVo;
+import com.fugary.simple.mock.web.vo.query.SimpleQueryVo;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -165,6 +165,16 @@ public class MockDataController {
         }
         String token = builder.sign(algorithm);
         return SimpleResultUtils.createSimpleResult(token);
+    }
+
+    @PostMapping("/xml2Json")
+    public SimpleResult<String> xml2Json(@RequestBody SimpleQueryVo queryVo) {
+        String resultStr =  "";
+        if (StringUtils.isNotBlank(queryVo.getKeyword()) && MockJsUtils.isXml(queryVo.getKeyword())) {
+            Map<String, ?> xmlMap = XmlUtils.fromXml(queryVo.getKeyword(), Map.class);
+            resultStr = JsonUtils.toJson(xmlMap);
+        }
+        return SimpleResultUtils.createSimpleResult(resultStr);
     }
 
     protected Algorithm getAlgorithm(String algorithm, String secret) {

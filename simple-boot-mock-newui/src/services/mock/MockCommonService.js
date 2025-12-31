@@ -214,6 +214,14 @@ export const isJson = str => {
   return false
 }
 
+export const isXml = str => {
+  if (isString(str)) {
+    str = str.trim()
+    return str.startsWith('<') && str.endsWith('>') && !str.toLowerCase().includes('<!doctype html>')
+  }
+  return false
+}
+
 /**
  * 查找：
  * 1. 第一个数组的值

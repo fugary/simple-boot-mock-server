@@ -65,6 +65,14 @@ export const generateJWT = function (data, config) {
   }, config)).then(response => response.data)
 }
 
+export const xml2Json = function (data, config) {
+  return $http(Object.assign({
+    url: `${MOCK_DATA_URL}/xml2Json`,
+    method: 'post',
+    data
+  }, config)).then(response => response.data)
+}
+
 export const markDefault = function (data, config) {
   return $http(Object.assign({
     url: `${MOCK_DATA_URL}/markDefault`,
