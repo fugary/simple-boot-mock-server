@@ -433,7 +433,7 @@ export const checkShowColumn = (dataList, field) => {
   dataList = dataList || []
   let checkFun = (item, field) => {
     const value = get(item, field)
-    return isNumber(value) || !!value
+    return isNumber(value) || isBoolean(value) || !!value
   }
   if (isFunction(field)) {
     checkFun = field
