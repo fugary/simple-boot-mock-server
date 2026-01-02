@@ -22,15 +22,19 @@ const vModel = defineModel({ type: String, default: '' })
 const formModel = defineModel('tableConfig', { type: Object, default: () => ({}) })
 
 const dataPathConfig = computed(() => checkArrayAndPath(vModel.value))
-
-const tableData = computed(() => {
+const DEFAULT_ROOT = '$ROOT'
+const calcTableData = () => {
   let data = dataPathConfig.value.data
   if (isArray(data)) {
     return data
   }
   if (formModel.value?.dataKey) {
     const dataKey = dataPathConfig.value.arrayPath?.find(path => path.join('.') === formModel.value?.dataKey) || formModel.value?.dataKey
+    const oriData = data
     data = get(data, dataKey)
+    if (!data && DEFAULT_ROOT === dataKey) {
+      data = oriData
+    }
     return isArray(data) ? data : [data]
   }
   const arrayData = dataPathConfig.value.arrayData
@@ -38,7 +42,9 @@ const tableData = computed(() => {
     return arrayData
   }
   return [data]
-})
+}
+
+const tableData = computed(() => calcTableData().filter(obj => !!obj))
 
 const selectedColumns = computed(() => {
   if (formModel.value.columns?.length) {
@@ -90,13 +96,17 @@ const formOptions = computed(() => {
   const defaultDataKey = dataPathConfig.value.arrayPath?.map(path => path.join('.'))
     ?.find(pathKey => pathKey === formModel.value.dataKey) ||
       dataPathConfig.value.arrayPath?.[0]?.join('.')
+  const selectKeys = dataPathConfig.value.arrayPath?.map(path => path.join('.')).map(value => ({ value, label: value }))
+  if (selectKeys.length) {
+    selectKeys.unshift({ value: DEFAULT_ROOT, label: DEFAULT_ROOT })
+  }
   return [
     {
       labelKey: 'mock.label.dataProperty',
       prop: 'dataKey',
       type: 'select',
       value: defaultDataKey,
-      children: dataPathConfig.value.arrayPath?.map(path => path.join('.')).map(value => ({ value, label: value })),
+      children: selectKeys,
       attrs: {
         clearable: true,
         filterable: true,
