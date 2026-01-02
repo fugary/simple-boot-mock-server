@@ -79,11 +79,16 @@ public class MockController {
         MockGroup mockGroup = dataPair.getLeft();
         long start = System.currentTimeMillis();
         ResponseEntity<?> responseEntity = ResponseEntity.notFound().build();
+        Integer delayTime = mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight());
+        if (delayTime != null && delayTime > 0) {
+            response.setHeader(MockConstants.MOCK_DELAY_TIME_HEADER, String.valueOf(delayTime));
+        }
         String proxyUrl;
         if (data != null) {
             HttpHeaders httpHeaders = SimpleMockUtils.calcHeaders(data.getHeaders());
             HttpStatus httpStatus = HttpStatus.resolve(data.getStatusCode());
             if (httpStatus != null && httpStatus.is3xxRedirection()) { // 重定向
+                mockGroupService.delayTime(start, delayTime);
                 if (SimpleMockUtils.isMockPreview(request)) {
                     return ResponseEntity.status(HttpStatus.OK).header(MockConstants.MOCK_DATA_REDIRECT_HEADER, "1")
                             .body("测试重定向请复制URL到浏览器访问，跳转地址：" + data.getResponseBody());
@@ -102,10 +107,6 @@ public class MockController {
             responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
             response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
             SimpleLogUtils.addResponseData(responseEntity);
-        }
-        Integer delayTime = mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight());
-        if (delayTime != null && delayTime > 0) {
-            response.setHeader(MockConstants.MOCK_DELAY_TIME_HEADER, String.valueOf(delayTime));
         }
         if (mockGroup != null) {
             response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
