@@ -91,6 +91,20 @@ const exampleGroups = computed(() => [{
 }
   `.trim()
   }, {
+    label: 'Mock.js',
+    link: 'http://mockjs.com/',
+    content: `
+Mock.mock({
+    "code": "success",
+    'data|10': [{
+        "id": "@integer(1, 10000)",
+        "name": "@name",
+        "birthday": "@date",
+        "gender": "@pick(['男', '女', '未知'])"
+    }]
+})
+`.trim()
+  }, {
     label: $i18nBundle('mock.msg.functionTooltip'),
     content: `
 (function () {
@@ -109,20 +123,6 @@ const exampleGroups = computed(() => [{
     };
 }())
   `.trim()
-  }, {
-    label: 'Mock.js',
-    link: 'http://mockjs.com/',
-    content: `
-Mock.mock({
-    "code": "success",
-    'data|10': [{
-        "id": "@integer(1, 10000)",
-        "name": "@name",
-        "birthday": "@date",
-        "gender": "@pick(['男', '女', '未知'])"
-    }]
-})
-`.trim()
   }, {
     label: $i18nBundle('mock.label.requestObject'),
     content: `
@@ -238,8 +238,14 @@ const calcHeight = (text) => {
 </script>
 
 <template>
-  <el-container class="flex-column">
-    <el-tabs v-model="currentTab">
+  <el-container
+    class="flex-column"
+    style="height: calc(100% - 45px)"
+  >
+    <el-tabs
+      v-model="currentTab"
+      class="tip-tabs"
+    >
       <el-tab-pane
         lazy
         :label="$t('mock.label.requestObject')"
@@ -277,7 +283,6 @@ const calcHeight = (text) => {
         >
           <p>
             {{ example.label }}
-            <mock-url-copy-link :content="example.content" />
             <el-link
               v-if="example.link"
               type="primary"
@@ -285,6 +290,7 @@ const calcHeight = (text) => {
             >
               {{ example.link }}
             </el-link>
+            <mock-url-copy-link :content="example.content" />
           </p>
           <vue-monaco-editor
             v-model:value="example.content"

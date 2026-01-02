@@ -506,6 +506,14 @@ html, body, #app, .index-container {
     position: unset;
 }
 
+.tip-tabs {
+    height: 100%;
+}
+
+.tip-tabs .el-tabs__content {
+    overflow: auto;
+}
+
 .iframe-preview {
     width: 100%;
     height: v-bind(height);

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import MockTips from '@/views/mock/MockTips.vue'
 import { isString } from 'lodash-es'
 
@@ -15,11 +15,16 @@ const showMockTips = (tab) => {
 defineExpose({
   showMockTips
 })
+const fullscreen = ref(false)
+const tipsHeight = computed(() => {
+  return fullscreen.value ? 'calc(100dvh - 150px)' : '400px'
+})
 </script>
 
 <template>
   <common-window
     v-model="showWindow"
+    v-model:fullscreen="fullscreen"
     width="1000px"
     show-fullscreen
     :show-cancel="false"
@@ -29,7 +34,10 @@ defineExpose({
     append-to-body
     v-bind="$attrs"
   >
-    <mock-tips v-model="currentTab" />
+    <mock-tips
+      v-model="currentTab"
+      :style="{height: tipsHeight, maxHeight:tipsHeight}"
+    />
   </common-window>
 </template>
 
