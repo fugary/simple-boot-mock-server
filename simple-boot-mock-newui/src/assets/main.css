@@ -511,3 +511,11 @@ html, body, #app, .index-container {
     height: v-bind(height);
     border: 0;
 }
+
+.dark .el-card .el-menu {
+    --el-menu-bg-color: var(--el-card-bg-color)
+}
+
+.dark .el-card .el-descriptions__body {
+    background-color: var(--el-card-bg-color)
+}

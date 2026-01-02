@@ -30,7 +30,7 @@ defineEmits(['viewDataDetails'])
       @click="$emit('viewDataDetails')"
     >
       {{ data }}
-    </el-link>&nbsp;
+    </el-link>
     <el-link
       v-else
       v-common-tooltip="tooltip"
