@@ -110,6 +110,9 @@ public class MockController {
         }
         if (mockGroup != null) {
             response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
+            if (Boolean.TRUE.equals(mockGroup.getDisableMock()) || (mockRequest != null && Boolean.TRUE.equals(mockRequest.getDisableMock()))) {
+                response.setHeader(MockConstants.MOCK_DATA_PAUSED_HEADER, "true");
+            }
         }
         mockGroupService.delayTime(start, delayTime);
         return responseEntity;

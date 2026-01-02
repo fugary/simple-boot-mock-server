@@ -162,11 +162,14 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant path不支持:var格式，只支持{var}格式
                     String configPath = groupPath + configRequestPath;
                     boolean testData = defaultId != 0;
-                    if (pathMatcher.match(configPath, requestPath) && (testData || !Boolean.TRUE.equals(mockRequest.getDisableMock()))) {
+                    if (pathMatcher.match(configPath, requestPath)) {
                         try {
                             HttpRequestVo requestVo = calcRequestVo(request, configPath, requestPath);
                             MockJsUtils.setCurrentRequestVo(requestVo);
                             if (mockRequestService.matchRequestPattern(mockRequest.getMatchPattern()) || testRequest) {
+                                if (Boolean.TRUE.equals(mockRequest.getDisableMock()) && !testData && !testRequest) {
+                                    return Triple.of(mockGroup, mockRequest, null);
+                                }
                                 List<MockData> mockDataList = mockRequestService.loadAllDataByRequest(mockRequest.getId());
                                 MockData mockData = mockRequestService.findForceMockData(mockDataList, defaultId);
                                 mockDataList = mockDataList.stream().filter(MockBase::isEnabled).collect(Collectors.toList());
@@ -219,6 +222,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     protected List<MockRequest> sortMockRequests(List<MockRequest> mockRequests) {
+        mockRequests.sort(Comparator.comparing(o -> Objects.requireNonNullElse(o.getDisableMock(), false)));
         mockRequests.sort((o1, o2) -> {
             // 按照matchPattern属性排序，长度最长的排前面
             return StringUtils.length(o2.getMatchPattern()) - StringUtils.length(o1.getMatchPattern());
