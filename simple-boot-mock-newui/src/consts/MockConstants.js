@@ -61,6 +61,7 @@ export const CONTENT_TYPES_TO_LANG = {
   'text/javascript': 'javascript',
   'text/html': 'html',
   'text/plain': 'text',
+  'text/event-stream': 'text',
   'text/css': 'css'
 }
 

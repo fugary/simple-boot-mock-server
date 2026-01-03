@@ -132,6 +132,28 @@ Mock.mock({
   params: request.params
 })
 `.trim()
+  }, {
+    label: 'Event Stream',
+    content: `
+[
+  {
+    "data": "连接成功",
+    "delay": 0
+  },
+  {
+    "data": {"msg": "这是一条消息", "id": 1},
+    "delay": 1000
+  },
+  {
+    "data": {"msg": "这是第二条消息", "id": 2},
+    "delay": 2000
+  },
+  {
+    "data": "结束",
+    "delay": 1000
+  }
+]
+`.trim()
   }]
 }, {
   label: $i18nBundle('mock.label.xmlExamples'),
