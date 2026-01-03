@@ -26,6 +26,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -64,22 +65,25 @@ public class MockController {
     private MockPushProcessor mockPushProcessor;
 
     @RequestMapping("/**")
-    public ResponseEntity<?> doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public Object doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String requestId = request.getHeader(MockConstants.MOCK_REQUEST_ID_HEADER);
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
-        Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request, NumberUtils.toInt(requestId), NumberUtils.toInt(dataId), mockGroup -> {
-            if (StringUtils.isBlank(requestId) && StringUtils.isBlank(dataId)) {
-                MockUser mockUser = mockUserService.loadValidUser(mockGroup.getUserName());
-                return mockUser != null && mockProjectService.checkProjectValid(mockGroup.getUserName(), mockGroup.getProjectCode());
-            }
-            return true;
-        });
+        Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request,
+                NumberUtils.toInt(requestId), NumberUtils.toInt(dataId), mockGroup -> {
+                    if (StringUtils.isBlank(requestId) && StringUtils.isBlank(dataId)) {
+                        MockUser mockUser = mockUserService.loadValidUser(mockGroup.getUserName());
+                        return mockUser != null && mockProjectService.checkProjectValid(mockGroup.getUserName(),
+                                mockGroup.getProjectCode());
+                    }
+                    return true;
+                });
         MockData data = dataPair.getRight();
         MockRequest mockRequest = dataPair.getMiddle();
         MockGroup mockGroup = dataPair.getLeft();
         long start = System.currentTimeMillis();
         ResponseEntity<?> responseEntity = ResponseEntity.notFound().build();
-        Integer delayTime = mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(), dataPair.getRight());
+        Integer delayTime = mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(),
+                dataPair.getRight());
         if (delayTime != null && delayTime > 0) {
             response.setHeader(MockConstants.MOCK_DELAY_TIME_HEADER, String.valueOf(delayTime));
         }
@@ -93,7 +97,12 @@ public class MockController {
                     return ResponseEntity.status(HttpStatus.OK).header(MockConstants.MOCK_DATA_REDIRECT_HEADER, "1")
                             .body("测试重定向请复制URL到浏览器访问，跳转地址：" + data.getResponseBody());
                 }
-                return ResponseEntity.status(data.getStatusCode()).headers(httpHeaders).header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
+                return ResponseEntity.status(data.getStatusCode()).headers(httpHeaders)
+                        .header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
+            }
+            if (StringUtils.contains(data.getContentType(), MediaType.TEXT_EVENT_STREAM_VALUE)) {
+                mockGroupService.delayTime(start, delayTime);
+                return MockEventStreamUtils.processSseRequest(request, response, data, httpHeaders, mockGroup);
             }
             response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
             Pair<String, Object> bodyPair = SimpleMockUtils.getMockResponseBody(data);
@@ -102,7 +111,8 @@ public class MockController {
                     .header(HttpHeaders.CONTENT_TYPE, bodyPair.getKey())
                     .body(bodyPair.getValue());
             SimpleLogUtils.addResponseData(data.getResponseBody());
-        } else if (mockGroup != null && SimpleMockUtils.isValidProxyUrl(proxyUrl = SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
+        } else if (mockGroup != null
+                && SimpleMockUtils.isValidProxyUrl(proxyUrl = SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
             // 所有request没有匹配上,但是有proxy地址
             responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
             response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
@@ -110,7 +120,8 @@ public class MockController {
         }
         if (mockGroup != null) {
             response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
-            if (Boolean.TRUE.equals(mockGroup.getDisableMock()) || (mockRequest != null && Boolean.TRUE.equals(mockRequest.getDisableMock()))) {
+            if (Boolean.TRUE.equals(mockGroup.getDisableMock())
+                    || (mockRequest != null && Boolean.TRUE.equals(mockRequest.getDisableMock()))) {
                 response.setHeader(MockConstants.MOCK_DATA_PAUSED_HEADER, "true");
             }
         }
@@ -120,6 +131,7 @@ public class MockController {
 
     /**
      * 表达式测试
+     * 
      * @param request
      * @return
      */
@@ -138,10 +150,10 @@ public class MockController {
                 return (SimpleResult) result;
             }
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_0, result);
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("checkMatchPattern error", e);
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, e.getMessage());
-        }finally {
+        } finally {
             MockJsUtils.removeCurrentRequestVo();
         }
     }
@@ -152,7 +164,8 @@ public class MockController {
         if (StringUtils.isNotBlank(pathParamsHeader)) {
             pathParamsHeader = URLDecoder.decode(pathParamsHeader, StandardCharsets.UTF_8);
             try {
-                List<NameValue> pathParams = JsonUtils.getMapper().readValue(pathParamsHeader, new TypeReference<>() {});
+                List<NameValue> pathParams = JsonUtils.getMapper().readValue(pathParamsHeader, new TypeReference<>() {
+                });
                 if (pathParams != null) {
                     requestVo.setPathParameters(pathParams.stream().collect(Collectors
                             .toMap(NameValue::getName, NameValue::getValue)));
