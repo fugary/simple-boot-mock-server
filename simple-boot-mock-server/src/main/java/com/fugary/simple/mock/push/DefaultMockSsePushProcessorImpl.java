@@ -89,37 +89,53 @@ public class DefaultMockSsePushProcessorImpl implements MockSsePushProcessor {
                             try (BufferedReader reader = new BufferedReader(
                                     new InputStreamReader(clientHttpResponse.getBody(), StandardCharsets.UTF_8))) {
                                 String line;
-                                StringBuilder eventBuilder = new StringBuilder();
+                                SseEmitter.SseEventBuilder eventBuilder = null;
+                                boolean hasData = false;
 
-                                // 检查是否被取消，及时退出循环
                                 while (!cancelled.get() && (line = reader.readLine()) != null) {
-                                    // SSE 事件以空行分隔
                                     if (line.isEmpty()) {
-                                        // 遇到空行，发送之前累积的事件（不包含这个空行）
-                                        if (eventBuilder.length() > 0) {
-                                            String event = eventBuilder.toString();
-                                            log.debug("发送 SSE 事件: {}", event.trim());
-
+                                        // 遇到空行，发送之前累积的事件
+                                        if (eventBuilder != null && hasData) {
                                             try {
-                                                sseEmitter.send(event);
+                                                log.debug("发送 SSE 事件对象");
+                                                sseEmitter.send(eventBuilder);
                                             } catch (Exception e) {
                                                 log.warn("发送 SSE 事件失败，客户端可能已断开: {}", e.getMessage());
                                                 cancelled.set(true);
                                                 break;
                                             }
-                                            eventBuilder.setLength(0); // 清空 builder
                                         }
+                                        eventBuilder = null;
+                                        hasData = false;
                                     } else {
-                                        // 非空行，添加到 builder
-                                        eventBuilder.append(line).append("\n");
+                                        if (eventBuilder == null) {
+                                            eventBuilder = SseEmitter.event();
+                                        }
+                                        if (line.startsWith("data:")) {
+                                            String dataContent = line.substring(5);
+                                            if (dataContent.startsWith(" ")) {
+                                                dataContent = dataContent.substring(1);
+                                            }
+                                            eventBuilder.data(dataContent);
+                                            hasData = true;
+                                        } else if (line.startsWith("event:")) {
+                                            eventBuilder.name(line.substring(6).trim());
+                                        } else if (line.startsWith("id:")) {
+                                            eventBuilder.id(line.substring(3).trim());
+                                        } else if (line.startsWith("retry:")) {
+                                            try {
+                                                eventBuilder.reconnectTime(Long.parseLong(line.substring(6).trim()));
+                                            } catch (Exception ignored) {
+                                            }
+                                        }
                                     }
                                 }
 
                                 if (!cancelled.get()) {
                                     // 发送最后一个事件（如果有）
-                                    if (eventBuilder.length() > 0) {
+                                    if (eventBuilder != null && hasData) {
                                         try {
-                                            sseEmitter.send(eventBuilder.toString());
+                                            sseEmitter.send(eventBuilder);
                                         } catch (Exception e) {
                                             log.warn("发送最后的 SSE 事件失败: {}", e.getMessage());
                                         }
