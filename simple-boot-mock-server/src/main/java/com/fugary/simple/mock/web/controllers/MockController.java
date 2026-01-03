@@ -9,6 +9,7 @@ import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.push.MockPushProcessor;
+import com.fugary.simple.mock.push.MockSsePushProcessor;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
@@ -64,6 +65,9 @@ public class MockController {
     @Autowired
     private MockPushProcessor mockPushProcessor;
 
+    @Autowired
+    private MockSsePushProcessor mockSsePushProcessor;
+
     @RequestMapping("/**")
     public Object doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String requestId = request.getHeader(MockConstants.MOCK_REQUEST_ID_HEADER);
@@ -114,6 +118,16 @@ public class MockController {
         } else if (mockGroup != null
                 && SimpleMockUtils.isValidProxyUrl(proxyUrl = SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
             // 所有request没有匹配上,但是有proxy地址
+            // 检测是否是 SSE 请求
+            String acceptHeader = request.getHeader(HttpHeaders.ACCEPT);
+            if (StringUtils.contains(acceptHeader, MediaType.TEXT_EVENT_STREAM_VALUE)) {
+                // SSE 代理请求
+                mockGroupService.delayTime(start, delayTime);
+                response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
+                return mockSsePushProcessor
+                        .processSseProxy(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
+            }
+            // 普通代理请求
             responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
             response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
             SimpleLogUtils.addResponseData(responseEntity);
