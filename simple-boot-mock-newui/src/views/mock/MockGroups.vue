@@ -31,6 +31,7 @@ import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { toCopyGroupTo } from '@/utils/DynamicUtils'
+import { useContentTypeOption } from '@/services/mock/MockCommonService'
 
 const props = defineProps({
   publicFlag: {
@@ -384,8 +385,9 @@ const editFormOptions = computed(() => defineFormOptions([{
     }
   }]
 }, { ...useFormStatus(), style: getStyleGrow(4) },
-{ ...useFormDisableMock(), style: getStyleGrow(3) },
-{ ...useFormDelay(), style: getStyleGrow(3) }, {
+{ ...useFormDisableMock(), style: getStyleGrow(6) },
+{ ...useFormDelay(), style: getStyleGrow(4) },
+{ ...useContentTypeOption(), style: getStyleGrow(6) }, {
   labelKey: 'common.label.description',
   prop: 'description',
   attrs: {

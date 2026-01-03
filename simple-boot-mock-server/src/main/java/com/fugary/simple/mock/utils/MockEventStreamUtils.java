@@ -38,7 +38,7 @@ public class MockEventStreamUtils {
         CompletableFuture.runAsync(() -> {
             try {
                 MockJsUtils.setCurrentRequestVo(requestVo); // Need to set in the new thread
-                Pair<String, Object> mockResponse = SimpleMockUtils.getMockResponseBody(data);
+                Pair<String, Object> mockResponse = SimpleMockUtils.getMockResponseBody(data, MediaType.TEXT_EVENT_STREAM_VALUE);
                 Object body = mockResponse.getValue();
                 if (body instanceof String && MockJsUtils.isJson((String) body)) {
                     body = JsonUtils.fromJson((String) body, Object.class);

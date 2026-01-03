@@ -38,6 +38,7 @@ import {
 } from '@/services/mock/NewMockDiffService'
 import { MOCK_LOAD_BALANCE_OPTIONS } from '@/consts/MockConstants'
 import { calcUrl, pasteCurl2Request } from '@/services/mock/CurlProcessService'
+import { useContentTypeOption } from '@/services/mock/MockCommonService'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -194,8 +195,9 @@ const editFormOptions = computed(() => {
       }
     }]
   }, { ...useFormStatus(), style: getStyleGrow(4) },
-  { ...useFormDisableMock(), style: getStyleGrow(3) },
-  { ...useFormDelay(), style: getStyleGrow(3) },
+  { ...useFormDisableMock(), style: getStyleGrow(6) },
+  { ...useFormDelay(), style: getStyleGrow(4) },
+  { ...useContentTypeOption(), style: getStyleGrow(6) },
   {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',

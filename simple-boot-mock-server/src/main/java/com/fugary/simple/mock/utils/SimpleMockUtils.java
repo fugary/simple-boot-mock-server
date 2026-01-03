@@ -318,6 +318,27 @@ public class SimpleMockUtils {
     }
 
     /**
+     * content type 计算
+     *
+     * @param mockGroup
+     * @param mockRequest
+     * @param mockData
+     * @return
+     */
+    public static String calcContentType(MockGroup mockGroup, MockRequest mockRequest, MockData mockData) {
+        if (mockData != null && StringUtils.isNotBlank(mockData.getContentType())) {
+            return mockData.getContentType();
+        }
+        if (mockRequest != null && StringUtils.isNotBlank(mockRequest.getContentType())) {
+            return mockRequest.getContentType();
+        }
+        if (mockGroup != null && StringUtils.isNotBlank(mockGroup.getContentType())) {
+            return mockGroup.getContentType();
+        }
+        return null;
+    }
+
+    /**
      * 获取上传文件信息
      *
      * @param request
@@ -493,10 +514,10 @@ public class SimpleMockUtils {
      * @param data
      * @return
      */
-    public static Pair<String, Object> getMockResponseBody(MockData data) {
+    public static Pair<String, Object> getMockResponseBody(MockData data, String contentType) {
         Object result = data.getResponseBody();
-        String contentType = SimpleMockUtils.getContentType(data.getContentType(), data.getDefaultCharset());
-        if (SimpleMockUtils.isStreamContentType(data.getContentType())) {
+        contentType = SimpleMockUtils.getContentType(contentType, data.getDefaultCharset());
+        if (SimpleMockUtils.isStreamContentType(contentType)) {
             byte[] streamResponseBody = SimpleMockUtils.getStreamResponseBody(data.getResponseBody());
             if (streamResponseBody != null) {
                 result = streamResponseBody;

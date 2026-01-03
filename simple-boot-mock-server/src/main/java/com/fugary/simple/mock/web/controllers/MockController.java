@@ -91,6 +91,7 @@ public class MockController {
         if (delayTime != null && delayTime > 0) {
             response.setHeader(MockConstants.MOCK_DELAY_TIME_HEADER, String.valueOf(delayTime));
         }
+        String contentType = SimpleMockUtils.calcContentType(mockGroup, mockRequest, data);
         String proxyUrl;
         if (data != null) {
             HttpHeaders httpHeaders = SimpleMockUtils.calcHeaders(data.getHeaders());
@@ -104,12 +105,12 @@ public class MockController {
                 return ResponseEntity.status(data.getStatusCode()).headers(httpHeaders)
                         .header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
             }
-            if (StringUtils.contains(data.getContentType(), MediaType.TEXT_EVENT_STREAM_VALUE)) {
+            if (StringUtils.contains(contentType, MediaType.TEXT_EVENT_STREAM_VALUE)) {
                 mockGroupService.delayTime(start, delayTime);
                 return MockEventStreamUtils.processSseRequest(request, response, data, httpHeaders, mockGroup);
             }
             response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
-            Pair<String, Object> bodyPair = SimpleMockUtils.getMockResponseBody(data);
+            Pair<String, Object> bodyPair = SimpleMockUtils.getMockResponseBody(data, contentType);
             responseEntity = ResponseEntity.status(data.getStatusCode())
                     .headers(httpHeaders)
                     .header(HttpHeaders.CONTENT_TYPE, bodyPair.getKey())
@@ -120,12 +121,12 @@ public class MockController {
             // 所有request没有匹配上,但是有proxy地址
             // 检测是否是 SSE 请求
             String acceptHeader = request.getHeader(HttpHeaders.ACCEPT);
-            if (StringUtils.contains(acceptHeader, MediaType.TEXT_EVENT_STREAM_VALUE)) {
+            if (StringUtils.contains(acceptHeader, MediaType.TEXT_EVENT_STREAM_VALUE)
+                    || StringUtils.contains(contentType, MediaType.TEXT_EVENT_STREAM_VALUE)) {
                 // SSE 代理请求
                 mockGroupService.delayTime(start, delayTime);
                 response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
-                return mockSsePushProcessor
-                        .processSseProxy(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
+                return mockSsePushProcessor.processSseProxy(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
             }
             // 普通代理请求
             responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));

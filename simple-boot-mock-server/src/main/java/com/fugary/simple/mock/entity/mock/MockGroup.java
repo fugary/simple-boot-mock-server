@@ -17,6 +17,7 @@ public class MockGroup extends MockBase {
     private String proxyUrl;
     private String projectCode;
     private Integer delay;
+    private String contentType;
     private String description;
     private String groupConfig;
     private Boolean disableMock;

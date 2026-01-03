@@ -243,7 +243,7 @@ export const calcParamTarget = (groupItem, requestItem, previewData, schemasConf
     responseStatusCode: previewData?.statusCode,
     responseBody: previewData?.responseBody,
     responseFormat: previewData?.responseFormat,
-    contentType: previewData?.contentType || DEFAULT_CONTENT_TYPE,
+    contentType: previewData?.contentType || requestItem?.contentType || groupItem?.contentType || DEFAULT_CONTENT_TYPE,
     defaultCharset: previewData?.defaultCharset
   }
   if (value) {
