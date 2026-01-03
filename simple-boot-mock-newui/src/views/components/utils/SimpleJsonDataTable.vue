@@ -77,9 +77,14 @@ const str2Column = column => {
 }
 
 const tableColumns = computed(() => {
-  const columns = Object.keys(tableData.value?.[0] || {})
-  if (columns) {
-    return columns.map(column => str2Column(column))
+  const columns = new Set()
+  tableData.value?.forEach(item => {
+    if (item && typeof item === 'object') {
+      Object.keys(item).forEach(key => columns.add(key))
+    }
+  })
+  if (columns.size) {
+    return Array.from(columns).map(column => str2Column(column))
   }
   return []
 })
