@@ -133,6 +133,7 @@ export const ALL_CONTENT_TYPES_LIST = [
   { contentType: 'text/css', text: true },
   { contentType: 'application/javascript', text: true },
   { contentType: 'text/javascript', text: true },
+  { contentType: 'text/event-stream', text: true },
   { contentType: 'application/x-www-form-urlencoded', response: false },
   { contentType: 'multipart/form-data', response: false },
   { contentType: 'image/png' },

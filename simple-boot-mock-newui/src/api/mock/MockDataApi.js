@@ -131,6 +131,63 @@ export const previewRequest = function (reqData, config) {
   }, config, { headers }))
 }
 
+export const previewSseRequest = function (reqData, config, onMessage, onError) {
+  const headers = Object.assign({
+    [MOCK_DATA_PREVIEW_HEADER]: 'true',
+    Accept: 'text/event-stream'
+  }, config.headers || {})
+
+  if (hasLoading(config)) {
+    $coreShowLoading(isString(config.loading) ? config.loading : undefined)
+  }
+
+  const url = config.url || reqData.url
+  const fetchUrl = url.startsWith('http') ? url : (import.meta.env.VITE_APP_API_BASE_URL + url)
+
+  return fetch(fetchUrl, {
+    method: reqData.method || 'GET',
+    headers,
+    body: ['GET', 'HEAD'].includes((reqData.method || 'GET').toUpperCase()) ? undefined : config.data
+  }).then(response => {
+    if (hasLoading(config)) {
+      $coreHideLoading()
+    }
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+
+    // Initial response object to show headers/status immediately
+    const initialResponse = {
+      status: response.status,
+      headers: {},
+      config: { url: fetchUrl, method: reqData.method, __startTime: config.__startTime }
+    }
+    response.headers.forEach((value, key) => { initialResponse.headers[key] = value })
+    onMessage && onMessage(initialResponse, true) // isInitial = true
+
+    function read () {
+      return reader.read().then(({ done, value }) => {
+        if (done) {
+          return
+        }
+        const chunk = decoder.decode(value, { stream: true })
+        onMessage && onMessage(chunk, false)
+        return read()
+      })
+    }
+    return read()
+  }).catch(error => {
+    if (hasLoading(config)) {
+      $coreHideLoading()
+    }
+    console.error('SSE Preview Error', error)
+    onError && onError(error)
+    throw error
+  })
+}
+
 export const processResponse = function (response) {
   console.log('=========================response', response)
   const { config } = response

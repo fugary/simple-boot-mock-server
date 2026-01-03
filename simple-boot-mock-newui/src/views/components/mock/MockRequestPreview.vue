@@ -6,6 +6,7 @@ import MockDataApi, {
   calcRequestBody,
   preProcessParams,
   previewRequest,
+  previewSseRequest,
   processResponse
 } from '@/api/mock/MockDataApi'
 import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
@@ -102,11 +103,43 @@ const doDataPreview = async () => {
   if (authContent) {
     await AUTH_OPTION_CONFIG[authContent.authType]?.parseAuthInfo(authContent, headers, params, paramTarget)
   }
-  previewRequest({
-    url: requestUrl,
-    method: requestItem.value.method
-  }, config)
-    .then(calcResponse, calcResponse)
+
+  if (headers.Accept?.includes('text/event-stream') || paramTarget.value.contentType?.includes('text/event-stream')) {
+    const sseData = ref('')
+
+    previewSseRequest({
+      url: requestUrl,
+      method: requestItem.value.method
+    }, config, (data, isInitial) => {
+      if (isInitial) {
+        responseTarget.value = processResponse({
+          config: data.config,
+          headers: data.headers,
+          status: data.status,
+          data: ''
+        })
+      } else {
+        // Accumulate chunks
+        sseData.value += data
+        // Trigger reactivity by creating new object
+        responseTarget.value = {
+          ...responseTarget.value,
+          data: sseData.value
+        }
+      }
+    }).catch((error) => {
+      responseTarget.value = processResponse({
+        config: { url: requestUrl, method: requestItem.value.method, __startTime: config.__startTime },
+        response: { data: error.message, status: error.response?.status || 500 }
+      })
+    })
+  } else {
+    previewRequest({
+      url: requestUrl,
+      method: requestItem.value.method
+    }, config)
+      .then(calcResponse, calcResponse)
+  }
 }
 
 const calcResponse = (response) => {
