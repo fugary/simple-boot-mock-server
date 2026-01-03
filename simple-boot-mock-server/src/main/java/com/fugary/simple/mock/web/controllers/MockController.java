@@ -126,6 +126,7 @@ public class MockController {
                 // SSE 代理请求
                 mockGroupService.delayTime(start, delayTime);
                 response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
+                response.setCharacterEncoding(StandardCharsets.UTF_8.name());
                 return mockSsePushProcessor.processSseProxy(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
             }
             // 普通代理请求

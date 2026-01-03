@@ -172,7 +172,7 @@ public class SimpleMockUtils {
             headerList.stream().forEach(map -> httpHeaders.add(map.get("name"), map.get("value")));
             return httpHeaders;
         }
-        return null;
+        return new HttpHeaders();
     }
 
     /**
