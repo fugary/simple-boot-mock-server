@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * SSE 代理处理器默认实现
@@ -40,8 +41,22 @@ public class DefaultMockSsePushProcessorImpl implements MockSsePushProcessor {
     public SseEmitter processSseProxy(MockParamsVo mockParams) {
         SseEmitter sseEmitter = new SseEmitter(0L); // 无限超时
         String requestUrl = defaultPushProcessor.getRequestUrl(mockParams.getTargetUrl(), mockParams);
+        AtomicBoolean cancelled = new AtomicBoolean(false);
 
         log.info("开始处理 SSE 代理请求: {}", requestUrl);
+
+        // 设置生命周期回调
+        Runnable cleanupTask = () -> {
+            cancelled.set(true);
+            log.info("SSE 连接已关闭，清理资源: {}", requestUrl);
+        };
+
+        sseEmitter.onCompletion(cleanupTask);
+        sseEmitter.onTimeout(cleanupTask);
+        sseEmitter.onError(throwable -> {
+            log.warn("SSE 连接发生错误: {}, 错误: {}", requestUrl, throwable.getMessage());
+            cleanupTask.run();
+        });
 
         CompletableFuture.runAsync(() -> {
             try {
@@ -76,39 +91,60 @@ public class DefaultMockSsePushProcessorImpl implements MockSsePushProcessor {
                                 String line;
                                 StringBuilder eventBuilder = new StringBuilder();
 
-                                while ((line = reader.readLine()) != null) {
-                                    eventBuilder.append(line).append("\n");
-
+                                // 检查是否被取消，及时退出循环
+                                while (!cancelled.get() && (line = reader.readLine()) != null) {
                                     // SSE 事件以空行分隔
-                                    if (line.isEmpty() && eventBuilder.length() > 1) {
-                                        String event = eventBuilder.toString();
-                                        log.debug("发送 SSE 事件: {}", event.trim());
-                                        sseEmitter.send(event);
-                                        eventBuilder.setLength(0); // 清空 builder
+                                    if (line.isEmpty()) {
+                                        // 遇到空行，发送之前累积的事件（不包含这个空行）
+                                        if (eventBuilder.length() > 0) {
+                                            String event = eventBuilder.toString();
+                                            log.debug("发送 SSE 事件: {}", event.trim());
+
+                                            try {
+                                                sseEmitter.send(event);
+                                            } catch (Exception e) {
+                                                log.warn("发送 SSE 事件失败，客户端可能已断开: {}", e.getMessage());
+                                                cancelled.set(true);
+                                                break;
+                                            }
+                                            eventBuilder.setLength(0); // 清空 builder
+                                        }
+                                    } else {
+                                        // 非空行，添加到 builder
+                                        eventBuilder.append(line).append("\n");
                                     }
                                 }
 
-                                // 发送最后一个事件（如果有）
-                                if (eventBuilder.length() > 0) {
-                                    sseEmitter.send(eventBuilder.toString());
+                                if (!cancelled.get()) {
+                                    // 发送最后一个事件（如果有）
+                                    if (eventBuilder.length() > 0) {
+                                        try {
+                                            sseEmitter.send(eventBuilder.toString());
+                                        } catch (Exception e) {
+                                            log.warn("发送最后的 SSE 事件失败: {}", e.getMessage());
+                                        }
+                                    }
+                                    sseEmitter.complete();
+                                    log.info("SSE 代理请求完成");
+                                } else {
+                                    log.info("SSE 代理请求被取消");
                                 }
-
-                                sseEmitter.complete();
-                                log.info("SSE 代理请求完成");
                             }
                             return null;
                         });
             } catch (Exception e) {
-                log.error("SSE 代理请求错误: {}", requestUrl, e);
-                try {
-                    // 尝试发送错误信息给客户端
-                    sseEmitter.send(SseEmitter.event()
-                            .name("error")
-                            .data("SSE Proxy Error: " + e.getMessage()));
-                } catch (Exception sendError) {
-                    log.error("发送错误事件失败", sendError);
+                if (!cancelled.get()) {
+                    log.error("SSE 代理请求错误: {}", requestUrl, e);
+                    try {
+                        // 尝试发送错误信息给客户端
+                        sseEmitter.send(SseEmitter.event()
+                                .name("error")
+                                .data("SSE Proxy Error: " + e.getMessage()));
+                    } catch (Exception sendError) {
+                        log.error("发送错误事件失败", sendError);
+                    }
+                    sseEmitter.completeWithError(e);
                 }
-                sseEmitter.completeWithError(e);
             }
         });
 
