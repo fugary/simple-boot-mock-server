@@ -32,3 +32,4 @@ logs/
 dist/
 .DS_Store
 simple-boot-mock-server/src/main/resources/static/
+.vscode/
