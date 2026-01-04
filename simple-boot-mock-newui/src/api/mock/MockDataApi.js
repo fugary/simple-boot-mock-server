@@ -1,6 +1,5 @@
 import { useResourceApi } from '@/hooks/ApiHooks'
 import { $http, hasLoading } from '@/vendors/axios'
-import axios from 'axios'
 import { $coreHideLoading, $coreShowLoading } from '@/utils'
 import { isArray, isString, isObject } from 'lodash-es'
 import {
@@ -112,79 +111,75 @@ export const recoverFromHistory = (data, config) => {
   }, config)).then(response => response.data)
 }
 
-export const previewRequest = function (reqData, config) {
-  const req = axios.create({
-    baseURL: import.meta.env.VITE_APP_API_BASE_URL, // url = base url + request url
-    timeout: 60000 // request timeout,
-  })
-  const headers = Object.assign({
-    [MOCK_DATA_PREVIEW_HEADER]: true
-  }, config.headers || {})// 预览的时候强制指定一个ID
-  config.__startTime = new Date().getTime()
-  if (hasLoading(config)) {
-    $coreShowLoading(isString(config.loading) ? config.loading : undefined)
-  }
-  return req(Object.assign({
-    url: reqData.url,
-    method: reqData.method,
-    transformResponse: res => res// 信息不要转换掉，这边需要预览原始信息
-  }, config, { headers }))
-}
-
-export const previewSseRequest = function (reqData, config, onMessage, onError) {
-  const headers = Object.assign({
-    [MOCK_DATA_PREVIEW_HEADER]: 'true',
-    Accept: 'text/event-stream'
-  }, config.headers || {})
-
-  if (hasLoading(config)) {
-    $coreShowLoading(isString(config.loading) ? config.loading : undefined)
-  }
-
-  const url = config.url || reqData.url
-  const fetchUrl = url.startsWith('http') ? url : (import.meta.env.VITE_APP_API_BASE_URL + url)
-
-  return fetch(fetchUrl, {
-    method: reqData.method || 'GET',
-    headers,
-    body: ['GET', 'HEAD'].includes((reqData.method || 'GET').toUpperCase()) ? undefined : config.data
-  }).then(response => {
+export const previewRequest = function (reqData, config = {}) {
+  return new Promise((resolve, reject) => {
+    const controller = new AbortController()
+    const headers = {
+      [MOCK_DATA_PREVIEW_HEADER]: 'true',
+      ...config.headers
+    }
+    const requestConfig = {
+      ...config,
+      url: reqData.url,
+      method: reqData.method
+    }
+    requestConfig.__startTime = Date.now()
     if (hasLoading(config)) {
-      $coreHideLoading()
+      $coreShowLoading(isString(config.loading) ? config.loading : undefined)
     }
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-
-    // Initial response object to show headers/status immediately
-    const initialResponse = {
-      status: response.status,
-      headers: {},
-      config: { url: fetchUrl, method: reqData.method, __startTime: config.__startTime }
-    }
-    response.headers.forEach((value, key) => { initialResponse.headers[key] = value })
-    onMessage && onMessage(initialResponse, true) // isInitial = true
-
-    function read () {
-      return reader.read().then(({ done, value }) => {
-        if (done) {
-          return
+    const fetchUrl = import.meta.env.VITE_APP_API_BASE_URL + reqData.url
+    fetch(fetchUrl, {
+      method: reqData.method || 'GET',
+      headers,
+      signal: controller.signal,
+      body: ['GET', 'HEAD'].includes((reqData.method || 'GET').toUpperCase()) ? undefined : config.data
+    }).then(async response => {
+      const contentType = response.headers.get('content-type') || ''
+      /** axios response 公共部分 */
+      const baseResponse = {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        config: requestConfig,
+        request: {
+          abort: () => controller.abort()
         }
-        const chunk = decoder.decode(value, { stream: true })
-        onMessage && onMessage(chunk, false)
-        return read()
+      }
+      let data
+      console.log('=============================res', response)
+      if (contentType.includes('text/event-stream')) {
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let raw = ''
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) break
+          const chunk = decoder.decode(value, { stream: true })
+          raw += chunk
+          // axios 风格 onChunk
+          config.onChunk?.({
+            ...baseResponse,
+            data: raw,
+            chunk
+          })
+        }
+        data = raw
+      } else if (config.responseType === 'arraybuffer') {
+        data = await response.arrayBuffer()
+      } else if (config.responseType === 'blob') {
+        data = await response.blob()
+      } else {
+        data = await response.text()
+      }
+      resolve({
+        ...baseResponse,
+        data
       })
-    }
-    return read()
-  }).catch(error => {
-    if (hasLoading(config)) {
-      $coreHideLoading()
-    }
-    console.error('SSE Preview Error', error)
-    onError && onError(error)
-    throw error
+    }).catch(err => {
+      if (err.name === 'AbortError') return
+      reject(err)
+    })
+    requestConfig.abort = () => controller.abort()
   })
 }
 
