@@ -129,7 +129,8 @@ export const processEvnParams = (groupConfig, dataValue, encode) => {
   return dataValue
 }
 
-export const useContentTypeOption = (prop = 'contentType', charset = true) => {
+export const useContentTypeOption = (config = {}) => {
+  const { prop = 'contentType', charset = true, ...rest } = isString(config) ? { prop: config } : config
   const contentTypesOptions = getSingleSelectOptions(...ALL_CONTENT_TYPES_LIST
     .filter(type => type.response !== false)
     .map(type => type.contentType))
@@ -152,7 +153,8 @@ export const useContentTypeOption = (prop = 'contentType', charset = true) => {
     attrs: {
       clearable: false,
       filterable: true,
-      allowCreate: true
+      allowCreate: true,
+      ...rest
     },
     charsetOption
   }

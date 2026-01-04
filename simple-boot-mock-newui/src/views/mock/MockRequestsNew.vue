@@ -197,7 +197,7 @@ const editFormOptions = computed(() => {
   }, { ...useFormStatus(), style: getStyleGrow(4) },
   { ...useFormDisableMock(), style: getStyleGrow(6) },
   { ...useFormDelay(), style: getStyleGrow(4) },
-  { ...useContentTypeOption(), style: getStyleGrow(6) },
+  { ...useContentTypeOption({ clearable: true }), style: getStyleGrow(6) },
   {
     labelKey: 'mock.label.matchPattern',
     type: 'vue-monaco-editor',

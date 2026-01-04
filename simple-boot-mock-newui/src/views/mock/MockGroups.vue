@@ -387,7 +387,7 @@ const editFormOptions = computed(() => defineFormOptions([{
 }, { ...useFormStatus(), style: getStyleGrow(4) },
 { ...useFormDisableMock(), style: getStyleGrow(6) },
 { ...useFormDelay(), style: getStyleGrow(4) },
-{ ...useContentTypeOption(), style: getStyleGrow(6) }, {
+{ ...useContentTypeOption({ clearable: true }), style: getStyleGrow(6) }, {
   labelKey: 'common.label.description',
   prop: 'description',
   attrs: {
