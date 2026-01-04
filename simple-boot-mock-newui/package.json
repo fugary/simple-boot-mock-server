@@ -1,6 +1,6 @@
 {
   "name": "simple-element-plus-template",
-  "version": "2.9.19",
+  "version": "2.10.0",
   "private": true,
   "scripts": {
     "dev": "vite --host",
