@@ -1,8 +1,6 @@
 package com.fugary.simple.mock.utils;
 
-import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
-import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import lombok.AccessLevel;
@@ -10,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -21,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Utility for SSE.
@@ -29,8 +27,7 @@ import java.util.concurrent.CompletableFuture;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MockEventStreamUtils {
 
-    public static SseEmitter processSseRequest(HttpServletRequest request, HttpServletResponse response, MockData data,
-            HttpHeaders httpHeaders, MockGroup mockGroup) {
+    public static SseEmitter processSseRequest(HttpServletRequest request, HttpServletResponse response, MockData data, ExecutorService executorService) {
         SseEmitter sseEmitter = new SseEmitter(0L); // Infinite timeout
         HttpRequestVo requestVo = HttpRequestUtils.parseRequestVo(request);
         MockJsUtils.setCurrentRequestVo(requestVo); // Set for async thread if using standard context, but Sse is async
@@ -59,15 +56,10 @@ public class MockEventStreamUtils {
             } finally {
                 MockJsUtils.removeCurrentRequestVo();
             }
-        });
+        }, executorService);
         // Headers for SSE
         response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        httpHeaders.forEach((k, v) -> v.forEach(val -> response.setHeader(k, val)));
-        response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
-        if (mockGroup != null) {
-            response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
-        }
         SimpleLogUtils.addResponseData("SSE Stream Started");
         return sseEmitter;
     }

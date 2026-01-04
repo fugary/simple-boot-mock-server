@@ -3,6 +3,7 @@ package com.fugary.simple.mock.push;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -17,12 +18,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * SSE 代理处理器默认实现
  * 使用 RestTemplate 进行流式读取并转发 SSE 事件
- * 
+ *
  * Create date 2026/01/03<br>
  *
  * @author gary.fu
@@ -36,6 +38,10 @@ public class DefaultMockSsePushProcessorImpl implements MockSsePushProcessor {
 
     @Autowired
     private DefaultMockPushProcessorImpl defaultPushProcessor;
+
+    @Autowired
+    @Qualifier("eventStreamThreadPool")
+    private ExecutorService eventStreamThreadPool;
 
     @Override
     public SseEmitter processSseProxy(MockParamsVo mockParams) {
@@ -162,7 +168,7 @@ public class DefaultMockSsePushProcessorImpl implements MockSsePushProcessor {
                     sseEmitter.completeWithError(e);
                 }
             }
-        });
+        }, eventStreamThreadPool);
 
         return sseEmitter;
     }

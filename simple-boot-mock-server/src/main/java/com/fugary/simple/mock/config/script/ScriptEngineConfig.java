@@ -12,6 +12,7 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolExecutorFactoryBean;
 
 import javax.script.ScriptEngine;
 
@@ -39,6 +40,22 @@ public class ScriptEngineConfig {
         config.setJmxEnabled(false);
         config.setMinIdle(5);
         return new ScriptGenericObjectPool<>(javaScriptEngineFactory(), config);
+    }
+
+    @Bean
+    public ThreadPoolExecutorFactoryBean eventStreamThreadPool() {
+        ThreadPoolExecutorFactoryBean pool = new ThreadPoolExecutorFactoryBean();
+        pool.setCorePoolSize(10);
+        pool.setMaxPoolSize(20);
+        return pool;
+    }
+
+    @Bean
+    public ThreadPoolExecutorFactoryBean fetchScriptThreadPool() {
+        ThreadPoolExecutorFactoryBean pool = new ThreadPoolExecutorFactoryBean();
+        pool.setCorePoolSize(10);
+        pool.setMaxPoolSize(20);
+        return pool;
     }
 
     @Bean

@@ -15,6 +15,7 @@ import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.graalvm.polyglot.proxy.ProxyObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -53,7 +53,9 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
     @Autowired
     private MockPushProcessor mockPushProcessor;
 
-    private ExecutorService fetchExecutor = Executors.newFixedThreadPool(20);
+    @Autowired
+    @Qualifier("fetchScriptThreadPool")
+    private ExecutorService fetchScriptThreadPool;
 
     @Override
     public Object internalEval(String script, ScriptEngine scriptEngine, ScriptContext scriptContext) throws ScriptException {
@@ -121,7 +123,7 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                 future.orTimeout(timeout, TimeUnit.MILLISECONDS);
             }
             log.info("fetch请求url:{}", url);
-            fetchExecutor.execute(() -> {
+            fetchScriptThreadPool.execute(() -> {
                 try {
                     ResponseEntity<byte[]> response = mockPushProcessor.doPush(mockParams);
                     log.info("fetch请求url完成:{}/{}", url, response);

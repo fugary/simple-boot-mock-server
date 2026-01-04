@@ -26,6 +26,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 /**
@@ -65,6 +67,10 @@ public class MockController {
     private GenericObjectPool<ScriptEngine> scriptEnginePool;
 
     @Autowired
+    @Qualifier("eventStreamThreadPool")
+    private ExecutorService eventStreamThreadPool;
+
+    @Autowired
     private ScriptEngineProvider scriptEngineProvider;
 
     @Autowired
@@ -75,7 +81,6 @@ public class MockController {
 
     @RequestMapping("/**")
     public Object doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        initLocalScriptEngine();
         String requestId = request.getHeader(MockConstants.MOCK_REQUEST_ID_HEADER);
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
         Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request,
@@ -113,7 +118,11 @@ public class MockController {
             }
             if (StringUtils.contains(contentType, MediaType.TEXT_EVENT_STREAM_VALUE)) {
                 mockGroupService.delayTime(start, delayTime);
-                return MockEventStreamUtils.processSseRequest(request, response, data, httpHeaders, mockGroup);
+                httpHeaders.forEach((k, v) -> v.forEach(val -> response.setHeader(k, val)));
+                response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
+                response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
+                returnLocalScriptEngine();
+                return MockEventStreamUtils.processSseRequest(request, response, data, eventStreamThreadPool);
             }
             response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
             Pair<String, Object> bodyPair = SimpleMockUtils.getMockResponseBody(data, contentType);
@@ -133,6 +142,7 @@ public class MockController {
                 mockGroupService.delayTime(start, delayTime);
                 response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
                 response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                returnLocalScriptEngine();
                 return mockSsePushProcessor.processSseProxy(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
             }
             // 普通代理请求
@@ -151,12 +161,14 @@ public class MockController {
         return responseEntity;
     }
 
-    private void initLocalScriptEngine() {
-        try {
-            ScriptEngine scriptEngine = scriptEnginePool.borrowObject();
-            MockJsUtils.setCurrentScriptEngine(scriptEngine);
-        } catch (Exception e) {
-            log.error("获取ScriptEngine失败", e);
+    /**
+     * SSE异步不兼容同步模式，先清理线程中的ScriptEngine
+     */
+    private void returnLocalScriptEngine() {
+        ScriptEngine scriptEngine = MockJsUtils.getCurrentScriptEngine();
+        MockJsUtils.removeCurrentScriptEngine();
+        if (scriptEngine != null) {
+            scriptEnginePool.returnObject(scriptEngine);
         }
     }
 

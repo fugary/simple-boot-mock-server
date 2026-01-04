@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.config.script;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.AbandonedConfig;
 import org.apache.commons.pool2.impl.GenericObjectPool;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.InitializingBean;
  *
  * @author gary.fu
  */
+@Slf4j
 public class ScriptGenericObjectPool<T> extends GenericObjectPool<T> implements InitializingBean {
 
     public ScriptGenericObjectPool(PooledObjectFactory<T> factory) {
@@ -23,6 +25,18 @@ public class ScriptGenericObjectPool<T> extends GenericObjectPool<T> implements 
 
     public ScriptGenericObjectPool(PooledObjectFactory<T> factory, GenericObjectPoolConfig<T> config, AbandonedConfig abandonedConfig) {
         super(factory, config, abandonedConfig);
+    }
+
+    @Override
+    public T borrowObject() throws Exception {
+        log.info("borrow script engine...");
+        return super.borrowObject();
+    }
+
+    @Override
+    public void returnObject(T obj) {
+        log.info("return script engine...");
+        super.returnObject(obj);
     }
 
     @Override
