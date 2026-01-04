@@ -133,26 +133,43 @@ Mock.mock({
 })
 `.trim()
   }, {
-    label: 'Event Stream',
+    label: 'Event Stream Array',
     content: `
-[
-  {
-    "data": "连接成功",
-    "delay": 0
-  },
-  {
-    "data": {"msg": "这是一条消息", "id": 1},
-    "delay": 1000
-  },
-  {
-    "data": {"msg": "这是第二条消息", "id": 2},
-    "delay": 2000
-  },
-  {
-    "data": "结束",
-    "delay": 1000
-  }
-]
+[{
+  "data": "连接成功",
+  "delay": 0
+}, {
+  "data": {"msg": "这是一条消息", "id": 1},
+  "delay": 1000
+}, {
+  "data": {"msg": "这是第二条消息", "id": 2},
+  "delay": 1000
+}, {
+  "data": "结束",
+  "delay": 500
+}]
+`.trim()
+  }, {
+    label: 'Event Stream Mock.js',
+    content: `
+(function () {
+  const data = Mock.mock({
+    "stream|3-6": [{
+      "data": {
+        "id": "@increment",
+        "msg": function () {
+          return \`这是ID为【\${this.id}】的消息\`
+        }
+      },
+      "delay": 500
+    }]
+  });
+  data.stream.push({
+    data: { msg: '完成' },
+    delay: 300
+  });
+  return data;
+})
 `.trim()
   }]
 }, {
