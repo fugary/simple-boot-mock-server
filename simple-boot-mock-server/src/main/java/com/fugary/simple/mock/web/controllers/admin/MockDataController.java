@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.CountData;
 import com.fugary.simple.mock.entity.mock.MockData;
@@ -17,6 +18,7 @@ import com.fugary.simple.mock.web.vo.query.MockDataQueryVo;
 import com.fugary.simple.mock.web.vo.query.MockHistoryVo;
 import com.fugary.simple.mock.web.vo.query.MockJwtParamVo;
 import com.fugary.simple.mock.web.vo.query.SimpleQueryVo;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -36,6 +38,7 @@ import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
  *
  * @author gary.fu
  */
+@Slf4j
 @RestController
 @RequestMapping("/admin/data")
 public class MockDataController {
@@ -171,7 +174,13 @@ public class MockDataController {
     public SimpleResult<String> xml2Json(@RequestBody SimpleQueryVo queryVo) {
         String resultStr =  "";
         if (StringUtils.isNotBlank(queryVo.getKeyword()) && MockJsUtils.isXml(queryVo.getKeyword())) {
-            Map<String, ?> xmlMap = XmlUtils.fromXml(queryVo.getKeyword(), Map.class);
+            Map<String, ?> xmlMap;
+            try {
+                xmlMap = XmlUtils.getMapper().readValue(queryVo.getKeyword(), Map.class);
+            } catch (JsonProcessingException e) {
+                log.error("XML解析失败", e);
+                return SimpleResultUtils.createError(e.getOriginalMessage());
+            }
             resultStr = JsonUtils.toJson(xmlMap);
         }
         return SimpleResultUtils.createSimpleResult(resultStr);
