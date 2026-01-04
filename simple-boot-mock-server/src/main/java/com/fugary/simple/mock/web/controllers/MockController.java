@@ -121,7 +121,7 @@ public class MockController {
                 httpHeaders.forEach((k, v) -> v.forEach(val -> response.setHeader(k, val)));
                 response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
                 response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
-                returnLocalScriptEngine();
+                MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
                 return MockEventStreamUtils.processSseRequest(request, response, data, eventStreamThreadPool);
             }
             response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
@@ -142,7 +142,7 @@ public class MockController {
                 mockGroupService.delayTime(start, delayTime);
                 response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
                 response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-                returnLocalScriptEngine();
+                MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
                 return mockSsePushProcessor.processSseProxy(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
             }
             // 普通代理请求
@@ -159,17 +159,6 @@ public class MockController {
         }
         mockGroupService.delayTime(start, delayTime);
         return responseEntity;
-    }
-
-    /**
-     * SSE异步不兼容同步模式，先清理线程中的ScriptEngine
-     */
-    private void returnLocalScriptEngine() {
-        ScriptEngine scriptEngine = MockJsUtils.getCurrentScriptEngine();
-        MockJsUtils.removeCurrentScriptEngine();
-        if (scriptEngine != null) {
-            scriptEnginePool.returnObject(scriptEngine);
-        }
     }
 
     /**

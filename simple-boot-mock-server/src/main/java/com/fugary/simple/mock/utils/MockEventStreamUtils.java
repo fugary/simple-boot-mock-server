@@ -40,6 +40,10 @@ public class MockEventStreamUtils {
                 if (body instanceof String && MockJsUtils.isJson((String) body)) {
                     body = JsonUtils.fromJson((String) body, Object.class);
                 }
+                Object streamField;
+                if(body instanceof Map && (streamField = ((Map<?, ?>) body).get("stream")) instanceof Collection) {
+                    body = streamField;
+                }
                 if (body instanceof Collection) {
                     for (Object item : (Collection<?>) body) {
                         sendSseItem(sseEmitter, item);

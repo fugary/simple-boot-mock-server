@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
@@ -17,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -145,6 +147,31 @@ public class MockJsUtils {
             result = result.replace("{{" + paramKey + "}}", paramValueStr);
         }
         return result;
+    }
+
+    /**
+     * 失效并准备ScriptEngine
+     *
+     * @param scriptEnginePool
+     */
+    public static void invalidateCurrentAndPrepareScriptEngine(GenericObjectPool<ScriptEngine> scriptEnginePool) {
+        ScriptEngine scriptEngine = MockJsUtils.getCurrentScriptEngine();
+        if (scriptEngine != null) {
+            MockJsUtils.removeCurrentScriptEngine();
+            try {
+                // 失效ScriptEngine，并生成新的
+                scriptEnginePool.invalidateObject(scriptEngine);
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        scriptEnginePool.preparePool();
+                    } catch (Exception e) {
+                        log.error("准备新的ScriptEngine失败", e);
+                    }
+                });
+            } catch (Exception e) {
+                log.error("标记ScriptEngine失效错误", e);
+            }
+        }
     }
 
     public static void main(String[] args) throws Exception {

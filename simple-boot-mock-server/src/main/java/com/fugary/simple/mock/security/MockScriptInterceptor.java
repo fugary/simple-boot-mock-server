@@ -35,12 +35,6 @@ public class MockScriptInterceptor implements HandlerInterceptor {
 
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
-        ScriptEngine scriptEngine = MockJsUtils.getCurrentScriptEngine();
-        MockJsUtils.removeCurrentScriptEngine();
-        if (scriptEngine != null) {
-//            scriptEnginePool.invalidateObject(scriptEngine);
-//            scriptEnginePool.preparePool();
-            scriptEnginePool.returnObject(scriptEngine);
-        }
+        MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
     }
 }
