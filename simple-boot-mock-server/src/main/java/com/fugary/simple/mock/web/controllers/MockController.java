@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.script.ScriptEngine;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -60,6 +62,9 @@ public class MockController {
     private MockProjectService mockProjectService;
 
     @Autowired
+    private GenericObjectPool<ScriptEngine> scriptEnginePool;
+
+    @Autowired
     private ScriptEngineProvider scriptEngineProvider;
 
     @Autowired
@@ -70,6 +75,7 @@ public class MockController {
 
     @RequestMapping("/**")
     public Object doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        initLocalScriptEngine();
         String requestId = request.getHeader(MockConstants.MOCK_REQUEST_ID_HEADER);
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
         Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request,
@@ -145,9 +151,18 @@ public class MockController {
         return responseEntity;
     }
 
+    private void initLocalScriptEngine() {
+        try {
+            ScriptEngine scriptEngine = scriptEnginePool.borrowObject();
+            MockJsUtils.setCurrentScriptEngine(scriptEngine);
+        } catch (Exception e) {
+            log.error("获取ScriptEngine失败", e);
+        }
+    }
+
     /**
      * 表达式测试
-     * 
+     *
      * @param request
      * @return
      */
