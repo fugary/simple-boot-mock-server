@@ -24,7 +24,7 @@
         <mybatis-plus-boot-starter.version>3.5.7</mybatis-plus-boot-starter.version>
         <java-jwt.version>4.4.0</java-jwt.version>
         <mysql.version>8.0.33</mysql.version>
-        <commons-beanutils.version>1.9.4</commons-beanutils.version>
+        <commons-beanutils.version>1.11.0</commons-beanutils.version>
         <commons-fileupload.version>1.5</commons-fileupload.version>
         <graalvm.version>22.3.1</graalvm.version>
         <swagger-parser.version>2.1.25</swagger-parser.version>
