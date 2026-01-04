@@ -64,9 +64,9 @@ export const ALL_MENUS = [
   {
     id: 53,
     parentId: 5,
-    iconCls: 'Coin',
-    nameCn: '数据库连接池',
-    nameEn: 'DB Pool',
+    iconCls: 'GridViewFilled',
+    nameCn: '对象池',
+    nameEn: 'Object Pool',
     menuUrl: '/admin/dbs',
     checkEnabled: isAdminUser
   },

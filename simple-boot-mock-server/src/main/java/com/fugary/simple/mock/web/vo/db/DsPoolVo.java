@@ -1,8 +1,10 @@
 package com.fugary.simple.mock.web.vo.db;
 
+import com.fugary.simple.mock.utils.JsonUtils;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Map;
 
 @Data
 public class DsPoolVo implements Serializable {
@@ -17,15 +19,17 @@ public class DsPoolVo implements Serializable {
 
     private int waitingCount;
 
-    private String userName;
+    private String info;
 
-    private String url;
+    private String type;
 
-    private String driver;
+    public DsPoolVo(String type, String info) {
+        this.type = type;
+        this.info = info;
+    }
 
-    public DsPoolVo(String username, String jdbcUrl, String driverClassName) {
-        this.userName = username;
-        this.url = jdbcUrl;
-        this.driver = driverClassName;
+    public DsPoolVo(String type, Map<String, String> info) {
+        this.type = type;
+        this.info = JsonUtils.toJson(info);
     }
 }
