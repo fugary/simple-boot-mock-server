@@ -39,6 +39,7 @@ import {
 import { MOCK_LOAD_BALANCE_OPTIONS } from '@/consts/MockConstants'
 import { calcUrl, pasteCurl2Request } from '@/services/mock/CurlProcessService'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
+import { set } from 'lodash-es'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -48,8 +49,7 @@ const { groupItem, loadGroup, mockProject, groupUrl, loadSuccess } = useMockGrou
 
 const { tableData, loading, searchParam, searchMethod: searchMockRequests } = useTableAndSearchForm({
   defaultParam: { groupId, page: useDefaultPage(8) },
-  searchMethod: (param) => MockRequestApi.search(param, { loading: true }),
-  saveParam: false
+  searchMethod: (param) => MockRequestApi.search(param, { loading: true })
 })
 
 const pageAttrs = {
@@ -62,7 +62,7 @@ const pageAttrs = {
 const loadMockRequests = (...args) => {
   return searchMockRequests(...args).then((result) => {
     if (tableData.value?.length) {
-      onSelectRequest(tableData.value.find(req => req.id === selectRequestId.value) || tableData.value[0])
+      onSelectRequest(tableData.value.find(req => req.id === searchParam.value.selectRequestId) || tableData.value[0])
       const countMap = result.infos?.countMap || {}
       const historyMap = result.infos?.historyMap || {}
       tableData.value.forEach(request => {
@@ -115,6 +115,12 @@ const searchFormOptions = computed(() => {
     }
   ]
 })
+const resetSearchForm = () => {
+  searchFormOptions.value.map(option => option.prop || option.property)
+    .forEach((prop) => set(searchParam.value, prop, undefined))
+  loadMockRequests()
+}
+
 const selectedRows = ref([])
 const requestTableRef = ref()
 
@@ -132,7 +138,6 @@ const newRequestItem = () => ({
 const showEditWindow = ref(false)
 const currentRequest = ref(newRequestItem())
 const selectRequest = ref()
-const selectRequestId = ref()
 const newOrEdit = async id => {
   if (id) {
     await MockRequestApi.getById(id).then(data => {
@@ -145,7 +150,7 @@ const newOrEdit = async id => {
 }
 const onSelectRequest = request => {
   selectRequest.value = request
-  selectRequestId.value = request?.id
+  searchParam.value.selectRequestId = request?.id
   requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
 }
 const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({
@@ -253,7 +258,7 @@ const editFormOptions = computed(() => {
 const saveMockRequest = item => {
   return MockRequestApi.saveOrUpdate(item)
     .then((data) => {
-      if (data.success && data.resultData && selectRequestId.value !== data.resultData.id) {
+      if (data.success && data.resultData && searchParam.value.selectRequestId !== data.resultData.id) {
         onSelectRequest(data.resultData)
       }
       loadMockRequests()
@@ -425,6 +430,12 @@ const toShowHistoryWindow = (current) => {
       @submit-form="loadMockRequests()"
     >
       <template #buttons>
+        <el-button
+          type="default"
+          @click="resetSearchForm"
+        >
+          {{ $t('common.label.reset') }}
+        </el-button>
         <el-button
           v-if="projectEditable"
           v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockRequest')"
