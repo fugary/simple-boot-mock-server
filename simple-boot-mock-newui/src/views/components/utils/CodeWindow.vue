@@ -7,6 +7,7 @@ import { showCodeWindow as dynamicShowCodeWindow, showJsonDataWindow } from '@/u
 import { isObject } from 'lodash-es'
 import { $copyText } from '@/utils'
 import { isJson, isXml } from '@/services/mock/MockCommonService'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const showWindow = ref(false)
 const { contentRef: codeText, languageRef, languageModel, languageSelectOption, normalLanguageSelectOption, formatDocument, editorRef, monacoEditorOptions } = useMonacoEditorOptions()
@@ -165,6 +166,8 @@ watch([originalContent, modifiedContent], ([original, modified]) => {
   }
 })
 
+const theme = computed(() => useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'vs')
+
 </script>
 
 <template>
@@ -237,7 +240,7 @@ watch([originalContent, modifiedContent], ([original, modified]) => {
       </common-form-control>
       <vue-monaco-diff-editor
         v-if="codeConfig.diffEditor"
-        theme="vs-dark"
+        :theme="theme"
         :language="codeConfig.language"
         :original="originalContent"
         :modified="modifiedContent"

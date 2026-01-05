@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, shallowRef } from 'vue'
 import { $i18nBundle } from '@/messages'
 import { isFunction } from 'lodash-es'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const props = defineProps({
   title: {
@@ -68,6 +69,7 @@ defineExpose({
 
 const fullscreen = ref(false)
 const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 150px)' : props.height)
+const theme = computed(() => useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'vs')
 
 </script>
 
@@ -84,7 +86,7 @@ const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 150px)' : pr
     <el-container class="flex-column">
       <vue-monaco-diff-editor
         v-if="original && modified"
-        theme="vs-dark"
+        :theme="theme"
         :original="fieldConfig.originalContent"
         :modified="fieldConfig.modifiedContent"
         language="markdown"

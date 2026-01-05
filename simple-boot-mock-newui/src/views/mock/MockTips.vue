@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { $i18nBundle, $i18nMsg } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const currentTab = defineModel({
   type: String,
@@ -273,7 +274,7 @@ Mock.mock({
 const calcHeight = (text) => {
   return text.split('\n').length * 20 + 'px'
 }
-
+const theme = computed(() => useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'vs')
 </script>
 
 <template>
@@ -336,6 +337,7 @@ const calcHeight = (text) => {
             :language="example.language||languageRef"
             :options="monacoEditorOptions"
             class="common-resize-vertical"
+            :theme="theme"
             :height="calcHeight(example.content)"
           />
         </template>
