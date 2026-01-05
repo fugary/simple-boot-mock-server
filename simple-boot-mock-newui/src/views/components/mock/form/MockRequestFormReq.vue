@@ -23,6 +23,7 @@ import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
 import { extendCurlParams, isGetMethod } from '@/services/mock/CurlProcessService'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const props = defineProps({
   showAuthorization: {
@@ -335,6 +336,7 @@ const processCurlWindow = () => {
           :height="codeHeight"
           :options="monacoEditorOptions"
           class="common-resize-vertical"
+          :theme="useGlobalConfigStore().monacoTheme"
           @mount="editorRef=$event"
         />
       </el-container>

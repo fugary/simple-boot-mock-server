@@ -33,6 +33,7 @@ import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import { useDefaultPage } from '@/config'
 import { getDataHistoryViewOptions, showCompareWindowNew } from '@/services/mock/NewMockDiffService'
 import { getStatusCode } from '@/services/mock/MockDiffService'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const props = defineProps({
   groupItem: {
@@ -253,8 +254,8 @@ const newOrEdit = async id => {
   }
   showEditWindow.value = true
 }
-const { contentRef, languageRef, editorRef, monacoEditorOptions, languageSelectOption } = useMonacoEditorOptions({ readOnly: false })
-const { contentRef: patternContentRef, editorRef: patternEditorRef, languageRef: patternLanguageRef, monacoEditorOptions: patternMonacoEditorOptions } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef, languageRef, monacoEditorOptions, languageSelectOption } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef: patternContentRef, languageRef: patternLanguageRef, monacoEditorOptions: patternMonacoEditorOptions } = useMonacoEditorOptions({ readOnly: false })
 
 const editFormOptions = computed(() => {
   const status = currentDataItem.value?.statusCode || 200
@@ -327,7 +328,7 @@ const editFormOptions = computed(() => {
       },
       language: patternLanguageRef.value || 'javascript',
       height: '100px',
-      onMount: editor => (patternEditorRef.value = editor),
+      theme: useGlobalConfigStore().monacoTheme,
       options: patternMonacoEditorOptions
     }
   }, {
@@ -379,7 +380,7 @@ const editFormOptions = computed(() => {
       },
       language: currentDataItem.value?.responseFormat || (isRedirect ? 'text' : languageRef.value),
       height: '200px',
-      onMount: editor => (editorRef.value = editor),
+      theme: useGlobalConfigStore().monacoTheme,
       options: monacoEditorOptions
     }
   }, {

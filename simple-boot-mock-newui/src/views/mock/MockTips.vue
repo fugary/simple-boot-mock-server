@@ -274,7 +274,6 @@ Mock.mock({
 const calcHeight = (text) => {
   return text.split('\n').length * 20 + 'px'
 }
-const theme = computed(() => useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'vs')
 </script>
 
 <template>
@@ -337,7 +336,7 @@ const theme = computed(() => useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'v
             :language="example.language||languageRef"
             :options="monacoEditorOptions"
             class="common-resize-vertical"
-            :theme="theme"
+            :theme="useGlobalConfigStore().monacoTheme"
             :height="calcHeight(example.content)"
           />
         </template>

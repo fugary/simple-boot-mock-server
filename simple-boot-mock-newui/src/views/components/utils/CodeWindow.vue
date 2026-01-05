@@ -165,9 +165,6 @@ watch([originalContent, modifiedContent], ([original, modified]) => {
     codeConfig.change(original, modified)
   }
 })
-
-const theme = computed(() => useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'vs')
-
 </script>
 
 <template>
@@ -240,7 +237,7 @@ const theme = computed(() => useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'v
       </common-form-control>
       <vue-monaco-diff-editor
         v-if="codeConfig.diffEditor"
-        :theme="theme"
+        :theme="useGlobalConfigStore().monacoTheme"
         :language="codeConfig.language"
         :original="originalContent"
         :modified="modifiedContent"
@@ -256,6 +253,7 @@ const theme = computed(() => useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'v
         v-model:value="codeText"
         :language="languageRef"
         :height="codeHeight"
+        :theme="useGlobalConfigStore().monacoTheme"
         :options="monacoEditorOptions"
         @mount="editorRef=$event"
         @change="codeRef=$event"

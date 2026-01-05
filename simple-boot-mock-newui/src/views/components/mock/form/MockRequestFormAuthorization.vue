@@ -6,6 +6,7 @@ import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { useFormItem } from 'element-plus'
 import { isFunction } from 'lodash-es'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const props = defineProps({
   formProp: {
@@ -69,6 +70,7 @@ const jwtPayloadOption = {
     },
     language: languageRef.value,
     height: '100px',
+    theme: useGlobalConfigStore().monacoTheme,
     options: monacoEditorOptions
   }
 }

@@ -8,7 +8,6 @@ import JsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import { isFunction, merge } from 'lodash-es'
 import { initMockJsHints } from '@/vendors/mockjs/MockJsHints'
-import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 /**
  * 默认配置
@@ -133,9 +132,6 @@ export const useMonacoEditorOptions = (config) => {
   const languageRef = ref(config?.language || '')
   const editorRef = ref()
   const monacoEditorOptions = defineMonacoOptions(config)
-  if (!monacoEditorOptions.theme) {
-    monacoEditorOptions.theme = useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'vs'
-  }
   const languageModel = ref({
     language: languageRef
   })
@@ -188,11 +184,6 @@ export const useMonacoEditorOptions = (config) => {
       }
       editorRef.value.onDidPaste(editorRef.value.__internalPasteFunc__)
     }
-  })
-  watch(() => useGlobalConfigStore().isDarkTheme, darkTheme => {
-    const theme = darkTheme ? 'vs-dark' : 'vs'
-    const editor = toRaw(editorRef.value)
-    editor?.updateOptions({ theme })
   })
   return {
     contentRef,

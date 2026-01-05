@@ -10,6 +10,7 @@ import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import { generateSampleCheckResults, generateSchemaSample, useContentTypeOption } from '@/services/mock/MockCommonService'
 import { loadSchemas } from '@/api/mock/MockRequestApi'
 import { calcContentType } from '@/consts/MockConstants'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption, formatDocument, checkEditorLang } = useMonacoEditorOptions({ readOnly: false })
 const showWindow = ref(false)
@@ -193,6 +194,7 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
         :language="languageRef"
         :height="codeHeight"
         :options="monacoEditorOptions"
+        :theme="useGlobalConfigStore().monacoTheme"
         @mount="editorRef=$event"
       />
     </el-container>

@@ -69,7 +69,6 @@ defineExpose({
 
 const fullscreen = ref(false)
 const codeHeight = computed(() => fullscreen.value ? 'calc(100dvh - 150px)' : props.height)
-const theme = computed(() => useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'vs')
 
 </script>
 
@@ -86,7 +85,7 @@ const theme = computed(() => useGlobalConfigStore().isDarkTheme ? 'vs-dark' : 'v
     <el-container class="flex-column">
       <vue-monaco-diff-editor
         v-if="original && modified"
-        :theme="theme"
+        :theme="useGlobalConfigStore().monacoTheme"
         :original="fieldConfig.originalContent"
         :modified="fieldConfig.modifiedContent"
         language="markdown"

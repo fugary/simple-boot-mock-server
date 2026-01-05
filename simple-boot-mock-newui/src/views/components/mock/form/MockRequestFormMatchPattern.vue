@@ -6,6 +6,7 @@ import { showCodeWindow, showMockTips } from '@/utils/DynamicUtils'
 import { defineFormOptions } from '@/components/utils'
 import { ElTag, ElText } from 'element-plus'
 import { isBoolean } from 'lodash-es'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const props = defineProps({
   responseTarget: {
@@ -56,6 +57,7 @@ const matchPatternOptions = computed(() => {
       },
       language: languageRef.value,
       height: '100px',
+      theme: useGlobalConfigStore().monacoTheme,
       options: monacoEditorOptions
     }
   }, {

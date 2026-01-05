@@ -40,6 +40,7 @@ import { MOCK_LOAD_BALANCE_OPTIONS } from '@/consts/MockConstants'
 import { calcUrl, pasteCurl2Request } from '@/services/mock/CurlProcessService'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import { set } from 'lodash-es'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -233,6 +234,7 @@ const editFormOptions = computed(() => {
         languageRef.value = 'javascript'
       },
       language: languageRef.value || 'javascript',
+      theme: useGlobalConfigStore().monacoTheme,
       height: '100px',
       options: monacoEditorOptions
     }

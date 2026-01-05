@@ -20,6 +20,7 @@ import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import { calcContentLanguage, calcContentType, getMockConfirmConfig, isStreamContentType } from '@/consts/MockConstants'
 import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
 import { downloadByLink } from '@/api/mock/MockGroupApi'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const props = defineProps({
   responseTarget: {
@@ -379,6 +380,7 @@ const toShowJsonDataWindow = () => {
               :height="codeHeight"
               :options="monacoEditorOptions"
               class="common-resize-vertical"
+              :theme="useGlobalConfigStore().monacoTheme"
               @mount="editorRef=$event"
             />
           </template>
@@ -567,6 +569,7 @@ const toShowJsonDataWindow = () => {
             :language="languageRef2"
             :height="codeHeight"
             :options="monacoEditorOptions2"
+            :theme="useGlobalConfigStore().monacoTheme"
             @mount="editorRef2=$event"
           />
         </el-container>
