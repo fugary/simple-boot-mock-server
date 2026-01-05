@@ -111,6 +111,24 @@ export const recoverFromHistory = (data, config) => {
   }, config)).then(response => response.data)
 }
 
+export const getHeader = (headers, key) => {
+  if (isObject(headers) && key) {
+    return headers[Object.keys(headers)
+      .find(headerName => headerName?.toLowerCase() === key?.toLowerCase())] || ''
+  }
+  return ''
+}
+
+export const deleteHeader = (headers, key) => {
+  if (isObject(headers) && key) {
+    Object.keys(headers).forEach(headerName => {
+      if (headerName?.toLowerCase() === key?.toLowerCase()) {
+        delete headers[headerName]
+      }
+    })
+  }
+}
+
 export const previewRequest = function (reqData, config = {}) {
   return new Promise((resolve, reject) => {
     const controller = new AbortController()
@@ -134,11 +152,34 @@ export const previewRequest = function (reqData, config = {}) {
         fetchUrl += (fetchUrl.includes('?') ? '&' : '?') + qs
       }
     }
+    let body
+    const method = (reqData.method || 'GET').toUpperCase()
+    console.log('=======================================config', config)
+    const contentTypeKey = 'Content-Type'
+    if (!['GET', 'HEAD'].includes(method)) {
+      const data = config.data
+      const contentType = getHeader(headers, contentTypeKey)
+      if (data instanceof FormData) {
+        body = data
+        deleteHeader(headers, contentTypeKey)
+      } else if (data instanceof Blob || data instanceof ArrayBuffer) {
+        body = data
+      } else if (typeof data === 'string') {
+        body = data
+      } else if (contentType.includes('application/x-www-form-urlencoded')) {
+        body = toGetParams(data)
+        deleteHeader(headers, contentTypeKey)
+        headers[contentTypeKey] = 'application/x-www-form-urlencoded;charset=UTF-8'
+      } else if (data !== undefined) {
+        body = JSON.stringify(data)
+        headers[contentTypeKey] = 'application/json;charset=UTF-8'
+      }
+    }
     fetch(fetchUrl, {
       method: reqData.method || 'GET',
       headers,
       signal: controller.signal,
-      body: ['GET', 'HEAD'].includes((reqData.method || 'GET').toUpperCase()) ? undefined : config.data
+      body
     }).then(async response => {
       const contentType = response.headers.get('content-type') || ''
       /** axios response 公共部分 */
