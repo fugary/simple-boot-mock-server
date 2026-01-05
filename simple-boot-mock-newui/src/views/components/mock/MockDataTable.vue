@@ -48,6 +48,10 @@ const requestItem = defineModel('requestItem', {
   type: Object,
   required: true
 })
+const selectDataId = defineModel('selectDataId', {
+  type: Number,
+  default: 0
+})
 const selectedRows = ref([])
 const batchMode = ref(false)
 const columns = computed(() => {
@@ -143,14 +147,13 @@ const { searchParam, tableData, loading, searchMethod: searchMockData } = useTab
 })
 
 const loadMockData = (...args) => {
-  const lastId = selectDataItem.value?.id
   return searchMockData(...args)
     .then((result) => {
       requestItem.value.dataCount = tableData.value?.length || 0
       if (!tableData.value?.length) {
         mockPreviewRef.value?.clearParamsAndResponse()
       } else {
-        const selectData = tableData.value.find(data => data.id === lastId) || tableData.value[0]
+        const selectData = tableData.value.find(data => data.id === selectDataId.value) || tableData.value[0]
         dataTableRef.value?.table?.setCurrentRow(selectData, true)
         const historyMap = result.infos?.historyMap || {}
         tableData.value.forEach(data => {
@@ -394,7 +397,7 @@ const saveMockData = (data) => {
   }
   return MockDataApi.saveOrUpdate(dataItem)
     .then((data) => {
-      if (data.success && data.resultData && selectDataItem.value?.id !== data.resultData.id) {
+      if (data.success && data.resultData && selectDataId.value !== data.resultData.id) {
         onSelectDataItem(data.resultData)
       }
       loadMockData()
@@ -424,6 +427,7 @@ const mockPreviewRef = ref()
 
 const onSelectDataItem = (dataItem) => {
   selectDataItem.value = dataItem
+  selectDataId.value = dataItem?.id
   if (dataItem) {
     mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, dataItem => {
       Object.assign(selectDataItem.value, dataItem)

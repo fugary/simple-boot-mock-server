@@ -536,6 +536,7 @@ const toShowHistoryWindow = (current) => {
             <mock-data-table
               v-if="selectRequest"
               v-model:request-item="selectRequest"
+              v-model:select-data-id="searchParam.selectDataId"
               :editable="projectEditable"
               class="form-edit-width-100"
               :group-item="groupItem"
