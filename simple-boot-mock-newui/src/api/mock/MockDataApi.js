@@ -1,6 +1,6 @@
 import { useResourceApi } from '@/hooks/ApiHooks'
 import { $http, hasLoading } from '@/vendors/axios'
-import { $coreHideLoading, $coreShowLoading } from '@/utils'
+import { $coreHideLoading, $coreShowLoading, toGetParams } from '@/utils'
 import { isArray, isString, isObject } from 'lodash-es'
 import {
   FORM_DATA,
@@ -127,7 +127,13 @@ export const previewRequest = function (reqData, config = {}) {
     if (hasLoading(config)) {
       $coreShowLoading(isString(config.loading) ? config.loading : undefined)
     }
-    const fetchUrl = import.meta.env.VITE_APP_API_BASE_URL + reqData.url
+    let fetchUrl = import.meta.env.VITE_APP_API_BASE_URL + reqData.url
+    if (config.params) {
+      const qs = (config.paramsSerializer || toGetParams)(config.params)
+      if (qs) {
+        fetchUrl += (fetchUrl.includes('?') ? '&' : '?') + qs
+      }
+    }
     fetch(fetchUrl, {
       method: reqData.method || 'GET',
       headers,
