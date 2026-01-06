@@ -129,6 +129,7 @@ const deleteRequests = () => {
   $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
     .then(() => MockRequestApi.removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
     .then(() => loadMockRequests())
+    .then(() => (batchMode.value = false))
 }
 
 const newRequestItem = () => ({

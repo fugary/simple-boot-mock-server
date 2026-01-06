@@ -228,6 +228,7 @@ const deleteDataList = () => {
   $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
     .then(() => MockDataApi.removeByIds(selectedRows.value.map(item => item.id), { loading: true }))
     .then(() => loadMockData())
+    .then(() => (batchMode.value = false))
 }
 const showEditWindow = ref(false)
 const currentDataItem = ref()
