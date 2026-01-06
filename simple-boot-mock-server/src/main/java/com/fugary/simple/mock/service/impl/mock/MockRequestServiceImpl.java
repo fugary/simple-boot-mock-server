@@ -94,6 +94,9 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             } else {
                 if (StringUtils.isNotBlank(mockRequest.getRequestName())) {
                     mockRequest.setRequestName(StringUtils.join(mockRequest.getRequestName(), "-copy"));
+                } else {
+                    mockRequest.setRequestName(StringUtils.join(mockRequest.getRequestPath()
+                            .replaceAll("[/{}:.]", " ").trim(), " copy"));
                 }
             }
             saveOrUpdate(mockRequest);
