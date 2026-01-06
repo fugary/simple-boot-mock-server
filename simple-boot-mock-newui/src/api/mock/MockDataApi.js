@@ -5,12 +5,13 @@ import { isArray, isString, isObject } from 'lodash-es'
 import {
   FORM_DATA,
   FORM_URL_ENCODED,
+  isStreamContentType,
   LANG_TO_CONTENT_TYPES,
   MOCK_DATA_PREVIEW_HEADER,
   MOCK_META_DATA_REQ,
   NONE
 } from '@/consts/MockConstants'
-import { processEvnParams } from '@/services/mock/MockCommonService'
+import { isMediaContentType, processEvnParams } from '@/services/mock/MockCommonService'
 
 const MOCK_DATA_URL = '/admin/data'
 
@@ -213,7 +214,7 @@ export const previewRequest = function (reqData, config = {}) {
         data = raw
       } else if (config.responseType === 'arraybuffer') {
         data = await response.arrayBuffer()
-      } else if (config.responseType === 'blob') {
+      } else if (config.responseType === 'blob' || isMediaContentType(contentType) || isStreamContentType(contentType)) {
         data = await response.blob()
       } else {
         data = await response.text()
