@@ -548,12 +548,13 @@ const pageAttrs = {
         {{ $t('common.label.operation') }}
         <el-tag
           v-if="searchParam.page?.totalCount"
-          :title="$t('mock.label.mockDataCount')"
+          v-common-tooltip="$t('mock.label.mockDataCount')"
           class="margin-left1 pointer"
           type="success"
           size="small"
           effect="plain"
           round
+          @click="loadMockData()"
         >
           <span v-if="selectedRows.length">{{ selectedRows.length }}/</span><span>{{ searchParam.page?.totalCount }}</span>
         </el-tag>

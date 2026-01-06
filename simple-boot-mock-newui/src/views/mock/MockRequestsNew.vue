@@ -488,12 +488,13 @@ const toShowHistoryWindow = (current) => {
                   {{ $t('mock.label.mockRequests') }}
                   <el-tag
                     v-if="searchParam.page?.totalCount"
-                    :title="$t('mock.label.mockRequestCount')"
+                    v-common-tooltip="$t('mock.label.mockRequestCount')"
                     class="margin-left1 pointer"
                     type="primary"
                     size="small"
                     effect="plain"
                     round
+                    @click="loadMockRequests()"
                   >
                     <span v-if="selectedRows.length">{{ selectedRows.length }}/</span><span>{{ searchParam.page?.totalCount }}</span>
                   </el-tag>
