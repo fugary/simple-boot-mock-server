@@ -18,6 +18,13 @@ export const hasLoading = config => {
   return config?.loading ?? GLOBAL_LOADING
 }
 
+export const clearTooltip = () => {
+  setTimeout(() => {
+    document.querySelectorAll('.common-el-tooltip,.common-el-popover')
+      .forEach(el => el.remove()) // 清理所有残留 Tooltip
+  })
+}
+
 /**
  * @param config {ServiceRequestConfig}
  * @return {*|boolean}
@@ -39,6 +46,7 @@ $http.interceptors.request.use(/** @param config {ServiceRequestConfig} */ confi
   if (hasLoading(config)) {
     $coreShowLoading(isString(config.loading) ? config.loading : undefined)
   }
+  clearTooltip()
   return config
 })
 
