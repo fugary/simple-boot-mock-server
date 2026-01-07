@@ -97,8 +97,8 @@ watch(() => props.responseTarget, async (responseTarget) => {
   currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
   const oriContentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type')?.value
   const contentType = isMediaContentType(oriContentType) || isStreamContentType(oriContentType) || isHtmlContentType(oriContentType) ? oriContentType : undefined
+  clearMediaItems()
   if (responseTarget?.data && contentType) {
-    clearMediaItems()
     if (isString(responseTarget.data)) {
       if (isHtmlContentType(contentType)) {
         previewHtml.value = true
