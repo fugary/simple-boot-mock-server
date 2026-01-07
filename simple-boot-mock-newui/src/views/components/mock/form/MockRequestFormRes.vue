@@ -335,6 +335,14 @@ const toShowJsonDataWindow = () => {
                   :content="contentRef"
                   :tooltip="$i18nKey('common.label.commonCopy', 'mock.label.responseBody')"
                 />
+                <new-window-edit-link
+                  v-model="contentRef"
+                  class="margin-left3"
+                  icon="View"
+                  :tooltip="$t('common.label.view')"
+                  full-editor
+                  read-only
+                />
                 <el-link
                   v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.responseBody')"
                   type="primary"
