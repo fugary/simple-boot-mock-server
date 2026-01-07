@@ -102,6 +102,7 @@ mock.label.loadBalanceRoundRobin = 'Round Robin'
 mock.label.viewAsTable = 'View as Table'
 mock.label.dataProperty = 'Data Property'
 mock.label.dataColumns = 'Columns'
+mock.label.lengthLimit = 'Length Limit'
 
 mock.msg.loadBalanceTips = 'When there are multiple response data entries and no matching rules, this defines which strategy is used to return the response'
 mock.msg.configSetDefault = 'Confirm to set as default?'

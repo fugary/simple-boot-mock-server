@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import { checkArrayAndPath } from '@/services/mock/MockCommonService'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { limitStr } from '@/components/utils'
-import { checkShowColumn } from '@/utils'
+import { checkShowColumn, getStyleGrow } from '@/utils'
 import { $i18nBundle, $i18nConcat } from '@/messages'
 
 defineProps({
@@ -69,7 +69,7 @@ const str2Column = column => {
         value = JSON.stringify(value)
       }
       if (isString(value)) {
-        return limitStr(value, 40)
+        return limitStr(value, formModel.value?.limit || 40)
       }
       return value !== undefined ? String(value) : ''
     }
@@ -112,24 +112,32 @@ const formOptions = computed(() => {
       type: 'select',
       value: defaultDataKey,
       children: selectKeys,
+      style: getStyleGrow(6),
       attrs: {
         clearable: true,
         filterable: true,
-        allowCreate: true,
-        style: { width: '20vw' }
+        allowCreate: true
       }
-    },
-    {
+    }, {
+      labelKey: 'mock.label.lengthLimit',
+      prop: 'limit',
+      type: 'input-number',
+      value: 40,
+      style: getStyleGrow(4),
+      attrs: {
+        min: 0
+      }
+    }, {
       labelKey: 'mock.label.dataColumns',
       type: 'select',
       prop: 'columns',
       children: tableColumns.value,
+      style: getStyleGrow(9),
       attrs: {
         multiple: true,
         clearable: true,
         filterable: true,
-        allowCreate: true,
-        style: { width: '30vw' }
+        allowCreate: true
       }
     }
   ]
@@ -147,7 +155,8 @@ const customPageAttrs = {
     <common-form
       :options="formOptions"
       :model="formModel"
-      inline
+      class="form-edit-width-100"
+      class-name="common-form-auto"
       :show-buttons="false"
     />
     <el-container class="flex-center margin-bottom2">

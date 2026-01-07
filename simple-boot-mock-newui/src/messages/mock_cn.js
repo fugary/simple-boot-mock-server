@@ -102,6 +102,7 @@ mock.label.loadBalanceRoundRobin = '轮询'
 mock.label.viewAsTable = '按表格查看'
 mock.label.dataProperty = '数据属性'
 mock.label.dataColumns = '数据列'
+mock.label.lengthLimit = '长度限制'
 
 mock.msg.loadBalanceTips = '没有匹配规则且有多条响应数据时，使用什么策略返回数据'
 mock.msg.configSetDefault = '确定要设为默认响应？'
