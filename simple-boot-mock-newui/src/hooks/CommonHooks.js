@@ -98,16 +98,27 @@ export const useGlobalSaveSearchParam = (defaultParam) => {
   }
 }
 
-export const useSortableParams = (params, selector) => {
+export const useSortableParams = (params, selector, moveCls = '.move-indicator') => {
   let sortable = null
   const sortableRef = ref()
+  const dragging = ref(false)
+  const hoverIndex = ref(-1)
   onMounted(() => {
     sortable = new Sortable(sortableRef.value.$el, {
       animation: 150,
       draggable: selector,
+      handle: moveCls,
+      onStart () {
+        hoverIndex.value = -1
+        dragging.value = true
+      },
       onEnd (event) {
         const { oldIndex, newIndex } = event
         params.value.splice(newIndex, 0, params.value.splice(oldIndex, 1)[0]) // 插入到 newIndex 位置
+        setTimeout(() => {
+          dragging.value = false
+          hoverIndex.value = newIndex
+        })
       }
     })
   })
@@ -116,6 +127,8 @@ export const useSortableParams = (params, selector) => {
     sortable = null
   })
   return {
+    dragging,
+    hoverIndex,
     sortableRef
   }
 }

@@ -232,7 +232,7 @@ const paramsOptions = computed(() => {
   })
 })
 
-const { sortableRef } = useSortableParams(params, '.common-params-item')
+const { sortableRef, hoverIndex, dragging } = useSortableParams(params, '.common-params-item')
 
 const { renderKey } = useRenderKey()
 
@@ -247,6 +247,8 @@ const { renderKey } = useRenderKey()
       v-for="(item, index) in params"
       :key="renderKey(item)"
       class="padding-bottom2 common-params-item"
+      @mouseenter="hoverIndex=index"
+      @mouseleave="hoverIndex=-1"
     >
       <template
         v-for="(option, idx) in paramsOptions[index]"
@@ -264,9 +266,9 @@ const { renderKey } = useRenderKey()
           >
             <template #beforeLabel>
               <common-icon
-                v-if="idx===0"
+                v-if="idx===0&&hoverIndex===index&&!dragging"
                 :size="20"
-                class="margin-top1"
+                class="margin-top1 move-indicator"
                 icon="DragIndicatorFilled"
                 style="cursor: move;"
               />
