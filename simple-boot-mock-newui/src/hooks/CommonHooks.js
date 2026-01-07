@@ -1,8 +1,9 @@
-import { ref, watch } from 'vue'
-import { isFunction, isNumber } from 'lodash-es'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { isFunction, isNumber, uniqueId } from 'lodash-es'
 import { useGlobalSearchParamStore } from '@/stores/GlobalSearchParamStore'
 import { $coreHideLoading, $coreShowLoading } from '@/utils'
 import { GLOBAL_LOADING } from '@/config'
+import Sortable from 'sortablejs'
 
 const defaultPageProcessor = (searchResult, searchParam) => {
   if (searchResult.page && searchParam.value.page) {
@@ -94,5 +95,45 @@ export const useGlobalSaveSearchParam = (defaultParam) => {
     saveSearchParam: (path) => {
       globalSearchParamStore.saveCurrentParam(searchParam.value, path)
     }
+  }
+}
+
+export const useSortableParams = (params, selector) => {
+  let sortable = null
+  const sortableRef = ref()
+  onMounted(() => {
+    sortable = new Sortable(sortableRef.value.$el, {
+      animation: 150,
+      draggable: selector,
+      onEnd (event) {
+        const { oldIndex, newIndex } = event
+        params.value.splice(newIndex, 0, params.value.splice(oldIndex, 1)[0]) // 插入到 newIndex 位置
+      }
+    })
+  })
+  onBeforeUnmount(() => {
+    sortable?.destroy()
+    sortable = null
+  })
+  return {
+    sortableRef
+  }
+}
+
+export const useRenderKey = () => {
+  const renderKeyMap = new WeakMap()
+
+  function renderKey (param) {
+    if (param.id != null) {
+      return `param-${param.id}`
+    }
+    if (!renderKeyMap.has(param)) {
+      renderKeyMap.set(param, uniqueId())
+    }
+    return `param-tmp-${renderKeyMap.get(param)}`
+  }
+
+  return {
+    renderKey
   }
 }
