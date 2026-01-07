@@ -169,7 +169,7 @@ const paramsOptions = computed(() => {
       attrs: {
         fetchSuggestions: nameSuggestions,
         triggerOnFocus: false,
-        tabindex: props.tabindex + index * 2 + 1
+        tabindex: props.baseTabIndex + index * 2 + 1
       },
       dynamicOption: (item, ...args) => {
         if (isFunction(item.dynamicOption)) {
@@ -203,7 +203,7 @@ const paramsOptions = computed(() => {
       attrs: {
         fetchSuggestions: paramValueSuggestions,
         triggerOnFocus: true,
-        tabindex: props.tabindex + 100 + index * 2 + 2
+        tabindex: props.baseTabIndex + 100 + index * 2 + 2
       },
       dynamicOption: (item, ...args) => {
         if (isFunction(item.dynamicOption)) {
