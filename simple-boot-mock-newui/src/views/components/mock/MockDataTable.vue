@@ -432,9 +432,9 @@ const dataTableRef = ref()
 const mockPreviewRef = ref()
 
 const onSelectDataItem = (dataItem) => {
-  selectDataItem.value = dataItem
-  selectDataId.value = dataItem?.id
   if (dataItem) {
+    selectDataItem.value = dataItem
+    selectDataId.value = dataItem?.id
     startLoading()
     mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, dataItem => {
       Object.assign(selectDataItem.value, dataItem)

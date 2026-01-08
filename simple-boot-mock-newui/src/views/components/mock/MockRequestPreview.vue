@@ -32,7 +32,6 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback, isEd
   groupItem.value = mockGroup
   requestItem.value = mockRequest
   previewData.value = viewData
-  const requestDataPromise = MockRequestApi.getById(mockRequest.id)
   schemasConf.value = await loadSchemas({
     requestId: mockRequest.id,
     dataId: viewData?.id
@@ -41,9 +40,11 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback, isEd
     const viewDataPromise = MockDataApi.getById(viewData.id)
     const requestViewData = await viewDataPromise
     previewData.value = requestViewData.resultData
+  } else {
+    const requestDataPromise = MockRequestApi.getById(mockRequest.id)
+    const requestData = await requestDataPromise
+    requestItem.value = requestData.resultData
   }
-  const requestData = await requestDataPromise
-  requestItem.value = requestData.resultData
   saveCallback = callback
   clearParamsAndResponse()
   return nextTick(() => {
