@@ -1,4 +1,4 @@
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { provide, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { isFunction, isNumber, uniqueId } from 'lodash-es'
 import { useGlobalSearchParamStore } from '@/stores/GlobalSearchParamStore'
 import { $coreHideLoading, $coreShowLoading } from '@/utils'
@@ -148,5 +148,36 @@ export const useRenderKey = () => {
 
   return {
     renderKey
+  }
+}
+
+export const useProvideDataLoading = (loadingKey = 'dataLoading') => {
+  const dataLoading = ref(false)
+  const startLoading = (config = { delay: 1 }) => {
+    $coreShowLoading(config)
+    dataLoading.value = true
+  }
+  provide(loadingKey, { dataLoading, startLoading })
+  return {
+    startLoading
+  }
+}
+
+export const useInjectDataLoading = (loadingKey = 'dataLoading') => {
+  const { dataLoading, startLoading } = inject(loadingKey,
+    { dataLoading: ref(false), startLoading: () => {} })
+  const endLoading = () => {
+    if (dataLoading?.value) {
+      setTimeout(() => {
+        if (dataLoading?.value) {
+          $coreHideLoading()
+          dataLoading.value = false
+        }
+      })
+    }
+  }
+  return {
+    startLoading,
+    endLoading
   }
 }

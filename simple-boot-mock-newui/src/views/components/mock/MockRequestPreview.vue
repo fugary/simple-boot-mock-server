@@ -16,6 +16,7 @@ import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConsta
 import { cloneDeep, isArray, pickBy, isString } from 'lodash-es'
 import { addRequestParamsToResult, calcPreviewHeaders, processEvnParams } from '@/services/mock/MockCommonService'
 import { toGetParams } from '@/utils'
+import { useInjectDataLoading } from '@/hooks/CommonHooks'
 
 const groupItem = ref()
 const requestItem = ref()
@@ -24,7 +25,7 @@ const paramTarget = ref()
 const responseTarget = ref()
 const schemasConf = ref({})
 const editable = ref(true)
-
+const { endLoading } = useInjectDataLoading()
 let saveCallback
 const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback, isEditable = true) => {
   editable.value = isEditable
@@ -47,6 +48,7 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback, isEd
   clearParamsAndResponse()
   return nextTick(() => {
     paramTarget.value = calcParamTarget(groupItem.value, requestItem.value, previewData.value, schemasConf.value)
+    endLoading()
   })
 }
 

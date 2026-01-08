@@ -9,7 +9,7 @@ import MockDataApi, {
   copyMockData,
   searchHistories, loadHistoryDiff, recoverFromHistory
 } from '@/api/mock/MockDataApi'
-import { useTableAndSearchForm } from '@/hooks/CommonHooks'
+import { useInjectDataLoading, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import CommonIcon from '@/components/common-icon/index.vue'
 import CommonFormControl from '@/components/common-form-control/index.vue'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
@@ -147,12 +147,14 @@ const { searchParam, tableData, loading, searchMethod: searchMockData } = useTab
   saveParam: false
 })
 
+const { startLoading, endLoading } = useInjectDataLoading()
 const loadMockData = (...args) => {
   return searchMockData(...args)
     .then((result) => {
       requestItem.value.dataCount = tableData.value?.length || 0
       if (!tableData.value?.length) {
         mockPreviewRef.value?.clearParamsAndResponse()
+        endLoading()
       } else {
         const selectData = tableData.value.find(data => data.id === selectDataId.value) || tableData.value[0]
         dataTableRef.value?.table?.setCurrentRow(selectData, true)
@@ -433,6 +435,7 @@ const onSelectDataItem = (dataItem) => {
   selectDataItem.value = dataItem
   selectDataId.value = dataItem?.id
   if (dataItem) {
+    startLoading()
     mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, dataItem => {
       Object.assign(selectDataItem.value, dataItem)
     }, props.editable)

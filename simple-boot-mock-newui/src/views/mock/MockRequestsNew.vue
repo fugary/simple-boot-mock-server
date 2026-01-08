@@ -8,7 +8,7 @@ import MockRequestApi, {
   recoverFromHistory,
   searchHistories
 } from '@/api/mock/MockRequestApi'
-import { useTableAndSearchForm } from '@/hooks/CommonHooks'
+import { useProvideDataLoading, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableColumns, limitStr } from '@/components/utils'
 import { ref, computed } from 'vue'
 import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
@@ -150,10 +150,12 @@ const newOrEdit = async id => {
   }
   showEditWindow.value = true
 }
+const { startLoading } = useProvideDataLoading()
 const onSelectRequest = request => {
   selectRequest.value = request
   searchParam.value.selectRequestId = request?.id
   requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
+  startLoading()
 }
 const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({
   readOnly: false,

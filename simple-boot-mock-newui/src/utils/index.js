@@ -295,8 +295,16 @@ const globalLoadingConfig = {
   globalLoading: null,
   delayLoadingId: null
 }
-
-export const $coreShowLoading = (message) => {
+/**
+ * loading窗口
+ * @param message 消息或配置
+ * @param [config] 配置
+ */
+export const $coreShowLoading = (message, config) => {
+  if (isObject(message)) {
+    config = message
+    message = config.message
+  }
   const globalLoading = globalLoadingConfig.globalLoading
   if (globalLoading) {
     globalLoading.close()
@@ -306,10 +314,11 @@ export const $coreShowLoading = (message) => {
     background: 'rgba(0, 0, 0, 0.7)',
     text: message
   }))
-  if (globalLoadingConfig.delay > 0) {
+  const delay = config?.delay ?? globalLoadingConfig.delay
+  if (delay >= 0) {
     globalLoadingConfig.delayLoadingId = setTimeout(() => {
       globalLoadingConfig.globalLoading = openLoading()
-    }, globalLoadingConfig.delay)
+    }, delay)
   } else {
     globalLoadingConfig.globalLoading = openLoading()
   }
