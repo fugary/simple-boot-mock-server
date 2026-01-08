@@ -151,7 +151,7 @@ const { startLoading, endLoading } = useInjectDataLoading()
 const loadMockData = (...args) => {
   return searchMockData(...args)
     .then((result) => {
-      requestItem.value.dataCount = tableData.value?.length || 0
+      requestItem.value.dataCount = result.infos?.dataCount || 0
       if (!tableData.value?.length) {
         mockPreviewRef.value?.clearParamsAndResponse()
         endLoading()

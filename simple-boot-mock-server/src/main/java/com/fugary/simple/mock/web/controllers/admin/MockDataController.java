@@ -71,7 +71,11 @@ public class MockDataController {
                     .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
                             CountData::getDataCount));
         }
-        return SimpleResultUtils.createSimpleResult(pageResult).addInfo("historyMap", historyMap);
+        long dataCount = mockDataService.count(Wrappers.<MockData>query().isNull(DB_MODIFY_FROM_KEY)
+                .eq("request_id", queryVo.getRequestId()));
+        return SimpleResultUtils.createSimpleResult(pageResult)
+                .addInfo("dataCount", dataCount)
+                .addInfo("historyMap", historyMap);
     }
 
     @PostMapping("/histories/{id}")
