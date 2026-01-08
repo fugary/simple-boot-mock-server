@@ -83,6 +83,12 @@ const require: (url, options) => Promise
 const clearRequireCache: () => void
 
 /**
+ * 将XML字符串转换成JSON格式
+ * @param xmlStr XML字符串
+ * @returns result JSON格式数据
+ */
+const xml2Json: (xmlStr: string) => string
+/**
  * 将十六进制字符串解码普通字符串
  * @param hex 十六进制字符串
  * @returns result 解码后的数据

@@ -1,7 +1,10 @@
 package com.fugary.simple.mock.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +60,27 @@ public class XmlUtils {
             log.error("输出xml错误", e);
         }
         return result;
+    }
+
+    /**
+     * xml转Json数据
+     *
+     * @param xml
+     * @return
+     */
+    public static SimpleResult<String> xml2Json(String xml) {
+        String resultStr = xml;
+        if (StringUtils.isNotBlank(xml) && MockJsUtils.isXml(xml)) {
+            JsonNode jsonNode;
+            try {
+                jsonNode = XmlUtils.getMapper().readTree(xml);
+            } catch (JsonProcessingException e) {
+                log.error("XML解析失败", e);
+                return SimpleResultUtils.createError(e.getOriginalMessage());
+            }
+            resultStr = JsonUtils.toJson(jsonNode);
+        }
+        return SimpleResultUtils.createSimpleResult(resultStr);
     }
 
 }

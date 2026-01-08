@@ -32,6 +32,7 @@ const internalFunctions = [
     desc: '清空 require 函数的缓存。默认情况下，require 函数会缓存已加载过的 URL 模块数据，避免重复加载。',
     descEn: 'Clears the cache of the require function. By default, the require function caches loaded module data by URL to avoid redundant requests.'
   },
+  { method: 'xml2Json(xmlStr)', desc: '将XML字符串转换成JSON格式', descEn: 'Convert an XML string into JSON format' },
   { method: 'decodeHex(hex)', desc: '将十六进制字符串解码为普通字符串', descEn: 'Decode hexadecimal string to normal string' },
   { method: 'decodeHex(hex)', desc: '将十六进制字符串解码为普通字符串', descEn: 'Decode hexadecimal string to normal string' },
   { method: 'encodeHex(data)', desc: '将普通字符串编码为十六进制格式', descEn: 'Encode normal string to hexadecimal format' },

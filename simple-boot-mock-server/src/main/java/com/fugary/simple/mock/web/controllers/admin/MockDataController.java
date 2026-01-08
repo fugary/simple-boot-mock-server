@@ -7,13 +7,13 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.CountData;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.service.mock.MockDataService;
-import com.fugary.simple.mock.utils.*;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
+import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.utils.XmlUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.MockDataQueryVo;
 import com.fugary.simple.mock.web.vo.query.MockHistoryVo;
@@ -173,18 +173,7 @@ public class MockDataController {
 
     @PostMapping("/xml2Json")
     public SimpleResult<String> xml2Json(@RequestBody SimpleQueryVo queryVo) {
-        String resultStr =  "";
-        if (StringUtils.isNotBlank(queryVo.getKeyword()) && MockJsUtils.isXml(queryVo.getKeyword())) {
-            JsonNode jsonNode;
-            try {
-                jsonNode = XmlUtils.getMapper().readTree(queryVo.getKeyword());
-            } catch (JsonProcessingException e) {
-                log.error("XML解析失败", e);
-                return SimpleResultUtils.createError(e.getOriginalMessage());
-            }
-            resultStr = JsonUtils.toJson(jsonNode);
-        }
-        return SimpleResultUtils.createSimpleResult(resultStr);
+        return XmlUtils.xml2Json(queryVo.getKeyword());
     }
 
     protected Algorithm getAlgorithm(String algorithm, String secret) {

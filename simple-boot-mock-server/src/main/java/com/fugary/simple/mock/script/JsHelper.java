@@ -1,7 +1,10 @@
 package com.fugary.simple.mock.script;
 
 import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
+import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
+import com.fugary.simple.mock.utils.XmlUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -276,6 +279,20 @@ public class JsHelper {
      */
     public String decryptRSA(String input, String key, Map<String, String> config) {
         return HuToolCryptoUtils.asymmetricRSA(input, key, config, false);
+    }
+
+    /**
+     * 将XML字符串转换成JSON格式
+     *
+     * @param xml
+     * @return
+     */
+    public String xml2Json(String xml) {
+        SimpleResult<String> result = XmlUtils.xml2Json(xml);
+        if (result.isSuccess()) {
+            return result.getResultData();
+        }
+        return JsonUtils.toJson(result);
     }
 
     /**

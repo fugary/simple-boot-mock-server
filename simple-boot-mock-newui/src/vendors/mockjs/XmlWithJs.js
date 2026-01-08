@@ -59,6 +59,9 @@ export const initXmlWithJs = (monaco) => {
     label: 'clearRequireCache()',
     detail: '清空 require 函数的缓存。默认情况下，require 函数会缓存已加载过的 URL 模块数据，避免重复加载。'
   }, {
+    label: 'xml2Json()',
+    detail: '将XML字符串转换成JSON格式'
+  }, {
     label: 'decodeHex()',
     detail: '将十六进制字符串解码为普通字符串'
   }, {
