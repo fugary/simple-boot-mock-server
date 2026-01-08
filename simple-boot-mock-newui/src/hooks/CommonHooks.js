@@ -153,9 +153,11 @@ export const useRenderKey = () => {
 
 export const useProvideDataLoading = (loadingKey = 'dataLoading') => {
   const dataLoading = ref(false)
-  const startLoading = (config = { delay: 1 }) => {
-    $coreShowLoading(config)
-    dataLoading.value = true
+  const startLoading = (config = { delay: 100 }) => {
+    if (!dataLoading.value) {
+      dataLoading.value = true
+      $coreShowLoading(config)
+    }
   }
   provide(loadingKey, { dataLoading, startLoading })
   return {
