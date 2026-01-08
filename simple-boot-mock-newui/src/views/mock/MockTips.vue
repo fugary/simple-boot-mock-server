@@ -18,6 +18,12 @@ const requestFields = [
   { field: 'request.pathParameters', desc: '路径参数对象', descEn: 'Path parameters object' },
   { field: 'request.params', desc: '请求参数和路径参数合并', descEn: 'Merged object of request parameters and path parameters' }
 ]
+
+const responseFields = [
+  { field: 'response.statusCode', desc: '状态码', descEn: 'Status Code' },
+  { field: 'response.body', desc: 'body内容对象', descEn: 'Body content object' },
+  { field: 'response.bodyStr', desc: 'body内容字符串', descEn: 'Body content as a string' }
+]
 const internalFunctions = [
   { method: 'Mock.mock(data)', desc: 'MockJS支持', descEn: 'MockJS support' },
   { method: 'dayjs(...args)', desc: 'dayjs支持', descEn: 'dayjs support' },
@@ -288,11 +294,21 @@ const calcHeight = (text) => {
     >
       <el-tab-pane
         lazy
-        :label="$t('mock.label.requestObject')"
-        name="request"
+        :label="$t('mock.label.buildInObjects')"
+        name="buildInObjects"
       >
+        <p>
+          {{ $t('mock.label.requestObject') }}
+        </p>
         <common-table
           :data="requestFields"
+          :columns="requestColumns"
+        />
+        <p>
+          {{ $t('mock.label.responseObject') }}
+        </p>
+        <common-table
+          :data="responseFields"
           :columns="requestColumns"
         />
       </el-tab-pane>

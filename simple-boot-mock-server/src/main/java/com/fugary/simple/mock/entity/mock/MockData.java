@@ -27,6 +27,7 @@ public class MockData extends MockBase implements HistoryBase {
     private String headers;
     private String mockParams;
     private String defaultCharset;
+    private String postProcessor;
     @Version
     @TableField("data_version")
     private Integer version;

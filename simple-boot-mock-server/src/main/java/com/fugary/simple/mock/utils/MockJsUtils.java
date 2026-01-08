@@ -5,6 +5,7 @@ import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
+import com.fugary.simple.mock.web.vo.http.HttpResponseVo;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,6 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 
-import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.servlet.http.HttpServletRequest;
 import java.text.MessageFormat;
@@ -37,6 +37,8 @@ public class MockJsUtils {
 
     private static final ThreadLocal<HttpRequestVo> CURRENT_REQUEST_VO = new ThreadLocal<>();
 
+    private static final ThreadLocal<HttpResponseVo> CURRENT_RESPONSE_VO = new ThreadLocal<>();
+
     private static final ThreadLocal<ScriptEngine> CURRENT_SCRIPT_ENGINE = new ThreadLocal<>();
 
     public static void setCurrentRequestVo(HttpRequestVo requestVo) {
@@ -49,6 +51,18 @@ public class MockJsUtils {
 
     public static void removeCurrentRequestVo() {
         CURRENT_REQUEST_VO.remove();
+    }
+
+    public static void setCurrentResponseVo(HttpResponseVo requestVo) {
+        CURRENT_RESPONSE_VO.set(requestVo);
+    }
+
+    public static HttpResponseVo getCurrentResponseVo() {
+        return CURRENT_RESPONSE_VO.get();
+    }
+
+    public static void removeCurrentResponseVo() {
+        CURRENT_RESPONSE_VO.remove();
     }
 
     public static void setCurrentScriptEngine(ScriptEngine scriptEngine) {
@@ -89,17 +103,6 @@ public class MockJsUtils {
                 && StringUtils.endsWith(xmlData, ">");
     }
 
-    /**
-     * 添加js参数
-     *
-     * @param bindings
-     */
-    public static void addRequestInfo(Bindings bindings) {
-        HttpRequestVo requestVo = getHttpRequestVo();
-        bindings.put("request", requestVo);
-        bindings.put("_req", requestVo);
-    }
-
     public static HttpRequestVo getHttpRequestVo() {
         HttpRequestVo requestVo = getCurrentRequestVo();
         if (requestVo == null) {
@@ -109,6 +112,28 @@ public class MockJsUtils {
             }
         }
         return requestVo;
+    }
+
+    /**
+     * 获取Body数据
+     *
+     * @param bodyStr
+     * @return
+     */
+    public static Object getObjectBody(String bodyStr) {
+        if(MockJsUtils.isJson(bodyStr)){
+            Object body = HttpRequestUtils.getJsonBody(bodyStr);
+            if (body != null) {
+                return body;
+            }
+        }
+        if(MockJsUtils.isXml(bodyStr)){
+            Object body = HttpRequestUtils.getXmlBody(bodyStr);
+            if (body != null) {
+                return body;
+            }
+        }
+        return null;
     }
 
     /**
@@ -157,6 +182,8 @@ public class MockJsUtils {
     public static void invalidateCurrentAndPrepareScriptEngine(GenericObjectPool<ScriptEngine> scriptEnginePool) {
         ScriptEngine scriptEngine = MockJsUtils.getCurrentScriptEngine();
         if (scriptEngine != null) {
+            MockJsUtils.removeCurrentRequestVo();
+            MockJsUtils.removeCurrentResponseVo();
             MockJsUtils.removeCurrentScriptEngine();
             try {
                 // 失效ScriptEngine，并生成新的

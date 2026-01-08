@@ -24,6 +24,18 @@ interface RequestVoType {
     bodyStr: string
 }
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+interface ResponseVoType {
+    /** 响应状态码 */
+    statusCode: number,
+    /** response请求体对象 */
+    body: {
+        [key:string] :any
+    },
+    /** response请求体字符串 */
+    bodyStr: string
+}
+
 interface RSAOptionsType {
     /**
      * 默认都是RSA
@@ -68,6 +80,14 @@ interface AESOptionsType {
  * request.params——请求参数和路径参数合并
  */
 const request: RequestVoType
+
+/**
+ * response请求封装:<br>
+ * response.statusCode——响应状态码<br>
+ * response.body——body内容对象<br>
+ * response.bodyStr——body内容字符串
+ */
+const response: ResponseVoType
 
 /**
  * 提供一个异步版的 CommonJS 风格 require 方法，用于动态加载第三方库。支持 module.exports 和 exports 形式的模块导出，不支持 ESM (export / import) 模块。返回 Promise，可用于异步获取远程或本地模块内容。

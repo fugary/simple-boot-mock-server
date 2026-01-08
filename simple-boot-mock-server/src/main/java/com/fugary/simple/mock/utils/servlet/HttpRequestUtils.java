@@ -6,6 +6,7 @@ package com.fugary.simple.mock.utils.servlet;
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.utils.XmlUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
 import lombok.AccessLevel;
@@ -178,6 +179,10 @@ public class HttpRequestUtils {
 
 	public static Object getXmlBody(String bodyStr) {
 		if (MockJsUtils.isXml(bodyStr)) {
+			SimpleResult<String> result = XmlUtils.xml2Json(bodyStr);
+            if (result.isSuccess()) {
+                return JsonUtils.fromJson(result.getResultData(), Map.class);
+            }
 			return XmlUtils.fromXml(bodyStr, Map.class);
 		}
 		return null;

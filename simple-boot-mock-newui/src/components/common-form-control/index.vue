@@ -223,12 +223,14 @@ const formatResult = computed(() => {
 })
 
 const tooltips = computed(() => {
+  let calcTips = []
   if (calcOption.value.tooltips?.length) {
-    return calcOption.value.tooltips
+    calcTips = calcOption.value.tooltips
   } else if (calcOption.value.tooltip || calcOption.value.tooltipFunc) {
-    return [calcOption.value]
+    calcTips = [calcOption.value]
   }
-  return []
+  calcTips = calcTips.filter(tip => tip.enabled !== false)
+  return calcTips
 })
 
 </script>

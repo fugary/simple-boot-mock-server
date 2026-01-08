@@ -21,6 +21,7 @@ import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.*;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
+import com.fugary.simple.mock.web.vo.http.HttpResponseVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
 import lombok.Getter;
 import lombok.Setter;
@@ -179,7 +180,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                                 if (mockData == null) { // 没有配置参数匹，或者没有匹配，过滤掉配置有参数匹配的数据
                                     mockData = mockRequestService.findMockData(mockRequest, mockDataList);
                                 }
-                                processMockData(mockData, requestVo);
+                                processMockData(mockRequest, mockData, requestVo);
                                 return Triple.of(mockGroup, mockRequest, mockData);
                             }
                         } finally {
@@ -255,10 +256,11 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     /**
      * 处理MockData数据，生成需要的模拟数据
      *
+     * @param mockRequest
      * @param mockData
      * @param requestVo
      */
-    protected void processMockData(MockData mockData, HttpRequestVo requestVo) {
+    protected void processMockData(MockRequest mockRequest, MockData mockData, HttpRequestVo requestVo) {
         if (mockData != null) {
             String responseBody = StringUtils.trimToEmpty(mockData.getResponseBody());
             if (StringUtils.contains(mockData.getContentType(), "javascript")) { // contentType是javascript不能处理
@@ -274,6 +276,15 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 responseBody = scriptEngineProvider.evalStr("mockStringify(" + responseBody + ")");
             } else {
                 responseBody = scriptEngineProvider.mock(responseBody);
+            }
+            String postProcessor = SimpleMockUtils.getPostProcessor(mockRequest, mockData);
+            if (StringUtils.isNotBlank(postProcessor)) {
+                HttpResponseVo responseVo = new HttpResponseVo();
+                responseVo.setStatusCode(mockData.getStatusCode());
+                responseVo.setBodyStr(responseBody);
+                responseVo.setBody(MockJsUtils.getObjectBody(responseBody));
+                MockJsUtils.setCurrentResponseVo(responseVo);
+                responseBody = scriptEngineProvider.evalStr("mockStringify(" + postProcessor + ")");
             }
             mockData.setResponseBody(responseBody); // 使用Mockjs来处理响应数据
         }

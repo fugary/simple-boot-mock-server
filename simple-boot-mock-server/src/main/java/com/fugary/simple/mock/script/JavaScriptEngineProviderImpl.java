@@ -7,6 +7,7 @@ import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
+import com.fugary.simple.mock.web.vo.http.HttpResponseVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -130,6 +131,12 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         if (requestVo != null) {
             scriptContext.setAttribute("request", processValue(requestVo), ScriptContext.ENGINE_SCOPE);
             scriptEngine.eval(FAST_MOCK_JS_CONTENT, scriptContext);
+        }
+        HttpResponseVo responseVo = MockJsUtils.getCurrentResponseVo();
+        if (responseVo != null) {
+            scriptContext.setAttribute("response", processValue(responseVo), ScriptContext.ENGINE_SCOPE);
+        } else {
+            scriptContext.removeAttribute("response", ScriptContext.ENGINE_SCOPE);
         }
         return scriptContext;
     }

@@ -19,13 +19,10 @@ import MockDataTable from '@/views/components/mock/MockDataTable.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import {
   previewMockRequest,
-  showCodeWindow,
   showHistoryListWindow,
-  showMockTips,
   toEditGroupEnvParams,
   toTestMatchPattern
 } from '@/utils/DynamicUtils'
-import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import MockRequestMenuItem from '@/views/components/mock/MockRequestMenuItem.vue'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { checkProjectEdit } from '@/api/mock/MockProjectApi'
@@ -40,7 +37,7 @@ import { MOCK_LOAD_BALANCE_OPTIONS } from '@/consts/MockConstants'
 import { calcUrl, pasteCurl2Request } from '@/services/mock/CurlProcessService'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import { set } from 'lodash-es'
-import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
+import { useMockMonacoFieldOption } from '@/services/mock/MockEditService'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -157,11 +154,6 @@ const onSelectRequest = request => {
   requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
   startLoading()
 }
-const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({
-  readOnly: false,
-  lineNumbers: 'off',
-  minimap: { enabled: false }
-})
 const editFormOptions = computed(() => {
   return defineFormOptions([{
     labelKey: 'mock.label.requestPath',
@@ -207,41 +199,8 @@ const editFormOptions = computed(() => {
   { ...useFormDisableMock(), style: getStyleGrow(6) },
   { ...useFormDelay(), style: getStyleGrow(4) },
   { ...useContentTypeOption({ clearable: true }), style: getStyleGrow(6) },
+  useMockMonacoFieldOption(currentRequest, { tipKey: 'matchPattern' }),
   {
-    labelKey: 'mock.label.matchPattern',
-    type: 'vue-monaco-editor',
-    prop: 'matchPattern',
-    tooltips: [{
-      tooltip: $i18nBundle('common.label.newWindowEdit'),
-      tooltipIcon: 'EditPen',
-      tooltipFunc: () => showCodeWindow(currentRequest.value?.matchPattern, {
-        language: 'javascript',
-        title: $i18nKey('common.label.commonEdit', 'mock.label.matchPattern'),
-        readOnly: false,
-        change: (value, lang) => {
-          currentRequest.value.matchPattern = value
-          languageRef.value = lang
-        }
-      })
-    }, {
-      tooltip: $i18nBundle('mock.label.clickToShowDetails'),
-      tooltipFunc: () => showMockTips('matchPattern')
-    }],
-    attrs: {
-      class: 'common-resize-vertical',
-      defaultValue: currentRequest.value?.matchPattern,
-      value: currentRequest.value?.matchPattern,
-      'onUpdate:value': (value) => {
-        currentRequest.value.matchPattern = value
-        contentRef.value = value
-        languageRef.value = 'javascript'
-      },
-      language: languageRef.value || 'javascript',
-      theme: useGlobalConfigStore().monacoTheme,
-      height: '100px',
-      options: monacoEditorOptions
-    }
-  }, {
     labelKey: 'mock.label.loadBalanceType',
     prop: 'loadBalancer',
     type: 'select',
@@ -251,7 +210,12 @@ const editFormOptions = computed(() => {
     labelKey: 'mock.label.requestName',
     prop: 'requestName',
     tooltip: $i18nBundle('mock.msg.requestNameTooltip')
-  }, {
+  },
+  useMockMonacoFieldOption(currentRequest, {
+    labelKey: 'mock.label.postProcessor',
+    prop: 'postProcessor',
+    tipKey: 'buildInObjects'
+  }), {
     labelKey: 'common.label.description',
     prop: 'description',
     attrs: {

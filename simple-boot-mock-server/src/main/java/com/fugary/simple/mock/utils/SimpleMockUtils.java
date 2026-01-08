@@ -339,6 +339,23 @@ public class SimpleMockUtils {
     }
 
     /**
+     * 获取后置处理
+     *
+     * @param mockRequest
+     * @param mockData
+     * @return
+     */
+    public static String getPostProcessor(MockRequest mockRequest, MockData mockData) {
+        if (mockData != null && StringUtils.isNotBlank(mockData.getPostProcessor())) {
+            return mockData.getPostProcessor();
+        }
+        if (mockRequest != null && StringUtils.isNotBlank(mockRequest.getPostProcessor())) {
+            return mockRequest.getPostProcessor();
+        }
+        return null;
+    }
+
+    /**
      * 获取上传文件信息
      *
      * @param request

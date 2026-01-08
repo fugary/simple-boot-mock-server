@@ -34,6 +34,7 @@ import { useDefaultPage } from '@/config'
 import { getDataHistoryViewOptions, showCompareWindowNew } from '@/services/mock/NewMockDiffService'
 import { getStatusCode } from '@/services/mock/MockDiffService'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
+import { useMockMonacoFieldOption } from '@/services/mock/MockEditService'
 
 const props = defineProps({
   groupItem: {
@@ -258,7 +259,6 @@ const newOrEdit = async id => {
   showEditWindow.value = true
 }
 const { contentRef, languageRef, monacoEditorOptions, languageSelectOption } = useMonacoEditorOptions({ readOnly: false })
-const { contentRef: patternContentRef, languageRef: patternLanguageRef, monacoEditorOptions: patternMonacoEditorOptions } = useMonacoEditorOptions({ readOnly: false })
 
 const editFormOptions = computed(() => {
   const status = currentDataItem.value?.statusCode || 200
@@ -300,41 +300,8 @@ const editFormOptions = computed(() => {
       activeText: $i18nBundle('common.label.yes'),
       inactiveText: $i18nBundle('common.label.no')
     }
-  }, { ...useFormDelay(), style: getStyleGrow(3) }, {
-    labelKey: 'mock.label.matchPattern',
-    type: 'vue-monaco-editor',
-    prop: 'matchPattern',
-    tooltips: [{
-      tooltip: $i18nBundle('common.label.newWindowEdit'),
-      tooltipIcon: 'EditPen',
-      tooltipFunc: () => showCodeWindow(currentDataItem.value?.matchPattern, {
-        language: 'javascript',
-        title: $i18nKey('common.label.commonEdit', 'mock.label.matchPattern'),
-        readOnly: false,
-        change: (value, lang) => {
-          currentDataItem.value.matchPattern = value
-          patternContentRef.value = lang
-        }
-      })
-    }, {
-      tooltip: $i18nBundle('mock.label.clickToShowDetails'),
-      tooltipFunc: () => showMockTips('matchPattern')
-    }],
-    attrs: {
-      class: 'common-resize-vertical',
-      defaultValue: currentDataItem.value?.matchPattern,
-      value: currentDataItem.value?.matchPattern,
-      'onUpdate:value': (value) => {
-        currentDataItem.value.matchPattern = value
-        patternContentRef.value = value
-        patternLanguageRef.value = 'javascript'
-      },
-      language: patternLanguageRef.value || 'javascript',
-      height: '100px',
-      theme: useGlobalConfigStore().monacoTheme,
-      options: patternMonacoEditorOptions
-    }
-  }, {
+  }, { ...useFormDelay(), style: getStyleGrow(3) },
+  useMockMonacoFieldOption(currentDataItem, { tipKey: 'matchPattern' }), {
     labelKey: 'mock.label.responseHeaders',
     slot: 'headerParams'
   }, {
@@ -386,7 +353,12 @@ const editFormOptions = computed(() => {
       theme: useGlobalConfigStore().monacoTheme,
       options: monacoEditorOptions
     }
-  }, {
+  },
+  useMockMonacoFieldOption(currentDataItem, {
+    labelKey: 'mock.label.postProcessor',
+    prop: 'postProcessor',
+    tipKey: 'buildInObjects'
+  }), {
     labelKey: 'common.label.description',
     prop: 'description',
     attrs: {

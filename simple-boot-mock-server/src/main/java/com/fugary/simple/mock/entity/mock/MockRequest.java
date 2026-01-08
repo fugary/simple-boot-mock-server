@@ -24,6 +24,7 @@ public class MockRequest extends MockBase implements HistoryBase{
     private String description;
     private String mockParams;
     private String loadBalancer;
+    private String postProcessor;
     @Version
     @TableField("data_version")
     private Integer version;
