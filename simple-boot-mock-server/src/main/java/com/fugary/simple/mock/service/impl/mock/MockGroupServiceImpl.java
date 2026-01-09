@@ -144,7 +144,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         if (StringUtils.isNotBlank(requestGroupPath)) {
             mockGroup = getOne(Wrappers.<MockGroup>query()
                     .eq("group_path", requestGroupPath)
-                    .eq(!testRequest,"status", 1));
+                    .eq(!testRequest, "status", 1));
             if (mockGroup != null && (testRequest || !Boolean.TRUE.equals(mockGroup.getDisableMock()))) {
                 if (checker != null && !checker.test(mockGroup)) {
                     return Triple.of(null, null, null);
@@ -266,14 +266,10 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             if (StringUtils.contains(mockData.getContentType(), "javascript")) { // contentType是javascript不能处理
                 return;
             }
-            responseBody = MockJsUtils.processResponseBody(responseBody, requestVo, paramKey -> {
-                String parsedKey = StringUtils.trimToEmpty(paramKey);
-                parsedKey = parsedKey.endsWith(";") ? parsedKey.substring(0, parsedKey.length() - 1) : parsedKey;
-                return scriptEngineProvider.evalStr("mockStringify(" + parsedKey + ")");
-            });
+            responseBody = MockJsUtils.processResponseBody(responseBody, requestVo,
+                    paramKey -> scriptEngineProvider.evalStr("mockStringify(" + MockJsUtils.getJsExpression(paramKey) + ")"));
             if ("javascript".equals(mockData.getResponseFormat())) {
-                responseBody = responseBody.endsWith(";") ? responseBody.substring(0, responseBody.length() - 1) : responseBody;
-                responseBody = scriptEngineProvider.evalStr("mockStringify(" + responseBody + ")");
+                responseBody = scriptEngineProvider.evalStr("mockStringify(" + MockJsUtils.getJsExpression(responseBody) + ")");
             } else {
                 responseBody = scriptEngineProvider.mock(responseBody);
             }
@@ -282,9 +278,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 HttpResponseVo responseVo = new HttpResponseVo();
                 responseVo.setStatusCode(mockData.getStatusCode());
                 responseVo.setBodyStr(responseBody);
-                responseVo.setBody(MockJsUtils.getObjectBody(responseBody));
+                responseVo.setBodyJson(MockJsUtils.getObjectBody(responseBody));
                 MockJsUtils.setCurrentResponseVo(responseVo);
-                responseBody = scriptEngineProvider.evalStr("mockStringify(" + postProcessor + ")");
+                responseBody = scriptEngineProvider.evalStr("mockStringify(" + MockJsUtils.getJsExpression(postProcessor) + ")");
             }
             mockData.setResponseBody(responseBody); // 使用Mockjs来处理响应数据
         }
@@ -381,12 +377,12 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             List<ExportGroupVo> importGroups = mockVo.getGroups();
             List<MockGroup> existGroups = checkGroupsExists(importGroups);
             if (CollectionUtils.isNotEmpty(existGroups)) {
-                if(MockConstants.IMPORT_STRATEGY_ERROR.equals(duplicateStrategy)) {
+                if (MockConstants.IMPORT_STRATEGY_ERROR.equals(duplicateStrategy)) {
                     return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2004);
-                } else if(MockConstants.IMPORT_STRATEGY_SKIP.equals(duplicateStrategy)) {
+                } else if (MockConstants.IMPORT_STRATEGY_SKIP.equals(duplicateStrategy)) {
                     Set<String> existGroupPaths = existGroups.stream().map(MockGroup::getGroupPath).collect(Collectors.toSet());
                     importGroups = importGroups.stream().filter(group -> !existGroupPaths.contains(group.getGroupPath())).collect(Collectors.toList());
-                } else if(MockConstants.IMPORT_STRATEGY_NEW.equals(duplicateStrategy)) {
+                } else if (MockConstants.IMPORT_STRATEGY_NEW.equals(duplicateStrategy)) {
                     Set<String> existGroupPaths = existGroups.stream().map(MockGroup::getGroupPath).collect(Collectors.toSet());
                     importGroups.forEach(group -> {
                         if (existGroupPaths.contains(group.getGroupPath())) {
@@ -452,7 +448,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     request.setGroupId(group.getId());
                     boolean reqSaved = mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(request));
                     importSchemas(request.getSchemas(), request, null);
-                    if (reqSaved && request.getDataList()!=null) {
+                    if (reqSaved && request.getDataList() != null) {
                         request.getDataList().forEach(data -> {
                             data.setId(null);
                             data.setGroupId(group.getId());
@@ -481,6 +477,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
 
     /**
      * 是否已经存在判断
+     *
      * @param groups
      * @return
      */

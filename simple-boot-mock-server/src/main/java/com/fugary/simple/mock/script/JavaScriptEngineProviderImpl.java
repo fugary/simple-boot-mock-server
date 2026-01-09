@@ -130,7 +130,6 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         scriptContext.setBindings(scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         if (requestVo != null) {
             scriptContext.setAttribute("request", processValue(requestVo), ScriptContext.ENGINE_SCOPE);
-            scriptEngine.eval(FAST_MOCK_JS_CONTENT, scriptContext);
         }
         HttpResponseVo responseVo = MockJsUtils.getCurrentResponseVo();
         if (responseVo != null) {
@@ -138,6 +137,7 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         } else {
             scriptContext.removeAttribute("response", ScriptContext.ENGINE_SCOPE);
         }
+        scriptEngine.eval(FAST_MOCK_JS_CONTENT, scriptContext);
         return scriptContext;
     }
 

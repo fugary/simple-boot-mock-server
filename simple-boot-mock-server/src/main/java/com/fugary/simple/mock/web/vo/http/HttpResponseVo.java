@@ -15,7 +15,7 @@ import java.util.Map;
 @Data
 public class HttpResponseVo {
     private Integer statusCode;
-    private Object body;
     private String bodyStr;
+    private String bodyJson;
     private Map<String, String> headers = new HashMap<>();
 }

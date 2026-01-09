@@ -120,20 +120,28 @@ public class MockJsUtils {
      * @param bodyStr
      * @return
      */
-    public static Object getObjectBody(String bodyStr) {
+    public static String getObjectBody(String bodyStr) {
         if(MockJsUtils.isJson(bodyStr)){
-            Object body = HttpRequestUtils.getJsonBody(bodyStr);
-            if (body != null) {
-                return body;
-            }
+            return bodyStr;
         }
         if(MockJsUtils.isXml(bodyStr)){
-            Object body = HttpRequestUtils.getXmlBody(bodyStr);
-            if (body != null) {
-                return body;
-            }
+            return HttpRequestUtils.getXmlJsonBody(bodyStr);
         }
         return null;
+    }
+
+    /**
+     * 去掉js后面的分号成为表达式
+     *
+     * @param expression
+     * @return
+     */
+    public static String getJsExpression(String expression) {
+        expression = StringUtils.trimToEmpty(expression);
+        while (StringUtils.isNotBlank(expression) && expression.endsWith(";")) {
+            expression = expression.substring(0, expression.length() - 1);
+        }
+        return expression;
     }
 
     /**

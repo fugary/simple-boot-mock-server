@@ -23,10 +23,10 @@ public class HttpRequestVo {
     private Map<String, String> headers = new HashMap<>();
     private Map<String, String> parameters = new HashMap<>();
     private Map<String, String> pathParameters = new HashMap<>();
-    private Object body;
     private String headersStr;
     private String parametersStr;
     private String bodyStr;
+    private String bodyJson;
     private String path;
     private String host;
     private String protocol;

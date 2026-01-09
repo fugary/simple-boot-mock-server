@@ -1,4 +1,4 @@
-(function (Mock, request) {
+(function (Mock, request, response) {
     const processMockParam = mockData => {
         if (typeof mockData === 'object') {
             const argObj = {
@@ -30,4 +30,14 @@
         return Mock.__oriMock(mockData, ...args)
     };
     globalThis.Random = Mock.Random;
-})(Mock, request)
+    try {
+        if (request && request.bodyJson) {
+            request.body = JSON.parse(request.bodyJson)
+        }
+        if (response && response.bodyJson) {
+            response.body = JSON.parse(response.bodyJson)
+        }
+    } catch (e) {
+        console.error('Parse body error', e)
+    }
+})(Mock, globalThis.request, globalThis.response)
