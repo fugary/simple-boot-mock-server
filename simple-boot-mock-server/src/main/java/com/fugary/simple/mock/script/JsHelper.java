@@ -12,11 +12,10 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 工具函数
@@ -296,6 +295,20 @@ public class JsHelper {
     }
 
     /**
+     * 将JSON字符串转换成XML格式
+     *
+     * @param json
+     * @return
+     */
+    public String json2Xml(String json, String rootName) {
+        SimpleResult<String> result = JsonUtils.json2Xml(json, rootName);
+        if (result.isSuccess()) {
+            return result.getResultData();
+        }
+        return XmlUtils.toXml(result, rootName);
+    }
+
+    /**
      * 初始化方法
      *
      * @return
@@ -303,6 +316,7 @@ public class JsHelper {
     public String getInitStr() {
         StringBuilder sb = new StringBuilder();
         Set<String> excludeMethods = Set.of("getInitStr", "main");
+        Set<String> hasOptionalMethods = Set.of("json2Xml");
         for (Method method : getClass().getDeclaredMethods()) {
             if (!excludeMethods.contains(method.getName())) {
                 sb.append("if(!globalThis.").append(method.getName()).append("){\n")
@@ -314,6 +328,13 @@ public class JsHelper {
                             .append("\t\tpassword = (typeof password === 'string') ? password : JSON.stringify(password);\n")
                             .append("\t\treturn JsHelper.").append(method.getName())
                             .append("(input, password, config || {});\n")
+                            .append("\t}\n");
+                } else if(hasOptionalMethods.contains(method.getName())) {
+                    String paramsStr = Arrays.stream(method.getParameters()).map(Parameter::getName)
+                            .collect(Collectors.joining(","));
+                    sb.append("(").append(paramsStr).append(") => {\n")
+                            .append("\t\treturn JsHelper.").append(method.getName())
+                            .append("(").append(paramsStr).append(");\n")
                             .append("\t}\n");
                 } else {
                     sb.append("JsHelper.").append(method.getName()).append(";\n");

@@ -2,9 +2,11 @@ package com.fugary.simple.mock.utils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,5 +95,26 @@ public class JsonUtils {
             log.error("将Json转换成对象出错", e);
         }
         return result;
+    }
+
+    /**
+     * json转xml格式
+     *
+     * @param json
+     * @return
+     */
+    public static SimpleResult<String> json2Xml(String json, String rootName) {
+        String resultStr = json;
+        if (StringUtils.isNotBlank(json) && MockJsUtils.isJson(json)) {
+            JsonNode jsonNode;
+            try {
+                jsonNode = getMapper().readTree(json);
+            } catch (JsonProcessingException e) {
+                log.error("XML解析失败", e);
+                return SimpleResultUtils.createError(e.getOriginalMessage());
+            }
+            resultStr = XmlUtils.toXml(jsonNode, rootName);
+        }
+        return SimpleResultUtils.createSimpleResult(resultStr);
     }
 }

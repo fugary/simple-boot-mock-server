@@ -108,6 +108,14 @@ const clearRequireCache: () => void
  * @returns result JSON格式数据
  */
 const xml2Json: (xmlStr: string) => string
+
+/**
+ * 将JSON字符串转换成XML格式
+ * @param jsonStr JSON字符串
+ * @param rootName 根节点名称
+ * @returns result XML格式数据
+ */
+const json2Xml: (jsonStr: string, rootName?: string) => string
 /**
  * 将十六进制字符串解码普通字符串
  * @param hex 十六进制字符串

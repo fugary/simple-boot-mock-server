@@ -45,6 +45,22 @@ public class XmlUtils {
     }
 
     /**
+     * 对象转xml
+     *
+     * @param input
+     * @return
+     */
+    public static String toXml(Object input, String rootName) {
+        String result = StringUtils.EMPTY;
+        try {
+            result = getMapper().writer().withRootName(rootName).writeValueAsString(input);
+        } catch (Exception e) {
+            log.error("输出xml错误", e);
+        }
+        return result;
+    }
+
+    /**
      * xml转对象
      *
      * @param input

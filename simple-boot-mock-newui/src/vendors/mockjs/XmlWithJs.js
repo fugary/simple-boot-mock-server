@@ -62,6 +62,9 @@ export const initXmlWithJs = (monaco) => {
     label: 'xml2Json()',
     detail: '将XML字符串转换成JSON格式'
   }, {
+    label: 'json2Xml()',
+    detail: '将JSON字符串转换成XML格式'
+  }, {
     label: 'decodeHex()',
     detail: '将十六进制字符串解码为普通字符串'
   }, {
