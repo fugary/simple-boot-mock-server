@@ -155,22 +155,35 @@ public class HttpRequestUtils {
         }
 		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON)
 				|| MockJsUtils.isJson(requestVo.getBodyStr())){
-			requestVo.setBodyJson(requestVo.getBodyStr());
+			Object body = HttpRequestUtils.getJsonBody(requestVo.getBodyStr());
+			if (body != null) {
+				requestVo.setBody(body);
+			}
 		}
 		if(isCompatibleWith(mediaTypes, MediaType.APPLICATION_XML)
 				|| MockJsUtils.isXml(requestVo.getBodyStr())){
-			requestVo.setBodyJson(HttpRequestUtils.getXmlJsonBody(requestVo.getBodyStr()));
+			Object body = HttpRequestUtils.getXmlBody(requestVo.getBodyStr());
+			if (body != null) {
+				requestVo.setBody(body);
+			}
 		}
 		return requestVo;
 	}
 
-	public static String getXmlJsonBody(String bodyStr) {
+	public static Object getJsonBody(String bodyStr) {
+		if (MockJsUtils.isJson(bodyStr)) {
+			return JsonUtils.fromJson(bodyStr, Map.class);
+		}
+		return null;
+	}
+
+	public static Object getXmlBody(String bodyStr) {
 		if (MockJsUtils.isXml(bodyStr)) {
 			SimpleResult<String> result = XmlUtils.xml2Json(bodyStr);
             if (result.isSuccess()) {
-                return result.getResultData();
+                return JsonUtils.fromJson(result.getResultData(), Map.class);
             }
-			return JsonUtils.toJson(result);
+			return XmlUtils.fromXml(bodyStr, Map.class);
 		}
 		return null;
 	}

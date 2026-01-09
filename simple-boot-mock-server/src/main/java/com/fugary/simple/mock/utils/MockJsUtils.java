@@ -120,12 +120,18 @@ public class MockJsUtils {
      * @param bodyStr
      * @return
      */
-    public static String getObjectBody(String bodyStr) {
+    public static Object getObjectBody(String bodyStr) {
         if(MockJsUtils.isJson(bodyStr)){
-            return bodyStr;
+            Object body = HttpRequestUtils.getJsonBody(bodyStr);
+            if (body != null) {
+                return body;
+            }
         }
         if(MockJsUtils.isXml(bodyStr)){
-            return HttpRequestUtils.getXmlJsonBody(bodyStr);
+            Object body = HttpRequestUtils.getXmlBody(bodyStr);
+            if (body != null) {
+                return body;
+            }
         }
         return null;
     }

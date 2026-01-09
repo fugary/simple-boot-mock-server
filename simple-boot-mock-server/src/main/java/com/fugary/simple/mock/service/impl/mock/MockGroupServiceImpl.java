@@ -278,7 +278,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 HttpResponseVo responseVo = new HttpResponseVo();
                 responseVo.setStatusCode(mockData.getStatusCode());
                 responseVo.setBodyStr(responseBody);
-                responseVo.setBodyJson(MockJsUtils.getObjectBody(responseBody));
+                responseVo.setBody(MockJsUtils.getObjectBody(responseBody));
                 MockJsUtils.setCurrentResponseVo(responseVo);
                 responseBody = scriptEngineProvider.evalStr("mockStringify(" + MockJsUtils.getJsExpression(postProcessor) + ")");
             }

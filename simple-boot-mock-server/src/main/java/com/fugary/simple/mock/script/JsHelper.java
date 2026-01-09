@@ -309,6 +309,16 @@ public class JsHelper {
     }
 
     /**
+     * java对象转json数据
+     *
+     * @param java
+     * @return
+     */
+    public String java2Json(Object java) {
+        return JsonUtils.toJson(java);
+    }
+
+    /**
      * 初始化方法
      *
      * @return

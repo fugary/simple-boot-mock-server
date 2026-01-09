@@ -14,8 +14,9 @@ import java.util.Map;
 @Slf4j
 @Data
 public class HttpResponseVo {
+    private boolean __mock__res;
     private Integer statusCode;
+    private Object body;
     private String bodyStr;
-    private String bodyJson;
     private Map<String, String> headers = new HashMap<>();
 }
