@@ -8,6 +8,7 @@ import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockUser;
+import com.fugary.simple.mock.push.MockPostScriptProcessor;
 import com.fugary.simple.mock.push.MockPushProcessor;
 import com.fugary.simple.mock.push.MockSsePushProcessor;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
@@ -79,6 +80,9 @@ public class MockController {
     @Autowired
     private MockSsePushProcessor mockSsePushProcessor;
 
+    @Autowired
+    private MockPostScriptProcessor mockPostScriptProcessor;
+
     @RequestMapping("/**")
     public Object doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String requestId = request.getHeader(MockConstants.MOCK_REQUEST_ID_HEADER);
@@ -147,6 +151,7 @@ public class MockController {
             }
             // 普通代理请求
             responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
+            responseEntity = mockPostScriptProcessor.process(mockRequest, responseEntity);
             response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
             SimpleLogUtils.addResponseData(responseEntity);
         }

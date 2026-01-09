@@ -8,6 +8,7 @@ import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.*;
 import com.fugary.simple.mock.imports.MockGroupImporter;
 import com.fugary.simple.mock.mapper.mock.MockGroupMapper;
+import com.fugary.simple.mock.push.MockPostScriptProcessor;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockGroupService;
@@ -21,7 +22,6 @@ import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.*;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
-import com.fugary.simple.mock.web.vo.http.HttpResponseVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
 import lombok.Getter;
 import lombok.Setter;
@@ -75,6 +75,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
 
     @Autowired
     private List<MockGroupImporter> mockGroupImporters = new ArrayList<>();
+
+    @Autowired
+    private MockPostScriptProcessor mockPostScriptProcessor;
 
     @Setter
     @Getter
@@ -273,15 +276,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             } else {
                 responseBody = scriptEngineProvider.mock(responseBody);
             }
-            String postProcessor = SimpleMockUtils.getPostProcessor(mockRequest, mockData);
-            if (StringUtils.isNotBlank(postProcessor)) {
-                HttpResponseVo responseVo = new HttpResponseVo();
-                responseVo.setStatusCode(mockData.getStatusCode());
-                responseVo.setBodyStr(responseBody);
-                responseVo.setBody(MockJsUtils.getObjectBody(responseBody));
-                MockJsUtils.setCurrentResponseVo(responseVo);
-                responseBody = scriptEngineProvider.evalStr("mockStringify(" + MockJsUtils.getJsExpression(postProcessor) + ")");
-            }
+            responseBody = mockPostScriptProcessor.process(mockRequest, mockData, responseBody);
             mockData.setResponseBody(responseBody); // 使用Mockjs来处理响应数据
         }
     }
