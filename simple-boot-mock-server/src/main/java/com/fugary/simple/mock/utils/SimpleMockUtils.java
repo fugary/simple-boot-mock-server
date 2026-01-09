@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.utils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.*;
@@ -10,6 +11,7 @@ import com.fugary.simple.mock.web.vo.NameValueObj;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
 import com.fugary.simple.mock.web.vo.export.ExportMockVo;
+import com.fugary.simple.mock.web.vo.http.MockHeaderVo;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -167,9 +169,10 @@ public class SimpleMockUtils {
      */
     public static HttpHeaders calcHeaders(String headers) {
         if (StringUtils.isNotBlank(headers)) {
-            List<Map<String, String>> headerList = JsonUtils.fromJson(headers, List.class);
+            List<MockHeaderVo> headerList = JsonUtils.fromJson(headers, new TypeReference<>() {});
             HttpHeaders httpHeaders = new HttpHeaders();
-            headerList.stream().forEach(map -> httpHeaders.add(map.get("name"), map.get("value")));
+            headerList.stream().filter(MockHeaderVo::isEnabled)
+                    .forEach(headerVo -> httpHeaders.set(headerVo.getName(), headerVo.getValue()));
             return httpHeaders;
         }
         return new HttpHeaders();
