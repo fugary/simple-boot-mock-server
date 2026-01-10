@@ -123,8 +123,8 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
     }
 
     protected Pair<String, HttpResponseVo> executePostProcessor(String postProcessor) {
-        StringBuilder sb = new StringBuilder("(function(){\n");
-        sb.append("const bodyStr = mockStringify(");
+        StringBuilder sb = new StringBuilder("(async function(){\n");
+        sb.append("const bodyStr = await mockStringify(");
         sb.append(MockJsUtils.getJsExpression(postProcessor));
         sb.append(");\n");
         sb.append("const responseStr = mockStringify(response);");
