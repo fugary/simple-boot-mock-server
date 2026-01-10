@@ -78,8 +78,14 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
             mockData.setStatusCode(httpResponse.getStatusCode());
             if (MapUtils.isNotEmpty(httpResponse.getHeaders())) {
                 String headers = StringUtils.defaultIfBlank(mockData.getHeaders(), "[]");
-                List<MockHeaderVo> headerList = JsonUtils.fromJson(headers, new TypeReference<>() {});
+                List<MockHeaderVo> headerList = JsonUtils.fromJson(headers, new TypeReference<>() {
+                });
                 httpResponse.getHeaders().forEach((k, v) -> {
+                    if (StringUtils.equalsIgnoreCase(HttpHeaders.CONTENT_TYPE, k)) {
+                        mockData.setContentType(v);
+                    }
+                    // remove exists header
+                    headerList.removeIf(headerVo -> StringUtils.equalsIgnoreCase(headerVo.getName(), k));
                     headerList.add(new MockHeaderVo(true, k, v));
                 });
                 mockData.setHeaders(JsonUtils.toJson(headerList));
@@ -87,11 +93,13 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
         }
     }
 
-    protected ResponseEntity<?> overrideResponse(ResponseEntity<?> responseEntity, byte[] bodyBytes, HttpResponseVo httpResponse) {
+    protected ResponseEntity<?> overrideResponse(ResponseEntity<?> responseEntity, byte[] bodyBytes,
+            HttpResponseVo httpResponse) {
         if (httpResponse != null) {
-            HttpHeaders headers = responseEntity.getHeaders();
+            HttpHeaders headers = new HttpHeaders();
+            headers.addAll(responseEntity.getHeaders()); // copy old headers
             if (MapUtils.isNotEmpty(httpResponse.getHeaders())) {
-                httpResponse.getHeaders().forEach(headers::add);
+                httpResponse.getHeaders().forEach(headers::set); // override headers
             }
             return ResponseEntity
                     .status(httpResponse.getStatusCode())
