@@ -357,7 +357,7 @@ const editFormOptions = computed(() => {
   useMockMonacoFieldOption(currentDataItem, {
     labelKey: 'mock.label.postProcessor',
     prop: 'postProcessor',
-    tipKey: 'buildInObjects'
+    tipKey: 'postProcessor'
   }), {
     labelKey: 'common.label.description',
     prop: 'description',

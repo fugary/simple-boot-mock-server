@@ -2,23 +2,23 @@
 interface RequestVoType {
     /** request请求头信息 */
     headers: {
-        [key:string] :string
+        [key: string]: string
     },
     /** request请求参数和路径参数合并 */
     params: {
-        [key:string] :string
+        [key: string]: string
     },
     /** request请求参数 */
     parameters: {
-        [key:string] :string
+        [key: string]: string
     },
     /** request路径参数 */
     pathParameters: {
-        [key:string] :string
+        [key: string]: string
     },
     /** request请求体对象 */
     body: {
-        [key:string] :any
+        [key: string]: any
     },
     /** request请求体字符串 */
     bodyStr: string
@@ -30,10 +30,14 @@ interface ResponseVoType {
     statusCode: number,
     /** response请求体对象 */
     body: {
-        [key:string] :any
+        [key: string]: any
     },
     /** response请求体字符串 */
-    bodyStr: string
+    bodyStr: string,
+    /** response头信息 */
+    headers: {
+        [key: string]: string
+    }
 }
 
 interface RSAOptionsType {
@@ -86,6 +90,7 @@ const request: RequestVoType
  * response.statusCode——响应状态码<br>
  * response.body——body内容对象<br>
  * response.bodyStr——body内容字符串
+ * response.headers——response头信息
  */
 const response: ResponseVoType
 

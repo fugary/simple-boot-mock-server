@@ -22,7 +22,8 @@ const requestFields = [
 const responseFields = [
   { field: 'response.statusCode', desc: '状态码', descEn: 'Status Code' },
   { field: 'response.body', desc: 'body内容对象', descEn: 'Body content object' },
-  { field: 'response.bodyStr', desc: 'body内容字符串', descEn: 'Body content as a string' }
+  { field: 'response.bodyStr', desc: 'body内容字符串', descEn: 'Body content as a string' },
+  { field: 'response.headers', desc: '响应头信息对象', descEn: 'Response header information object' }
 ]
 const internalFunctions = [
   { method: 'Mock.mock(data)', desc: 'MockJS支持', descEn: 'MockJS support' },
@@ -240,6 +241,32 @@ Mock.mock({
 `.trim()
   }]
 }, {
+  name: 'postProcessor',
+  label: $i18nBundle('mock.label.postProcessor'),
+  examples: [{
+    label: 'Transform body XML to JSON',
+    content: `
+(function () {
+  response.statusCode = 200; // modify status code
+  response.headers['Content-Type'] = 'application/json'; // modify content type
+  return xml2Json(response.bodyStr);
+}())
+`.trim()
+  }, {
+    label: 'Override response body',
+    content: `
+(async function () {
+    const res = await fetch('https://httpbin.org/post', {
+        method: 'post',
+        body: JSON.stringify({ username: "example" })
+    })
+    const json = await res.json();
+    response.headers['Content-Type'] = 'application/json';
+    return json;
+}())
+`.trim()
+  }]
+}, {
   name: 'fetch',
   label: $i18nBundle('mock.label.fetchAndAsync'),
   examples: [{
@@ -248,7 +275,7 @@ Mock.mock({
 (async function () {
     const response = await fetch('https://httpbin.org/put', {
         method: 'put',
-        body: JSON.stringify({ username: "example" }),
+        body: JSON.stringify({ username: "example" })
     })
     const json = await response.json();
     return json;
