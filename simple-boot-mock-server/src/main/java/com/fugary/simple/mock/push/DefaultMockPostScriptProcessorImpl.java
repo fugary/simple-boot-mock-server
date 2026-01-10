@@ -136,6 +136,8 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
         if (mockRes instanceof SimpleResult) {
             responseBody = JsonUtils.toJson(mockRes);
         } else if (mockRes instanceof Map) {
+            String json = JsonUtils.toJson(mockRes);
+            mockRes = JsonUtils.fromJson(json, Map.class);
             responseBody = ((Map<String, String>) mockRes).get("bodyStr");
             responseStr = ((Map<String, String>) mockRes).get("responseStr");
         }
