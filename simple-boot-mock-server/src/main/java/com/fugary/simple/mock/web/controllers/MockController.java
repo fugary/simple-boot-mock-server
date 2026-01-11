@@ -126,7 +126,8 @@ public class MockController {
                 response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
                 response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
                 MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
-                return MockEventStreamUtils.processSseRequest(request, response, data, eventStreamThreadPool);
+                return MockEventStreamUtils.processSseRequest(request, response, data, eventStreamThreadPool,
+                        mockPostScriptProcessor, mockRequest);
             }
             response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
             Pair<String, Object> bodyPair = SimpleMockUtils.getMockResponseBody(data, contentType);
@@ -147,7 +148,8 @@ public class MockController {
                 response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
                 response.setCharacterEncoding(StandardCharsets.UTF_8.name());
                 MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
-                return mockSsePushProcessor.processSseProxy(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));
+                return mockSsePushProcessor.processSseProxy(
+                        SimpleMockUtils.toMockParams(mockGroup, mockRequest, request), mockRequest, null);
             }
             // 普通代理请求
             responseEntity = mockPushProcessor.doPush(SimpleMockUtils.toMockParams(mockGroup, mockRequest, request));

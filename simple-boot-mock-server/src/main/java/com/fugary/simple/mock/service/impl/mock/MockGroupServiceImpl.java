@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
@@ -276,7 +277,10 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             } else {
                 responseBody = scriptEngineProvider.mock(responseBody);
             }
-            responseBody = mockPostScriptProcessor.process(mockRequest, mockData, responseBody);
+            String contentType = SimpleMockUtils.calcContentType(null, mockRequest, mockData);
+            if (!StringUtils.contains(contentType, MediaType.TEXT_EVENT_STREAM_VALUE)) {
+                responseBody = mockPostScriptProcessor.process(mockRequest, mockData, responseBody);
+            }
             mockData.setResponseBody(responseBody); // 使用Mockjs来处理响应数据
         }
     }

@@ -20,6 +20,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
+import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.push.MockPostScriptProcessor;
+
 /**
  * Utility for SSE.
  */
@@ -27,7 +30,8 @@ import java.util.concurrent.ExecutorService;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MockEventStreamUtils {
 
-    public static SseEmitter processSseRequest(HttpServletRequest request, HttpServletResponse response, MockData data, ExecutorService executorService) {
+    public static SseEmitter processSseRequest(HttpServletRequest request, HttpServletResponse response, MockData data,
+            ExecutorService executorService, MockPostScriptProcessor postProcessor, MockRequest mockRequest) {
         SseEmitter sseEmitter = new SseEmitter(0L); // Infinite timeout
         HttpRequestVo requestVo = HttpRequestUtils.parseRequestVo(request);
         MockJsUtils.setCurrentRequestVo(requestVo); // Set for async thread if using standard context, but Sse is async
@@ -35,22 +39,26 @@ public class MockEventStreamUtils {
         CompletableFuture.runAsync(() -> {
             try {
                 MockJsUtils.setCurrentRequestVo(requestVo); // Need to set in the new thread
-                Pair<String, Object> mockResponse = SimpleMockUtils.getMockResponseBody(data, MediaType.TEXT_EVENT_STREAM_VALUE);
+                Pair<String, Object> mockResponse = SimpleMockUtils.getMockResponseBody(data,
+                        MediaType.TEXT_EVENT_STREAM_VALUE);
                 Object body = mockResponse.getValue();
                 if (body instanceof String && MockJsUtils.isJson((String) body)) {
                     body = JsonUtils.fromJson((String) body, Object.class);
                 }
                 Object streamField;
-                if(body instanceof Map && (streamField = ((Map<?, ?>) body).get("stream")) instanceof Collection) {
+                if (body instanceof Map && (streamField = ((Map<?, ?>) body).get("stream")) instanceof Collection) {
                     body = streamField;
                 }
                 if (body instanceof Collection) {
                     for (Object item : (Collection<?>) body) {
+                        item = postProcessor.processSse(mockRequest, data, item);
                         sendSseItem(sseEmitter, item);
                     }
                 } else if (body instanceof Map) {
+                    body = postProcessor.processSse(mockRequest, data, body);
                     sendSseItem(sseEmitter, body);
                 } else {
+                    body = postProcessor.processSse(mockRequest, data, body);
                     sseEmitter.send(body);
                 }
                 sseEmitter.complete();

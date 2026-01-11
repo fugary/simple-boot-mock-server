@@ -29,4 +29,14 @@ public interface MockPostScriptProcessor {
      */
     ResponseEntity<?> process(MockRequest mockRequest, ResponseEntity<?> responseEntity);
 
+    /**
+     * 后置处理脚本（SSE）
+     *
+     * @param mockRequest
+     * @param mockData
+     * @param sseItem
+     * @return
+     */
+    Object processSse(MockRequest mockRequest, MockData mockData, Object sseItem);
+
 }

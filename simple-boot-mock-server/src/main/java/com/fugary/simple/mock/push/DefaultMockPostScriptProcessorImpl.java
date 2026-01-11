@@ -143,4 +143,40 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
         }
         return Pair.of(responseBody, checkResponseVo(responseStr));
     }
+
+    @Override
+    public Object processSse(MockRequest mockRequest, MockData mockData, Object sseItem) {
+        String postProcessor = SimpleMockUtils.getPostProcessor(mockRequest, mockData);
+        if (StringUtils.isNotBlank(postProcessor)) {
+            HttpResponseVo responseVo = new HttpResponseVo();
+            responseVo.setBody(sseItem);
+            if (sseItem instanceof String) {
+                responseVo.setBodyStr((String) sseItem);
+            } else {
+                responseVo.setBodyStr(JsonUtils.toJson(sseItem));
+            }
+            MockJsUtils.setCurrentResponseVo(responseVo);
+            try {
+                Pair<String, HttpResponseVo> resultPair = executePostProcessor(postProcessor);
+                Object resultItem = sseItem;
+                if (resultPair.getKey() != null) {
+                    String bodyStr = resultPair.getKey();
+                    if (StringUtils.isNotBlank(bodyStr)) {
+                        if (sseItem instanceof Map || MockJsUtils.isJson(bodyStr)) {
+                            resultItem = JsonUtils.fromJson(bodyStr, Map.class); // Assuming Map for structured events
+                            if (resultItem == null) {
+                                resultItem = bodyStr; // Fallback
+                            }
+                        } else {
+                            resultItem = bodyStr;
+                        }
+                    }
+                }
+                return resultItem;
+            } finally {
+                MockJsUtils.removeCurrentResponseVo();
+            }
+        }
+        return sseItem;
+    }
 }
