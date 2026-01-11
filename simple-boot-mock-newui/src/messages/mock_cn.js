@@ -144,3 +144,5 @@ mock.msg.disableMockTooltip = '暂停Mock请求或数据，暂停后如果配置
 mock.msg.previewStreamConfirm = '从Content-Type头信息判断此响应为数据流，响应下载为文件还是以文本方式预览？'
 mock.msg.recoverFromHistory = '是否要以此版本数据作为最新数据？'
 mock.msg.responseCharsetTooltip = '默认字符集是UTF-8, "none"表示没有响应不带字符集'
+mock.msg.matchPatternDescription = '匹配规则是指在相同URL请求方法下，根据给定的JavaScript表达式区分不同请求给出不同的响应，用于匹配Mock请求和Mock数据。'
+mock.msg.postProcessorDescription = '后置处理是指在得到响应数据之后做二次处理，可以使用request和response数据，可以修改response的状态码或头信息，返回值为新的响应数据，通常为response.body。'

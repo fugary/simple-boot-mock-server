@@ -220,6 +220,8 @@ Mock.mock({
 }, {
   name: 'matchPattern',
   label: $i18nBundle('mock.label.matchPattern'),
+  tooltip: $i18nBundle('mock.msg.matchPatternTooltip'),
+  description: $i18nBundle('mock.msg.matchPatternDescription'),
   examples: [{
     label: 'Request parameters and headers matching',
     language: 'javascript',
@@ -243,6 +245,7 @@ Mock.mock({
 }, {
   name: 'postProcessor',
   label: $i18nBundle('mock.label.postProcessor'),
+  description: $i18nBundle('mock.msg.postProcessorDescription'),
   examples: [{
     label: 'Transform body XML to JSON',
     content: `
@@ -360,7 +363,21 @@ const calcHeight = (text) => {
       >
         <template #label>
           {{ exampleGroup.label }}
+          <el-link
+            v-if="exampleGroup.tooltip"
+            v-common-tooltip="exampleGroup.tooltip"
+            underline="never"
+            type="primary"
+            class="margin-left1"
+          >
+            <common-icon
+              icon="QuestionFilled"
+            />
+          </el-link>
         </template>
+        <p v-if="exampleGroup.description">
+          <strong>{{ exampleGroup.description }}</strong>
+        </p>
         <template
           v-for="(example,index) in exampleGroup.examples"
           :key="`${groupIndex}-${index}`"
