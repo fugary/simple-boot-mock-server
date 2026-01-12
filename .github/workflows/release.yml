@@ -33,8 +33,8 @@ jobs:
       - name: Build Frontend
         working-directory: simple-boot-mock-newui
         run: |
-          npm install
-          npm run build
+          npm ci
+          npx vite build
 
       - name: Copy Frontend to Backend
         run: |
