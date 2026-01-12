@@ -30,12 +30,11 @@ jobs:
 
       - name: Build Frontend
         working-directory: simple-boot-mock-newui
-        env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
         run: |
-          npm install -g vite
-          npm install --legacy-peer-deps --no-audit --no-fund
-          vite build
+          echo "Building frontend in: $(pwd)"
+          ls -F
+          npm ci --legacy-peer-deps --no-audit --no-fund
+          npm run build
 
       - name: Copy Frontend to Backend
         run: |
