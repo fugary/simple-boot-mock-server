@@ -27,6 +27,7 @@ export const getRequestHistoryViewOptions = (request, history) => {
     { labelKey: 'mock.label.matchPattern', prop: 'matchPattern' },
     { labelKey: 'mock.label.loadBalanceType', prop: () => request.loadBalancer ? getLoadBalancerLabel(request) : '' },
     { labelKey: 'mock.label.requestName', prop: 'requestName' },
+    { labelKey: 'mock.label.postProcessor', prop: 'postProcessor' },
     { labelKey: 'common.label.description', prop: 'description' },
     { label: $i18nKey('common.label.commonTest', 'mock.label.queryParams'), prop: () => formatJsonStr(request.mockParams) }
   ]
@@ -51,6 +52,7 @@ export const getDataHistoryViewOptions = (data, history) => {
     { label: 'Charset', prop: 'defaultCharset' },
     { labelKey: 'mock.label.dataFormat', prop: 'responseFormat' },
     { labelKey: 'mock.label.mockResponseBody', prop: 'responseBody' },
+    { labelKey: 'mock.label.postProcessor', prop: 'postProcessor' },
     { labelKey: 'common.label.description', prop: 'description' },
     { label: $i18nKey('common.label.commonTest', 'mock.label.queryParams'), prop: () => formatJsonStr(data.mockParams) }
   ]
