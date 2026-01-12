@@ -27,11 +27,32 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Build Frontend
         working-directory: simple-boot-mock-newui
         run: |
-          npm install
+          echo "node $(node -v) / npm $(npm -v)"
+          echo "NODE_ENV=${NODE_ENV}"
+
+          # Try reproducible install first
+          if npm ci --prefer-offline --no-audit --no-fund; then
+            echo "npm ci succeeded"
+          else
+            echo "npm ci failed. printing npm debug log (if exists) and retrying with npm install"
+            ls -l /home/runner/.npm/_logs || true
+            test -f /home/runner/.npm/_logs/*debug-0.log && sed -n '1,400p' /home/runner/.npm/_logs/*debug-0.log || true
+            # Retry once with npm install
+            if npm install --no-audit --no-fund; then
+              echo "npm install succeeded on retry"
+            else
+              echo "Both npm ci and npm install failed. Consider upgrading npm and inspect logs above."
+              npm -v
+              ls -la node_modules/.bin || true
+              exit 1
+            fi
+          fi
+
           ls -l node_modules/.bin/vite || echo "Vite not found in .bin"
           npx vite build
 
