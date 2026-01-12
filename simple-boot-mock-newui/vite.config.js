@@ -4,13 +4,9 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import eslint from 'vite-plugin-eslint'
-import { visualizer } from 'rollup-plugin-visualizer'
 import packageJson from './package.json'
 
-const optionalPlugins = [{
-  plugin: visualizer({ open: true }),
-  enabled: false
-}].filter(p => p.enabled).map(p => p.plugin)
+const optionalPlugins = [].filter(p => p.enabled).map(p => p.plugin)
 
 const JS_FILE_NAMES = 'js/[name]-[hash].js'
 const CSS_FILE_NAMES = 'css/[name]-[hash].css'
@@ -41,7 +37,7 @@ export default ({ mode }) => {
         output: {
           chunkFileNames: JS_FILE_NAMES, // 引入文件名的名称
           entryFileNames: JS_FILE_NAMES, // 包的入口文件名称
-          assetFileNames(assetInfo) {
+          assetFileNames (assetInfo) {
             if (assetInfo.name?.endsWith('.css')) { // CSS文件
               return CSS_FILE_NAMES
             } else if (IMG_EXT_LIST.some((ext) => assetInfo.name?.endsWith(ext))) { // 图片
@@ -49,7 +45,7 @@ export default ({ mode }) => {
             }
             return 'assets/[name]-[hash].[ext]' // 其他资源
           },
-          manualChunks(id) {
+          manualChunks (id) {
             if (id.includes('element-plus')) {
               return 'elp'
             }
