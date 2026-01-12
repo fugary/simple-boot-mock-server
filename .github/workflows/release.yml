@@ -26,14 +26,15 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Build Frontend
         working-directory: simple-boot-mock-newui
         run: |
-          npm install -g npm@latest
+          echo "Current directory: $(pwd)"
+          ls -F
           npm install --legacy-peer-deps --no-audit --no-fund
-          ./node_modules/.bin/vite build
+          npx vite build
 
       - name: Copy Frontend to Backend
         run: |
