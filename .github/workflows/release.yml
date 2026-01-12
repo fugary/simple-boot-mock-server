@@ -65,28 +65,70 @@ jobs:
         run: |
           git fetch --tags --force
           CURRENT_TAG=${{ github.event.inputs.tag_name || github.ref_name }}
-          # Find the previous tag
           PREVIOUS_TAG=$(git tag --sort=-v:refname | grep -A 1 "^${CURRENT_TAG}$" | tail -n 1)
+          REPO_URL="https://github.com/fugary/simple-boot-mock-server"
           
-          echo "## What's Changed" > changelog.txt
           if [ -z "$PREVIOUS_TAG" ] || [ "$PREVIOUS_TAG" == "$CURRENT_TAG" ]; then
             REVISION_RANGE="-n 20"
           else
             REVISION_RANGE="$PREVIOUS_TAG..$CURRENT_TAG"
           fi
 
-          # Get logs, filter by author and message patterns, de-duplicate by subject (keep oldest), and format
-          git log --reverse $REVISION_RANGE --pretty=format:"%an|%s|%H" | \
-          grep -v "github-actions\[bot\]" | \
-          grep -vE "^[^|]+\|(version:|docs: add github release automation workflow|mvn versions:set|Updating simple-boot-mock-newui version)" | \
-          awk -F'|' '!seen[$2]++ {
-            count++;
-            print count ". [" $2 "](https://github.com/fugary/simple-boot-mock-server/commit/" $3 ")"
-          }' >> changelog.txt
+          # Function to get and filter logs
+          get_logs() {
+            local pattern=$1
+            local exclude_pattern="github-actions\[bot\]"
+            local exclude_msgs="(version:|docs: add github release automation workflow|mvn versions:set|Updating simple-boot-mock-newui version)"
+            
+            git log --reverse $REVISION_RANGE --pretty=format:"%an|%s|%H" | \
+            grep -v "$exclude_pattern" | \
+            grep -vE "^[^|]+\|$exclude_msgs" | \
+            while IFS='|' read -r author subject hash; do
+                # Filter out commits that only modify .github/ or release.yml
+                local files=$(git diff-tree --no-commit-id --name-only -r "$hash")
+                local non_ignored_count=$(echo "$files" | grep -vE "^(\.github/|release\.yml)" | wc -l)
+                if [ "$non_ignored_count" -gt 0 ]; then
+                    if [ "$pattern" == "other" ]; then
+                        if [[ ! "$subject" =~ ^(feat|fix|bug|opt|dep|test): ]]; then
+                            echo "$subject|$hash"
+                        fi
+                    else
+                        if [[ "$subject" =~ ^($pattern): ]]; then
+                            echo "$subject|$hash"
+                        fi
+                    fi
+                fi
+            done | awk -F'|' '!seen[$1]++'
+          }
+
+          format_list() {
+            local title=$1
+            local data=$2
+            if [ -n "$data" ]; then
+              echo "### $title" >> changelog.txt
+              echo "$data" | awk -F'|' -v url="$REPO_URL" '{print (NR ". [" $1 "](" url "/commit/" $2 ")")}' >> changelog.txt
+              echo "" >> changelog.txt
+            fi
+          }
+
+          echo "## What's Changed" > changelog.txt
           
-          echo "" >> changelog.txt
+          FEATS=$(get_logs "feat")
+          FIXES=$(get_logs "fix|bug")
+          OPTS=$(get_logs "opt")
+          DEPS=$(get_logs "dep")
+          TESTS=$(get_logs "test")
+          OTHERS=$(get_logs "other")
+
+          format_list "🚀 Features" "$FEATS"
+          format_list "🐛 Bug Fixes" "$FIXES"
+          format_list "🧪 Tests" "$TESTS"
+          format_list "⚡ Optimizations" "$OPTS"
+          format_list "📦 Dependencies" "$DEPS"
+          format_list "📝 Other Changes" "$OTHERS"
+          
           if [ -n "$PREVIOUS_TAG" ] && [ "$PREVIOUS_TAG" != "$CURRENT_TAG" ]; then
-            echo "**Full Changelog**: https://github.com/fugary/simple-boot-mock-server/compare/$PREVIOUS_TAG...$CURRENT_TAG" >> changelog.txt
+            echo "**Full Changelog**: $REPO_URL/compare/$PREVIOUS_TAG...$CURRENT_TAG" >> changelog.txt
           fi
           
           {
