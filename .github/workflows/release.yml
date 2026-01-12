@@ -75,11 +75,13 @@ jobs:
             REVISION_RANGE="$PREVIOUS_TAG..$CURRENT_TAG"
           fi
 
-          # Get logs, de-duplicate by subject (keep oldest), and format as numbered list with links
-          git log --reverse $REVISION_RANGE --pretty=format:"%s|%H" | \
-          awk -F'|' '!seen[$1]++ {
+          # Get logs, filter by author and message patterns, de-duplicate by subject (keep oldest), and format
+          git log --reverse $REVISION_RANGE --pretty=format:"%an|%s|%H" | \
+          grep -v "github-actions\[bot\]" | \
+          grep -vE "^[^|]+\|(version:|docs: add github release automation workflow|mvn versions:set|Updating simple-boot-mock-newui version)" | \
+          awk -F'|' '!seen[$2]++ {
             count++;
-            print count ". [" $1 "](https://github.com/fugary/simple-boot-mock-server/commit/" $2 ")"
+            print count ". [" $2 "](https://github.com/fugary/simple-boot-mock-server/commit/" $3 ")"
           }' >> changelog.txt
           
           echo "" >> changelog.txt
@@ -99,8 +101,7 @@ jobs:
           files: ${{ steps.find_artifact.outputs.artifact_path }}
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           body: ${{ steps.changelog.outputs.body }}
-          generate_release_notes: true
-          configuration_file: .github/release-notes.yml
+          generate_release_notes: false
           draft: false
           prerelease: false
         env:
