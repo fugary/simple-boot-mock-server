@@ -64,6 +64,7 @@ jobs:
           files: ${{ steps.find_artifact.outputs.artifact_path }}
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           generate_release_notes: true
+          configuration_file: .github/release-notes.yml
           draft: false
           prerelease: false
         env:
