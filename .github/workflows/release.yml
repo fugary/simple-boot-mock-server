@@ -31,10 +31,9 @@ jobs:
       - name: Build Frontend
         working-directory: simple-boot-mock-newui
         run: |
-          echo "Building frontend in: $(pwd)"
-          ls -F
-          npm ci --legacy-peer-deps --no-audit --no-fund
-          npm run build
+          npm install -g npm@latest
+          npm install --legacy-peer-deps --no-audit --no-fund
+          ./node_modules/.bin/vite build
 
       - name: Copy Frontend to Backend
         run: |
