@@ -31,10 +31,11 @@ jobs:
       - name: Build Frontend
         working-directory: simple-boot-mock-newui
         run: |
+          npm install -g vite
           npm install --legacy-peer-deps --no-audit --no-fund
           echo "Current directory: $(pwd)"
           ls -F
-          npx vite build
+          npm run build
 
       - name: Copy Frontend to Backend
         run: |
