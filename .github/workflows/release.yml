@@ -59,11 +59,46 @@ jobs:
           echo "artifact_path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
           echo "Found artifact: $ARTIFACT_PATH"
 
+      - name: Generate Changelog
+        id: changelog
+        shell: bash
+        run: |
+          git fetch --tags --force
+          CURRENT_TAG=${{ github.event.inputs.tag_name || github.ref_name }}
+          # Find the previous tag
+          PREVIOUS_TAG=$(git tag --sort=-v:refname | grep -A 1 "^${CURRENT_TAG}$" | tail -n 1)
+          
+          echo "## What's Changed" > changelog.txt
+          if [ -z "$PREVIOUS_TAG" ] || [ "$PREVIOUS_TAG" == "$CURRENT_TAG" ]; then
+            REVISION_RANGE="-n 20"
+          else
+            REVISION_RANGE="$PREVIOUS_TAG..$CURRENT_TAG"
+          fi
+
+          # Get logs, de-duplicate by subject (keep oldest), and format as numbered list with links
+          git log --reverse $REVISION_RANGE --pretty=format:"%s|%H" | \
+          awk -F'|' '!seen[$1]++ {
+            count++;
+            print count ". [" $1 "](https://github.com/fugary/simple-boot-mock-server/commit/" $2 ")"
+          }' >> changelog.txt
+          
+          echo "" >> changelog.txt
+          if [ -n "$PREVIOUS_TAG" ] && [ "$PREVIOUS_TAG" != "$CURRENT_TAG" ]; then
+            echo "**Full Changelog**: https://github.com/fugary/simple-boot-mock-server/compare/$PREVIOUS_TAG...$CURRENT_TAG" >> changelog.txt
+          fi
+          
+          {
+            echo 'body<<EOF'
+            cat changelog.txt
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.find_artifact.outputs.artifact_path }}
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          body: ${{ steps.changelog.outputs.body }}
           generate_release_notes: true
           configuration_file: .github/release-notes.yml
           draft: false
