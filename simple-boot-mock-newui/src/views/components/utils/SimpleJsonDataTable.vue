@@ -1,13 +1,16 @@
 <script setup lang="jsx">
-import { isString, isArray, get, isPlainObject } from 'lodash-es'
+import { isString, isArray, get, isPlainObject, cloneDeep } from 'lodash-es'
 import { computed } from 'vue'
 import { checkArrayAndPath } from '@/services/mock/MockCommonService'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { limitStr } from '@/components/utils'
 import { checkShowColumn, getStyleGrow } from '@/utils'
-import { $i18nBundle, $i18nConcat } from '@/messages'
+import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
+import { useJsonTableConfigStore } from '@/stores/JsonTableConfigStore'
+import CommonIcon from '@/components/common-icon/index.vue'
+import { ElLink } from 'element-plus'
 
-defineProps({
+const props = defineProps({
   editable: {
     type: Boolean,
     default: false
@@ -17,6 +20,8 @@ defineProps({
     default: ''
   }
 })
+
+const jsonTableConfigStore = useJsonTableConfigStore()
 
 const vModel = defineModel({ type: String, default: '' })
 const formModel = defineModel('tableConfig', { type: Object, default: () => ({}) })
@@ -132,17 +137,70 @@ const formOptions = computed(() => {
       type: 'select',
       prop: 'columns',
       children: tableColumns.value,
-      style: getStyleGrow(9),
+      style: {
+        ...getStyleGrow(6),
+        alignItems: 'center'
+      },
       attrs: {
         multiple: true,
         clearable: true,
         filterable: true,
         allowCreate: true
       }
+    }, {
+      label: $i18nKey('common.label.commonSave', 'mock.label.params'),
+      type: 'select',
+      prop: 'name',
+      required: true,
+      enabled: !props.editable,
+      children: savedConfigs.value?.map(item => {
+        return {
+          value: item.name,
+          slots: {
+            default: () => {
+              return <>
+                <span>{ item.name }</span>
+                <ElLink class="float-right margin-top2" underline="none" type="danger"
+                        onClick={() => jsonTableConfigStore.deleteTableConfig(item.name)}>
+                  <CommonIcon size={18} icon="Delete"/>
+                </ElLink>
+              </>
+            }
+          }
+        }
+      }),
+      style: {
+        ...getStyleGrow(4),
+        alignItems: 'center'
+      },
+      attrs: {
+        clearable: true,
+        filterable: true,
+        allowCreate: true
+      },
+      change (name) {
+        const savedConfig = jsonTableConfigStore.getTableConfig(name)
+        if (savedConfig) {
+          formModel.value = cloneDeep(savedConfig)
+        }
+      }
     }
   ]
 })
-defineEmits(['saveTableConfig'])
+const emit = defineEmits(['saveTableConfig'])
+const savedConfigs = computed(() => {
+  if (!props.editable) {
+    return Object.values(jsonTableConfigStore.jsonTableConfigs) || []
+  }
+  return []
+})
+const saveTableConfig = () => {
+  if (props.editable) {
+    emit('saveTableConfig', formModel.value)
+  } else {
+    jsonTableConfigStore.saveTableConfig(cloneDeep(formModel.value))
+  }
+}
 const customPageAttrs = {
   layout: 'total, sizes, prev, pager, next',
   pageSizes: [5, 10, 20, 50],
@@ -161,9 +219,9 @@ const customPageAttrs = {
     />
     <el-container class="flex-center margin-bottom2">
       <el-button
-        v-if="editable"
+        v-if="editable||formModel.name"
         type="primary"
-        @click="$emit('saveTableConfig', formModel)"
+        @click="saveTableConfig"
       >
         {{ $t('common.label.save') }}
       </el-button>
