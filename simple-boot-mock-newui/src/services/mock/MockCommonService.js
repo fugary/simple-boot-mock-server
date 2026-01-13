@@ -1,9 +1,14 @@
-import { $coreConfirm, getSingleSelectOptions } from '@/utils'
+import { $coreConfirm, getSingleSelectOptions, includesAnyIgnoreCase } from '@/utils'
 import { $i18nKey, $i18nBundle } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
 import { cloneDeep, isArray, isFunction, isObject, isPlainObject, isString } from 'lodash-es'
-import { ALL_CONTENT_TYPES_LIST, isStreamContentType } from '@/consts/MockConstants'
+import {
+  ALL_CONTENT_TYPES_LIST,
+  CHARSET_LIST,
+  LANGUAGE_LIST1,
+  isStreamContentType
+} from '@/consts/MockConstants'
 
 /**
  * 添加数据
@@ -114,6 +119,34 @@ export const calcEnvSuggestions = (groupConfig) => {
   }
 }
 
+const HEADER_SUGGESTIONS = [{
+  keys: ['accept-encoding', 'content-encoding'],
+  values: ['gzip', 'deflate', 'br']
+}, {
+  keys: ['accept', 'content-type'],
+  values: ALL_CONTENT_TYPES_LIST.map(i => i.contentType)
+}, {
+  keys: ['cache-control'],
+  values: ['no-cache', 'no-store', 'max-age=3600']
+}, {
+  keys: ['authorization'],
+  values: ['Bearer ', 'Basic ']
+}, {
+  keyWords: ['charset', 'encoding'],
+  values: CHARSET_LIST
+}, {
+  keyWords: ['language', 'locale', 'lang'],
+  values: LANGUAGE_LIST1
+}]
+
+export const calcHeaderSuggestions = name => {
+  if (!name) return []
+  const header = HEADER_SUGGESTIONS.find(h =>
+    includesAnyIgnoreCase(name, h.keys) || includesAnyIgnoreCase(name, h.keyWords)
+  )
+  return header ? header.values : []
+}
+
 export const processEvnParams = (groupConfig, dataValue, encode) => {
   if (groupConfig && isString(dataValue) && dataValue.includes('{{') && dataValue.includes('}}')) {
     groupConfig = groupConfig && isString(groupConfig) ? JSON.parse(groupConfig) : groupConfig
@@ -141,7 +174,7 @@ export const useContentTypeOption = (config = {}) => {
         type: 'autocomplete',
         tooltip: $i18nBundle('mock.msg.responseCharsetTooltip'),
         attrs: {
-          fetchSuggestions: ['UTF-8', 'ISO-8859-1', 'GBK', 'GB2312', 'GB18030', 'UTF-16'].map(value => ({ value }))
+          fetchSuggestions: CHARSET_LIST.map(value => ({ value }))
         }
       }
     : undefined

@@ -18,7 +18,12 @@ import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
 import { getSingleSelectOptions } from '@/utils'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { isString } from 'lodash-es'
-import { calcEnvSuggestions, generateSampleCheckResults, generateSchemaSample } from '@/services/mock/MockCommonService'
+import {
+  calcEnvSuggestions,
+  calcHeaderSuggestions,
+  generateSampleCheckResults,
+  generateSchemaSample
+} from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
@@ -97,6 +102,15 @@ watch(languageRef, lang => {
 watch(contentRef, val => {
   paramTarget.value.requestBody = val
 })
+
+watch(() => [paramTarget.value.headerParams, paramTarget.value.requestParams], (allParams) => {
+  allParams.forEach(eachParams => eachParams.forEach(param => {
+    const newSuggestions = calcHeaderSuggestions(param.name)
+    if (JSON.stringify(param.valueSuggestions) !== JSON.stringify(newSuggestions)) {
+      param.valueSuggestions = newSuggestions
+    }
+  }))
+}, { deep: true })
 
 const currentTabName = ref('requestParamsTab')
 const authContentModel = ref({})

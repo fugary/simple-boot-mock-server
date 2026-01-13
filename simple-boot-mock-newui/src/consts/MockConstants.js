@@ -175,3 +175,45 @@ export const getMockConfirmConfig = (config) => {
     ...config
   }
 }
+
+export const CHARSET_LIST = ['UTF-8', 'ISO-8859-1', 'GBK', 'GB2312', 'GB18030', 'UTF-16']
+
+export const LANGUAGE_LIST = [
+  'zh',
+  'zh-CN',
+  'zh-TW',
+  'zh-HK',
+  'en',
+  'en-US',
+  'en-GB',
+  'en-AU',
+  'ja',
+  'ja-JP',
+  'ko',
+  'ko-KR',
+  'fr',
+  'fr-FR',
+  'fr-CA',
+  'de',
+  'de-DE',
+  'es',
+  'es-ES',
+  'es-MX',
+  'it',
+  'it-IT',
+  'pt',
+  'pt-BR',
+  'pt-PT',
+  'ru',
+  'ru-RU',
+  'ar',
+  'ar-SA',
+  'th',
+  'th-TH',
+  'vi',
+  'vi-VN'
+]
+
+export const LANGUAGE_LIST1 = LANGUAGE_LIST.flatMap(item =>
+  item.includes('-') ? [item, item.replace('-', '_')] : [item]
+)

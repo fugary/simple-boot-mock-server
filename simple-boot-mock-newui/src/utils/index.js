@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { markRaw, ref } from 'vue'
-import { isObject, isArray, set, isNumber, isFunction, isBoolean, get } from 'lodash-es'
+import { isObject, isArray, set, isNumber, isFunction, isBoolean, get, isString } from 'lodash-es'
 import { ElLoading, ElMessageBox, ElMessage } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import numeral from 'numeral'
@@ -466,6 +466,28 @@ export const getStyleGrow = flexGrow => ({
   flexGrow,
   minWidth: `calc(${flexGrow}0%)`
 })
+
+/**
+ * 检查是否包含数组中的任意一个子串（忽略大小写）
+ * @param {string|string[]} strOrArr - 要检查的字符串或数组
+ * @param {...string|string[]} searchItems - 要搜索的数据，可以是数组或可变参数
+ * @returns {boolean}
+ * @example
+ * includesAnyIgnoreCase('Content-Type', 'content-type', 'accept')  // true
+ * includesAnyIgnoreCase('Content-Type', ['content-type', 'accept'])  // true
+ */
+export const includesAnyIgnoreCase = (strOrArr, ...searchItems) => {
+  if (!strOrArr) return false
+  // 如果第一个参数是数组，使用它；否则使用所有参数
+  const searches = isArray(searchItems[0]) ? searchItems[0] : searchItems
+  if (!searches || searches.length === 0) return false
+  if (isArray(strOrArr)) {
+    strOrArr = strOrArr.filter(s => !!s).map(s => isString(s) ? s.toLowerCase() : s)
+  } else {
+    strOrArr = strOrArr.toLowerCase()
+  }
+  return searches.some(item => item && strOrArr.includes(isString(item) ? item.toLowerCase() : item))
+}
 
 export default {
   install (app) {
