@@ -309,6 +309,8 @@ const deleteGroups = () => {
 }
 
 const showEditWindow = ref(false)
+const showMore = ref(false)
+const hiddenKeys = ['disableMock', 'delay', 'contentType', 'description']
 const currentGroup = ref()
 const newOrEdit = async id => {
   if (id) {
@@ -323,6 +325,8 @@ const newOrEdit = async id => {
     }
   }
   showEditWindow.value = true
+  // Auto-expand if any hidden field has a value
+  showMore.value = hiddenKeys.some(key => !!currentGroup.value?.[key])
 }
 const { showEditWindow: showEditProjectWindow, currentProject, newOrEditProject, editFormOptions: editProjectFormOptions } = useProjectEditHook(searchParam, userOptions)
 const reloadProjectsAndRefreshOptions = async (item, importModel) => {
@@ -335,66 +339,77 @@ const reloadProjectsAndRefreshOptions = async (item, importModel) => {
 const saveProjectItem = (item) => {
   return MockProjectApi.saveOrUpdate(item).then(() => reloadProjectsAndRefreshOptions(item))
 }
-const editFormOptions = computed(() => defineFormOptions([{
-  labelKey: 'common.label.user',
-  prop: 'userName',
-  type: 'select',
-  enabled: isAdminUser(),
-  children: userOptions.value,
-  attrs: {
-    clearable: false
-  },
-  change (value) {
-    if (currentGroup.value) {
-      currentGroup.value.projectCode = MOCK_DEFAULT_PROJECT
+const editFormOptions = computed(() => {
+  const options = defineFormOptions([{
+    labelKey: 'common.label.user',
+    prop: 'userName',
+    type: 'select',
+    enabled: isAdminUser(),
+    children: userOptions.value,
+    attrs: {
+      clearable: false
+    },
+    change (value) {
+      if (currentGroup.value) {
+        currentGroup.value.projectCode = MOCK_DEFAULT_PROJECT
+      }
+      changedUser(value)
     }
-    changedUser(value)
-  }
-}, {
-  labelKey: 'mock.label.project',
-  prop: 'projectCode',
-  type: 'select',
-  children: projectOptions.value,
-  attrs: {
-    clearable: false
-  },
-  tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
-  tooltipIcon: 'CirclePlusFilled',
-  tooltipLinkAttrs: {
-    type: 'primary'
-  },
-  tooltipFunc (event) {
-    newOrEditProject()
-    event.preventDefault()
-  }
-}, {
-  labelKey: 'mock.label.groupName',
-  prop: 'groupName',
-  required: true
-}, {
-  labelKey: 'mock.label.pathId',
-  prop: 'groupPath',
-  placeholder: $i18nBundle('mock.msg.pathIdMsg')
-}, {
-  labelKey: 'mock.label.proxyUrl',
-  prop: 'proxyUrl',
-  tooltip: $i18nBundle('mock.msg.proxyUrlTooltip'),
-  rules: [{
-    message: $i18nBundle('mock.msg.proxyUrlMsg'),
-    validator: () => {
-      return !currentGroup.value?.proxyUrl || /^https?:\/\/.+/.test(currentGroup.value?.proxyUrl)
+  }, {
+    labelKey: 'mock.label.project',
+    prop: 'projectCode',
+    type: 'select',
+    children: projectOptions.value,
+    attrs: {
+      clearable: false
+    },
+    tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
+    tooltipIcon: 'CirclePlusFilled',
+    tooltipLinkAttrs: {
+      type: 'primary'
+    },
+    tooltipFunc (event) {
+      newOrEditProject()
+      event.preventDefault()
     }
-  }]
-}, { ...useFormStatus(), style: getStyleGrow(4) },
-{ ...useFormDisableMock(), style: getStyleGrow(6) },
-{ ...useFormDelay(), style: getStyleGrow(4) },
-{ ...useContentTypeOption({ clearable: true }), style: getStyleGrow(6) }, {
-  labelKey: 'common.label.description',
-  prop: 'description',
-  attrs: {
-    type: 'textarea'
-  }
-}]))
+  }, {
+    labelKey: 'mock.label.groupName',
+    prop: 'groupName',
+    required: true
+  }, {
+    labelKey: 'mock.label.pathId',
+    prop: 'groupPath',
+    placeholder: $i18nBundle('mock.msg.pathIdMsg')
+  }, {
+    labelKey: 'mock.label.proxyUrl',
+    prop: 'proxyUrl',
+    tooltip: $i18nBundle('mock.msg.proxyUrlTooltip'),
+    rules: [{
+      message: $i18nBundle('mock.msg.proxyUrlMsg'),
+      validator: () => {
+        return !currentGroup.value?.proxyUrl || /^https?:\/\/.+/.test(currentGroup.value?.proxyUrl)
+      }
+    }]
+  }, { ...useFormStatus(), style: getStyleGrow(4) },
+  { ...useFormDisableMock(), style: getStyleGrow(6) },
+  { ...useFormDelay(), style: getStyleGrow(4) },
+  { ...useContentTypeOption({ clearable: true }), style: getStyleGrow(6) }, {
+    labelKey: 'common.label.description',
+    prop: 'description',
+    attrs: {
+      type: 'textarea'
+    }
+  }])
+  const filteredOptions = options.filter(option => {
+    if (!option.prop || !hiddenKeys.includes(option.prop)) return true
+    return showMore.value
+  })
+  filteredOptions.push({
+    slot: 'moreOptions',
+    style: getStyleGrow(10)
+  })
+  return filteredOptions
+})
 const saveGroupItem = (item) => {
   return saveOrUpdate(item).then(() => loadMockGroups())
 }
@@ -541,7 +556,20 @@ const showImportWindow = ref(false)
       :name="$t('mock.label.mockGroups')"
       :save-current-item="saveGroupItem"
       inline-auto-mode
-    />
+    >
+      <template #moreOptions>
+        <div class="form-edit-width-100 flex-center">
+          <el-button
+            link
+            type="primary"
+            @click="showMore=!showMore"
+          >
+            {{ showMore ? $t('mock.label.hideMoreOptions') : $t('mock.label.showMoreOptions') }}
+            <common-icon :icon="showMore?'ArrowUp':'ArrowDown'" />
+          </el-button>
+        </div>
+      </template>
+    </simple-edit-window>
     <simple-edit-window
       v-model="currentProject"
       v-model:show-edit-window="showEditProjectWindow"

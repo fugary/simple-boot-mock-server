@@ -135,6 +135,8 @@ const newRequestItem = () => ({
   groupId
 })
 const showEditWindow = ref(false)
+const showMore = ref(false)
+const hiddenKeys = ['disableMock', 'delay', 'contentType', 'matchPattern', 'loadBalancer', 'postProcessor', 'description']
 const currentRequest = ref(newRequestItem())
 const selectRequest = ref()
 const newOrEdit = async id => {
@@ -146,6 +148,8 @@ const newOrEdit = async id => {
     currentRequest.value = newRequestItem()
   }
   showEditWindow.value = true
+  // Auto-expand if any hidden field has a value
+  showMore.value = hiddenKeys.some(key => !!currentRequest.value?.[key])
 }
 const { startLoading } = useProvideDataLoading()
 const onSelectRequest = request => {
@@ -155,7 +159,7 @@ const onSelectRequest = request => {
   startLoading()
 }
 const editFormOptions = computed(() => {
-  return defineFormOptions([{
+  const options = defineFormOptions([{
     labelKey: 'mock.label.requestPath',
     style: getStyleGrow(3),
     prop: 'method',
@@ -186,6 +190,10 @@ const editFormOptions = computed(() => {
       currentRequest.value.requestPath = val && !val.startsWith('/') ? `/${val.trim()}` : val
     }
   }, {
+    labelKey: 'mock.label.requestName',
+    prop: 'requestName',
+    tooltip: $i18nBundle('mock.msg.requestNameTooltip')
+  }, {
     labelKey: 'mock.label.proxyUrl',
     prop: 'proxyUrl',
     tooltip: $i18nBundle('mock.msg.proxyUrlTooltip'),
@@ -206,10 +214,6 @@ const editFormOptions = computed(() => {
     type: 'select',
     children: MOCK_LOAD_BALANCE_OPTIONS,
     tooltip: $i18nBundle('mock.msg.loadBalanceTips')
-  }, {
-    labelKey: 'mock.label.requestName',
-    prop: 'requestName',
-    tooltip: $i18nBundle('mock.msg.requestNameTooltip')
   },
   useMockMonacoFieldOption(currentRequest, {
     labelKey: 'mock.label.postProcessor',
@@ -222,6 +226,15 @@ const editFormOptions = computed(() => {
       type: 'textarea'
     }
   }])
+  const filteredOptions = options.filter(option => {
+    if (!option.prop || !hiddenKeys.includes(option.prop)) return true
+    return showMore.value
+  })
+  filteredOptions.push({
+    slot: 'moreOptions',
+    style: getStyleGrow(10)
+  })
+  return filteredOptions
 })
 
 const saveMockRequest = item => {
@@ -525,7 +538,20 @@ const toShowHistoryWindow = (current) => {
       label-width="140px"
       inline-auto-mode
       :editable="projectEditable"
-    />
+    >
+      <template #moreOptions>
+        <div class="form-edit-width-100 flex-center">
+          <el-button
+            link
+            type="primary"
+            @click="showMore=!showMore"
+          >
+            {{ showMore ? $t('mock.label.hideMoreOptions') : $t('mock.label.showMoreOptions') }}
+            <common-icon :icon="showMore?'ArrowUp':'ArrowDown'" />
+          </el-button>
+        </div>
+      </template>
+    </simple-edit-window>
   </el-container>
 </template>
 

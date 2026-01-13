@@ -234,6 +234,8 @@ const deleteDataList = () => {
     .then(() => (batchMode.value = false))
 }
 const showEditWindow = ref(false)
+const showMore = ref(false)
+const hiddenKeys = ['matchPattern', 'headerParams', 'postProcessor', 'description']
 const currentDataItem = ref()
 const selectDataItem = ref()
 const newDataItem = () => ({
@@ -257,6 +259,11 @@ const newOrEdit = async id => {
     currentDataItem.value = newDataItem()
   }
   showEditWindow.value = true
+  // Auto-expand if any hidden field has a value
+  showMore.value = hiddenKeys.some(key => {
+    const value = currentDataItem.value?.[key]
+    return value && (Array.isArray(value) ? value.length > 0 : true)
+  })
 }
 const { contentRef, languageRef, monacoEditorOptions, languageSelectOption } = useMonacoEditorOptions({ readOnly: false })
 
@@ -270,7 +277,7 @@ const editFormOptions = computed(() => {
       label: `${status.code} - ${label}`
     }
   })
-  return defineFormOptions([{
+  const options = defineFormOptions([{
     labelKey: 'mock.label.statusCode',
     prop: 'statusCode',
     type: 'select',
@@ -300,14 +307,11 @@ const editFormOptions = computed(() => {
       activeText: $i18nBundle('common.label.yes'),
       inactiveText: $i18nBundle('common.label.no')
     }
-  }, { ...useFormDelay(), style: getStyleGrow(3) },
-  useMockMonacoFieldOption(currentDataItem, { tipKey: 'matchPattern' }), {
-    labelKey: 'mock.label.responseHeaders',
-    slot: 'headerParams'
-  }, {
+  }, { ...useFormDelay(), style: getStyleGrow(3) }, {
     ...useContentTypeOption(),
     slot: 'newContentType',
-    enabled: !isRedirect
+    enabled: !isRedirect,
+    prop: 'contentType'
   }, {
     ...languageSelectOption.value,
     change (val) {
@@ -354,6 +358,11 @@ const editFormOptions = computed(() => {
       options: monacoEditorOptions
     }
   },
+  useMockMonacoFieldOption(currentDataItem, { tipKey: 'matchPattern' }), {
+    labelKey: 'mock.label.responseHeaders',
+    slot: 'headerParams',
+    prop: 'headerParams'
+  },
   useMockMonacoFieldOption(currentDataItem, {
     labelKey: 'mock.label.postProcessor',
     prop: 'postProcessor',
@@ -365,6 +374,15 @@ const editFormOptions = computed(() => {
       type: 'textarea'
     }
   }])
+  const filteredOptions = options.filter(option => {
+    if (!option.prop || !hiddenKeys.includes(option.prop)) return true
+    return showMore.value
+  })
+  filteredOptions.push({
+    slot: 'moreOptions',
+    style: getStyleGrow(10)
+  })
+  return filteredOptions
 })
 
 const saveMockData = (data) => {
@@ -594,6 +612,18 @@ const pageAttrs = {
       inline-auto-mode
       :editable="editable"
     >
+      <template #moreOptions>
+        <div class="form-edit-width-100 flex-center">
+          <el-button
+            link
+            type="primary"
+            @click="showMore=!showMore"
+          >
+            {{ showMore ? $t('mock.label.hideMoreOptions') : $t('mock.label.showMoreOptions') }}
+            <common-icon :icon="showMore?'ArrowUp':'ArrowDown'" />
+          </el-button>
+        </div>
+      </template>
       <template #headerParams="{option}">
         <common-form-control
           :model="currentDataItem"
