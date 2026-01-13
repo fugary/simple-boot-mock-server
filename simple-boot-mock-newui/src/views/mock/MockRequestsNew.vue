@@ -531,7 +531,7 @@ const toShowHistoryWindow = (current) => {
     <simple-edit-window
       v-model="currentRequest"
       v-model:show-edit-window="showEditWindow"
-      width="900px"
+      width="800px"
       :form-options="editFormOptions"
       :name="$t('mock.label.mockRequests')"
       :save-current-item="saveMockRequest"

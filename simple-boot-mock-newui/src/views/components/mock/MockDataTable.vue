@@ -611,6 +611,7 @@ const pageAttrs = {
       :save-current-item="saveMockData"
       inline-auto-mode
       :editable="editable"
+      width="900px"
     >
       <template #moreOptions>
         <div class="form-edit-width-100 flex-center">
@@ -637,7 +638,10 @@ const pageAttrs = {
         </common-form-control>
       </template>
       <template #newContentType="{option}">
-        <el-row v-if="option.enabled!==false">
+        <el-row
+          v-if="option.enabled!==false"
+          class="form-edit-width-100"
+        >
           <el-col :span="12">
             <common-form-control
               :model="currentDataItem"
