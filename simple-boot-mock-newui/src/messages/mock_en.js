@@ -108,6 +108,7 @@ mock.label.dataColumns = 'Columns'
 mock.label.lengthLimit = 'Length Limit'
 mock.label.showMoreOptions = 'Show More Options'
 mock.label.hideMoreOptions = 'Hide More Options'
+mock.label.savedParams = 'Saved Params'
 
 mock.msg.loadBalanceTips = 'When there are multiple response data entries and no matching rules, this defines which strategy is used to return the response'
 mock.msg.configSetDefault = 'Confirm to set as default?'

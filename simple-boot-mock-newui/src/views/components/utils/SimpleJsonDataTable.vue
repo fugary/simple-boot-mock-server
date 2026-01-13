@@ -1,6 +1,6 @@
 <script setup lang="jsx">
 import { isString, isArray, get, isPlainObject, cloneDeep } from 'lodash-es'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { checkArrayAndPath } from '@/services/mock/MockCommonService'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { limitStr } from '@/components/utils'
@@ -9,6 +9,7 @@ import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
 import { useJsonTableConfigStore } from '@/stores/JsonTableConfigStore'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { ElLink } from 'element-plus'
+import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 
 const props = defineProps({
   editable: {
@@ -148,10 +149,9 @@ const formOptions = computed(() => {
         allowCreate: true
       }
     }, {
-      label: $i18nKey('common.label.commonSave', 'mock.label.params'),
+      labelKey: 'mock.label.savedParams',
       type: 'select',
       prop: 'name',
-      required: true,
       enabled: !props.editable,
       children: savedConfigs.value?.map(item => {
         return {
@@ -160,7 +160,7 @@ const formOptions = computed(() => {
             default: () => {
               return <>
                 <span>{ item.name }</span>
-                <ElLink class="float-right margin-top2" underline="none" type="danger"
+                <ElLink class="float-right margin-top2" underline="never" type="danger"
                         onClick={() => jsonTableConfigStore.deleteTableConfig(item.name)}>
                   <CommonIcon size={18} icon="Delete"/>
                 </ElLink>
@@ -175,8 +175,7 @@ const formOptions = computed(() => {
       },
       attrs: {
         clearable: true,
-        filterable: true,
-        allowCreate: true
+        filterable: true
       },
       change (name) {
         const savedConfig = jsonTableConfigStore.getTableConfig(name)
@@ -190,7 +189,7 @@ const formOptions = computed(() => {
 const emit = defineEmits(['saveTableConfig'])
 const savedConfigs = computed(() => {
   if (!props.editable) {
-    return Object.values(jsonTableConfigStore.jsonTableConfigs) || []
+    return (Object.values(jsonTableConfigStore.jsonTableConfigs) || []).filter(config => !!config.name)
   }
   return []
 })
@@ -198,8 +197,20 @@ const saveTableConfig = () => {
   if (props.editable) {
     emit('saveTableConfig', formModel.value)
   } else {
-    jsonTableConfigStore.saveTableConfig(cloneDeep(formModel.value))
+    formSaveModel.value = cloneDeep(formModel.value)
+    showSaveWindow.value = true
   }
+}
+const formSaveModel = ref()
+const showSaveWindow = ref(false)
+const saveFormOptions = [{
+  labelKey: 'common.label.name',
+  prop: 'name',
+  placeholder: $i18nKey('common.msg.commonInput', 'common.label.name'),
+  required: true
+}]
+const saveStorageTableConfig = async () => {
+  jsonTableConfigStore.saveTableConfig(formSaveModel.value)
 }
 const customPageAttrs = {
   layout: 'total, sizes, prev, pager, next',
@@ -219,7 +230,6 @@ const customPageAttrs = {
     />
     <el-container class="flex-center margin-bottom2">
       <el-button
-        v-if="editable||formModel.name"
         type="primary"
         @click="saveTableConfig"
       >
@@ -248,6 +258,14 @@ const customPageAttrs = {
       :page-attrs="customPageAttrs"
       frontend-paging
       @row-dblclick="showCodeWindow(JSON.stringify($event), {language: 'json', viewAsTable: true})"
+    />
+    <simple-edit-window
+      v-model="formSaveModel"
+      v-model:show-edit-window="showSaveWindow"
+      width="500px"
+      :form-options="saveFormOptions"
+      :title="$i18nKey('common.label.commonSave', 'mock.label.params')"
+      :save-current-item="saveStorageTableConfig"
     />
   </el-container>
 </template>

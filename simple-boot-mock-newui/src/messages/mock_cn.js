@@ -108,6 +108,7 @@ mock.label.dataColumns = '数据列'
 mock.label.lengthLimit = '长度限制'
 mock.label.showMoreOptions = '显示更多选项'
 mock.label.hideMoreOptions = '隐藏更多选项'
+mock.label.savedParams = '已保存条件'
 
 mock.msg.loadBalanceTips = '没有匹配规则且有多条响应数据时，使用什么策略返回数据'
 mock.msg.configSetDefault = '确定要设为默认响应？'
