@@ -45,6 +45,10 @@ export const useSelectProjects = (searchParam, autoSelect) => {
     const currentProj = projects.value.find(proj => proj.projectCode === searchParam.value.projectCode)
     if (autoSelect) {
       searchParam.value.projectCode = currentProj?.projectCode || MOCK_DEFAULT_PROJECT
+    } else if (currentProj?.projectCode) {
+      searchParam.value.projectCode = currentProj.projectCode
+    } else {
+      searchParam.value.projectCode = null
     }
     if (isAdminUser() && currentProj?.userName) {
       searchParam.value.userName = currentProj.userName
