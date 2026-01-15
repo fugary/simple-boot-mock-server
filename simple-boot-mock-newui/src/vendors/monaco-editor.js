@@ -229,7 +229,13 @@ export const useMonacoDiffEditorOptions = (config) => {
     ...config
   })
   const diffEditorRef = shallowRef()
-  const handleMount = diffEditor => (diffEditorRef.value = diffEditor)
+  const handleMount = diffEditor => {
+    diffEditorRef.value = diffEditor
+    if (diffEditorRef.value) {
+      diffEditorRef.value.getOriginalEditor().onDidChangeModelContent(() => diffChanged())
+      diffEditorRef.value.getModifiedEditor().onDidChangeModelContent(() => diffChanged())
+    }
+  }
   onBeforeUnmount(() => {
     diffEditorRef.value?.dispose()
   })

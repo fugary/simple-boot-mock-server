@@ -7,6 +7,8 @@ import { isAdminUser } from '@/utils'
 
 const dbUrl = getMockUrl(`${BASE_URL}${BASE_URL.endsWith('/') ? '' : '/'}h2-console`)
 const editorContent = ref('')
+const originalContent = ref('')
+const modifiedContent = ref('')
 export const ALL_MENUS = [
   {
     id: 1,
@@ -122,7 +124,13 @@ export const ALL_MENUS = [
         title: $i18nBundle('mock.label.compare'),
         diffEditor: true,
         readOnly: false,
-        closeOnClickModal: false
+        closeOnClickModal: false,
+        originalContent: originalContent.value,
+        modifiedContent: modifiedContent.value,
+        change (ori, mod) {
+          originalContent.value = ori
+          modifiedContent.value = mod
+        }
       })
     }
   },
