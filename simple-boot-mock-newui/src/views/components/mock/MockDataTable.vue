@@ -607,7 +607,7 @@ const pageAttrs = {
       v-model:show-edit-window="showEditWindow"
       :form-options="editFormOptions"
       :name="$t('mock.label.mockData')"
-      label-width="140px"
+      label-width="160px"
       :save-current-item="saveMockData"
       inline-auto-mode
       :editable="editable"

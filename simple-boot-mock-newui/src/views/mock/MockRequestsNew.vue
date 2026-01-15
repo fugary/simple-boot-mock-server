@@ -535,7 +535,7 @@ const toShowHistoryWindow = (current) => {
       :form-options="editFormOptions"
       :name="$t('mock.label.mockRequests')"
       :save-current-item="saveMockRequest"
-      label-width="140px"
+      label-width="160px"
       inline-auto-mode
       :editable="projectEditable"
     >
