@@ -98,6 +98,8 @@ const langOption = computed(() => {
   return codeConfig.fullEditor ? languageSelectOption.value : normalLanguageSelectOption.value
 })
 
+const isJsonOrXmlContent = computed(() => isJson(codeText.value) || isXml(codeText.value))
+
 const calcButtons = computed(() => {
   let buttons = codeConfig.buttons || []
   if (codeConfig.showSelectButton) {
@@ -114,7 +116,6 @@ const calcButtons = computed(() => {
       }
     }, ...buttons]
   }
-  const isJsonOrXmlContent = isJson(codeText.value) || isXml(codeText.value)
   return [{
     labelKey: 'common.label.copy',
     type: 'success',
@@ -128,7 +129,7 @@ const calcButtons = computed(() => {
   }, {
     labelKey: 'mock.label.viewAsTable',
     type: 'success',
-    enabled: codeConfig.viewAsTable && !codeConfig.diffEditor && isJsonOrXmlContent,
+    enabled: codeConfig.viewAsTable && !codeConfig.diffEditor && isJsonOrXmlContent.value,
     click () {
       showJsonDataWindow(codeText.value)
     }
@@ -231,6 +232,19 @@ watch([originalContent, modifiedContent], ([original, modified]) => {
             <common-icon
               :size="18"
               icon="FormatIndentIncreaseFilled"
+            />
+          </el-link>
+          <el-link
+            v-if="codeConfig.viewAsTable && !codeConfig.diffEditor && isJsonOrXmlContent"
+            v-common-tooltip="$t('mock.label.viewAsTable')"
+            type="primary"
+            underline="never"
+            class="margin-left3"
+            @click="showJsonDataWindow(codeText)"
+          >
+            <common-icon
+              :size="18"
+              icon="TableRowsFilled"
             />
           </el-link>
         </template>

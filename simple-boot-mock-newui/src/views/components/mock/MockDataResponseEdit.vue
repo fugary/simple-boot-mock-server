@@ -4,10 +4,15 @@ import { computed, ref } from 'vue'
 import { cloneDeep, isString } from 'lodash-es'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { $i18nKey } from '@/messages'
-import { showCodeWindow, showMockTips } from '@/utils/DynamicUtils'
+import { showCodeWindow, showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
-import { generateSampleCheckResults, generateSchemaSample, useContentTypeOption } from '@/services/mock/MockCommonService'
+import {
+  generateSampleCheckResults,
+  generateSchemaSample,
+  isJson, isXml,
+  useContentTypeOption
+} from '@/services/mock/MockCommonService'
 import { loadSchemas } from '@/api/mock/MockRequestApi'
 import { calcContentType } from '@/consts/MockConstants'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
@@ -85,6 +90,7 @@ const langOption = {
   }
 }
 const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.value, componentsSpec.value, schema.value?.responseMediaType))
+const isJsonOrXmlContent = computed(() => isJson(contentRef.value) || isXml(contentRef.value))
 </script>
 
 <template>
@@ -187,6 +193,19 @@ const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.
             :examples="responseExamples"
             @select-example="selectExample"
           />
+          <el-link
+            v-if="isJsonOrXmlContent"
+            v-common-tooltip="$t('mock.label.viewAsTable')"
+            type="primary"
+            underline="never"
+            class="margin-left3"
+            @click="showJsonDataWindow(contentRef)"
+          >
+            <common-icon
+              :size="18"
+              icon="TableRowsFilled"
+            />
+          </el-link>
         </template>
       </common-form-control>
       <vue-monaco-editor
