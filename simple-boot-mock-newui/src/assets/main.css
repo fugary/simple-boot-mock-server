@@ -527,3 +527,16 @@ html, body, #app, .index-container {
 .dark .el-card .el-descriptions__body {
     background-color: var(--el-card-bg-color)
 }
+/* 整体编辑器区域 */
+.monaco-editor.vs {
+    background-color: #f5f7fa; /* el-bg-color-page */
+}
+/* gutter（行号区） */
+.monaco-editor.vs .margin {
+    background-color: #f0f2f5; /* el-fill-color-light */
+    box-shadow: inset -1px 0 0 #dcdfe6; /* el-border-color */
+}
+/* 内容区 */
+.monaco-editor.vs .monaco-editor-background {
+    background-color: #ffffff;
+}

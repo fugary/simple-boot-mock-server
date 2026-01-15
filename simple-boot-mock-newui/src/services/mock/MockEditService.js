@@ -12,7 +12,6 @@ export const useMockMonacoFieldOption = (modelRef, config) => {
   }, config)
   const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({
     readOnly: false,
-    lineNumbers: 'off',
     minimap: { enabled: false }
   })
   return {
