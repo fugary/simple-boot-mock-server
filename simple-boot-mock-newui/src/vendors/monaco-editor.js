@@ -250,6 +250,12 @@ export const useMonacoDiffEditorOptions = (config) => {
   const gotoDiffPosition = prev => {
     diffEditorRef.value.goToDiff(prev ? 'previous' : 'next')
   }
+  const diffFormatDocument = () => {
+    if (diffEditorRef.value) {
+      $formatDocument(diffEditorRef.value.getOriginalEditor(), false)
+      $formatDocument(diffEditorRef.value.getModifiedEditor(), false)
+    }
+  }
   return {
     originalContent,
     modifiedContent,
@@ -257,6 +263,7 @@ export const useMonacoDiffEditorOptions = (config) => {
     diffEditorRef,
     handleMount,
     gotoDiffPosition,
+    diffFormatDocument,
     diffChanged
   }
 }

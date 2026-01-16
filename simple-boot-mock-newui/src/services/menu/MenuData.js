@@ -123,6 +123,7 @@ export const ALL_MENUS = [
       showCodeWindow({
         title: $i18nBundle('mock.label.compare'),
         diffEditor: true,
+        showDiffLanguage: true,
         readOnly: false,
         closeOnClickModal: false,
         originalContent: originalContent.value,
