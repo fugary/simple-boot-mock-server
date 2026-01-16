@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import { checkArrayAndPath } from '@/services/mock/MockCommonService'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { limitStr } from '@/components/utils'
-import { $coreConfirm, checkShowColumn, getStyleGrow } from '@/utils'
+import { $coreConfirm, checkShowColumn, formatDateSmart, getStyleGrow, isDateString } from '@/utils'
 import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
 import { useJsonTableConfigStore } from '@/stores/JsonTableConfigStore'
 import CommonIcon from '@/components/common-icon/index.vue'
@@ -73,6 +73,9 @@ const str2Column = column => {
       let value = get(item, column)
       if (isPlainObject(value) || isArray(value)) {
         value = JSON.stringify(value)
+      }
+      if (isDateString(value)) {
+        return formatDateSmart(value)
       }
       if (isString(value)) {
         return limitStr(value, formModel.value?.limit || 40)

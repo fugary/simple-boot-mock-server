@@ -489,6 +489,24 @@ export const includesAnyIgnoreCase = (strOrArr, ...searchItems) => {
   return searches.some(item => item && strOrArr.includes(isString(item) ? item.toLowerCase() : item))
 }
 
+export const DATE_FAST_REG = /^\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})?)?$/
+
+export const HAS_TIME_RE = /[ T]\d{2}:\d{2}/
+
+export const isDateString = (val) => {
+  if (!isString(val)) return false
+  if (val.length < 10 || val.length > 35) return false
+  if (!DATE_FAST_REG.test(val)) return false
+  return dayjs(val).isValid()
+}
+
+export const formatDateSmart = (val) => {
+  const format = HAS_TIME_RE.test(val)
+    ? 'YYYY-MM-DD HH:mm:ss'
+    : 'YYYY-MM-DD'
+  return formatDate(val, format)
+}
+
 export default {
   install (app) {
     router = app.config.globalProperties.$router
