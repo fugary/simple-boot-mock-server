@@ -156,12 +156,14 @@ const onSelectRequest = request => {
   selectRequest.value = request
   searchParam.value.selectRequestId = request?.id
   requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
-  startLoading()
+  if (request) {
+    startLoading()
+  }
 }
 const editFormOptions = computed(() => {
   const options = defineFormOptions([{
     labelKey: 'mock.label.requestPath',
-    style: getStyleGrow(3),
+    style: getStyleGrow(3.5),
     prop: 'method',
     required: true,
     type: 'select',
@@ -174,7 +176,7 @@ const editFormOptions = computed(() => {
     prop: 'requestPath',
     labelWidth: '10px',
     showLabel: false,
-    style: getStyleGrow(7),
+    style: getStyleGrow(6.5),
     required: true,
     trim: true,
     placeholder: `${$i18nKey('common.msg.commonInput', 'mock.label.requestPath')}, ${$i18nConcat($i18nBundle('common.label.paste'), 'CURL')}`,
