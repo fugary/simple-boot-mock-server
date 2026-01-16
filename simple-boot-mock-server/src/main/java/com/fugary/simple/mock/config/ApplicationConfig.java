@@ -98,7 +98,7 @@ public class ApplicationConfig implements WebMvcConfigurer {
     @Bean
     public RestTemplate restTemplate() {
         ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(
-                SimpleHttpClientUtils.getHttpsClient());
+                SimpleHttpClientUtils.getHttpsClient(false));
         RestTemplate restTemplate = new RestTemplate(clientHttpRequestFactory);
         restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         return restTemplate;

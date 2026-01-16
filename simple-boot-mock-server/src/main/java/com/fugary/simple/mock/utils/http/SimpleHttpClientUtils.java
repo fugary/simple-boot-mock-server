@@ -97,14 +97,22 @@ public class SimpleHttpClientUtils {
     }
 
     public static CloseableHttpClient getHttpsClient() {
+        return getHttpsClient(true);
+    }
+
+    public static CloseableHttpClient getHttpsClient(boolean cookie) {
         try {
             SSLContext ctx = SSLContext.getInstance("TLSv1.2");
             TrustManager[] trustManagers = getTrustManagers();
             ctx.init(null, trustManagers, null);
             SSLConnectionSocketFactory ssf = new SSLConnectionSocketFactory(ctx, new NoopHostnameVerifier());
-            return HttpClientBuilder.create()
+            HttpClientBuilder clientBuilder = HttpClientBuilder.create()
                     .setDefaultRequestConfig(REQUEST_CONFIG)
-                    .setSSLSocketFactory(ssf).build();
+                    .setSSLSocketFactory(ssf);
+            if (!cookie) {
+                clientBuilder.disableCookieManagement();
+            }
+            return clientBuilder.build();
         } catch (Exception e) {
             return getHttpClient();
         }
