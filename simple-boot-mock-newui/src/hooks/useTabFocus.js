@@ -19,7 +19,18 @@ export function useTabFocus (containerRef, selector) {
     const elements = getFocusable()
     const index = isNumber(currentEl) ? currentEl : elements.indexOf(currentEl)
     if (index === -1) return
-    const nextEl = elements[index + 1] || elements[0]
+    // 优先寻找没有值的输入框
+    let targetIndex = -1
+    const len = elements.length
+    for (let i = 1; i < len; i++) {
+      const idx = (index + i) % len
+      if (!elements[idx].value) {
+        targetIndex = idx
+        break
+      }
+    }
+    // 如果都填了值，则按顺序跳转
+    const nextEl = targetIndex !== -1 ? elements[targetIndex] : (elements[index + 1] || elements[0])
     nextEl.focus()
   }
 
