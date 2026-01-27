@@ -1,13 +1,18 @@
-body, #app .el-header{
+body,
+#app .el-header {
     padding: 0;
 }
 
-html, body {
+html,
+body {
     margin: 0;
     --el-border-radius-large: 6px;
 }
 
-html, body, #app, .index-container {
+html,
+body,
+#app,
+.index-container {
     height: 100%;
 }
 
@@ -60,18 +65,23 @@ html, body, #app, .index-container {
 .padding-left1 {
     padding-left: 5px;
 }
+
 .padding-left2 {
     padding-left: 10px;
 }
+
 .padding-left3 {
     padding-left: 15px;
 }
+
 .padding-right1 {
     padding-right: 5px;
 }
+
 .padding-right2 {
     padding-right: 10px;
 }
+
 .padding-right3 {
     padding-right: 15px;
 }
@@ -79,18 +89,23 @@ html, body, #app, .index-container {
 .padding-top1 {
     padding-top: 5px;
 }
+
 .padding-top2 {
     padding-top: 10px;
 }
+
 .padding-top3 {
     padding-top: 15px;
 }
+
 .padding-bottom1 {
     padding-bottom: 5px;
 }
+
 .padding-bottom2 {
     padding-bottom: 10px;
 }
+
 .padding-bottom3 {
     padding-bottom: 15px;
 }
@@ -98,9 +113,11 @@ html, body, #app, .index-container {
 .margin-bottom1 {
     margin-bottom: 5px;
 }
+
 .margin-bottom2 {
     margin-bottom: 10px;
 }
+
 .margin-bottom3 {
     margin-bottom: 15px;
 }
@@ -108,9 +125,11 @@ html, body, #app, .index-container {
 .margin-left1 {
     margin-left: 5px;
 }
+
 .margin-left2 {
     margin-left: 10px;
 }
+
 .margin-left3 {
     margin-left: 15px;
 }
@@ -118,9 +137,11 @@ html, body, #app, .index-container {
 .margin-right1 {
     margin-right: 5px;
 }
+
 .margin-right2 {
     margin-right: 10px;
 }
+
 .margin-right3 {
     margin-right: 15px;
 }
@@ -128,9 +149,11 @@ html, body, #app, .index-container {
 .margin-top1 {
     margin-top: 5px;
 }
+
 .margin-top2 {
     margin-top: 10px;
 }
+
 .margin-top3 {
     margin-top: 15px;
 }
@@ -138,20 +161,22 @@ html, body, #app, .index-container {
 .text-center {
     text-align: center;
 }
+
 .text-left {
     text-align: left;
 }
+
 .text-right {
     text-align: right;
 }
 
-.flex-center{
+.flex-center {
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.flex-center-col{
+.flex-center-col {
     display: flex;
     align-items: center;
 }
@@ -165,26 +190,30 @@ html, body, #app, .index-container {
 }
 
 .el-dialog.is-fullscreen .el-dialog__header,
-.el-dialog.is-fullscreen .el-dialog__footer{
+.el-dialog.is-fullscreen .el-dialog__footer {
     position: fixed;
     left: 0;
-    right:0;
+    right: 0;
     z-index: 999;
     border-radius: 0;
     padding-left: 20px;
 }
-.el-dialog.is-fullscreen .el-dialog__header{
+
+.el-dialog.is-fullscreen .el-dialog__header {
     margin-top: -20px;
     padding-top: 20px;
     background: inherit;
 }
-.el-dialog.is-fullscreen .el-dialog__footer{
+
+.el-dialog.is-fullscreen .el-dialog__footer {
     bottom: var(--el-dialog-padding-primary);
 }
-.el-dialog.is-fullscreen .dialog-footer{
+
+.el-dialog.is-fullscreen .dialog-footer {
     border-radius: 0;
 }
-.el-dialog.is-fullscreen .el-dialog__body{
+
+.el-dialog.is-fullscreen .el-dialog__body {
     padding: 48px 12px;
 }
 
@@ -192,13 +221,14 @@ html, body, #app, .index-container {
     z-index: 10;
     width: 6px;
 }
+
 .icon-list::-webkit-scrollbar-thumb {
-    border-radius:5px;
-    width:6px;
-    background:var(--el-text-color-disabled)
+    border-radius: 5px;
+    width: 6px;
+    background: var(--el-text-color-disabled)
 }
 
-.login-form .el-card__header{
+.login-form .el-card__header {
     padding-top: 0;
     padding-bottom: 0;
 }
@@ -230,7 +260,7 @@ html, body, #app, .index-container {
     padding-top: 20px;
 }
 
-.reason-code-container .el-radio__label{
+.reason-code-container .el-radio__label {
     white-space: break-spaces;
 }
 
@@ -250,40 +280,40 @@ html, body, #app, .index-container {
 }
 
 .common-form.el-form--inline .el-select,
-.common-subform.el-form--inline .el-select{
+.common-subform.el-form--inline .el-select {
     --el-select-width: 200px;
 }
 
 .common-form.el-form--inline .el-input,
-.common-subform.el-form--inline .el-input{
+.common-subform.el-form--inline .el-input {
     --el-input-width: 200px;
     --el-date-editor-width: 200px;
 }
 
-.common-form-small.common-form.el-form--inline .el-select{
+.common-form-small.common-form.el-form--inline .el-select {
     --el-select-width: 160px;
 }
 
-.common-form-small.common-form.el-form--inline .el-input{
+.common-form-small.common-form.el-form--inline .el-input {
     --el-input-width: 160px;
     --el-date-editor-width: 160px;
 }
 
 .form-edit-width-70 {
-    width:70%
+    width: 70%
 }
 
 .form-edit-width-90 {
-    width:90%
+    width: 90%
 }
 
 .form-edit-width-100 {
-    width:100%
+    width: 100%
 }
 
-.form-edit-width-70 .el-select:not(:is(.el-form--inline .el-select,.el-pagination .el-select)),
-.form-edit-width-90 .el-select:not(:is(.el-form--inline .el-select,.el-pagination .el-select)),
-.form-edit-width-100 .el-select:not(:is(.el-form--inline .el-select,.el-pagination .el-select)){
+.form-edit-width-70 .el-select:not(:is(.el-form--inline .el-select, .el-pagination .el-select)),
+.form-edit-width-90 .el-select:not(:is(.el-form--inline .el-select, .el-pagination .el-select)),
+.form-edit-width-100 .el-select:not(:is(.el-form--inline .el-select, .el-pagination .el-select)) {
     width: 100%;
 }
 
@@ -291,17 +321,18 @@ html, body, #app, .index-container {
     cursor: pointer;
 }
 
-.common-autocomplete .el-popover__title{
+.common-autocomplete .el-popover__title {
     font-size: 14px;
     font-weight: 600;
 }
 
-.common-autocomplete .autocomplete-table .el-table__cell{
+.common-autocomplete .autocomplete-table .el-table__cell {
     padding: 3px 0;
     cursor: pointer;
 }
 
-.common-autocomplete .el-tabs__nav-next, .el-tabs__nav-prev {
+.common-autocomplete .el-tabs__nav-next,
+.el-tabs__nav-prev {
     line-height: 30px;
 }
 
@@ -331,7 +362,7 @@ html, body, #app, .index-container {
     right: -20px;
 }
 
-.small-card .el-card__header{
+.small-card .el-card__header {
     padding: 10px;
 }
 
@@ -354,7 +385,7 @@ html, body, #app, .index-container {
 }
 
 .common-data-row label {
-    font-weight: 600 ;
+    font-weight: 600;
 }
 
 .common-data-row .el-col {
@@ -404,7 +435,7 @@ html, body, #app, .index-container {
     flex-direction: row-reverse;
 }
 
-.common-message-confirm .el-message-box__btns .el-button+.el-button{
+.common-message-confirm .el-message-box__btns .el-button+.el-button {
     margin-right: 12px;
 }
 
@@ -437,6 +468,7 @@ html, body, #app, .index-container {
     float: right;
     width: calc(100% - 140px) !important;
 }
+
 .common-params-edit .el-upload-list {
     margin-left: -515px;
     width: 700px;
@@ -449,13 +481,16 @@ html, body, #app, .index-container {
 .request-table {
     overflow: auto;
 }
+
 .request-table .el-table__row {
     cursor: pointer;
 }
-.request-table .current-row td:first-child{
+
+.request-table .current-row td:first-child {
     border-left: 4px solid var(--el-color-primary);
 }
-.request-table td{
+
+.request-table td {
     border-left: 4px solid transparent;
 }
 
@@ -502,6 +537,7 @@ html, body, #app, .index-container {
     resize: horizontal;
     overflow: auto;
 }
+
 .disable-affix .el-affix--fixed {
     position: unset;
 }
@@ -527,16 +563,57 @@ html, body, #app, .index-container {
 .dark .el-card .el-descriptions__body {
     background-color: var(--el-card-bg-color)
 }
+
 /* 整体编辑器区域 */
 .monaco-editor.vs {
-    background-color: #f5f7fa; /* el-bg-color-page */
+    background-color: #f5f7fa;
+    /* el-bg-color-page */
 }
+
 /* gutter（行号区） */
 .monaco-editor.vs .margin {
-    background-color: #f0f2f5; /* el-fill-color-light */
-    box-shadow: inset -1px 0 0 #dcdfe6; /* el-border-color */
+    background-color: #f0f2f5;
+    /* el-fill-color-light */
+    box-shadow: inset -1px 0 0 #dcdfe6;
+    /* el-border-color */
 }
+
 /* 内容区 */
 .monaco-editor.vs .monaco-editor-background {
     background-color: #ffffff;
+}
+
+.home-main.is-maximized {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2000;
+    background-color: var(--el-bg-color);
+}
+
+.fullscreen-btn {
+    position: fixed;
+    top: auto;
+    right: 70px;
+    bottom: 120px;
+    z-index: 999;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--el-bg-color-overlay);
+    color: var(--el-color-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: var(--el-box-shadow-lighter);
+    opacity: 1;
+    transition: opacity 0.3s;
+    font-size: 20px;
+}
+
+.fullscreen-btn:hover {
+    opacity: 1;
 }
