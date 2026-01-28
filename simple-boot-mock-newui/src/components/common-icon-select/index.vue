@@ -159,8 +159,8 @@ const selectIcon = icon => {
           <el-backtop
             v-common-tooltip="$t('common.label.backtop')"
             target=".scroller"
-            :right="10"
-            :bottom="10"
+            :right="40"
+            :bottom="40"
           />
         </el-main>
       </el-container>

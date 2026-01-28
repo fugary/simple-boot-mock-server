@@ -596,8 +596,8 @@ body,
 .fullscreen-btn {
     position: fixed;
     top: auto;
-    right: 70px;
-    bottom: 120px;
+    right: 40px;
+    bottom: 90px;
     z-index: 999;
     width: 40px;
     height: 40px;

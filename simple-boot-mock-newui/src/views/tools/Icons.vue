@@ -65,8 +65,8 @@ const copyIcon = (icon) => {
       <el-backtop
         v-common-tooltip="$t('common.label.backtop')"
         target=".scroller"
-        :right="50"
-        :bottom="50"
+        :right="40"
+        :bottom="40"
       />
     </el-main>
   </el-container>
