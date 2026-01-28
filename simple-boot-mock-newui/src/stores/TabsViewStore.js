@@ -39,6 +39,7 @@ const serializer = {
  */
 export const useTabsViewStore = defineStore('tabsView', () => {
   const isTabMode = ref(false)
+  const isMainMaximized = ref(false)
   const isCachedTabMode = ref(true)
   const isShowTabIcon = ref(true)
   const currentTab = ref('')
@@ -204,6 +205,10 @@ export const useTabsViewStore = defineStore('tabsView', () => {
   })
 
   return {
+    isMainMaximized,
+    toggleMainFullscreen () {
+      isMainMaximized.value = !isMainMaximized.value
+    },
     isTabMode,
     isCachedTabMode,
     isShowTabIcon,

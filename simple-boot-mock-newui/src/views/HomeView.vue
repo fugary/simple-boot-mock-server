@@ -4,7 +4,7 @@ import TopNav from '@/layout/TopNav.vue'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 import { useTabsViewStore } from '@/stores/TabsViewStore'
 import { GlobalLayoutMode } from '@/consts/GlobalConstants'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import GlobalSettings from '@/views/components/global/GlobalSettings.vue'
 import { useMenuConfigStore } from '@/stores/MenuConfigStore'
 import { useBreadcrumbConfigStore } from '@/stores/BreadcrumbConfigStore'
@@ -13,14 +13,13 @@ import { useTabModeScrollSaver, getParentRootKey } from '@/route/RouteUtils'
 import { formatDate } from '@/utils'
 import { onKeyStroke } from '@vueuse/core'
 
-const isMainMaximized = ref(false)
 const toggleMainFullscreen = () => {
-  isMainMaximized.value = !isMainMaximized.value
+  tabsViewStore.toggleMainFullscreen()
 }
 onKeyStroke('Escape', (e) => {
-  if (isMainMaximized.value) {
+  if (tabsViewStore.isMainMaximized) {
     e.preventDefault()
-    isMainMaximized.value = false
+    tabsViewStore.isMainMaximized = false
   }
 })
 
@@ -66,14 +65,14 @@ useMenuConfigStore().loadBusinessMenus()
       </el-header>
       <el-main
         class="home-main"
-        :class="{ 'is-maximized': isMainMaximized }"
+        :class="{ 'is-maximized': tabsViewStore.isMainMaximized }"
       >
         <div
           class="fullscreen-btn"
           @click="toggleMainFullscreen"
         >
           <common-icon
-            :icon="isMainMaximized ? 'FullscreenExitFilled' : 'FullscreenFilled'"
+            :icon="tabsViewStore.isMainMaximized ? 'FullscreenExitFilled' : 'FullscreenFilled'"
             :size="20"
           />
         </div>

@@ -456,6 +456,9 @@ export const checkShowColumn = (dataList, field) => {
   return hasFieldData
 }
 export const calcAffixOffset = (fix = 10) => {
+  if (useTabsViewStore().isMainMaximized) {
+    return fix
+  }
   let initValue = 60 + fix
   useGlobalConfigStore().layoutMode === GlobalLayoutMode.TOP && useGlobalConfigStore().isShowBreadcrumb && (initValue += 40)
   useTabsViewStore().isTabMode && (initValue += 40)
