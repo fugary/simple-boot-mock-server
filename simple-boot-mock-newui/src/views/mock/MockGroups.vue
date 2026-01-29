@@ -337,7 +337,9 @@ const reloadProjectsAndRefreshOptions = async (item, importModel) => {
   }
 }
 const saveProjectItem = (item) => {
-  return MockProjectApi.saveOrUpdate(item).then(() => reloadProjectsAndRefreshOptions(item))
+  return MockProjectApi.saveOrUpdate(item).then(() => {
+    reloadProjectsAndRefreshOptions(item)
+  })
 }
 const editFormOptions = computed(() => {
   const options = defineFormOptions([{
@@ -411,7 +413,9 @@ const editFormOptions = computed(() => {
   return filteredOptions
 })
 const saveGroupItem = (item) => {
-  return saveOrUpdate(item).then(() => loadMockGroups())
+  return saveOrUpdate(item).then(() => {
+    loadMockGroups()
+  })
 }
 const selectedRows = ref([])
 const exportGroups = (groupIds) => {

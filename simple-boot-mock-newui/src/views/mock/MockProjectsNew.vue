@@ -96,7 +96,9 @@ const deleteProjects = () => {
 
 const { showEditWindow, currentProject, newOrEditProject: newOrEdit, editFormOptions } = useProjectEditHook(searchParam, userOptions)
 const saveProjectItem = (item) => {
-  return saveOrUpdate(item).then(() => loadMockProjects())
+  return saveOrUpdate(item, { loading: true }).then(() => {
+    loadMockProjects()
+  })
 }
 
 const minWidth = '100px'
@@ -198,7 +200,7 @@ const toCopyProject = (project) => {
 }
 const saveCopyProject = () => {
   return copyMockProject(copyToModel.value, { loading: true })
-    .then(() => loadMockProjects())
+    .then(() => { loadMockProjects() })
 }
 const { width } = useWindowSize()
 const colSize = computed(() => {
