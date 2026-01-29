@@ -1,6 +1,6 @@
 {
   "name": "simple-element-plus-template",
-  "version": "2.11.2",
+  "version": "2.11.3",
   "private": true,
   "scripts": {
     "dev": "vite --host",
@@ -24,7 +24,7 @@
     "dayjs": "^1.11.19",
     "element-plus": "^2.13.1",
     "fast-xml-parser": "^5.3.3",
-    "lodash-es": "^4.17.22",
+    "lodash-es": "^4.17.23",
     "monaco-editor": "^0.55.1",
     "nprogress": "^0.2.0",
     "numeral": "^2.0.6",
