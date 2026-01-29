@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useThemeAndLocaleMenus } from '@/services/menu/MenuService'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { ElMessage } from 'element-plus'
+import { User, Lock } from '@element-plus/icons-vue'
 import { APP_VERSION } from '@/config'
 import { formatDate } from '@/utils'
 
@@ -18,13 +19,19 @@ const themeAndLocaleMenus = ref(useThemeAndLocaleMenus())
 const loginFormOptions = [{
   labelKey: 'common.label.username',
   required: true,
-  prop: 'userName'
+  prop: 'userName',
+  attrs: {
+    size: 'large',
+    'prefix-icon': User
+  }
 }, {
   labelKey: 'common.label.password',
   required: true,
   prop: 'userPassword',
   attrs: {
-    showPassword: true
+    size: 'large',
+    showPassword: true,
+    'prefix-icon': Lock
   }
 }]
 
@@ -117,6 +124,7 @@ const formRef = ref()
           <el-button
             class="reset-btn"
             text
+            size="large"
             @click="formRef.form.resetFields()"
           >
             {{ $t('common.label.reset') }}
