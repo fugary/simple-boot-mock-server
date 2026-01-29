@@ -121,7 +121,66 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.common-tabs .el-tabs__header {
+:deep(.el-tabs__header) {
   margin: 0;
+  border-bottom: 1px solid var(--el-border-color-light) !important;
+}
+
+:deep(.el-tabs__nav) {
+  border: 0 !important;
+}
+
+:deep(.el-tabs__item) {
+  border: 1px solid transparent !important;
+  margin: 0 4px -1px 0;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  /* Default inactive background */
+  background-color: var(--el-fill-color-light);
+  border-bottom: 1px solid var(--el-border-color-light) !important;
+}
+
+/* Specific styling for active tab to look "connected" to content */
+:deep(.el-tabs__item.is-active) {
+  background-color: var(--el-bg-color);
+  border-left: 1px solid var(--el-border-color-light) !important;
+  border-right: 1px solid var(--el-border-color-light) !important;
+  border-top: 1px solid var(--el-border-color-light) !important;
+  border-bottom: 1px solid transparent !important; /* Hide bottom border to merge */
+  position: relative;
+  font-weight: 600;
+}
+
+/* Top highlight line for active tab */
+:deep(.el-tabs__item.is-active)::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: calc(100% + 2px);
+  height: 2px;
+  background-color: var(--el-color-primary);
+  border-radius: 4px 4px 0 0;
+}
+
+:deep(.el-tabs__item:not(.is-active):hover) {
+  background-color: var(--el-fill-color);
+  color: var(--el-color-primary);
+}
+
+/* Dark mode adjustments */
+.dark :deep(.el-tabs__header) {
+  border-bottom: 1px solid var(--el-border-color-darker) !important;
+}
+
+.dark :deep(.el-tabs__item) {
+  background-color: var(--el-bg-color-overlay);
+  border-bottom: 1px solid var(--el-border-color-darker) !important;
+}
+
+.dark :deep(.el-tabs__item.is-active) {
+  background-color: var(--el-bg-color);
+  border-color: var(--el-border-color-darker) !important;
+  border-bottom-color: transparent !important;
 }
 </style>

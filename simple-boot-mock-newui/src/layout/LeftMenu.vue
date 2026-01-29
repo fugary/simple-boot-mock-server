@@ -8,7 +8,10 @@ const businessMenus = computed(() => menuConfigStore.calcBusinessMenus())
 </script>
 
 <template>
-  <el-scrollbar>
+  <el-scrollbar
+    view-class="height100"
+    class="height100"
+  >
     <common-menu
       class="el-menu-left"
       :collapse="globalConfigStore.isCollapseLeft"

@@ -43,7 +43,7 @@ useMenuConfigStore().loadBusinessMenus()
       <left-menu />
     </el-aside>
     <el-container>
-      <el-header>
+      <el-header class="index-header">
         <top-nav />
       </el-header>
       <el-header
