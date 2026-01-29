@@ -58,67 +58,73 @@ const formRef = ref()
 </script>
 
 <template>
-  <el-container class="flex-column">
-    <el-card class="login-form">
-      <template #header>
-        <div class="card-header">
-          <span>{{ $t('common.label.title') }}</span>
-          <common-menu
-            :menus="themeAndLocaleMenus"
-            mode="horizontal"
-            :ellipsis="false"
-          />
-        </div>
-      </template>
-      <el-container class="text-center flex-column margin-bottom3">
-        <strong>{{ $t('common.msg.loginTitle') }}</strong>
-      </el-container>
-      <common-form
-        ref="formRef"
-        :model="loginVo"
-        :options="loginFormOptions"
-        label-width="100px"
-        :show-buttons="false"
-        @submit-form="submitForm"
+  <div class="login-container">
+    <!-- Tools (Language/Theme) - Absolute Top Right -->
+    <div class="login-tools">
+      <common-menu
+        :menus="themeAndLocaleMenus"
+        mode="horizontal"
+        :ellipsis="false"
       />
-      <template #footer>
-        <el-button
-          type="primary"
-          :loading="loading"
-          @click="submitForm(formRef.form)"
-        >
-          <span v-if="!loading">{{ $t('common.label.login') }}</span>
-          <span v-else>{{ $t('common.label.logining') }}</span>
-        </el-button>
-        <el-button
-          @click="formRef.form.resetFields()"
-        >
-          {{ $t('common.label.reset') }}
-        </el-button>
-      </template>
-    </el-card>
-    <el-container class="text-center padding-10 flex-center">
-      <span>
-        <el-text>Copyright © {{ formatDate(new Date(), 'YYYY') }} Version: {{ APP_VERSION }}</el-text>
-      </span>
-    </el-container>
-  </el-container>
+    </div>
+
+    <!-- Left Side: Branding -->
+    <div class="login-branding">
+      <div class="branding-content">
+        <h1 class="branding-title">
+          {{ $t('common.label.title') }}
+        </h1>
+        <p class="branding-subtitle">
+          {{ $t('common.msg.brandingSubtitle') }}
+        </p>
+        <div class="branding-decoration" />
+      </div>
+      <div class="branding-footer">
+        <span>© {{ formatDate(new Date(), 'YYYY') }} Version {{ APP_VERSION }}</span>
+      </div>
+    </div>
+
+    <!-- Right Side: Form -->
+    <div class="login-form-section">
+      <div class="form-wrapper">
+        <div class="form-header">
+          <h2>{{ $t('common.msg.loginTitle') }}</h2>
+          <p class="form-subtitle">
+            {{ $t('common.msg.loginSubtitle') }}
+          </p>
+        </div>
+
+        <common-form
+          ref="formRef"
+          :model="loginVo"
+          :options="loginFormOptions"
+          label-position="top"
+          class="modern-form"
+          :show-buttons="false"
+          @submit-form="submitForm"
+        />
+
+        <div class="form-actions">
+          <el-button
+            type="primary"
+            class="login-btn"
+            size="large"
+            :loading="loading"
+            @click="submitForm(formRef.form)"
+          >
+            {{ loading ? $t('common.label.logining') : $t('common.label.login') }}
+          </el-button>
+          <el-button
+            class="reset-btn"
+            text
+            @click="formRef.form.resetFields()"
+          >
+            {{ $t('common.label.reset') }}
+          </el-button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
-<style scoped>
-.login-form {
-  width: 500px;
-  margin: 5% auto;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.el-menu--horizontal.el-menu {
-  border-bottom: none;
-}
-
-</style>
+<style scoped src="@/assets/login.css"></style>

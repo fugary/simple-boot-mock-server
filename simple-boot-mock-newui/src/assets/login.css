@@ -1,0 +1,191 @@
+.login-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--el-bg-color);
+}
+
+/* Tools */
+.login-tools {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  z-index: 10;
+}
+
+:deep(.el-menu--horizontal) {
+  border-bottom: none;
+  background: transparent;
+}
+
+/* Left Branding (Mobile hidden) */
+.login-branding {
+  flex: 1;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  position: relative;
+}
+
+/* Decorative Circle */
+.branding-decoration {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  filter: blur(80px);
+}
+
+.branding-content {
+  text-align: center;
+  z-index: 2;
+  animation: fadeIn 1s ease-out;
+}
+
+.branding-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  letter-spacing: -1px;
+}
+
+.branding-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  font-weight: 300;
+}
+
+.branding-footer {
+  position: absolute;
+  bottom: 30px;
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+/* Right Form Section */
+.login-form-section {
+  flex: 1; /* Default to 1, on wide screens maybe fixed width */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  background-color: var(--el-bg-color);
+  max-width: 600px;
+  min-width: 400px;
+}
+
+.form-wrapper {
+  width: 100%;
+  max-width: 400px;
+  animation: slideUp 0.8s ease-out;
+}
+
+.form-header {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.form-header h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--el-text-color-primary);
+}
+
+.form-subtitle {
+  color: var(--el-text-color-secondary);
+  font-size: 0.95rem;
+}
+
+/* Form Styles */
+.modern-form {
+  margin-bottom: 1.5rem;
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 600;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%; /* Ensure full width alignment */
+}
+
+.login-btn {
+  width: 100%;
+  font-size: 1rem;
+  padding: 22px 0;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%);
+  border: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(42, 82, 152, 0.3);
+}
+
+.reset-btn {
+  width: 100%;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-branding {
+    flex: 0 0 150px; /* Short header on mobile */
+    min-height: auto;
+    padding: 20px;
+  }
+
+  .branding-title {
+    font-size: 1.8rem;
+
+    margin-bottom: 0;
+  }
+
+  .branding-subtitle, .branding-footer {
+    display: none;
+  }
+
+  .login-form-section {
+    flex: 1;
+    max-width: 100%;
+    align-items: flex-start;
+
+    padding-top: 40px;
+  }
+
+  .login-tools {
+    color: white; /* Text needs to be visible on dark header */
+
+  }
+
+  .login-tools :deep(.el-sub-menu__title), .login-tools :deep(.el-tooltip__trigger) {
+     color: white !important;
+  }
+}
