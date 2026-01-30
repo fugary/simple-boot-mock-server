@@ -282,9 +282,12 @@ const pageAttrs = {
         >
           <el-card
             shadow="hover"
-            class="small-card operation-card"
-            style="border-radius: 10px;"
-            :class="{pointer: project.status===1, 'project-selected': project.selected}"
+            class="small-card operation-card project-card"
+            :class="{
+              pointer: project.status===1,
+              'project-selected': project.selected,
+              'project-disabled': project.status!==1
+            }"
             @click="gotoMockGroups(project)"
           >
             <template #header>
@@ -307,7 +310,7 @@ const pageAttrs = {
                     {{ project.projectCode===MOCK_DEFAULT_PROJECT?$t('mock.label.defaultProject'):project.projectName }}
                   </el-text>
                 </el-checkbox>
-                <template v-if="project.showOperations">
+                <div class="project-operations">
                   <el-button
                     v-if="checkProjectEdit(project)&&!defaultProject"
                     v-common-tooltip="$t('common.label.edit')"
@@ -338,7 +341,7 @@ const pageAttrs = {
                   >
                     <common-icon icon="DeleteFilled" />
                   </el-button>
-                </template>
+                </div>
               </div>
             </template>
             <common-descriptions
@@ -379,7 +382,73 @@ const pageAttrs = {
 </template>
 
 <style scoped>
+/* Project card base styling */
+.project-card {
+  border-radius: 12px;
+  transition: all 0.25s ease;
+  overflow: hidden;
+  border-top: 3px solid transparent;
+}
+
+/* Hover effect */
+.project-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  border-top-color: var(--el-color-primary);
+}
+
+.dark .project-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* Selected state */
 .project-selected {
   border-color: var(--el-color-primary);
+  border-top-color: var(--el-color-primary);
+}
+
+/* Card header styling */
+.project-card :deep(.el-card__header) {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+/* Card body styling */
+.project-card :deep(.el-card__body) {
+  padding: 14px 16px;
+}
+
+/* Project title styling */
+.project-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Operation buttons */
+.project-operations {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.project-card:hover .project-operations {
+  opacity: 1;
+}
+
+/* Disabled project styling */
+.project-disabled {
+  opacity: 0.6;
+}
+
+.project-disabled:hover {
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* Description items styling */
+.project-card :deep(.el-descriptions__label) {
+  font-weight: 500;
+  color: var(--el-text-color-secondary);
 }
 </style>

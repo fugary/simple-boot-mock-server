@@ -18,6 +18,7 @@ module.exports = {
   rules: {
     'vue/multi-word-component-names': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-unused-expressions': 'off'
+    '@typescript-eslint/no-unused-expressions': 'off',
+    'vue/no-v-model-argument': 'off' // Vue 3 allows v-model arguments
   }
 }
