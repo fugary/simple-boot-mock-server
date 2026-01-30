@@ -695,3 +695,91 @@ html.dark {
     box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.5);
     border-right: 1px solid var(--el-border-color-light);
 }
+
+/* ========================================
+   GLOBAL LIGHT THEME OPTIMIZATIONS
+   ======================================== */
+
+/* 1. Main Content Background
+   Use a light gray background for the main area to create contrast with white cards */
+.home-main {
+    background-color: #f5f7fa;
+    /* Light gray background */
+}
+
+/* 2. Card Enhancements
+   Strengthen borders and shadows for better separation from the background */
+.el-card {
+    border: 1px solid #ebEEF5;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    /* Subtle base shadow */
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.el-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    /* Stronger hover shadow */
+}
+
+/* 3. Form Input Highlighting removed to prevent style conflict */
+
+/* 4. Table Header Contrast
+   Slightly darker header for data tables */
+.el-table th.el-table__cell {
+    background-color: #f5f7fa !important;
+    color: #606266;
+    font-weight: 600;
+}
+
+/* 5. Tabs Header Integration
+   Ensure tabs header blends with page structure */
+.tabs-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e4e7ed;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* 6. Typography
+   Increase contrast for labels and secondary text */
+.el-descriptions__label,
+.el-form-item__label {
+    color: #606266;
+    font-weight: 500;
+}
+
+/* ========================================
+   DARK MODE COMPATIBILITY RESTORATION
+   ======================================== */
+.dark .home-main {
+    background-color: var(--el-bg-color);
+    /* Revert to dark bg */
+}
+
+.dark .el-card {
+    border-color: var(--el-border-color-darker);
+    box-shadow: none;
+    /* Dark mode usually relies less on shadow */
+    background-color: var(--el-bg-color-overlay);
+}
+
+.dark .el-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark .el-table th.el-table__cell {
+    background-color: var(--el-bg-color-overlay) !important;
+    color: var(--el-text-color-primary);
+}
+
+.dark .tabs-header {
+    background-color: var(--el-bg-color);
+    border-bottom-color: var(--el-border-color-darker);
+    box-shadow: none;
+}
+
+
+
+.dark .el-descriptions__label,
+.dark .el-form-item__label {
+    color: var(--el-text-color-regular);
+}

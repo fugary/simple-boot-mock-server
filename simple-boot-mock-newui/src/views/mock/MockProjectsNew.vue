@@ -387,7 +387,13 @@ const pageAttrs = {
   border-radius: 12px;
   transition: all 0.25s ease;
   overflow: hidden;
-  border-top: 3px solid transparent;
+  /* Sync top border width with hover state to prevent layout shift
+     Use default border color initially so it looks connected */
+  border-top: 3px solid var(--el-border-color-lighter);
+}
+
+.dark .project-card {
+  border-top-color: var(--el-border-color-darker);
 }
 
 /* Hover effect */
