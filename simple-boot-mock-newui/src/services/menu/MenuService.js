@@ -16,6 +16,7 @@ import { I18N_ENABLED, THEME_ENABLED } from '@/config'
 import { $logout } from '@/utils'
 import { ALL_MENUS } from '@/services/menu/MenuData'
 import { cloneDeep, isFunction } from 'lodash-es'
+import { nextTick } from 'vue'
 
 /**
  * @param menu {MenuDto}
@@ -100,6 +101,45 @@ const processMenus = (menus, parent = undefined) => {
   return results
 }
 
+const handleThemeChange = (globalConfigStore, event) => {
+  const isDark = globalConfigStore.isDarkTheme
+  // Check if view transition is supported and event exists
+  if (!document.startViewTransition) {
+    globalConfigStore.changeTheme(!isDark)
+    return
+  }
+
+  const x = event?.clientX ?? window.event?.clientX ?? window.innerWidth / 2
+  const y = event?.clientY ?? window.event?.clientY ?? window.innerHeight / 2
+  const endRadius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y)
+  )
+
+  const transition = document.startViewTransition(async () => {
+    globalConfigStore.changeTheme(!isDark)
+    // Wait for Vue to update the DOM
+    await nextTick()
+  })
+
+  transition.ready.then(() => {
+    const clipPath = [
+      `circle(0px at ${x}px ${y}px)`,
+      `circle(${endRadius}px at ${x}px ${y}px)`
+    ]
+    document.documentElement.animate(
+      {
+        clipPath: isDark ? clipPath : clipPath.reverse()
+      },
+      {
+        duration: 400,
+        easing: 'ease-in',
+        pseudoElement: isDark ? '::view-transition-new(root)' : '::view-transition-old(root)'
+      }
+    )
+  })
+}
+
 export const useThemeAndLocaleMenus = () => {
   const globalConfigStore = useGlobalConfigStore()
   return [{
@@ -123,7 +163,7 @@ export const useThemeAndLocaleMenus = () => {
     isDropdown: true,
     enabled: THEME_ENABLED,
     iconIf: () => !globalConfigStore.isDarkTheme ? 'moon' : 'sunny',
-    click: () => globalConfigStore.changeTheme(!globalConfigStore.isDarkTheme)
+    click: (event) => handleThemeChange(globalConfigStore, event)
   }]
 }
 

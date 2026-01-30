@@ -307,7 +307,7 @@ const editFormOptions = computed(() => {
       activeText: $i18nBundle('common.label.yes'),
       inactiveText: $i18nBundle('common.label.no')
     }
-  }, { ...useFormDelay(), style: getStyleGrow(3) }, {
+  }, { ...useFormDelay(), style: getStyleGrow(3.5) }, {
     ...useContentTypeOption(),
     slot: 'newContentType',
     enabled: !isRedirect,
