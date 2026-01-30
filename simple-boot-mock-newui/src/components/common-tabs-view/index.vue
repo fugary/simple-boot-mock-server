@@ -124,6 +124,7 @@ onBeforeUnmount(() => {
 :deep(.el-tabs__header) {
   margin: 0;
   border-bottom: 1px solid var(--el-border-color-light) !important;
+  position: relative;
 }
 
 :deep(.el-tabs__nav) {
@@ -132,11 +133,15 @@ onBeforeUnmount(() => {
 
 :deep(.el-tabs__item) {
   border: 1px solid transparent !important;
-  margin: 0 4px -1px 0;
+  margin: 0 4px 0 0;
   border-radius: 4px 4px 0 0;
   transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
   /* Default inactive background */
   background-color: var(--el-fill-color-light);
+}
+
+/* Bottom border for inactive tabs */
+:deep(.el-tabs__item:not(.is-active)) {
   border-bottom: 1px solid var(--el-border-color-light) !important;
 }
 
@@ -146,9 +151,21 @@ onBeforeUnmount(() => {
   border-left: 1px solid var(--el-border-color-light) !important;
   border-right: 1px solid var(--el-border-color-light) !important;
   border-top: 1px solid var(--el-border-color-light) !important;
-  border-bottom: 1px solid transparent !important; /* Hide bottom border to merge */
+  border-bottom: 1px solid transparent !important;
   position: relative;
   font-weight: 600;
+}
+
+/* Cover the header bottom border under active tab */
+:deep(.el-tabs__item.is-active)::before {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--el-bg-color);
+  z-index: 10;
 }
 
 /* Top highlight line for active tab */
@@ -175,6 +192,9 @@ onBeforeUnmount(() => {
 
 .dark :deep(.el-tabs__item) {
   background-color: var(--el-bg-color-overlay);
+}
+
+.dark :deep(.el-tabs__item:not(.is-active)) {
   border-bottom: 1px solid var(--el-border-color-darker) !important;
 }
 
@@ -182,5 +202,9 @@ onBeforeUnmount(() => {
   background-color: var(--el-bg-color);
   border-color: var(--el-border-color-darker) !important;
   border-bottom-color: transparent !important;
+}
+
+.dark :deep(.el-tabs__item.is-active)::before {
+  background-color: var(--el-bg-color);
 }
 </style>
