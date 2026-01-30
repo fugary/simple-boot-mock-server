@@ -48,7 +48,7 @@ useMenuConfigStore().loadBusinessMenus()
       </el-header>
       <el-header
         v-if="globalConfigStore.layoutMode === GlobalLayoutMode.TOP && globalConfigStore.isShowBreadcrumb"
-        class="tabs-header"
+        class="breadcrumb-header"
         style="height: 40px"
       >
         <common-breadcrumb
@@ -115,5 +115,10 @@ useMenuConfigStore().loadBusinessMenus()
   </el-container>
 </template>
 <style scoped>
-
+.tabs-header {
+  padding-top: 6px !important;
+  height: auto !important;
+  border-bottom: none !important;
+  box-shadow: none !important; /* Remove shadow if it causes double lines */
+}
 </style>

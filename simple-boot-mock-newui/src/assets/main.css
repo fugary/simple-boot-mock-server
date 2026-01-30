@@ -735,8 +735,20 @@ html.dark {
    Ensure tabs header blends with page structure */
 .tabs-header {
     background-color: #fff;
-    border-bottom: 1px solid #e4e7ed;
+    /* Removed border-bottom as it's handled by the tabs component itself */
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    padding-top: 6px;
+    height: auto !important;
+}
+
+/* Breadcrumb header - clean white background without border */
+.breadcrumb-header {
+    background-color: #fff;
+    /* No border-bottom to avoid double lines */
+}
+
+.dark .breadcrumb-header {
+    background-color: var(--el-bg-color);
 }
 
 /* 6. Typography
@@ -773,7 +785,7 @@ html.dark {
 
 .dark .tabs-header {
     background-color: var(--el-bg-color);
-    border-bottom-color: var(--el-border-color-darker);
+    /* No border needed here either */
     box-shadow: none;
 }
 
