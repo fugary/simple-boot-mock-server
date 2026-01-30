@@ -296,7 +296,7 @@ const editFormOptions = computed(() => {
   }, {
     labelKey: 'mock.label.responseName',
     prop: 'dataName'
-  }, { ...useFormStatus(), style: getStyleGrow(3) }, {
+  }, { ...useFormStatus(), style: getStyleGrow(3.5) }, {
     labelKey: 'mock.label.default',
     prop: 'defaultFlag',
     style: getStyleGrow(3),

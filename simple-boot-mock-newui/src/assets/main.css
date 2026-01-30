@@ -181,8 +181,126 @@ body,
     align-items: center;
 }
 
+/* ========================================
+   GLOBAL DIALOG/POPUP STYLES - Modern Clean Look
+   ======================================== */
 .el-dialog {
-    --el-dialog-border-radius: var(--el-border-radius-large);
+    --el-dialog-border-radius: 12px;
+    /* Cleaner shadow, more depth via softness rather than darkness */
+    box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+/* Header: Clean, minimalist */
+.el-dialog__header {
+    margin-right: 0;
+    padding: 20px 24px 10px;
+    /* More top padding */
+    border-bottom: none;
+    /* Removed hard styling */
+}
+
+.el-dialog__title {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 24px;
+    color: var(--el-text-color-primary);
+}
+
+/* Body: Comfortable spacing */
+.el-dialog__body {
+    padding: 10px 24px 24px;
+    /* Reduced top padding to flow from header */
+}
+
+/* Footer: Seamless integration */
+.el-dialog__footer {
+    padding: 0 24px 24px;
+    border-top: none;
+    background-color: transparent;
+    text-align: right;
+}
+
+/* Close Button: Styled for interaction */
+.el-dialog__headerbtn {
+    top: 20px;
+    right: 20px;
+    /* Standard close button position */
+    width: 32px;
+    /* Slightly larger touch target */
+    height: 32px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Fix overlap with custom fullscreen button */
+.el-dialog__headerbtn.dialog-fullscreen-btn {
+    right: 60px !important;
+    /* Move fullscreen button to the left of close button */
+}
+
+.el-dialog__headerbtn:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+.el-dialog__headerbtn .el-dialog__close {
+    font-size: 18px;
+    /* Larger icon */
+    color: var(--el-text-color-secondary);
+    transition: color 0.2s;
+}
+
+.el-dialog__headerbtn:hover .el-dialog__close {
+    color: var(--el-text-color-primary);
+}
+
+/* Fullscreen adjustments */
+.el-dialog.is-fullscreen {
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: none;
+    margin-top: 0;
+    margin-bottom: 0;
+    height: 100%;
+}
+
+.el-dialog.is-fullscreen .el-dialog__header {
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    padding-bottom: 16px;
+    background-color: #fff;
+    /* Ensure opaque background in fullscreen */
+}
+
+.el-dialog.is-fullscreen .el-dialog__body {
+    flex: 1;
+    overflow: auto;
+    padding: 24px;
+}
+
+.el-dialog.is-fullscreen .el-dialog__footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--el-border-color-lighter);
+    background-color: #fff;
+}
+
+/* Dark Mode Adaptation */
+.dark .el-dialog {
+    box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    background-color: #1d1e1f;
+}
+
+.dark .el-dialog__headerbtn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .el-dialog.is-fullscreen .el-dialog__header,
+.dark .el-dialog.is-fullscreen .el-dialog__footer {
+    background-color: #1d1e1f;
+    border-color: var(--el-border-color-darker);
 }
 
 .icon-dialog .el-dialog__body {
