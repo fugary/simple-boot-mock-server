@@ -131,6 +131,12 @@ onBeforeUnmount(() => {
   border: 0 !important;
 }
 
+/* Allow pseudo-elements to overflow and cover the header border */
+:deep(.el-tabs__nav-wrap),
+:deep(.el-tabs__nav-scroll) {
+  overflow: visible !important;
+}
+
 :deep(.el-tabs__item) {
   border: 1px solid transparent !important;
   margin: 0 4px 0 0;
@@ -160,10 +166,10 @@ onBeforeUnmount(() => {
 :deep(.el-tabs__item.is-active)::before {
   content: "";
   position: absolute;
-  bottom: -1px;
+  bottom: -2px;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 4px;
   background-color: var(--el-bg-color);
   z-index: 10;
 }

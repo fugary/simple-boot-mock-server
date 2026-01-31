@@ -461,7 +461,7 @@ export const calcAffixOffset = (fix = 10) => {
   }
   let initValue = 60 + fix
   useGlobalConfigStore().layoutMode === GlobalLayoutMode.TOP && useGlobalConfigStore().isShowBreadcrumb && (initValue += 40)
-  useTabsViewStore().isTabMode && (initValue += 46)
+  useTabsViewStore().isTabMode && (initValue += 48)
   return initValue
 }
 
