@@ -202,7 +202,7 @@ export const useBaseTopMenus = () => {
         },
         {
           labelKey: 'common.label.logout',
-          click() {
+          click () {
             $logout()
           }
         }
