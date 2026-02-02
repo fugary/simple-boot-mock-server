@@ -71,4 +71,7 @@ useMenuConfigStore().loadBusinessMenus()
 :deep(.collapsed-split.is-disabled > .split-pane:first-child) {
   width: 64px !important;
 }
+:deep(.common-split:not(.is-dragging) > .split-pane) {
+  transition: width 0.3s;
+}
 </style>
