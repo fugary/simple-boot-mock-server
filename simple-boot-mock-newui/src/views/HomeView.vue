@@ -72,6 +72,7 @@ useMenuConfigStore().loadBusinessMenus()
   width: 64px !important;
 }
 :deep(.common-split:not(.is-dragging) > .split-pane) {
-  transition: width 0.3s;
+  will-change: width;
+  transition: width 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
 }
 </style>
