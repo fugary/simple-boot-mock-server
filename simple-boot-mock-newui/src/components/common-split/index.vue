@@ -39,6 +39,7 @@ const props = defineProps({
   }
 })
 const itemRefs = ref([])
+const isDragging = ref(false)
 
 const attrs = useAttrs()
 let splitInstance = null
@@ -55,8 +56,21 @@ const initSplit = () => {
     minSize: props.minSize,
     maxSize: props.maxSize,
     gutterAlign: props.gutterAlign,
+    gutterSize: 5,
     direction: props.direction,
-    ...attrs
+    ...attrs,
+    onDragStart: (sizes) => {
+      isDragging.value = true
+      if (attrs.onDragStart) {
+        attrs.onDragStart(sizes)
+      }
+    },
+    onDragEnd: (sizes) => {
+      isDragging.value = false
+      if (attrs.onDragEnd) {
+        attrs.onDragEnd(sizes)
+      }
+    }
   })
 }
 
@@ -85,7 +99,7 @@ watch(() => props.sizes, (newSizes) => {
 <template>
   <div
     class="common-split"
-    :class="{ 'is-disabled': disabled }"
+    :class="{ 'is-disabled': disabled, 'is-dragging': isDragging }"
   >
     <div
       v-for="(_, index) in sizes"
@@ -124,8 +138,9 @@ watch(() => props.sizes, (newSizes) => {
   background-repeat: no-repeat;
   background-position: 50%;
 }
-:deep(.gutter:hover) {
-  background-color: #409eff;
+/* Highlight when dragging (controlled by JS state) */
+.is-dragging > :deep(.gutter) {
+  background-color: #409eff !important;
 }
 :deep(.gutter.gutter-horizontal) {
   cursor: col-resize;
