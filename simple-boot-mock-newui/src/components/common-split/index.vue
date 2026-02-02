@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, useAttrs } from 'vue'
+import { onMounted, onUnmounted, ref, useAttrs, watch } from 'vue'
 import Split from 'split.js'
 
 /**
@@ -32,14 +32,25 @@ const props = defineProps({
     validator (value) {
       return ['start', 'center', 'end'].includes(value)
     }
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 const itemRefs = ref([])
 
 const attrs = useAttrs()
+let splitInstance = null
 
-onMounted(() => {
-  Split(itemRefs.value.map(itemRef => itemRef), {
+const initSplit = () => {
+  if (splitInstance) {
+    splitInstance.destroy()
+    splitInstance = null
+  }
+  if (props.disabled) return
+
+  splitInstance = Split(itemRefs.value.map(itemRef => itemRef), {
     sizes: props.sizes,
     minSize: props.minSize,
     maxSize: props.maxSize,
@@ -47,16 +58,40 @@ onMounted(() => {
     direction: props.direction,
     ...attrs
   })
+}
+
+onMounted(() => {
+  initSplit()
+})
+
+onUnmounted(() => {
+  if (splitInstance) {
+    splitInstance.destroy()
+  }
+})
+
+watch(() => props.disabled, () => {
+  initSplit()
+})
+
+watch(() => props.sizes, (newSizes) => {
+  if (splitInstance) {
+    splitInstance.setSizes(newSizes)
+  }
 })
 
 </script>
 
 <template>
-  <div class="common-split">
+  <div
+    class="common-split"
+    :class="{ 'is-disabled': disabled }"
+  >
     <div
       v-for="(_, index) in sizes"
       ref="itemRefs"
       :key="index"
+      class="split-pane"
     >
       <slot :name="`split-${index}`" />
     </div>
@@ -64,5 +99,36 @@ onMounted(() => {
 </template>
 
 <style scoped>
-
+.common-split {
+  height: 100%;
+  width: 100%;
+}
+.split-pane {
+  overflow: hidden;
+  height: 100%;
+}
+.common-split.is-disabled {
+  display: flex;
+  flex-direction: row;
+}
+.common-split.is-disabled > .split-pane:first-child {
+  width: auto !important;
+  flex: none;
+}
+.common-split.is-disabled > .split-pane:last-child {
+  flex: 1;
+  width: auto !important;
+}
+:deep(.gutter) {
+  background-color: #eee;
+  background-repeat: no-repeat;
+  background-position: 50%;
+}
+:deep(.gutter:hover) {
+  background-color: #409eff;
+}
+:deep(.gutter.gutter-horizontal) {
+  cursor: col-resize;
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZemwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+}
 </style>

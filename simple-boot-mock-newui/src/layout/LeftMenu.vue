@@ -22,4 +22,17 @@ const businessMenus = computed(() => menuConfigStore.calcBusinessMenus())
 </template>
 
 <style scoped>
+:deep(.el-menu-left) {
+  height: 100%;
+  width: 100%;
+  border-right: none;
+  background-color: var(--el-bg-color-overlay); /* Or specific menu background color */
+}
+:deep(.el-scrollbar__view) {
+  height: 100%;
+  width: 100%;
+}
+.el-scrollbar {
+  width: 100%;
+}
 </style>
