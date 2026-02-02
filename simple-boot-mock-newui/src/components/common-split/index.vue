@@ -142,8 +142,4 @@ watch(() => props.sizes, (newSizes) => {
 .is-dragging > :deep(.gutter) {
   background-color: #409eff !important;
 }
-:deep(.gutter.gutter-horizontal) {
-  cursor: col-resize;
-  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZemwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
-}
 </style>
