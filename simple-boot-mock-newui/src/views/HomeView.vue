@@ -1,6 +1,7 @@
 <script setup>
 import LeftMenu from '@/layout/LeftMenu.vue'
 import MainContent from '@/layout/MainContent.vue'
+import GlobalSettings from '@/views/components/global/GlobalSettings.vue'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 import { GlobalLayoutMode } from '@/consts/GlobalConstants'
 import { computed } from 'vue'
@@ -40,6 +41,7 @@ useMenuConfigStore().loadBusinessMenus()
     </common-split>
 
     <main-content v-else />
+    <global-settings />
   </el-container>
 </template>
 

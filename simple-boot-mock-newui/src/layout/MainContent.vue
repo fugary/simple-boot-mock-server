@@ -3,7 +3,6 @@ import TopNav from '@/layout/TopNav.vue'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 import { useTabsViewStore } from '@/stores/TabsViewStore'
 import { GlobalLayoutMode } from '@/consts/GlobalConstants'
-import GlobalSettings from '@/views/components/global/GlobalSettings.vue'
 import { useBreadcrumbConfigStore } from '@/stores/BreadcrumbConfigStore'
 import { APP_VERSION } from '@/config'
 import { getParentRootKey } from '@/route/RouteUtils'
@@ -94,7 +93,6 @@ const breadcrumbConfigStore = useBreadcrumbConfigStore()
         :bottom="40"
       />
     </el-main>
-    <global-settings />
   </el-container>
 </template>
 
