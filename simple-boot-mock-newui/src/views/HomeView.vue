@@ -4,7 +4,7 @@ import MainContent from '@/layout/MainContent.vue'
 import GlobalSettings from '@/views/components/global/GlobalSettings.vue'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 import { GlobalLayoutMode } from '@/consts/GlobalConstants'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useMenuConfigStore } from '@/stores/MenuConfigStore'
 import { useTabModeScrollSaver } from '@/route/RouteUtils'
 
@@ -12,6 +12,17 @@ const globalConfigStore = useGlobalConfigStore()
 const showLeftMenu = computed(() => {
   return globalConfigStore.layoutMode === GlobalLayoutMode.LEFT
 })
+const leftMenuAsideRef = ref(null)
+
+const handleDragEnd = () => {
+  if (leftMenuAsideRef.value) {
+    const width = leftMenuAsideRef.value.$el.offsetWidth
+    if (width < 100) {
+      globalConfigStore.isCollapseLeft = true
+    }
+  }
+}
+
 useTabModeScrollSaver()
 useMenuConfigStore().loadBusinessMenus()
 </script>
@@ -21,13 +32,16 @@ useMenuConfigStore().loadBusinessMenus()
     <common-split
       v-if="showLeftMenu"
       :disabled="globalConfigStore.isCollapseLeft"
+      :class="{ 'collapsed-split': globalConfigStore.isCollapseLeft }"
       :sizes="[20, 80]"
-      :min-size="[200, 300]"
+      :min-size="[60, 500]"
       :max-size="[500, Infinity]"
       class="flex-grow"
+      @drag-end="handleDragEnd"
     >
       <template #split-0>
         <el-aside
+          ref="leftMenuAsideRef"
           class="index-aside menu"
           width="auto"
           style="height: 100%; width: 100% !important;"
@@ -49,5 +63,12 @@ useMenuConfigStore().loadBusinessMenus()
 .index-container {
   height: 100vh;
   overflow: hidden;
+}
+.index-aside {
+  background-color: var(--el-bg-color-overlay);
+  border-right: none;
+}
+:deep(.collapsed-split.is-disabled > .split-pane:first-child) {
+  width: 64px !important;
 }
 </style>
