@@ -699,24 +699,6 @@ body,
     background-color: #ffffff;
 }
 
-/* Dark Mode Editor Contrast */
-.dark .monaco-editor.vs-dark {
-    background-color: var(--el-bg-color);
-    /* Match page background for outer container */
-    border: none;
-}
-
-.dark .monaco-editor.vs-dark .margin {
-    background-color: #252526 !important;
-    box-shadow: inset -1px 0 0 #424242;
-    /* Use box-shadow like light mode to avoid size changes */
-    border: none;
-}
-
-.dark .monaco-editor.vs-dark .monaco-editor-background {
-    background-color: #1e1e1e !important;
-}
-
 .home-main.is-maximized {
     position: fixed;
     top: 0;
