@@ -29,6 +29,9 @@ import { $i18nBundle, $i18nKey } from '@/messages'
 import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import {
+  showCompareWindowNew
+} from '@/services/mock/NewMockDiffService'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
 import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
@@ -41,6 +44,50 @@ import { toCopyGroupTo } from '@/utils/DynamicUtils'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import MockHistoryListWindow from '@/views/components/utils/MockHistoryListWindow.vue'
 
+// Add getGroupHistoryViewOptions
+const getGroupHistoryViewOptions = () => {
+  return [{
+    labelKey: 'mock.label.groupName',
+    prop: 'groupName'
+  }, {
+    labelKey: 'mock.label.pathId',
+    prop: 'groupPath'
+  }, {
+    labelKey: 'mock.label.proxyUrl',
+    prop: 'proxyUrl'
+  }, {
+    labelKey: 'common.label.status',
+    prop: 'status',
+    type: 'switch'
+  }, {
+    labelKey: 'common.label.delay',
+    prop: 'delay'
+  }, {
+    labelKey: 'common.label.description',
+    prop: 'description',
+    type: 'textarea'
+  }]
+}
+
+// ... existing code ...
+
+const loadHistoryDiffFunc = async (history, current, isView) => {
+  let modified = current
+  let original = history
+  if (isView) {
+    await loadHistoryDiff(history).then(data => {
+      const result = data.resultData || {}
+      modified = result.modified || {}
+      original = result.original || {}
+      modified.current = !modified.modifyFrom
+    })
+  }
+  showCompareWindowNew({
+    modified,
+    original,
+    historyOptionsMethod: getGroupHistoryViewOptions
+  })
+}
 const props = defineProps({
   publicFlag: {
     type: Boolean,
@@ -466,22 +513,76 @@ const exportSelected = () => {
 }
 const showImportWindow = ref(false)
 
+const historyColumns = computed(() => {
+  return [{
+    labelKey: 'mock.label.groupName',
+    minWidth: '130px',
+    formatter (data) {
+      return data.groupName
+    }
+  }, {
+    labelKey: 'mock.label.pathId',
+    minWidth: '180px',
+    formatter (data) {
+      return data.groupPath
+    }
+  }, {
+    labelKey: 'common.label.status',
+    minWidth: '80px',
+    formatter (data) {
+      return <DelFlagTag modelValue={data.status} />
+    }
+  }, {
+    labelKey: 'common.label.modifyDate',
+    minWidth: '160px',
+    formatter (item) {
+      return formatDate(item.modifyDate)
+    }
+  }, {
+    labelKey: 'common.label.modifier',
+    property: 'modifier',
+    minWidth: '120px'
+  }, {
+    labelKey: 'mock.label.version',
+    property: 'version',
+    minWidth: '120px',
+    formatter (item) {
+      return <>
+        {item.version}
+        {!item.modifyFrom ? <ElTag type="success" class="margin-left1">{$i18nBundle('mock.label.current')}</ElTag> : ''}
+      </>
+    }
+  }, {
+    labelKey: 'mock.label.proxyUrl',
+    minWidth: '150px',
+    formatter (data) {
+      return data.proxyUrl
+    }
+  }, {
+    labelKey: 'common.label.delay',
+    minWidth: '100px',
+    formatter (data) {
+      return data.delay
+    }
+  }, {
+    labelKey: 'common.label.description',
+    minWidth: '100px',
+    formatter (data) {
+      return data.description
+    }
+  }]
+})
+
 const historyWindowRef = ref()
 const showHistory = (group) => {
-  histories(group.id, { page: { pageSize: 15 } }).then(() => {
-    historyWindowRef.value.showHistoryListWindow()
-  })
+  currentGroup.value = group
+  historyWindowRef.value.showHistoryListWindow()
 }
 const searchHistories = (query, page) => {
+  if (!currentGroup.value?.id) return Promise.resolve({ resultData: [], infos: {} })
   return histories(currentGroup.value?.id, Object.assign(query, { page }))
 }
-const loadHistoryDiffFunc = (history, current, isView) => {
-  // Rename local variable to avoid conflict if necessary, but here we used imports.
-  // Actually, import names match usage.
-  return loadHistoryDiff(history).then(data => {
-    historyWindowRef.value.showDiff(data.resultData, data.infos?.history, isView)
-  })
-}
+
 const recoverFromHistoryFunc = (history) => {
   return recoverFromHistory(history).then(() => {
     loadMockGroups()
@@ -636,6 +737,7 @@ const recoverFromHistoryFunc = (history) => {
     />
     <mock-history-list-window
       ref="historyWindowRef"
+      :columns="historyColumns"
       :search-func="searchHistories"
       :compare-func="loadHistoryDiffFunc"
       :recover-func="recoverFromHistoryFunc"

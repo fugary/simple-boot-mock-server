@@ -277,10 +277,13 @@ public class MockGroupController {
     }
 
     @PostMapping("/loadHistoryDiff")
-    public SimpleResult<MockGroup> loadHistoryDiff(@RequestBody MockGroup group) {
+    public SimpleResult<Map<String, MockGroup>> loadHistoryDiff(@RequestBody MockGroup group) {
         MockGroup history = mockGroupService.getById(group.getId());
         MockGroup current = mockGroupService.getById(history.getModifyFrom());
-        return SimpleResultUtils.createSimpleResult(current).addInfo("history", history);
+        Map<String, MockGroup> map = new HashMap<>();
+        map.put("modified", current);
+        map.put("original", history);
+        return SimpleResultUtils.createSimpleResult(map);
     }
 
     @PostMapping("/recoverFromHistory")
