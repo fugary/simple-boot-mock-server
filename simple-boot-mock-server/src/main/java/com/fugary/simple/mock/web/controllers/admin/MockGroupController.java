@@ -285,9 +285,9 @@ public class MockGroupController {
         MockGroup modified = mockGroupService.getById(id);
         Page<MockGroup> page = new Page<>(1, 2);
         mockGroupService.page(page, Wrappers.<MockGroup>query()
-                        .eq(DB_MODIFY_FROM_KEY, ObjectUtils.defaultIfNull(modified.getModifyFrom(), modified.getId()))
-                        .le(maxVersion != null, "data_version", maxVersion)
-                        .orderByDesc("data_version"));
+                .eq(DB_MODIFY_FROM_KEY, ObjectUtils.defaultIfNull(modified.getModifyFrom(), modified.getId()))
+                .le(maxVersion != null, "data_version", maxVersion)
+                .orderByDesc("data_version"));
         if (page.getRecords().isEmpty()) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         } else {
@@ -302,18 +302,16 @@ public class MockGroupController {
     }
 
     @PostMapping("/recoverFromHistory")
-    public SimpleResult recoverFromHistory(@RequestBody MockGroup group) {
-        MockGroup history = mockGroupService.getById(group.getId());
-        MockGroup current = mockGroupService.getById(history.getModifyFrom());
-        if (current == null) {
+    public SimpleResult<MockGroup> recoverFromHistory(@RequestBody MockHistoryVo historyVo) {
+        MockGroup history = mockGroupService.getById(historyVo.getId());
+        MockGroup target = null;
+        if (history != null && history.getModifyFrom() != null) {
+            target = mockGroupService.getById(history.getModifyFrom());
+        }
+        if (history == null || target == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        Integer id = current.getId();
-        BeanUtils.copyProperties(history, current);
-        current.setId(id);
-        current.setModifyFrom(null);
-        current.setVersion(null);
-        return SimpleResultUtils
-                .createSimpleResult(mockGroupService.saveOrUpdate(SimpleMockUtils.addAuditInfo(current)));
+        SimpleMockUtils.copyFromHistory(history, target);
+        return SimpleResultUtils.createSimpleResult(mockGroupService.saveOrUpdate(target));
     }
 }
