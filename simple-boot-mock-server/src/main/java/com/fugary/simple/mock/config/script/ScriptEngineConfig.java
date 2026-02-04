@@ -59,6 +59,14 @@ public class ScriptEngineConfig {
     }
 
     @Bean
+    public ThreadPoolExecutorFactoryBean asyncQueryThreadPool() {
+        ThreadPoolExecutorFactoryBean pool = new ThreadPoolExecutorFactoryBean();
+        pool.setCorePoolSize(10);
+        pool.setMaxPoolSize(20);
+        return pool;
+    }
+
+    @Bean
     public JavaScriptEngineFactory javaScriptEngineFactory(){
         JavaScriptEngineFactory javaScriptEngineFactory = new JavaScriptEngineFactory();
         javaScriptEngineFactory.setScriptWithFetchProvider(scriptWithFetchProvider());

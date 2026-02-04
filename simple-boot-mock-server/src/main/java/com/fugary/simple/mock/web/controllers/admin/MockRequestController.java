@@ -13,6 +13,7 @@ import com.fugary.simple.mock.entity.mock.MockSchema;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
+import com.fugary.simple.mock.utils.AsyncUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
@@ -25,11 +26,14 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
@@ -51,6 +55,10 @@ public class MockRequestController {
 
     @Autowired
     private MockDataService mockDataService;
+
+    @Autowired
+    @Qualifier("asyncQueryThreadPool")
+    private ExecutorService asyncQueryThreadPool;
 
     @GetMapping
     public SimpleResult<List<MockRequest>> search(@ModelAttribute MockRequestQueryVo queryVo) {
@@ -79,30 +87,35 @@ public class MockRequestController {
         }
         queryWrapper.orderByAsc("request_path", "method");
         Page<MockRequest> pageResult = mockRequestService.page(page, queryWrapper);
-        Map<Integer, Long> countMap = new HashMap<>();
+        Future<Map<Integer, Long>> countMapFuture = null;
         if (CollectionUtils.isNotEmpty(pageResult.getRecords())) {
-            List<Integer> requestIds = pageResult.getRecords().stream().map(MockRequest::getId)
-                    .collect(Collectors.toList());
-            QueryWrapper<MockData> countQuery = Wrappers.<MockData>query()
-                    .select("request_id as group_key", "count(0) as data_count")
-                    .in("request_id", requestIds).isNull(DB_MODIFY_FROM_KEY).groupBy("request_id");
-            countMap = mockDataService.listMaps(countQuery).stream().map(CountData::new)
-                    .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
-                            CountData::getDataCount));
+            countMapFuture = asyncQueryThreadPool.submit(() -> {
+                List<Integer> requestIds = pageResult.getRecords().stream().map(MockRequest::getId)
+                        .collect(Collectors.toList());
+                QueryWrapper<MockData> countQuery = Wrappers.<MockData>query()
+                        .select("request_id as group_key", "count(0) as data_count")
+                        .in("request_id", requestIds).isNull(DB_MODIFY_FROM_KEY).groupBy("request_id");
+                return mockDataService.listMaps(countQuery).stream().map(CountData::new)
+                        .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
+                                CountData::getDataCount));
+            });
         }
-        Map<Integer, Long> historyMap = new HashMap<>();
+        Future<Map<Integer, Long>> historyMapFuture = null;
         if (CollectionUtils.isNotEmpty(pageResult.getRecords())) {
-            List<Integer> dataIds = pageResult.getRecords().stream().map(MockRequest::getId)
-                    .collect(Collectors.toList());
-            QueryWrapper<MockRequest> countQuery = Wrappers.<MockRequest>query()
-                    .select("modify_from as group_key", "count(0) as data_count")
-                    .in(DB_MODIFY_FROM_KEY, dataIds).groupBy(DB_MODIFY_FROM_KEY);
-            historyMap = mockRequestService.listMaps(countQuery).stream().map(CountData::new)
-                    .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
-                            CountData::getDataCount));
+            asyncQueryThreadPool.submit(() -> {
+                List<Integer> dataIds = pageResult.getRecords().stream().map(MockRequest::getId)
+                        .collect(Collectors.toList());
+                QueryWrapper<MockRequest> countQuery = Wrappers.<MockRequest>query()
+                        .select("modify_from as group_key", "count(0) as data_count")
+                        .in(DB_MODIFY_FROM_KEY, dataIds).groupBy(DB_MODIFY_FROM_KEY);
+                return mockRequestService.listMaps(countQuery).stream().map(CountData::new)
+                        .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
+                                CountData::getDataCount));
+            });
         }
-        return SimpleResultUtils.createSimpleResult(pageResult).addInfo("countMap", countMap)
-                .addInfo("historyMap", historyMap);
+        return SimpleResultUtils.createSimpleResult(pageResult)
+                .addInfo("countMap", AsyncUtils.get(countMapFuture, HashMap::new))
+                .addInfo("historyMap", AsyncUtils.get(historyMapFuture, HashMap::new));
     }
 
     @PostMapping("/histories/{id}")

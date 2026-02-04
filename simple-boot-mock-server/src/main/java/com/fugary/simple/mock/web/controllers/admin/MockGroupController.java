@@ -10,6 +10,7 @@ import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockLogService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
+import com.fugary.simple.mock.utils.AsyncUtils;
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
@@ -27,8 +28,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +43,8 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
@@ -68,6 +71,10 @@ public class MockGroupController {
     @Autowired
     private MockLogService mockLogService;
 
+    @Autowired
+    @Qualifier("asyncQueryThreadPool")
+    private ExecutorService asyncQueryThreadPool;
+
     @GetMapping
     public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
@@ -81,7 +88,7 @@ public class MockGroupController {
                 .or().like("group_path", keyword)
                 .or().like("proxy_url", keyword)
                 .or().like("description", keyword));
-        MockProject mockProject = mockProjectService.loadMockProject(queryUserName, projectCode);
+        MockProject mockProject = StringUtils.isNotBlank(projectCode) ? mockProjectService.loadMockProject(queryUserName, projectCode) : null;
         if (mockProject == null && !queryVo.isPublicFlag()
                 && (SecurityUtils.isCurrentUser(queryUserName) || SecurityUtils.isAdminUser())
                 && StringUtils.isBlank(projectCode)) {
@@ -105,46 +112,53 @@ public class MockGroupController {
         }
         boolean isExport = queryVo instanceof MockGroupExportParamVo;
         Page<MockGroup> pageResult = mockGroupService.page(page, queryWrapper);
-        Map<Integer, Long> countMap = new HashMap<>();
+        Future<Map<Integer, Long>> countMapFuture = null;
         if (!isExport && CollectionUtils.isNotEmpty(pageResult.getRecords())) {
-            List<Integer> groupIds = pageResult.getRecords().stream().map(MockGroup::getId)
-                    .collect(Collectors.toList());
-            QueryWrapper<MockRequest> countQuery = Wrappers.<MockRequest>query()
-                    .select("group_id as group_key", "count(0) as data_count")
-                    .in("group_id", groupIds).isNull(DB_MODIFY_FROM_KEY)
-                    .groupBy("group_id");
-            countMap = mockRequestService.listMaps(countQuery).stream().map(CountData::new)
-                    .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
-                            CountData::getDataCount));
+            countMapFuture = asyncQueryThreadPool.submit(() -> {
+                List<Integer> groupIds = pageResult.getRecords().stream().map(MockGroup::getId)
+                        .collect(Collectors.toList());
+                QueryWrapper<MockRequest> countQuery = Wrappers.<MockRequest>query()
+                        .select("group_id as group_key", "count(0) as data_count")
+                        .in("group_id", groupIds).isNull(DB_MODIFY_FROM_KEY)
+                        .groupBy("group_id");
+                return mockRequestService.listMaps(countQuery).stream().map(CountData::new)
+                        .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
+                                CountData::getDataCount));
+            });
         }
-        Map<String, Date> accessDateMap = new HashMap<>();
+        Future<Map<String, Date>> accessDateMapFuture = null;
         if (!isExport && CollectionUtils.isNotEmpty(pageResult.getRecords())) {
-            List<String> groupPaths = pageResult.getRecords().stream().map(MockGroup::getGroupPath)
-                    .collect(Collectors.toList());
-            QueryWrapper<MockLog> countQuery = Wrappers.<MockLog>query()
-                    .select("mock_group_path as group_key", "MAX(create_date) AS group_value")
-                    .in("mock_group_path", groupPaths)
-                    .groupBy("mock_group_path");
-            accessDateMap = mockLogService.listMaps(countQuery).stream().map(map -> new GroupByData<>(map, Date.class))
-                    .collect(Collectors.toMap(GroupByData::getGroupKey, GroupByData::getGroupValue));
+            accessDateMapFuture = asyncQueryThreadPool.submit(() -> {
+                List<String> groupPaths = pageResult.getRecords().stream().map(MockGroup::getGroupPath)
+                        .collect(Collectors.toList());
+                QueryWrapper<MockLog> countQuery = Wrappers.<MockLog>query()
+                        .select("mock_group_path as group_key", "MAX(create_date) AS group_value")
+                        .in("mock_group_path", groupPaths)
+                        .groupBy("mock_group_path");
+                return mockLogService.listMaps(countQuery).stream().map(map -> new GroupByData<>(map, Date.class))
+                        .collect(Collectors.toMap(GroupByData::getGroupKey, GroupByData::getGroupValue));
+
+            });
         }
-        Map<Integer, Long> historyCountMap = new HashMap<>();
+        Future<Map<Integer, Long>> historyCountMapFuture = null;
         if (!isExport && CollectionUtils.isNotEmpty(pageResult.getRecords())) {
-            List<Integer> groupIds = pageResult.getRecords().stream().map(MockGroup::getId)
-                    .collect(Collectors.toList());
-            QueryWrapper<MockGroup> historyCountQuery = Wrappers.<MockGroup>query()
-                    .select("modify_from as group_key", "count(0) as data_count")
-                    .in("modify_from", groupIds)
-                    .groupBy("modify_from");
-            historyCountMap = mockGroupService.listMaps(historyCountQuery).stream().map(CountData::new)
-                    .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
-                            CountData::getDataCount));
+            historyCountMapFuture = asyncQueryThreadPool.submit(() -> {
+                List<Integer> groupIds = pageResult.getRecords().stream().map(MockGroup::getId)
+                        .collect(Collectors.toList());
+                QueryWrapper<MockGroup> historyCountQuery = Wrappers.<MockGroup>query()
+                        .select("modify_from as group_key", "count(0) as data_count")
+                        .in("modify_from", groupIds)
+                        .groupBy("modify_from");
+                return mockGroupService.listMaps(historyCountQuery).stream().map(CountData::new)
+                        .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
+                                CountData::getDataCount));
+            });
         }
         return SimpleResultUtils.createSimpleResult(pageResult)
                 .addInfo("mockProject", mockProject)
-                .addInfo("historyCountMap", historyCountMap)
-                .addInfo("countMap", countMap)
-                .addInfo("accessDateMap", accessDateMap);
+                .addInfo("historyCountMap", AsyncUtils.get(historyCountMapFuture, HashMap::new))
+                .addInfo("countMap", AsyncUtils.get(countMapFuture, HashMap::new))
+                .addInfo("accessDateMap", AsyncUtils.get(accessDateMapFuture, HashMap::new));
     }
 
     @GetMapping("/{id}")
