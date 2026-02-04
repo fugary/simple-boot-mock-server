@@ -20,7 +20,9 @@ import com.fugary.simple.mock.web.vo.export.ExportMockVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupExportParamVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupQueryVo;
+import com.fugary.simple.mock.web.vo.query.MockHistoryVo;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -66,8 +68,8 @@ public class MockGroupController {
     @Autowired
     private MockLogService mockLogService;
 
-    @PostMapping("/search")
-    public SimpleResult<List<MockGroup>> search(@RequestBody MockGroupQueryVo queryVo) {
+    @GetMapping
+    public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         String queryUserName = queryVo.getUserName();
@@ -169,7 +171,7 @@ public class MockGroupController {
     }
 
     @DeleteMapping("/removeByIds/{ids}")
-    public SimpleResult removeByIds(@PathVariable("ids") List<Integer> ids) {
+    public SimpleResult<Object> removeByIds(@PathVariable("ids") List<Integer> ids) {
         return SimpleResultUtils.createSimpleResult(mockGroupService.deleteMockGroups(ids));
     }
 
@@ -270,20 +272,33 @@ public class MockGroupController {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
         QueryWrapper<MockGroup> queryWrapper = Wrappers.<MockGroup>query()
                 .eq("modify_from", id)
-                .orderByDesc("id");
+                .orderByDesc("data_version");
         Page<MockGroup> pageResult = mockGroupService.page(page, queryWrapper);
         MockGroup current = mockGroupService.getById(id);
         return SimpleResultUtils.createSimpleResult(pageResult).addInfo("current", current);
     }
 
     @PostMapping("/loadHistoryDiff")
-    public SimpleResult<Map<String, MockGroup>> loadHistoryDiff(@RequestBody MockGroup group) {
-        MockGroup history = mockGroupService.getById(group.getId());
-        MockGroup current = mockGroupService.getById(history.getModifyFrom());
-        Map<String, MockGroup> map = new HashMap<>();
-        map.put("modified", current);
-        map.put("original", history);
-        return SimpleResultUtils.createSimpleResult(map);
+    public SimpleResult<Map<String, MockGroup>> loadHistoryDiff(@RequestBody MockHistoryVo queryVo) {
+        Integer id = queryVo.getId();
+        Integer maxVersion = queryVo.getVersion();
+        MockGroup modified = mockGroupService.getById(id);
+        Page<MockGroup> page = new Page<>(1, 2);
+        mockGroupService.page(page, Wrappers.<MockGroup>query()
+                        .eq(DB_MODIFY_FROM_KEY, ObjectUtils.defaultIfNull(modified.getModifyFrom(), modified.getId()))
+                        .le(maxVersion != null, "data_version", maxVersion)
+                        .orderByDesc("data_version"));
+        if (page.getRecords().isEmpty()) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        } else {
+            Map<String, MockGroup> map = new HashMap<>(2);
+            List<MockGroup> dataList = page.getRecords();
+            map.put("modified", modified);
+            dataList.stream().filter(data -> !data.getId().equals(modified.getId())).findFirst().ifPresent(data -> {
+                map.put("original", data);
+            });
+            return SimpleResultUtils.createSimpleResult(map);
+        }
     }
 
     @PostMapping("/recoverFromHistory")

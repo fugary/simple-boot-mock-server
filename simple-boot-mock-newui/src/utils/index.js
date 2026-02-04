@@ -56,6 +56,9 @@ export const formatDay = (date, format) => {
 export const formatJsonStr = (str) => {
   if (str) {
     try {
+      if (isObject(str) || isArray(str)) {
+        return JSON.stringify(str, null, 2)
+      }
       return JSON.stringify(JSON.parse(str), null, 2)
     } catch (e) {
       console.error('解析json错误', e)

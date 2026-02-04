@@ -22,6 +22,7 @@ import {
   useCurrentUserName,
   getStyleGrow,
   formatDate,
+  formatJsonStr,
   useBackUrl
 } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
@@ -45,7 +46,7 @@ import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import MockHistoryListWindow from '@/views/components/utils/MockHistoryListWindow.vue'
 
 // Add getGroupHistoryViewOptions
-const getGroupHistoryViewOptions = () => {
+const getGroupHistoryViewOptions = (group, history) => {
   return [{
     labelKey: 'mock.label.groupName',
     prop: 'groupName'
@@ -53,19 +54,34 @@ const getGroupHistoryViewOptions = () => {
     labelKey: 'mock.label.pathId',
     prop: 'groupPath'
   }, {
+    labelKey: 'mock.label.version',
+    prop: () => `${group.version ?? ''}${group.current ? ` <${$i18nBundle('mock.label.current')}>` : ''}`
+  }, {
+    labelKey: 'common.label.modifyDate',
+    prop: () => formatDate(group[history ? 'createDate' : 'modifyDate'])
+  }, {
+    labelKey: 'common.label.modifier',
+    prop: () => group[history ? 'creator' : 'modifier']
+  }, {
     labelKey: 'mock.label.proxyUrl',
     prop: 'proxyUrl'
   }, {
     labelKey: 'common.label.status',
-    prop: 'status',
-    type: 'switch'
+    prop: () => [$i18nBundle('common.label.statusDisabled'), $i18nBundle('common.label.statusEnabled')][group.status]
+  }, {
+    labelKey: 'mock.label.disabledMock',
+    prop: () => group.disableMock !== undefined ? $i18nBundle(group.disableMock ? 'common.label.yes' : 'common.label.no') : ''
   }, {
     labelKey: 'common.label.delay',
     prop: 'delay'
   }, {
     labelKey: 'common.label.description',
-    prop: 'description',
-    type: 'textarea'
+    prop: 'description'
+  }, {
+    labelKey: 'mock.label.mockEnv',
+    prop: () => {
+      return formatJsonStr(group.groupConfig)
+    }
   }]
 }
 

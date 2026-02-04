@@ -87,9 +87,4 @@ export const recoverFromHistory = (data, config) => {
   }, config)).then(response => response.data)
 }
 
-const mockGroupApi = useResourceApi('/admin/groups')
-mockGroupApi.search = (data, config) => {
-  return $httpPost(`${MOCK_GROUP_URL}/search`, data, config)
-}
-
-export default mockGroupApi
+export default useResourceApi('/admin/groups')
