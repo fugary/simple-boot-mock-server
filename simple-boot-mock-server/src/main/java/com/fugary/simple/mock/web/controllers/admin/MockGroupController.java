@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -65,14 +66,15 @@ public class MockGroupController {
     @Autowired
     private MockLogService mockLogService;
 
-    @GetMapping
-    public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
+    @PostMapping("/search")
+    public SimpleResult<List<MockGroup>> search(@RequestBody MockGroupQueryVo queryVo) {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         String queryUserName = queryVo.getUserName();
         String projectCode = queryVo.getProjectCode();
         QueryWrapper<MockGroup> queryWrapper = Wrappers.<MockGroup>query()
-                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus());
+                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus())
+                .isNull(DB_MODIFY_FROM_KEY);
         queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("group_name", keyword)
                 .or().like("group_path", keyword)
                 .or().like("proxy_url", keyword)
@@ -124,8 +126,21 @@ public class MockGroupController {
             accessDateMap = mockLogService.listMaps(countQuery).stream().map(map -> new GroupByData<>(map, Date.class))
                     .collect(Collectors.toMap(GroupByData::getGroupKey, GroupByData::getGroupValue));
         }
+        Map<Integer, Long> historyCountMap = new HashMap<>();
+        if (!isExport && CollectionUtils.isNotEmpty(pageResult.getRecords())) {
+            List<Integer> groupIds = pageResult.getRecords().stream().map(MockGroup::getId)
+                    .collect(Collectors.toList());
+            QueryWrapper<MockGroup> historyCountQuery = Wrappers.<MockGroup>query()
+                    .select("modify_from as group_key", "count(0) as data_count")
+                    .in("modify_from", groupIds)
+                    .groupBy("modify_from");
+            historyCountMap = mockGroupService.listMaps(historyCountQuery).stream().map(CountData::new)
+                    .collect(Collectors.toMap(data -> NumberUtils.toInt(data.getGroupKey()),
+                            CountData::getDataCount));
+        }
         return SimpleResultUtils.createSimpleResult(pageResult)
                 .addInfo("mockProject", mockProject)
+                .addInfo("historyCountMap", historyCountMap)
                 .addInfo("countMap", countMap)
                 .addInfo("accessDateMap", accessDateMap);
     }
@@ -140,7 +155,8 @@ public class MockGroupController {
         if (mockGroup == null || mockProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!Boolean.TRUE.equals(mockProject.getPublicFlag()) && !SecurityUtils.validateUserUpdate(mockGroup.getUserName())) {
+        if (!Boolean.TRUE.equals(mockProject.getPublicFlag())
+                && !SecurityUtils.validateUserUpdate(mockGroup.getUserName())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockGroup)
@@ -180,7 +196,7 @@ public class MockGroupController {
 
     @PostMapping("/copyMockGroup/{groupId}")
     public SimpleResult<MockGroup> copyMockGroup(@PathVariable("groupId") String groupIdsStr,
-                                                 @RequestBody MockGroupQueryVo copyVo) {
+            @RequestBody MockGroupQueryVo copyVo) {
         MockProject existsProject = mockProjectService.loadMockProject(copyVo.getUserName(), copyVo.getProjectCode());
         if (existsProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
@@ -197,7 +213,8 @@ public class MockGroupController {
     }
 
     @PostMapping("/import")
-    public SimpleResult<Integer> doImport(@ModelAttribute MockGroupImportParamVo importVo, MultipartHttpServletRequest request){
+    public SimpleResult<Integer> doImport(@ModelAttribute MockGroupImportParamVo importVo,
+            MultipartHttpServletRequest request) {
         List<MultipartFile> files = SimpleMockUtils.getUploadFiles(request);
         if (files.isEmpty()) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2002, 0);
@@ -221,27 +238,64 @@ public class MockGroupController {
             queryVo.setPage(SimpleResultUtils.getNewPage(1, MockConstants.MAX_EXPORT_COUNT));
             SimpleResult<List<MockGroup>> simpleResult = this.search(queryVo);
             groups = simpleResult.getResultData();
-        } else if(CollectionUtils.isNotEmpty(queryVo.getGroupIds())){
+        } else if (CollectionUtils.isNotEmpty(queryVo.getGroupIds())) {
             groups = mockGroupService.listByIds(queryVo.getGroupIds());
         }
         return groups;
     }
 
     @GetMapping("/export")
-    public void export(@ModelAttribute MockGroupExportParamVo queryVo, HttpServletResponse response) throws IOException {
+    public void export(@ModelAttribute MockGroupExportParamVo queryVo, HttpServletResponse response)
+            throws IOException {
         List<MockGroup> groups = loadExportGroups(queryVo);
         List<ExportGroupVo> groupVoList = mockGroupService.loadExportGroups(groups);
         ExportMockVo mockVo = new ExportMockVo();
         mockVo.setGroups(groupVoList);
         String json = JsonUtils.toJson(mockVo);
-        String fileName = "mock-groups-" + DateFormatUtils.format(System.currentTimeMillis(), MockConstants.OUTPUT_FILE_NAME) + ".json";
+        String fileName = "mock-groups-"
+                + DateFormatUtils.format(System.currentTimeMillis(), MockConstants.OUTPUT_FILE_NAME) + ".json";
         response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
         response.addHeader("Content-Disposition", "attachment; filename="
                 + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
-        try(InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        try (InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
                 OutputStream outputStream = response.getOutputStream()) {
             IOUtils.copy(inputStream, outputStream);
             response.getOutputStream().flush();
         }
+    }
+
+    @PostMapping("/histories/{id}")
+    public SimpleResult<List<MockGroup>> histories(@PathVariable("id") Integer id,
+            @RequestBody MockGroupQueryVo queryVo) {
+        Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
+        QueryWrapper<MockGroup> queryWrapper = Wrappers.<MockGroup>query()
+                .eq("modify_from", id)
+                .orderByDesc("id");
+        Page<MockGroup> pageResult = mockGroupService.page(page, queryWrapper);
+        MockGroup current = mockGroupService.getById(id);
+        return SimpleResultUtils.createSimpleResult(pageResult).addInfo("current", current);
+    }
+
+    @PostMapping("/loadHistoryDiff")
+    public SimpleResult<MockGroup> loadHistoryDiff(@RequestBody MockGroup group) {
+        MockGroup history = mockGroupService.getById(group.getId());
+        MockGroup current = mockGroupService.getById(history.getModifyFrom());
+        return SimpleResultUtils.createSimpleResult(current).addInfo("history", history);
+    }
+
+    @PostMapping("/recoverFromHistory")
+    public SimpleResult recoverFromHistory(@RequestBody MockGroup group) {
+        MockGroup history = mockGroupService.getById(group.getId());
+        MockGroup current = mockGroupService.getById(history.getModifyFrom());
+        if (current == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        Integer id = current.getId();
+        BeanUtils.copyProperties(history, current);
+        current.setId(id);
+        current.setModifyFrom(null);
+        current.setVersion(null);
+        return SimpleResultUtils
+                .createSimpleResult(mockGroupService.saveOrUpdate(SimpleMockUtils.addAuditInfo(current)));
     }
 }

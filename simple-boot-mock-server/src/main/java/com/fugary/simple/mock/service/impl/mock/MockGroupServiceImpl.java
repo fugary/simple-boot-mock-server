@@ -60,7 +60,8 @@ import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
  */
 @Slf4j
 @Service
-public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup> implements MockGroupService, InitializingBean {
+public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup>
+        implements MockGroupService, InitializingBean {
 
     @Autowired
     private MockRequestService mockRequestService;
@@ -113,6 +114,36 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
+    public boolean saveOrUpdate(MockGroup entity) {
+        if (entity.getId() == null || entity.getVersion() == null) {
+            entity.setVersion(1);
+        }
+        boolean needSave = true;
+        if (entity.getId() != null) {
+            MockGroup history = getById(entity.getId());
+            if (history != null) {
+                needSave = !SimpleMockUtils.isSameMockData(history, entity);
+                if (needSave) {
+                    history.setId(null);
+                    history.setModifyFrom(entity.getId());
+                    history.setVersion(entity.getVersion());
+                    if (StringUtils.isBlank(history.getModifier())) {
+                        history.setModifier(history.getCreator());
+                    }
+                    if (history.getModifyDate() == null) {
+                        history.setModifyDate(history.getCreateDate());
+                    }
+                    this.save(history);
+                }
+            }
+        }
+        if (needSave) {
+            return super.saveOrUpdate(entity);
+        }
+        return true;
+    }
+
+    @Override
     public boolean deleteMockGroup(Integer id) {
         List<MockRequest> requests = mockRequestService.list(Wrappers.<MockRequest>query().eq("group_id", id));
         mockRequestService.deleteMockRequests(requests.stream().map(MockRequest::getId).collect(Collectors.toList()));
@@ -134,12 +165,14 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     @Override
     public boolean existsMockGroup(MockGroup group) {
         List<MockGroup> existGroups = list(Wrappers.<MockGroup>query()
-                .eq("group_path", group.getGroupPath()));
+                .eq("group_path", group.getGroupPath())
+                .isNull(DB_MODIFY_FROM_KEY));
         return existGroups.stream().anyMatch(existGroup -> !existGroup.getId().equals(group.getId()));
     }
 
     @Override
-    public Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId, Integer defaultId, Predicate<MockGroup> checker) {
+    public Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId,
+            Integer defaultId, Predicate<MockGroup> checker) {
         String requestPath = request.getServletPath();
         String method = request.getMethod();
         String requestGroupPath = calcGroupPath(requestPath);
@@ -148,7 +181,8 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         if (StringUtils.isNotBlank(requestGroupPath)) {
             mockGroup = getOne(Wrappers.<MockGroup>query()
                     .eq("group_path", requestGroupPath)
-                    .eq(!testRequest, "status", 1));
+                    .eq(!testRequest, "status", 1)
+                    .isNull(DB_MODIFY_FROM_KEY));
             if (mockGroup != null && (testRequest || !Boolean.TRUE.equals(mockGroup.getDisableMock()))) {
                 if (checker != null && !checker.test(mockGroup)) {
                     return Triple.of(null, null, null);
@@ -164,7 +198,8 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 // 请求是否匹配上Request，如果匹配上就查询Data
                 for (MockRequest mockRequest : sortMockRequests(mockRequests)) {
                     String configRequestPath = StringUtils.prependIfMissing(mockRequest.getRequestPath(), "/");
-                    configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant path不支持:var格式，只支持{var}格式
+                    configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant
+                                                                                            // path不支持:var格式，只支持{var}格式
                     String configPath = groupPath + configRequestPath;
                     boolean testData = defaultId != 0;
                     if (pathMatcher.match(configPath, requestPath)) {
@@ -175,9 +210,11 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                                 if (Boolean.TRUE.equals(mockRequest.getDisableMock()) && !testData && !testRequest) {
                                     return Triple.of(mockGroup, mockRequest, null);
                                 }
-                                List<MockData> mockDataList = mockRequestService.loadAllDataByRequest(mockRequest.getId());
+                                List<MockData> mockDataList = mockRequestService
+                                        .loadAllDataByRequest(mockRequest.getId());
                                 MockData mockData = mockRequestService.findForceMockData(mockDataList, defaultId);
-                                mockDataList = mockDataList.stream().filter(MockBase::isEnabled).collect(Collectors.toList());
+                                mockDataList = mockDataList.stream().filter(MockBase::isEnabled)
+                                        .collect(Collectors.toList());
                                 if (mockData == null) { // request匹配的数据查找
                                     mockData = mockRequestService.findMockDataByRequest(mockDataList, requestVo);
                                 }
@@ -271,9 +308,11 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 return;
             }
             responseBody = MockJsUtils.processResponseBody(responseBody, requestVo,
-                    paramKey -> scriptEngineProvider.evalStr("mockStringify(" + MockJsUtils.getJsExpression(paramKey) + ")"));
+                    paramKey -> scriptEngineProvider
+                            .evalStr("mockStringify(" + MockJsUtils.getJsExpression(paramKey) + ")"));
             if ("javascript".equals(mockData.getResponseFormat())) {
-                responseBody = scriptEngineProvider.evalStr("mockStringify(" + MockJsUtils.getJsExpression(responseBody) + ")");
+                responseBody = scriptEngineProvider
+                        .evalStr("mockStringify(" + MockJsUtils.getJsExpression(responseBody) + ")");
             } else {
                 responseBody = scriptEngineProvider.mock(responseBody);
             }
@@ -288,13 +327,18 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     @Override
     public List<ExportGroupVo> loadExportGroups(List<MockGroup> groups) {
         List<Integer> groupIds = groups.stream().map(MockGroup::getId).collect(Collectors.toList());
-        List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().in("group_id", groupIds).isNull(DB_MODIFY_FROM_KEY));
-        List<MockData> mockDataList = mockDataService.list(Wrappers.<MockData>query().in("group_id", groupIds).isNull(DB_MODIFY_FROM_KEY));
+        List<MockRequest> mockRequests = mockRequestService
+                .list(Wrappers.<MockRequest>query().in("group_id", groupIds).isNull(DB_MODIFY_FROM_KEY));
+        List<MockData> mockDataList = mockDataService
+                .list(Wrappers.<MockData>query().in("group_id", groupIds).isNull(DB_MODIFY_FROM_KEY));
         List<MockSchema> mockSchemas = mockSchemaService.list(Wrappers.<MockSchema>query().in("group_id", groupIds));
-        Map<Integer, List<MockRequest>> requestMap = mockRequests.stream().collect(Collectors.groupingBy(MockRequest::getGroupId));
-        Map<Integer, List<MockData>> mockDataMap = mockDataList.stream().collect(Collectors.groupingBy(MockData::getRequestId));
+        Map<Integer, List<MockRequest>> requestMap = mockRequests.stream()
+                .collect(Collectors.groupingBy(MockRequest::getGroupId));
+        Map<Integer, List<MockData>> mockDataMap = mockDataList.stream()
+                .collect(Collectors.groupingBy(MockData::getRequestId));
         Map<String, List<MockSchema>> mockSchemaMap = mockSchemas.stream().collect(Collectors
-                .groupingBy(schema -> SimpleMockUtils.calcMockSchemaKey(schema.getGroupId(), schema.getRequestId(), schema.getDataId())));
+                .groupingBy(schema -> SimpleMockUtils.calcMockSchemaKey(schema.getGroupId(), schema.getRequestId(),
+                        schema.getDataId())));
         return groups.stream().map(group -> {
             ExportGroupVo exportGroupVo = new ExportGroupVo();
             copyProperties(exportGroupVo, group);
@@ -325,8 +369,10 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         }).collect(Collectors.toList());
     }
 
-    protected List<ExportSchemaVo> calcMockSchemaVo(Map<String, List<MockSchema>> mockSchemaMap, MockRequest mockRequest, MockData mockData) {
-        List<MockSchema> schemas = mockSchemaMap.get(SimpleMockUtils.calcMockSchemaKey(mockRequest.getGroupId(), mockRequest.getId(), mockData != null ? mockData.getId() : null));
+    protected List<ExportSchemaVo> calcMockSchemaVo(Map<String, List<MockSchema>> mockSchemaMap,
+            MockRequest mockRequest, MockData mockData) {
+        List<MockSchema> schemas = mockSchemaMap.get(SimpleMockUtils.calcMockSchemaKey(mockRequest.getGroupId(),
+                mockRequest.getId(), mockData != null ? mockData.getId() : null));
         if (CollectionUtils.isNotEmpty(schemas)) {
             return schemas.stream().map(mockSchema -> {
                 ExportSchemaVo exportSchemaVo = new ExportSchemaVo();
@@ -344,7 +390,8 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public SimpleResult<List<ExportGroupVo>> toImportGroups(List<MultipartFile> files, MockGroupImportParamVo importVo) {
+    public SimpleResult<List<ExportGroupVo>> toImportGroups(List<MultipartFile> files,
+            MockGroupImportParamVo importVo) {
         try {
             ExportMockVo mockVo = new ExportMockVo();
             for (MultipartFile file : files) {
@@ -357,12 +404,21 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     SimpleMockUtils.addMockVo(mockVo, currentVo);
                 }
             }
-            Integer duplicateStrategy = Objects.requireNonNullElse(importVo.getDuplicateStrategy(), MockConstants.IMPORT_STRATEGY_ERROR);
-            SimpleResult<List<ExportGroupVo>> strategyResult = SimpleMockUtils.mergeExportMockVo(mockVo, duplicateStrategy);
+            if (CollectionUtils.isNotEmpty(mockVo.getGroups())) {
+                for (ExportGroupVo group : mockVo.getGroups()) {
+                    group.setModifyFrom(null); // 导入的数据不包含修改来源
+                    group.setVersion(null); // 导入的数据版本归0
+                }
+            }
+            Integer duplicateStrategy = Objects.requireNonNullElse(importVo.getDuplicateStrategy(),
+                    MockConstants.IMPORT_STRATEGY_ERROR);
+            SimpleResult<List<ExportGroupVo>> strategyResult = SimpleMockUtils.mergeExportMockVo(mockVo,
+                    duplicateStrategy);
             if (!strategyResult.isSuccess()) {
                 return strategyResult;
             }
-            if (Set.of("swagger", "postman").contains(importVo.getType()) && BooleanUtils.isTrue(importVo.getSingleGroup())
+            if (Set.of("swagger", "postman").contains(importVo.getType())
+                    && BooleanUtils.isTrue(importVo.getSingleGroup())
                     && CollectionUtils.size(mockVo.getGroups()) > 1) {
                 ExportGroupVo groupVo = mockVo.getGroups().get(0);
                 ExportGroupVo newGroup = SimpleMockUtils.copy(groupVo, ExportGroupVo.class);
@@ -379,10 +435,14 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 if (MockConstants.IMPORT_STRATEGY_ERROR.equals(duplicateStrategy)) {
                     return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2004);
                 } else if (MockConstants.IMPORT_STRATEGY_SKIP.equals(duplicateStrategy)) {
-                    Set<String> existGroupPaths = existGroups.stream().map(MockGroup::getGroupPath).collect(Collectors.toSet());
-                    importGroups = importGroups.stream().filter(group -> !existGroupPaths.contains(group.getGroupPath())).collect(Collectors.toList());
+                    Set<String> existGroupPaths = existGroups.stream().map(MockGroup::getGroupPath)
+                            .collect(Collectors.toSet());
+                    importGroups = importGroups.stream()
+                            .filter(group -> !existGroupPaths.contains(group.getGroupPath()))
+                            .collect(Collectors.toList());
                 } else if (MockConstants.IMPORT_STRATEGY_NEW.equals(duplicateStrategy)) {
-                    Set<String> existGroupPaths = existGroups.stream().map(MockGroup::getGroupPath).collect(Collectors.toSet());
+                    Set<String> existGroupPaths = existGroups.stream().map(MockGroup::getGroupPath)
+                            .collect(Collectors.toSet());
                     importGroups.forEach(group -> {
                         if (existGroupPaths.contains(group.getGroupPath())) {
                             group.setGroupPath(SimpleMockUtils.uuid());
@@ -415,7 +475,8 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             mockGroup.setGroupName(StringUtils.join(mockGroup.getGroupName(), "-copy"));
         }
         saveOrUpdate(mockGroup);
-        List<MockRequest> mockRequests = mockRequestService.list(Wrappers.<MockRequest>query().eq("group_id", groupId).isNull(DB_MODIFY_FROM_KEY));
+        List<MockRequest> mockRequests = mockRequestService
+                .list(Wrappers.<MockRequest>query().eq("group_id", groupId).isNull(DB_MODIFY_FROM_KEY));
         for (MockRequest mockRequest : mockRequests) {
             mockRequestService.copyMockRequest(mockRequest.getId(), mockGroup.getId());
         }
@@ -434,9 +495,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         // 保存数据
         importGroups.forEach(group -> {
             group.setId(null);
+            group.setModifyFrom(null);
+            group.setVersion(null);
             group.setUserName(SecurityUtils.getUserName(importVo.getUserName()));
-            group.setGroupPath(StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
-            group.setProjectCode(StringUtils.defaultIfBlank(importVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
+            group.setGroupPath(
+                    StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
+            group.setProjectCode(
+                    StringUtils.defaultIfBlank(importVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
             boolean saved = saveOrUpdate(SimpleMockUtils.addAuditInfo(group));
             ExportRequestVo groupRequestVo = new ExportRequestVo();
             groupRequestVo.setGroupId(group.getId());
@@ -482,7 +547,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
      */
     protected List<MockGroup> checkGroupsExists(List<? extends MockGroup> groups) {
         List<String> pathList = groups.stream().map(MockGroup::getGroupPath).collect(Collectors.toList());
-        return list(Wrappers.<MockGroup>query().in("group_path", pathList));
+        return list(Wrappers.<MockGroup>query().in("group_path", pathList).isNull(DB_MODIFY_FROM_KEY));
     }
 
     protected void copyProperties(Object target, Object source) {

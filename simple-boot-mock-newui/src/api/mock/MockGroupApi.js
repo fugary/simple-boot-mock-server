@@ -63,4 +63,33 @@ export const copyMockGroup = (data, config) => {
   }, config)).then(response => response.data)
 }
 
-export default useResourceApi('/admin/groups')
+export const histories = (id, data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_GROUP_URL}/histories/${id}`,
+    method: 'POST',
+    data
+  }, config)).then(response => response.data)
+}
+
+export const loadHistoryDiff = (data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_GROUP_URL}/loadHistoryDiff`,
+    method: 'POST',
+    data
+  }, config)).then(response => response.data)
+}
+
+export const recoverFromHistory = (data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_GROUP_URL}/recoverFromHistory`,
+    method: 'POST',
+    data
+  }, config)).then(response => response.data)
+}
+
+const mockGroupApi = useResourceApi('/admin/groups')
+mockGroupApi.search = (data, config) => {
+  return $httpPost(`${MOCK_GROUP_URL}/search`, data, config)
+}
+
+export default mockGroupApi

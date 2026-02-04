@@ -3,7 +3,14 @@ import { computed, onActivated, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
-import MockGroupApi, { checkExport, downloadByLink, MOCK_GROUP_URL } from '@/api/mock/MockGroupApi'
+import MockGroupApi, {
+  checkExport,
+  downloadByLink,
+  MOCK_GROUP_URL,
+  histories,
+  loadHistoryDiff,
+  recoverFromHistory
+} from '@/api/mock/MockGroupApi'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import {
   $coreConfirm,
@@ -32,6 +39,7 @@ import { useRoute } from 'vue-router'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { toCopyGroupTo } from '@/utils/DynamicUtils'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
+import MockHistoryListWindow from '@/views/components/utils/MockHistoryListWindow.vue'
 
 const props = defineProps({
   publicFlag: {
@@ -51,9 +59,11 @@ const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
   .then(data => {
     mockProject.value = data.infos?.mockProject
     const countMap = data.infos?.countMap || {}
+    const historyCountMap = data.infos?.historyCountMap || {}
     const accessDateMap = data.infos?.accessDateMap || {}
     tableData.value.forEach(group => {
       group.requestCount = countMap[group.id] || 0
+      group.historyCount = historyCountMap[group.id] || 0
       group.lastAccessDate = accessDateMap[group.groupPath]
     })
     return data
@@ -219,6 +229,16 @@ const buttons = computed(() => defineTableButtons([{
   enabled: !!projectEditable.value,
   click: item => {
     newOrEdit(item.id)
+  }
+}, {
+  tooltip: $i18nBundle('mock.label.modifyHistory'),
+  icon: 'Clock',
+  round: true,
+  type: 'info',
+  buttonIf: item => item.historyCount > 0,
+  click: item => {
+    currentGroup.value = item
+    showHistory(item)
   }
 }, {
   tooltip: $i18nBundle('common.label.config'),
@@ -445,6 +465,28 @@ const exportSelected = () => {
   exportGroups(selectedRows.value.map(group => group.id))
 }
 const showImportWindow = ref(false)
+
+const historyWindowRef = ref()
+const showHistory = (group) => {
+  histories(group.id, { page: { pageSize: 15 } }).then(() => {
+    historyWindowRef.value.showHistoryListWindow()
+  })
+}
+const searchHistories = (query, page) => {
+  return histories(currentGroup.value?.id, Object.assign(query, { page }))
+}
+const loadHistoryDiffFunc = (history, current, isView) => {
+  // Rename local variable to avoid conflict if necessary, but here we used imports.
+  // Actually, import names match usage.
+  return loadHistoryDiff(history).then(data => {
+    historyWindowRef.value.showDiff(data.resultData, data.infos?.history, isView)
+  })
+}
+const recoverFromHistoryFunc = (history) => {
+  return recoverFromHistory(history).then(() => {
+    loadMockGroups()
+  })
+}
 </script>
 
 <template>
@@ -546,7 +588,7 @@ const showImportWindow = ref(false)
       :data="tableData"
       :columns="columns"
       :buttons="buttons"
-      :buttons-column-attrs="{minWidth:'230px',fixed:'right'}"
+      :buttons-column-attrs="{minWidth:'280px',fixed:'right'}"
       :loading="loading"
       @page-size-change="loadMockGroups()"
       @current-page-change="loadMockGroups()"
@@ -591,6 +633,13 @@ const showImportWindow = ref(false)
       @import-success="loadMockGroups()"
       @update-projects="reloadProjectsAndRefreshOptions"
       @changed-user="changedUser"
+    />
+    <mock-history-list-window
+      ref="historyWindowRef"
+      :search-func="searchHistories"
+      :compare-func="loadHistoryDiffFunc"
+      :recover-func="recoverFromHistoryFunc"
+      @update-history="loadMockGroups()"
     />
   </el-container>
 </template>
