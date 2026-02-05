@@ -154,6 +154,7 @@ export const useRenderKey = () => {
 export const useProvideDataLoading = (loadingKey = 'dataLoading') => {
   const dataLoading = ref(false)
   const startLoading = (config = { delay: 100 }) => {
+    console.log('========================start', dataLoading.value)
     if (!dataLoading.value) {
       dataLoading.value = true
       $coreShowLoading(config)
@@ -161,6 +162,7 @@ export const useProvideDataLoading = (loadingKey = 'dataLoading') => {
   }
   provide(loadingKey, { dataLoading, startLoading })
   return {
+    dataLoading,
     startLoading
   }
 }
@@ -169,13 +171,14 @@ export const useInjectDataLoading = (loadingKey = 'dataLoading') => {
   const { dataLoading, startLoading } = inject(loadingKey,
     { dataLoading: ref(false), startLoading: () => {} })
   const endLoading = () => {
+    console.log('========================end', dataLoading.value)
     if (dataLoading?.value) {
       setTimeout(() => {
-        if (dataLoading?.value) {
-          $coreHideLoading()
-          dataLoading.value = false
-        }
+        $coreHideLoading()
+        dataLoading.value = false
       })
+    } else {
+      $coreHideLoading()
     }
   }
   return {
