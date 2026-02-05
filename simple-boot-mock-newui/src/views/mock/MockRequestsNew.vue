@@ -151,12 +151,12 @@ const newOrEdit = async id => {
   // Auto-expand if any hidden field has a value
   showMore.value = hiddenKeys.some(key => !!currentRequest.value?.[key])
 }
-const { startLoading } = useProvideDataLoading()
+const { startLoading, dataLoading } = useProvideDataLoading()
 const onSelectRequest = request => {
   selectRequest.value = request
   searchParam.value.selectRequestId = request?.id
   requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
-  if (request) {
+  if (request && !dataLoading.value) {
     startLoading()
   }
 }
