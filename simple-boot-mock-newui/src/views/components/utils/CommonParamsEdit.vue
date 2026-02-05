@@ -277,6 +277,7 @@ useTabFocus(sortableRef)
   <el-container
     ref="sortableRef"
     class="flex-column common-params-edit"
+    style="line-height: normal;"
   >
     <el-row
       v-for="(item, index) in params"
