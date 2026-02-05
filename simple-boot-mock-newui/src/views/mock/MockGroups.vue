@@ -42,8 +42,14 @@ import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { toCopyGroupTo } from '@/utils/DynamicUtils'
-import { useContentTypeOption } from '@/services/mock/MockCommonService'
+import {
+  calcProxyUrl,
+  getProxyUrlOptions,
+  toProxyUrlParams,
+  useContentTypeOption
+} from '@/services/mock/MockCommonService'
 import MockHistoryListWindow from '@/views/components/utils/MockHistoryListWindow.vue'
+import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 
 // Add getGroupHistoryViewOptions
 const getGroupHistoryViewOptions = (group, history) => {
@@ -64,7 +70,7 @@ const getGroupHistoryViewOptions = (group, history) => {
     prop: () => group[history ? 'creator' : 'modifier']
   }, {
     labelKey: 'mock.label.proxyUrl',
-    prop: 'proxyUrl'
+    prop: () => calcProxyUrl(group.proxyUrl)
   }, {
     labelKey: 'common.label.status',
     prop: () => [$i18nBundle('common.label.statusDisabled'), $i18nBundle('common.label.statusEnabled')][group.status]
@@ -212,8 +218,9 @@ const columns = computed(() => {
     enabled: checkShowColumn(tableData.value, 'proxyUrl'),
     formatter (data) {
       if (data.proxyUrl) {
+        const proxyUrl = calcProxyUrl(data.proxyUrl)
         return <>
-          <MockUrlCopyLink class="margin-left1" urlPath={data.proxyUrl}>{data.proxyUrl}</MockUrlCopyLink>
+          <MockUrlCopyLink class="margin-left1" urlPath={proxyUrl}>{proxyUrl}</MockUrlCopyLink>
         </>
       }
     }
@@ -398,13 +405,17 @@ const currentGroup = ref()
 const newOrEdit = async id => {
   if (id) {
     await getById(id).then(data => {
-      data.resultData && (currentGroup.value = data.resultData)
+      if (data.resultData) {
+        currentGroup.value = data.resultData
+        currentGroup.value.proxyUrlParams = toProxyUrlParams(currentGroup.value.proxyUrl)
+      }
     })
   } else {
     currentGroup.value = {
       status: 1,
       userName: searchParam.value?.userName || useCurrentUserName(),
-      projectCode: searchParam.value?.projectCode || MOCK_DEFAULT_PROJECT
+      projectCode: searchParam.value?.projectCode || MOCK_DEFAULT_PROJECT,
+      proxyUrlParams: []
     }
   }
   showEditWindow.value = true
@@ -467,14 +478,8 @@ const editFormOptions = computed(() => {
     placeholder: $i18nBundle('mock.msg.pathIdMsg')
   }, {
     labelKey: 'mock.label.proxyUrl',
-    prop: 'proxyUrl',
-    tooltip: $i18nBundle('mock.msg.proxyUrlTooltip'),
-    rules: [{
-      message: $i18nBundle('mock.msg.proxyUrlMsg'),
-      validator: () => {
-        return !currentGroup.value?.proxyUrl || /^https?:\/\/.+/.test(currentGroup.value?.proxyUrl)
-      }
-    }]
+    slot: 'proxyUrlParams',
+    tooltip: $i18nBundle('mock.msg.proxyUrlTooltip')
   }, { ...useFormStatus(), style: getStyleGrow(4) },
   { ...useFormDisableMock(), style: getStyleGrow(6) },
   { ...useFormDelay(), style: getStyleGrow(4) },
@@ -496,6 +501,9 @@ const editFormOptions = computed(() => {
   return filteredOptions
 })
 const saveGroupItem = (item) => {
+  if (item.proxyUrlParams?.length) {
+    item.proxyUrl = JSON.stringify(item.proxyUrlParams.filter(param => param.value))
+  }
   return saveOrUpdate(item).then(() => {
     loadMockGroups()
   })
@@ -572,7 +580,7 @@ const historyColumns = computed(() => {
     labelKey: 'mock.label.proxyUrl',
     minWidth: '150px',
     formatter (data) {
-      return data.proxyUrl
+      return calcProxyUrl(data.proxyUrl)
     }
   }, {
     labelKey: 'common.label.delay',
@@ -604,6 +612,8 @@ const recoverFromHistoryFunc = (history) => {
     loadMockGroups()
   })
 }
+
+const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
 </script>
 
 <template>
@@ -719,7 +729,27 @@ const recoverFromHistoryFunc = (history) => {
       :name="$t('mock.label.mockGroups')"
       :save-current-item="saveGroupItem"
       inline-auto-mode
+      width="800px"
     >
+      <template #proxyUrlParams="{option}">
+        <common-form-control
+          :model="currentGroup"
+          :option="option"
+        >
+          <common-params-edit
+            v-model="currentGroup.proxyUrlParams"
+            form-prop="proxyUrlParams"
+            :name-dynamic-option="nameDynamicOption"
+            :value-dynamic-option="valueDynamicOption"
+            :show-copy-button="false"
+            :show-paste-button="false"
+            single-enable
+            :name-span="7"
+            :value-span="12"
+          />
+        </common-form-control>
+        <br>
+      </template>
       <template #moreOptions>
         <div class="form-edit-width-100 flex-center">
           <el-button

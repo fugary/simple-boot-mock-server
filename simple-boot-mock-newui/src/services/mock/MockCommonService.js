@@ -302,3 +302,46 @@ export function checkArrayAndPath (jsonStr) {
   }
   return {}
 }
+
+export const toProxyUrlParams = (proxyUrl) => {
+  let proxyUrlParams = []
+  if (isJson(proxyUrl)) {
+    proxyUrlParams = JSON.parse(proxyUrl)
+  } else if (isString(proxyUrl)) {
+    proxyUrlParams = [{
+      enabled: true,
+      name: 'default',
+      value: proxyUrl
+    }]
+  }
+  return proxyUrlParams
+}
+
+export const calcProxyUrl = (proxyUrl) => toProxyUrlParams(proxyUrl).find(url => url.enabled && !!url.value)?.value
+
+export const getProxyUrlOptions = () => {
+  return {
+    nameDynamicOption: () => {
+      return {
+        placeholder: $i18nKey('common.msg.commonInput', 'common.label.name'),
+        labelWidth: '30px',
+        colSpan: 6,
+        showLabel: false
+      }
+    },
+    valueDynamicOption: () => {
+      return {
+        placeholder: $i18nKey('common.msg.commonInput', 'mock.label.proxyUrl'),
+        labelWidth: '10px',
+        colSpan: 10,
+        showLabel: false,
+        rules: [{
+          message: $i18nBundle('mock.msg.proxyUrlMsg'),
+          validator: (_, proxyUrl) => {
+            return !proxyUrl || /^https?:\/\/.+/.test(proxyUrl)
+          }
+        }]
+      }
+    }
+  }
+}

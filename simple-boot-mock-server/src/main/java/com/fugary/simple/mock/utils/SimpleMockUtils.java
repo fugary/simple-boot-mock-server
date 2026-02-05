@@ -313,11 +313,31 @@ public class SimpleMockUtils {
      * @return
      */
     public static String calcProxyUrl(MockGroup mockGroup, MockRequest mockRequest) {
-        String proxyUrl = mockGroup.getProxyUrl();
-        if (mockRequest != null && StringUtils.isNotBlank(mockRequest.getProxyUrl())) {
-            proxyUrl = mockRequest.getProxyUrl();
+        String proxyUrl = mockRequest != null ? calcProxyUrl(mockRequest.getProxyUrl()) : null;
+        if (StringUtils.isBlank(proxyUrl)) {
+            proxyUrl = calcProxyUrl(mockGroup.getProxyUrl());
         }
         return proxyUrl;
+    }
+
+    /**
+     * 解析proxyUrl，支持json数组格式
+     *
+     * @param proxyUrl
+     * @return
+     */
+    public static String calcProxyUrl(String proxyUrl) {
+        if (StringUtils.isNotBlank(proxyUrl)) {
+            if (MockJsUtils.isJson(proxyUrl)) {
+                List<MockHeaderVo> proxyUrls = JsonUtils.fromJson(proxyUrl, new TypeReference<>() {
+                });
+                return proxyUrls.stream().filter(MockHeaderVo::isEnabled).findFirst()
+                        .orElseGet(MockHeaderVo::new).getValue();
+            } else {
+                return proxyUrl;
+            }
+        }
+        return null;
     }
 
     /**

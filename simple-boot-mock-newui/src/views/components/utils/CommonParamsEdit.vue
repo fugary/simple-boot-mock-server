@@ -58,7 +58,27 @@ const props = defineProps({
     type: [Array, Function],
     default: () => []
   },
+  nameDynamicOption: {
+    type: Function,
+    default: undefined
+  },
+  valueDynamicOption: {
+    type: Function,
+    default: undefined
+  },
+  nameSpan: {
+    type: Number,
+    default: 8
+  },
+  valueSpan: {
+    type: Number,
+    default: 8
+  },
   fileFlag: {
+    type: Boolean,
+    default: false
+  },
+  singleEnable: {
     type: Boolean,
     default: false
   }
@@ -73,7 +93,7 @@ params.value.forEach(param => (param.enabled = param.enabled ?? true))
 
 const addRequestParam = () => {
   params.value.push({
-    enabled: true
+    enabled: !props.singleEnable
   })
 }
 
@@ -155,13 +175,25 @@ const paramsOptions = computed(() => {
       prop: 'enabled',
       disabled: props.nameReadOnly,
       type: 'switch',
-      colSpan: 2
+      colSpan: 2,
+      dynamicOption (item) {
+        if (props.singleEnable) {
+          return {
+            change (value) {
+              console.log('=========================item', item, value)
+              if (value) {
+                params.value.filter(param => param !== item).forEach(param => (param.enabled = false))
+              }
+            }
+          }
+        }
+      }
     }, {
       labelKey: 'common.label.name',
       prop: props.nameKey,
       required: props.nameReadOnly || props.nameRequired || param.nameRequired || param.valueRequired,
       disabled: props.nameReadOnly,
-      colSpan: nvSpan,
+      colSpan: props.nameSpan || nvSpan,
       type: nameSuggestions ? 'autocomplete' : 'input',
       attrs: {
         fetchSuggestions: nameSuggestions,
@@ -170,6 +202,9 @@ const paramsOptions = computed(() => {
       dynamicOption: (item, ...args) => {
         if (isFunction(item.dynamicOption)) {
           return item.dynamicOption(item, ...args)
+        }
+        if (isFunction(props.nameDynamicOption)) {
+          return props.nameDynamicOption(item, ...args)
         }
       }
     }, {
@@ -193,7 +228,7 @@ const paramsOptions = computed(() => {
       labelKey: 'common.label.value',
       prop: props.valueKey,
       required: props.nameReadOnly || props.valueRequired || param.valueRequired,
-      colSpan: nvSpan,
+      colSpan: props.valueSpan || nvSpan,
       enabled: param.type !== 'file',
       type: paramValueSuggestions ? 'autocomplete' : 'input',
       attrs: {
@@ -203,6 +238,9 @@ const paramsOptions = computed(() => {
       dynamicOption: (item, ...args) => {
         if (isFunction(item.dynamicOption)) {
           return item.dynamicOption(item, ...args)
+        }
+        if (isFunction(props.valueDynamicOption)) {
+          return props.valueDynamicOption(item, ...args)
         }
       }
     }, {

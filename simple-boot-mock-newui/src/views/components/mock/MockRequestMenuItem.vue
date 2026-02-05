@@ -7,6 +7,7 @@ import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { defineTableButtons } from '@/components/utils'
 import { $coreConfirm } from '@/utils'
 import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
+import { calcProxyUrl } from '@/services/mock/MockCommonService'
 const props = defineProps({
   groupItem: {
     type: Object,
@@ -118,7 +119,7 @@ const confirmResumeMock = () => $coreConfirm($i18nKey('common.msg.commonConfirm'
   .then(() => emit('saveMockRequest', { ...requestItem.value, disableMock: false }))
 
 const requestProxyUrl = computed(() => {
-  let proxyUrl = requestItem.value.proxyUrl || props.groupItem.proxyUrl
+  let proxyUrl = calcProxyUrl(requestItem.value.proxyUrl) || calcProxyUrl(props.groupItem.proxyUrl)
   if (proxyUrl) { // 去掉末尾的斜杠
     proxyUrl = proxyUrl.endsWith('/') ? proxyUrl.slice(0, proxyUrl.length - 1) : proxyUrl
     return `${proxyUrl}${requestItem.value?.requestPath}`
