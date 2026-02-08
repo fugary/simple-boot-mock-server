@@ -468,6 +468,29 @@ export const calcAffixOffset = (fix = 10) => {
   return initValue
 }
 
+/**
+ * 产生随机字符，数字加字母
+ * @param len
+ * @returns {string}
+ */
+export const $randomStr = (len = 8) => {
+  const str = Math.random().toString(36).substring(2)
+  if (str.length >= len) {
+    return str.substring(0, len)
+  }
+  return str + $randomStr(len - str.length)
+}
+/**
+ * 下载链接点击
+ * @param downloadUrl
+ */
+export const $downloadWithLinkClick = (downloadUrl) => {
+  const downloadLink = document.createElement('a')
+  downloadLink.href = downloadUrl
+  downloadLink.download = 'download'
+  downloadLink.click()
+}
+
 export const getStyleGrow = flexGrow => ({
   flexGrow,
   minWidth: `calc(${flexGrow}0%)`

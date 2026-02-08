@@ -1,12 +1,12 @@
-<script setup>
+<script setup lang="jsx">
 import { ref, computed } from 'vue'
 import MockUserApi from '@/api/mock/MockUserApi'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { defineFormOptions } from '@/components/utils'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElButton } from 'element-plus'
 import { $i18nBundle } from '@/messages'
 import { useRoute } from 'vue-router'
-import { isAdminUser, isUserAdmin, useBackUrl } from '@/utils'
+import { $randomStr, isAdminUser, isUserAdmin, useBackUrl } from '@/utils'
 import { useFormStatus } from '@/consts/GlobalConstants'
 
 const props = defineProps({
@@ -65,6 +65,16 @@ const formOptions = computed(() => {
     required: true,
     attrs: {
       showPassword: true
+    },
+    slots: {
+      append () {
+        const generatePass = () => {
+          userAccount.value.userPassword = $randomStr(8)
+        }
+        return <ElButton type="primary" onClick={generatePass}>
+          {$i18nBundle('common.label.generate')}
+        </ElButton>
+      }
     }
   }])
 })
