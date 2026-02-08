@@ -317,7 +317,9 @@ export const toProxyUrlParams = (proxyUrl) => {
   return proxyUrlParams
 }
 
-export const calcProxyUrl = (proxyUrl) => toProxyUrlParams(proxyUrl).find(url => url.enabled && !!url.value)?.value
+export const calcProxyUrl = (proxyUrl) => calcProxyUrlParam(proxyUrl)?.value
+
+export const calcProxyUrlParam = (proxyUrl) => toProxyUrlParams(proxyUrl).find(url => url.enabled && !!url.value)
 
 export const getProxyUrlOptions = () => {
   return {

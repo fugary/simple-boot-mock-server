@@ -44,6 +44,7 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import { toCopyGroupTo } from '@/utils/DynamicUtils'
 import {
   calcProxyUrl,
+  calcProxyUrlParam,
   getProxyUrlOptions,
   toProxyUrlParams,
   useContentTypeOption
@@ -218,9 +219,12 @@ const columns = computed(() => {
     enabled: checkShowColumn(tableData.value, 'proxyUrl'),
     formatter (data) {
       if (data.proxyUrl) {
-        const proxyUrl = calcProxyUrl(data.proxyUrl)
+        const { value: proxyUrl, name } = calcProxyUrlParam(data.proxyUrl)
+        const calcName = name !== 'default' ? name : undefined
         return <>
-          <MockUrlCopyLink class="margin-left1" urlPath={proxyUrl}>{proxyUrl}</MockUrlCopyLink>
+          <MockUrlCopyLink class="margin-left1"
+                           tooltip={calcName ? `<strong>${calcName}:</strong> ${proxyUrl}` : ''}
+                           urlPath={proxyUrl}>{calcName || proxyUrl}</MockUrlCopyLink>
         </>
       }
     }
