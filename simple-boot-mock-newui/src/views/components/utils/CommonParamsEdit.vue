@@ -93,7 +93,7 @@ params.value.forEach(param => (param.enabled = param.enabled ?? true))
 
 const addRequestParam = () => {
   params.value.push({
-    enabled: !props.singleEnable
+    enabled: !props.singleEnable || !params.value.length
   })
 }
 
