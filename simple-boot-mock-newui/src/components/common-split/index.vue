@@ -1,6 +1,7 @@
 <script setup>
-import { onMounted, onUnmounted, ref, useAttrs, watch } from 'vue'
+import { onMounted, ref, useAttrs, shallowRef, watch, computed } from 'vue'
 import Split from 'split.js'
+import { useElementSize } from '@vueuse/core'
 
 /**
  * 更多属性配置可以参考文档
@@ -38,20 +39,31 @@ const props = defineProps({
     default: false
   }
 })
+const elementSizesRefs = ref([])
 const itemRefs = ref([])
 const isDragging = ref(false)
 
 const attrs = useAttrs()
-let splitInstance = null
+const splitInstance = shallowRef()
 
 const initSplit = () => {
-  if (splitInstance) {
-    splitInstance.destroy()
-    splitInstance = null
+  if (splitInstance.value) {
+    splitInstance.value.destroy()
+    splitInstance.value = null
   }
+  // Clear previous size refs to avoid duplicates/leaks on re-init
+  elementSizesRefs.value = []
+
   if (props.disabled) return
 
-  splitInstance = Split(itemRefs.value.map(itemRef => itemRef), {
+  const elements = itemRefs.value.filter(el => el)
+  if (elements.length === 0) return
+
+  splitInstance.value = Split(elements.map(itemRef => {
+    const { width, height } = useElementSize(itemRef)
+    elementSizesRefs.value.push(props.direction === 'vertical' ? height : width)
+    return itemRef
+  }), {
     sizes: props.sizes,
     minSize: props.minSize,
     maxSize: props.maxSize,
@@ -59,6 +71,14 @@ const initSplit = () => {
     gutterSize: 5,
     direction: props.direction,
     ...attrs,
+    gutter: (index, direction) => {
+      const gutter = document.createElement('div')
+      gutter.className = `gutter gutter-${direction}`
+      gutter.addEventListener('mousedown', () => {
+        gutter.classList.add('is-active')
+      })
+      return gutter
+    },
     onDragStart: (sizes) => {
       isDragging.value = true
       if (attrs.onDragStart) {
@@ -67,6 +87,12 @@ const initSplit = () => {
     },
     onDragEnd: (sizes) => {
       isDragging.value = false
+      // remove is-active from all gutters
+      const container = itemRefs.value[0]?.parentNode
+      if (container) {
+        container.querySelectorAll('.gutter.is-active').forEach(el => el.classList.remove('is-active'))
+      }
+
       if (attrs.onDragEnd) {
         attrs.onDragEnd(sizes)
       }
@@ -78,20 +104,19 @@ onMounted(() => {
   initSplit()
 })
 
-onUnmounted(() => {
-  if (splitInstance) {
-    splitInstance.destroy()
-  }
-})
+watch(() => props.sizes, () => {
+  initSplit()
+}, { flush: 'post' })
 
 watch(() => props.disabled, () => {
   initSplit()
-})
+}, { flush: 'post' })
 
-watch(() => props.sizes, (newSizes) => {
-  if (splitInstance) {
-    splitInstance.setSizes(newSizes)
-  }
+const elementSizes = computed(() => elementSizesRefs.value?.map(sizeRef => sizeRef.value))
+
+defineExpose({
+  splitInstance,
+  elementSizes
 })
 
 </script>
@@ -139,7 +164,7 @@ watch(() => props.sizes, (newSizes) => {
   background-position: 50%;
 }
 /* Highlight when dragging (controlled by JS state) */
-.is-dragging > :deep(.gutter) {
+:deep(.gutter.is-active) {
   background-color: #409eff !important;
 }
 </style>
