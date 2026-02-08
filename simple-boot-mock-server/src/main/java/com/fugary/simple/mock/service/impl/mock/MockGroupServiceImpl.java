@@ -114,7 +114,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public boolean saveOrUpdate(MockGroup entity) {
+    public SimpleResult<MockGroup> newSaveOrUpdate(MockGroup entity) {
         if (entity.getId() == null || entity.getVersion() == null) {
             entity.setVersion(1);
         }
@@ -137,10 +137,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 }
             }
         }
+        boolean result = true;
+        int code = MockErrorConstants.CODE_2000;
         if (needSave) {
-            return super.saveOrUpdate(entity);
+            result = super.saveOrUpdate(entity);
+            code = result ? MockErrorConstants.CODE_0 : MockErrorConstants.CODE_1;
         }
-        return true;
+        return SimpleResultUtils.createSimpleResult(code, entity);
     }
 
     @Override

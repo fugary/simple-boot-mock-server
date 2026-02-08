@@ -108,4 +108,12 @@ public interface MockGroupService extends IService<MockGroup> {
      * @return
      */
     SimpleResult<MockGroup> copyMockGroup(Integer groupId, MockProject newProject);
+
+    /**
+     * 自定义保存
+     *
+     * @param entity
+     * @return
+     */
+    SimpleResult<MockGroup> newSaveOrUpdate(MockGroup entity);
 }

@@ -190,7 +190,7 @@ public class MockGroupController {
     }
 
     @PostMapping
-    public SimpleResult save(@RequestBody MockGroup group) {
+    public SimpleResult<MockGroup> save(@RequestBody MockGroup group) {
         if (StringUtils.isBlank(group.getGroupPath())) {
             group.setGroupPath(SimpleMockUtils.uuid());
         }
@@ -207,7 +207,7 @@ public class MockGroupController {
         if (!SecurityUtils.validateUserUpdate(group.getUserName())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
-        return SimpleResultUtils.createSimpleResult(mockGroupService.saveOrUpdate(SimpleMockUtils.addAuditInfo(group)));
+        return mockGroupService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(group));
     }
 
     @PostMapping("/copyMockGroup/{groupId}")
@@ -326,6 +326,6 @@ public class MockGroupController {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
         SimpleMockUtils.copyFromHistory(history, target);
-        return SimpleResultUtils.createSimpleResult(mockGroupService.saveOrUpdate(target));
+        return mockGroupService.newSaveOrUpdate(target);
     }
 }
