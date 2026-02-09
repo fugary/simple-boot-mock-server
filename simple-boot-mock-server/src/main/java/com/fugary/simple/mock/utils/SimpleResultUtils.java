@@ -145,6 +145,18 @@ public class SimpleResultUtils {
                 .message(msg).build();
     }
 
+    /**
+     * 内部异常错误
+     *
+     * @param msg
+     * @return
+     */
+    public static <T> SimpleResult<T> createError(int code, String msg) {
+        return SimpleResult.<T>builder()
+                .code(code)
+                .message(msg).build();
+    }
+
     public static String getErrorMsg(Integer code, Locale locale) {
         String messageKey = "simple.error.code." + code;
         if (messageSource != null) {

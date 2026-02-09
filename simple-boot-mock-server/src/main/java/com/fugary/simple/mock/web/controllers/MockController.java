@@ -115,7 +115,9 @@ public class MockController {
                 mockGroupService.delayTime(start, delayTime);
                 if (SimpleMockUtils.isMockPreview(request)) {
                     return ResponseEntity.status(HttpStatus.OK).header(MockConstants.MOCK_DATA_REDIRECT_HEADER, "1")
-                            .body("测试重定向请复制URL到浏览器访问，跳转地址：" + data.getResponseBody());
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(JsonUtils.toJson(SimpleResultUtils.createError(MockErrorConstants.CODE_0, "Test redirect, please copy redirect URL to browser to visit")
+                                    .addInfo("redirectUrl", data.getResponseBody())));
                 }
                 return ResponseEntity.status(data.getStatusCode()).headers(httpHeaders)
                         .header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
@@ -139,6 +141,11 @@ public class MockController {
         } else if (mockGroup != null
                 && SimpleMockUtils.isValidProxyUrl(proxyUrl = SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
             // 所有request没有匹配上,但是有proxy地址
+            String loopCountStr = request.getHeader(MockConstants.SIMPLE_BOOT_MOCK_HEADER);
+            if (NumberUtils.toInt(loopCountStr, 0) > 2) {
+                return ResponseEntity.status(HttpStatus.LOOP_DETECTED).contentType(MediaType.APPLICATION_JSON)
+                        .body(JsonUtils.toJson(SimpleResultUtils.createError("Proxy Loop Detected")));
+            }
             // 检测是否是 SSE 请求
             String acceptHeader = request.getHeader(HttpHeaders.ACCEPT);
             if (StringUtils.contains(acceptHeader, MediaType.TEXT_EVENT_STREAM_VALUE)

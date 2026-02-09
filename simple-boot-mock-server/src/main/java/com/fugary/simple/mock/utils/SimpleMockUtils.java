@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.tuple.Pair;
@@ -261,7 +262,9 @@ public class SimpleMockUtils {
                 headers.add(new NameValue(headerName, headerValue));
             }
         }
-        headers.add(new NameValue(MockConstants.SIMPLE_BOOT_MOCK_HEADER, "1"));
+        String loopCountStr = request.getHeader(MockConstants.SIMPLE_BOOT_MOCK_HEADER);
+        int loopCount = NumberUtils.toInt(loopCountStr, 0) + 1;
+        headers.add(new NameValue(MockConstants.SIMPLE_BOOT_MOCK_HEADER, String.valueOf(loopCount)));
         Enumeration<String> parameterNames = request.getParameterNames();
         List<NameValue> parameters = mockParams.getRequestParams();
         List<NameValue> formUrlencoded = mockParams.getFormUrlencoded();

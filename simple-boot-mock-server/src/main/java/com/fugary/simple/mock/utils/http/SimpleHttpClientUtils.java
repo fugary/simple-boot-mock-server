@@ -108,6 +108,7 @@ public class SimpleHttpClientUtils {
             SSLConnectionSocketFactory ssf = new SSLConnectionSocketFactory(ctx, new NoopHostnameVerifier());
             HttpClientBuilder clientBuilder = HttpClientBuilder.create()
                     .setDefaultRequestConfig(REQUEST_CONFIG)
+                    .setConnectionManager(CLIENT_CONNECTION_MANAGER)
                     .setSSLSocketFactory(ssf);
             if (!cookie) {
                 clientBuilder.disableCookieManagement();

@@ -141,7 +141,7 @@ public class DefaultMockPushProcessorImpl implements MockPushProcessor {
      */
     protected HttpHeaders getHeaders(MockParamsVo paramsVo) {
         HttpHeaders headers = new HttpHeaders();
-        paramsVo.getHeaderParams().forEach(nv -> headers.addIfAbsent(nv.getName(), nv.getValue()));
+        paramsVo.getHeaderParams().forEach(nv -> headers.set(nv.getName(), nv.getValue()));
         return headers;
     }
 

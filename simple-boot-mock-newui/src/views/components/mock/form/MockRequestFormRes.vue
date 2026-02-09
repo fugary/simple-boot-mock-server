@@ -133,13 +133,8 @@ watch(() => props.responseTarget, async (responseTarget) => {
       content = await responseTarget?.data.text()
     }
     contentRef.value = content
-    const isRedirect = !!responseTarget?.responseHeaders?.find(header => header.name === 'mock-data-redirect')
     setTimeout(() => {
-      if (isRedirect) {
-        languageRef.value = 'text'
-      } else {
-        languageRef.value = calcContentLanguage(oriContentType) || languageRef.value
-      }
+      languageRef.value = calcContentLanguage(oriContentType) || languageRef.value
       formatDocument()
     })
   }
