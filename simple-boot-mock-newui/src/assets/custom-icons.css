@@ -14,7 +14,7 @@
 }
 
 .custom-logo {
-    --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' color='%23000'%3E%3Cpath d='M2.5 12c0-4.478 0-6.718 1.391-8.109S7.521 2.5 12 2.5c4.478 0 6.718 0 8.109 1.391S21.5 7.521 21.5 12c0 4.478 0 6.718-1.391 8.109S16.479 21.5 12 21.5c-4.478 0-6.718 0-8.109-1.391S2.5 16.479 2.5 12'/%3E%3Cpath d='M6 13.5L7.5 9l1.875 4.5M6 13.5L5.5 15m.5-1.5h3.375m0 0L10 15m2.5-3V9.7c0-.186 0-.28.024-.355a.5.5 0 0 1 .322-.32C12.92 9 13.013 9 13.2 9h1.3a1.5 1.5 0 0 1 0 3zm0 0v3m6-6v6'/%3E%3C/g%3E%3C/svg%3E");
+    --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='%23000' stroke='%23000' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='4' y1='20' x2='4' y2='5' stroke-width='2' fill='none'/%3E%3Cline x1='4' y1='5' x2='12' y2='13' stroke-width='2' fill='none'/%3E%3Cline x1='12' y1='13' x2='20' y2='5' stroke-width='2' fill='none'/%3E%3Cline x1='20' y1='5' x2='20' y2='20' stroke-width='2' fill='none'/%3E%3Ccircle cx='4' cy='20' r='2' stroke='none'/%3E%3Ccircle cx='4' cy='5' r='2' stroke='none'/%3E%3Ccircle cx='20' cy='5' r='2' stroke='none'/%3E%3Ccircle cx='20' cy='20' r='2' stroke='none'/%3E%3Ccircle cx='12' cy='13' r='1.8' stroke='none'/%3E%3Ccircle cx='16' cy='9' r='1.8' fill='none' stroke='%23000' stroke-width='1.2' stroke-dasharray='1.5 1'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 .custom-markdown, .custom-icon-md {
