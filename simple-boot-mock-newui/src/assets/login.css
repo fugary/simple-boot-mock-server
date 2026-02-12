@@ -78,6 +78,13 @@
     animation: fadeIn 1s ease-out;
 }
 
+.branding-logo img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.3));
+}
+
 .branding-title {
     font-size: 3rem;
     font-weight: 700;

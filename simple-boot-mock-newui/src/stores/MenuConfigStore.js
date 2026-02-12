@@ -18,7 +18,7 @@ export const useMenuConfigStore = defineStore('menuConfig', () => {
     },
     calcBusinessMenus () {
       return [{
-        icon: 'HomeFilled',
+        icon: 'custom-logo',
         index: '/',
         labelKey: 'common.label.title'
       }, ...businessMenus.value.map(menu2CommonMenu)]
