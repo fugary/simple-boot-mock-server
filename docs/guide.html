@@ -141,6 +141,8 @@
         h3::before { content: '#'; color: var(--primary); opacity: 0.5; }
 
         p { margin-bottom: 1rem; color: var(--text-dim); line-height: 1.7; }
+        .content ol, .content ul { margin-bottom: 1.5rem; margin-left: 1.5rem; color: var(--text-dim); }
+        .content li { margin-bottom: 0.5rem; }
         
         /* Tables */
         .table-wrapper {
@@ -284,15 +286,19 @@
                     <li><a href="#mock-response">Mock 响应</a></li>
                     <li><a href="#request-object">请求对象</a></li>
                     <li><a href="#response-object">响应对象</a></li>
+                    <li><a href="#js-support">JS & Mock.js</a></li>
+                    <li><a href="#match-pattern">匹配规则</a></li>
                 </ul>
 
                 <div class="sidebar-section-title">高级功能</div>
                 <ul>
-                    <li><a href="#js-support">JS & Mock.js</a></li>
-                    <li><a href="#built-in-functions">内置函数</a></li>
                     <li><a href="#variable-support">变量支持</a></li>
                     <li><a href="#xml-support">XML 支持</a></li>
-                    <li><a href="#match-pattern">匹配规则</a></li>
+                    <li><a href="#built-in-functions">内置函数</a></li>
+                    <li><a href="#ex-fetch">Fetch 异步请求</a></li>
+                    <li><a href="#ex-require">动态加载库</a></li>
+                    <li><a href="#post-processor">后置处理</a></li>
+                    <li><a href="#sse-push">SSE 推送</a></li>
                 </ul>
             </aside>
 
@@ -303,6 +309,7 @@
                 <h2 id="install-run">安装运行</h2>
                 <h3 id="download-run">1. 下载运行</h3>
                 <p>下载最新版发行包 (Zip)：<a href="https://github.com/fugary/simple-boot-mock-server/releases" target="_blank" style="color: var(--primary);">GitHub Releases</a></p>
+                <p><strong>注意：</strong> 本地运行需要安装 Java 环境 (JRE/JDK 11+)。</p>
                 <ol>
                     <li>下载并解压 zip 文件。</li>
                     <li>运行 <code>bin/start.sh</code> (Linux/macOS) 或 <code>bin/start.bat</code> (Windows)。</li>
@@ -414,6 +421,7 @@
                             <tr><td><code>request.headers</code></td><td>请求头 Map</td></tr>
                             <tr><td><code>request.parameters</code></td><td>Query 参数</td></tr>
                             <tr><td><code>request.pathParameters</code></td><td>路径参数</td></tr>
+                            <tr><td><code>request.params</code></td><td>请求参数和路径参数合并 (快捷访问)</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -426,16 +434,17 @@
                             <tr><td><code>response.statusCode</code></td><td>状态码 (默认 200)</td></tr>
                             <tr><td><code>response.headers</code></td><td>响应头 Map</td></tr>
                             <tr><td><code>response.body</code></td><td>响应体对象</td></tr>
-                            <tr><td><code>response.bodyStr</code></td><td>响应体字符串</td></tr>
+                            <tr><td><code>response.bodyStr</code></td><td>响应体字符串 (原始内容)</td></tr>
+                            <tr><td><code>response.headers</code></td><td>响应头 Map (可修改)</td></tr>
                         </tbody>
                     </table>
                 </div>
 
                 <h2 id="js-support">JS & Mock.js 支持</h2>
                 <p>系统内置 JavaScript 引擎 (基于 JDK ScriptEngine)，支持 ES6 语法 (箭头函数等)。</p>
+                <p>支持使用 <a href="http://mockjs.com/" target="_blank" style="color: var(--primary);">Mock.js</a> 语法生成随机数据。</p>
                 
                 <h3>Mock.js 模板</h3>
-                <p>支持 <a href="http://mockjs.com/" target="_blank" style="color: var(--primary);">Mock.js</a> 语法生成随机数据。</p>
                 <pre><code class="language-javascript">Mock.mock({
     "code": "success",
     "data|10": [{
@@ -445,6 +454,44 @@
     }]
 })</code></pre>
                 <img src="./assets/docs-images/image-20240710224052933.png" alt="Mock.js 示例" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h2 id="match-pattern">匹配规则</h2>
+                <p>当同一个 URL 需要根据不同参数返回不同结果时，使用匹配规则。规则为 JS 表达式，返回 <code>true</code> 即匹配成功。</p>
+                <pre><code class="language-javascript">// 示例: 当参数 type 为 'vip' 且 header 中有 token 时匹配
+request.params.type === 'vip' && request.headers.token</code></pre>
+
+                <p>也支持使用自执行函数 (IIFE) 处理更复杂的逻辑：</p>
+                <pre><code class="language-javascript">(function () {
+    if (request.params.name === "admin" && request.params.password === "123456") {
+        return true;
+    }
+    return false;
+}())</code></pre>
+                <img src="./assets/docs-images/image-20240710230952984.png" alt="匹配规则" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+
+
+
+                <h2 id="variable-support">变量支持</h2>
+                <p>在响应数据中，可以使用 <code>request</code> 对象获取请求参数，实现动态响应。</p>
+                <ul>
+                    <li><code>request.body</code>: 请求体对象</li>
+                    <li><code>request.params</code>: 所有参数集合 (Path + Query)</li>
+                    <li><code>request.headers</code>: 请求头</li>
+                </ul>
+                <pre><code class="language-javascript">Mock.mock({
+    "input_id": request.params.id,
+    "input_name": request.body.name,
+    "timestamp": Date.now()
+})</code></pre>
+
+                <h2 id="xml-support">XML 支持</h2>
+                <p>XML 响应同样支持 JS 模板语法 and 变量替换。</p>
+                <pre><code class="language-xml">&lt;user&gt;
+    &lt;id&gt;{{request.params.id}}&lt;/id&gt;
+    &lt;name&gt;{{Mock.mock('@cname')}}&lt;/name&gt;
+&lt;/user&gt;</code></pre>
+
 
                 <h2 id="built-in-functions">内置函数</h2>
                 <p>除了 Mock.js，系统还预置了大量工具函数，用于加密、解码和日期处理。</p>
@@ -463,35 +510,73 @@
                             <tr><td><code>decryptAES(data, key)</code></td><td>AES 解密</td></tr>
                             <tr><td><code>encryptRSA(data, key)</code> / <code>decryptRSA(data, key)</code></td><td>RSA 加密 / 解密</td></tr>
                             <tr><td><code>dayjs(date)</code></td><td>日期处理 (Day.js)</td></tr>
+                            <tr><td><code>xml2Json(xmlStr)</code></td><td>XML 字符串转 JSON</td></tr>
+                            <tr><td><code>json2Xml(json, root)</code></td><td>JSON 转 XML 字符串</td></tr>
+                            <tr><td><code>fetch(url, options)</code></td><td>发送 HTTP 请求 (支持 async/await)</td></tr>
+                            <tr><td><code>require(url)</code></td><td>动态加载远程 JS 库 (如 CryptoJS)</td></tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h2 id="variable-support">变量支持</h2>
-                <p>在响应数据中，可以使用 <code>request</code> 对象获取请求参数，实现动态响应。</p>
-                <ul>
-                    <li><code>request.body</code>: 请求体对象</li>
-                    <li><code>request.params</code>: 所有参数集合 (Path + Query)</li>
-                    <li><code>request.headers</code>: 请求头</li>
-                </ul>
-                <pre><code class="language-javascript">Mock.mock({
-    "input_id": request.params.id,
-    "input_name": request.body.name,
-    "timestamp": Date.now()
-})</code></pre>
+                <h2 id="ex-fetch">Fetch 异步请求</h2>
+                <p>可以使用 <code>fetch</code> 请求第三方 API 并返回结果，支持 <code>async/await</code>。</p>
+                <p><strong>获取 JSON 数据：</strong></p>
+                <pre><code class="language-javascript">(async function () {
+    const response = await fetch('https://httpbin.org/get?name=mock');
+    const json = await response.json();
+    return {
+        original: json,
+        processed: true,
+        timestamp: Date.now()
+    };
+}())</code></pre>
+                
+                <p><strong>获取并返回二进制图片：</strong></p>
+                <pre><code class="language-javascript">(async function () {
+    const response = await fetch('https://httpbin.org/image/png');
+    return await response.blob();
+}())</code></pre>
 
-                <h2 id="xml-support">XML 支持</h2>
-                <p>XML 响应同样支持 JS 模板语法和变量替换。</p>
-                <pre><code class="language-xml">&lt;user&gt;
-    &lt;id&gt;{{request.params.id}}&lt;/id&gt;
-    &lt;name&gt;{{Mock.mock('@cname')}}&lt;/name&gt;
-&lt;/user&gt;</code></pre>
+                <h2 id="ex-require">动态加载库 (CryptoJS)</h2>
+                <p>通过 <code>require</code> 可以加载远程 JS 库，处理复杂的加密逻辑 or 使用第三方算法。</p>
+                <pre><code class="language-javascript">(async function () {
+    // 加载 CryptoJS 库
+    const CryptoJS = await require('https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js');
+    
+    const message = "hello world";
+    const hash = CryptoJS.MD5(message).toString();
+    const sha256 = CryptoJS.SHA256(message).toString();
+    
+    return {
+        message: message,
+        md5_hash: hash,
+        sha256_hash: sha256
+    };
+}())</code></pre>
 
-                <h2 id="match-pattern">匹配规则</h2>
-                <p>当同一个 URL 需要根据不同参数返回不同结果时，使用匹配规则。规则为 JS 表达式，返回 <code>true</code> 即匹配成功。</p>
-                <pre><code class="language-javascript">// 示例: 当参数 type 为 'vip' 且 header 中有 token 时匹配
-request.params.type === 'vip' && request.headers.token</code></pre>
-                <img src="./assets/docs-images/image-20240710230952984.png" alt="匹配规则" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+                <h2 id="post-processor">后置处理 (Post-Processor)</h2>
+                <p>后置处理器允许您在响应生成后对其进行二次加工。支持修改状态码、头信息，或者将响应体从一种格式转换为另一种格式。</p>
+                <p><strong>示例：将 XML 响应转换为 JSON</strong></p>
+                <pre><code class="language-javascript">(function () {
+  response.statusCode = 200;
+  response.headers['Content-Type'] = 'application/json';
+  return xml2Json(response.bodyStr);
+}())</code></pre>
+
+                <h2 id="sse-push">SSE 推送 (Event Stream)</h2>
+                <p>对于需要模拟多消息推送 (Server-Sent Events) 的场景，可以返回一个特定的数组结构：</p>
+                <pre><code class="language-javascript">[{
+  "data": "连接成功",
+  "delay": 0
+}, {
+  "data": {"msg": "这是一条消息", "id": 1},
+  "delay": 1000
+}, {
+  "data": "结束",
+  "delay": 500
+}]</code></pre>
+                <p>系统会自动识别此格式并按照 <code>delay</code> 设定的毫秒数分段推送数据。</p>
+
 
             </main>
         </div>
@@ -507,6 +592,7 @@ request.params.type === 'vip' && request.headers.token</code></pre>
 
     <!-- Initialize Highlight.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
     <script>
         hljs.highlightAll();
