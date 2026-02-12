@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用教程 - Simple Boot Mock Server</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #10b981;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Animated Background */
+        .bg-gradient {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 40%);
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+
+        /* Navbar */
+        nav {
+            padding: 1.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: flex; align-items: center; gap: 0.75rem;
+            font-size: 1.25rem; font-weight: 700; color: var(--text-main); text-decoration: none;
+        }
+
+        .logo img { width: 32px; height: 32px; }
+
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-links a {
+            color: var(--text-dim); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;
+        }
+        .nav-links a:hover { color: var(--primary); }
+
+        /* Layout */
+        .docs-layout {
+            display: flex;
+            gap: 4rem;
+            align-items: flex-start;
+        }
+
+        /* Elegant Sidebar - Refined Further */
+        .sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 100px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            border-right: 1px solid var(--glass-border);
+            padding-right: 1rem;
+        }
+
+        .sidebar ul { list-style: none; margin: 0; padding: 0; }
+        .sidebar li { margin-bottom: 0.15rem; }
+        
+        .sidebar-section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+            margin: 1.5rem 0 0.5rem;
+            font-weight: 700;
+            padding-left: 1rem; /* Indent Title */
+        }
+
+        .sidebar a {
+            color: var(--text-dim);
+            text-decoration: none;
+            display: block;
+            padding: 0.6rem 1rem 0.6rem 2rem; /* Indent Links */
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .sidebar a:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar a.active {
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            font-weight: 600;
+        }
+
+        .sidebar a.sub-item {
+            padding-left: 3rem; /* Indent Sub-items more */
+            font-size: 0.85rem;
+            margin-left: 0;
+        }
+        
+        /* Content */
+        .content { flex-grow: 1; padding-bottom: 4rem; min-width: 0; }
+
+        h1, h2, h3 { color: var(--text-main); scroll-margin-top: 100px; }
+        h1 { font-size: 2.5rem; margin-bottom: 1.5rem; line-height: 1.2; }
+        h2 { font-size: 1.75rem; margin-top: 3.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--glass-border); color: var(--text-main); }
+        h3 { font-size: 1.25rem; margin-top: 2.5rem; margin-bottom: 1rem; color: var(--text-main); font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+        h3::before { content: '#'; color: var(--primary); opacity: 0.5; }
+
+        p { margin-bottom: 1rem; color: var(--text-dim); line-height: 1.7; }
+        
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 0.5rem;
+            border: 1px solid var(--glass-border);
+            margin: 1.5rem 0;
+            background: rgba(30, 41, 59, 0.4); /* Set bg on wrapper */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: transparent; /* Remove table bg */
+            margin: 0; /* Remove internal margin to fix blank space */
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        th { 
+            background: rgba(99, 102, 241, 0.1); 
+            color: var(--primary); 
+            font-weight: 600; 
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        td { color: var(--text-main); font-size: 0.9rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            color: #a5b4fc;
+            font-size: 0.85em;
+        }
+
+        /* Code Blocks - Highlight.js Override & Line Numbers */
+        pre {
+            margin: 1.5rem 0;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            padding: 1rem 0; /* Minimal padding on pre only */
+            background: #282c34; /* Match Atom One Dark bg */
+        }
+        
+        pre code.hljs {
+            padding: 0 !important; /* Remove huge padding */
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            background: transparent !important;
+        }
+
+        /* Line Numbers Styling */
+        .hljs-ln-numbers {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            text-align: right;
+            color: #636d83;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            vertical-align: top;
+            padding-right: 10px !important;
+            padding-left: 10px !important; /* More space for numbers */
+            width: 40px;
+        }
+
+        .hljs-ln-code {
+            padding-left: 15px !important;
+        }
+
+        /* Fix for table layout within code blocks (injected by plugin) */
+        pre code.hljs table {
+            width: 100%;
+            background: transparent;
+            border-collapse: collapse;
+            margin: 0; /* Ensure no margin */
+        }
+        pre code.hljs tr td {
+            border: none;
+            background: transparent;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        footer {
+            padding: 4rem 0 2rem;
+            text-align: center;
+            border-top: 1px solid var(--glass-border);
+            margin-top: 4rem;
+        }
+        .copyright { color: var(--text-dim); font-size: 0.85rem; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <nav>
+            <a href="index.html" class="logo">
+                <img src="./assets/logo.png" alt="Logo">
+                Simple Boot Mock Server
+            </a>
+            <div class="nav-links">
+                <a href="index.html#features">功能特性</a>
+                <a href="guide.html" style="color: var(--primary); font-weight: 600;">使用教程</a>
+                <a href="https://github.com/fugary/simple-boot-mock-server">GitHub</a>
+            </div>
+        </nav>
+
+        <div class="docs-layout">
+            <aside class="sidebar">
+                <div class="sidebar-section-title">安装运行</div>
+                <ul>
+                    <li><a href="#install-run">下载运行</a></li>
+                    <li><a href="#docker-deploy">Docker 部署</a></li>
+                </ul>
+
+                <div class="sidebar-section-title">基础入门</div>
+                <ul>
+                    <li><a href="#login-usage">登录使用</a></li>
+                    <li><a href="#mock-group">Mock 分组</a></li>
+                    <li><a href="#mock-request">Mock 请求</a></li>
+                    <li><a href="#mock-response">Mock 响应</a></li>
+                    <li><a href="#request-object">请求对象</a></li>
+                    <li><a href="#response-object">响应对象</a></li>
+                </ul>
+
+                <div class="sidebar-section-title">高级功能</div>
+                <ul>
+                    <li><a href="#js-support">JS & Mock.js</a></li>
+                    <li><a href="#built-in-functions">内置函数</a></li>
+                    <li><a href="#variable-support">变量支持</a></li>
+                    <li><a href="#xml-support">XML 支持</a></li>
+                    <li><a href="#match-pattern">匹配规则</a></li>
+                </ul>
+            </aside>
+
+            <main class="content">
+                <h1>使用指南</h1>
+                <p>Simple Boot Mock Server 是一个功能强大的 Mock 服务，支持基于 JavaScript (GraalJS) 的脚本引擎，允许您通过编写脚本来动态生成响应数据，实现高度灵活的 Mock 逻辑。</p>
+
+                <h2 id="install-run">安装运行</h2>
+                <h3 id="download-run">1. 下载运行</h3>
+                <p>下载最新版发行包 (Zip)：<a href="https://github.com/fugary/simple-boot-mock-server/releases" target="_blank" style="color: var(--primary);">GitHub Releases</a></p>
+                <ol>
+                    <li>下载并解压 zip 文件。</li>
+                    <li>运行 <code>bin/start.sh</code> (Linux/macOS) 或 <code>bin/start.bat</code> (Windows)。</li>
+                </ol>
+
+                <h3 id="docker-deploy">2. Docker 部署</h3>
+                <p>使用 Docker 容器化部署是最简单快捷的方式：</p>
+                <pre><code class="language-bash">docker run -d -p 9086:9086 fugary/simple-boot-mock-server:latest</code></pre>
+                <p>Docker Hub 地址: <a href="https://hub.docker.com/r/fugary/simple-boot-mock-server" target="_blank" style="color: var(--primary);">fugary/simple-boot-mock-server</a></p>
+
+                <h2 id="login-usage">基础入门</h2>
+                <h3 id="default-accounts">登录使用</h3>
+                <p>默认启动后访问：<a href="http://localhost:9086" target="_blank" style="color: var(--primary);">http://localhost:9086</a></p>
+                <p>系统预置了两个账号：</p>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>角色</th><th>用户名</th><th>密码</th><th>说明</th></tr></thead>
+                        <tbody>
+                            <tr><td>管理员</td><td><code>admin</code></td><td><code>12345678</code></td><td>拥有所有权限</td></tr>
+                            <tr><td>普通用户</td><td><code>mock</code></td><td><code>mock</code></td><td>仅能管理自己的项目</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 id="change-password">修改密码</h3>
+                <p>登录后请第一时间修改密码。点击右上角头像进入【个人资料】，清空旧密码并设置新密码即可。</p>
+                <img src="./assets/docs-images/image-20240710215302252.png" alt="修改密码" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h2 id="mock-group">Mock 分组</h2>
+                <p>Mock 分组用于组织和管理接口。每个分组对应一组 API 接口。</p>
+                <img src="./assets/docs-images/image-20240710215424610.png" alt="Mock 分组列表" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+                
+                <h3>新增分组</h3>
+                <p>点击【新增】，填写【分组名称】。可以直接设置【代理地址】，当 Mock 规则未匹配时，请求会自动转发到该地址。</p>
+                <img src="./assets/docs-images/image-20240710215951061.png" alt="新增分组" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h2 id="mock-request">Mock 请求</h2>
+                <p>一个 Mock 分组下可以包含多个 Mock 请求。请求由 <strong>路径</strong>、<strong>方法</strong> 和 <strong>匹配规则</strong> 唯一确定。</p>
+                <img src="./assets/docs-images/image-20240710220339217.png" alt="Mock 请求列表" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h3>新建请求</h3>
+                <p>填写请求路径（如 <code>/api/user/info</code>）和请求方法。</p>
+                <img src="./assets/docs-images/image-20240710220501949.png" alt="新建请求" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h3>测试请求</h3>
+                <p>保存后点击【测试】按钮可直接测试 API。</p>
+                <ul>
+                    <li>如果未配置响应且未配置代理：返回 404。</li>
+                    <li>如果配置了代理：转发请求到代理地址。</li>
+                    <li>如果配置了响应：返回配置的 Mock 数据。</li>
+                </ul>
+                <img src="./assets/docs-images/image-20240710220804994.png" alt="测试请求" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h2 id="mock-response">Mock 响应</h2>
+                <p>每个请求可以配置多个响应数据（例如：成功、失败、异常），便于覆盖不同测试场景。</p>
+                
+                <h3>新建响应数据</h3>
+                <p>支持配置 HTTP 状态码、响应头、延迟时间等。响应体支持 JSON、XML 等格式。</p>
+                <img src="./assets/docs-images/image-20240710221322130.png" alt="新建响应" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h3>默认响应与切换</h3>
+                <p>当存在多条响应数据时，可以点击【设为默认】来指定当前生效的响应。这对于快速切换 "成功" / "失败" 场景非常有用。</p>
+                <img src="./assets/docs-images/image-20240710222933373.png" alt="默认响应切换" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h3>历史版本</h3>
+                <p>每次修改响应数据都会自动记录历史版本，支持版本对比和回滚。</p>
+                <img src="./assets/docs-images/image-20250530155754546.png" alt="历史版本" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h2 id="request-object">请求对象 (Request)</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>属性</th><th>说明</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>request.body</code></td><td>Body 内容对象</td></tr>
+                            <tr><td><code>request.bodyStr</code></td><td>Body 原始内容字符串</td></tr>
+                            <tr><td><code>request.headers</code></td><td>请求头 Map</td></tr>
+                            <tr><td><code>request.parameters</code></td><td>Query 参数</td></tr>
+                            <tr><td><code>request.pathParameters</code></td><td>路径参数</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 id="response-object">响应对象 (Response)</h2>
+                <div class="table-wrapper">
+                    <table>
+                         <thead><tr><th>属性</th><th>说明</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>response.statusCode</code></td><td>状态码 (默认 200)</td></tr>
+                            <tr><td><code>response.headers</code></td><td>响应头 Map</td></tr>
+                            <tr><td><code>response.body</code></td><td>响应体对象</td></tr>
+                            <tr><td><code>response.bodyStr</code></td><td>响应体字符串</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 id="js-support">JS & Mock.js 支持</h2>
+                <p>系统内置 JavaScript 引擎 (基于 JDK ScriptEngine)，支持 ES6 语法 (箭头函数等)。</p>
+                
+                <h3>Mock.js 模板</h3>
+                <p>支持 <a href="http://mockjs.com/" target="_blank" style="color: var(--primary);">Mock.js</a> 语法生成随机数据。</p>
+                <pre><code class="language-javascript">Mock.mock({
+    "code": "success",
+    "data|10": [{
+        "id": "@integer(1, 100)",
+        "city": "@city",
+        "image": "@image('200x100')"
+    }]
+})</code></pre>
+                <img src="./assets/docs-images/image-20240710224052933.png" alt="Mock.js 示例" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h2 id="built-in-functions">内置函数</h2>
+                <p>除了 Mock.js，系统还预置了大量工具函数，用于加密、解码和日期处理。</p>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>函数签名</th><th>说明</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>decodeHex(hex)</code></td><td>Hex 解码为字符串</td></tr>
+                            <tr><td><code>encodeHex(data)</code></td><td>字符串编码为 Hex</td></tr>
+                            <tr><td><code>md5Hex(data)</code></td><td>MD5 加密 (Hex 输出)</td></tr>
+                            <tr><td><code>md5Base64(data)</code></td><td>MD5 加密 (Base64 输出)</td></tr>
+                            <tr><td><code>sha1Hex(data)</code> / <code>sha1Base64(data)</code></td><td>SHA1 加密</td></tr>
+                            <tr><td><code>sha256Hex(data)</code> / <code>sha256Base64(data)</code></td><td>SHA256 加密</td></tr>
+                            <tr><td><code>btoa(data)</code> / <code>atob(data)</code></td><td>Base64 编码 / 解码</td></tr>
+                            <tr><td><code>encryptAES(data, key)</code></td><td>AES 加密 (Base64)</td></tr>
+                            <tr><td><code>decryptAES(data, key)</code></td><td>AES 解密</td></tr>
+                            <tr><td><code>encryptRSA(data, key)</code> / <code>decryptRSA(data, key)</code></td><td>RSA 加密 / 解密</td></tr>
+                            <tr><td><code>dayjs(date)</code></td><td>日期处理 (Day.js)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 id="variable-support">变量支持</h2>
+                <p>在响应数据中，可以使用 <code>request</code> 对象获取请求参数，实现动态响应。</p>
+                <ul>
+                    <li><code>request.body</code>: 请求体对象</li>
+                    <li><code>request.params</code>: 所有参数集合 (Path + Query)</li>
+                    <li><code>request.headers</code>: 请求头</li>
+                </ul>
+                <pre><code class="language-javascript">Mock.mock({
+    "input_id": request.params.id,
+    "input_name": request.body.name,
+    "timestamp": Date.now()
+})</code></pre>
+
+                <h2 id="xml-support">XML 支持</h2>
+                <p>XML 响应同样支持 JS 模板语法和变量替换。</p>
+                <pre><code class="language-xml">&lt;user&gt;
+    &lt;id&gt;{{request.params.id}}&lt;/id&gt;
+    &lt;name&gt;{{Mock.mock('@cname')}}&lt;/name&gt;
+&lt;/user&gt;</code></pre>
+
+                <h2 id="match-pattern">匹配规则</h2>
+                <p>当同一个 URL 需要根据不同参数返回不同结果时，使用匹配规则。规则为 JS 表达式，返回 <code>true</code> 即匹配成功。</p>
+                <pre><code class="language-javascript">// 示例: 当参数 type 为 'vip' 且 header 中有 token 时匹配
+request.params.type === 'vip' && request.headers.token</code></pre>
+                <img src="./assets/docs-images/image-20240710230952984.png" alt="匹配规则" style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+            </main>
+        </div>
+
+        <footer>
+            <div class="footer-links">
+                <a href="https://fugary.com/?p=626">架构设计</a>
+                <a href="https://github.com/fugary/simple-boot-mock-server">源码仓库</a>
+            </div>
+            <p class="copyright">&copy; 2024 Simple Boot Mock Server. Developed by Fugary.</p>
+        </footer>
+    </div>
+
+    <!-- Initialize Highlight.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+    <script>
+        hljs.highlightAll();
+        hljs.initLineNumbersOnLoad();
+    </script>
+</body>
+</html>
