@@ -273,6 +273,7 @@
                 <ul>
                     <li><a href="#install-run">下载运行</a></li>
                     <li><a href="#docker-deploy">Docker 部署</a></li>
+                    <li><a href="#docker-config">Docker 配置</a></li>
                 </ul>
 
                 <div class="sidebar-section-title">基础入门</div>
@@ -311,6 +312,39 @@
                 <p>使用 Docker 容器化部署是最简单快捷的方式：</p>
                 <pre><code class="language-bash">docker run -d -p 9086:9086 fugary/simple-boot-mock-server:latest</code></pre>
                 <p>Docker Hub 地址: <a href="https://hub.docker.com/r/fugary/simple-boot-mock-server" target="_blank" style="color: var(--primary);">fugary/simple-boot-mock-server</a></p>
+
+                <h3 id="docker-config">Docker 配置参数</h3>
+                <p>支持以下环境变量配置 (<code>-e</code>)：</p>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>变量名</th>
+                                <th>默认值</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>JAVA_OPTS</code></td><td><code>-Xmx512M</code></td><td>JVM 启动参数</td></tr>
+                            <tr><td><code>MOCK_DB_TYPE</code></td><td><code>h2</code></td><td>数据库类型，支持 <code>h2</code> 或 <code>mysql</code></td></tr>
+                            <tr><td><code>MOCK_DB_DATA_DIR</code></td><td><code>/data</code></td><td>H2 数据库文件存放路径 (建议挂载)</td></tr>
+                            <tr><td><code>MOCK_DB_H2_CONSOLE</code></td><td><code>false</code></td><td>是否开启 H2 控制台</td></tr>
+                            <tr><td><code>MOCK_DB_MYSQL_SERVER</code></td><td><code>localhost</code></td><td>MySQL 服务器地址 (仅 mysql 模式)</td></tr>
+                            <tr><td><code>MOCK_DB_MYSQL_PORT</code></td><td><code>3306</code></td><td>MySQL 端口 (仅 mysql 模式)</td></tr>
+                            <tr><td><code>MOCK_DB_MYSQL_DBNAME</code></td><td><code>mock-db</code></td><td>MySQL 数据库名称 (仅 mysql 模式)</td></tr>
+                            <tr><td><code>MOCK_DB_USERNAME</code></td><td><code>root</code></td><td>数据库用户名</td></tr>
+                            <tr><td><code>MOCK_DB_PASSWORD</code></td><td><code>12345678</code></td><td>数据库密码</td></tr>
+                            <tr><td><code>MOCK_DB_POOL_SIZE</code></td><td><code>5</code></td><td>数据库连接池大小</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p><strong>示例：使用 MySQL</strong></p>
+                <pre><code class="language-bash">docker run -d -p 9086:9086 \
+  -e MOCK_DB_TYPE=mysql \
+  -e MOCK_DB_MYSQL_SERVER=192.168.1.100 \
+  -e MOCK_DB_USERNAME=root \
+  -e MOCK_DB_PASSWORD=secret \
+  fugary/simple-boot-mock-server:latest</code></pre>
 
                 <h2 id="login-usage">基础入门</h2>
                 <h3 id="default-accounts">登录使用</h3>
