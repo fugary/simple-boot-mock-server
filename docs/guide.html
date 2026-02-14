@@ -71,24 +71,36 @@
         }
         .nav-links a:hover { color: var(--primary); }
 
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; width: 100%; transition: max-width 0.3s; }
+
         /* Layout */
         .docs-layout {
             display: flex;
-            gap: 4rem;
+            gap: 3rem;
             align-items: flex-start;
         }
 
-        /* Elegant Sidebar - Refined Further */
+        /* Sidebar Base */
         .sidebar {
-            width: 240px;
+            width: 260px;
             flex-shrink: 0;
-            position: sticky;
-            top: 100px;
-            max-height: calc(100vh - 120px);
-            overflow-y: auto;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border-right: 1px solid var(--glass-border);
-            padding-right: 1rem;
+            z-index: 100;
         }
+
+        @media (min-width: 1025px) {
+            .sidebar {
+                position: sticky;
+                top: 100px;
+                max-height: calc(100vh - 120px);
+                overflow-y: auto;
+                padding-right: 1rem;
+            }
+        }
+
+        .sidebar-header { display: none; }
+        .sidebar-nav { display: contents; } /* Default behavior for desktop */
 
         .sidebar ul { list-style: none; margin: 0; padding: 0; }
         .sidebar li { margin-bottom: 0.15rem; }
@@ -100,14 +112,14 @@
             color: var(--text-dim);
             margin: 1.5rem 0 0.5rem;
             font-weight: 700;
-            padding-left: 1rem; /* Indent Title */
+            padding-left: 1rem;
         }
 
         .sidebar a {
             color: var(--text-dim);
             text-decoration: none;
             display: block;
-            padding: 0.6rem 1rem 0.6rem 2rem; /* Indent Links */
+            padding: 0.6rem 1rem 0.6rem 2rem;
             border-radius: 0.375rem;
             transition: all 0.2s;
             font-size: 0.9rem;
@@ -123,12 +135,6 @@
             color: var(--primary);
             background: rgba(99, 102, 241, 0.1);
             font-weight: 600;
-        }
-
-        .sidebar a.sub-item {
-            padding-left: 3rem; /* Indent Sub-items more */
-            font-size: 0.85rem;
-            margin-left: 0;
         }
         
         /* Content */
@@ -251,6 +257,121 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 0;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.2s;
+            width: 42px;
+            height: 42px;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .mobile-menu-btn:hover { background: rgba(255, 255, 255, 0.2); border-color: var(--primary); }
+        .mobile-menu-btn svg { width: 24px; height: 24px; display: block; }
+
+        @media (max-width: 1024px) {
+            .container { max-width: 100%; padding: 0 1.5rem; }
+            .docs-layout { flex-direction: column; gap: 2rem; }
+            .nav-links { display: none; }
+            .mobile-menu-btn { display: flex; }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                left: -100%;
+                width: 85%;
+                max-width: 320px;
+                height: 100vh;
+                background: #0f172a;
+                z-index: 1050;
+                padding: 0;
+                box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+                border-right: 1px solid var(--glass-border);
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .sidebar.active { left: 0; }
+
+            .sidebar-nav {
+                flex-grow: 1;
+                overflow-y: auto;
+                padding-bottom: 3rem;
+                display: block;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .sidebar-header {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                padding: 1.5rem;
+                border-bottom: 1px solid var(--glass-border);
+                margin-bottom: 1rem;
+            }
+
+            .sidebar-brand {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                font-weight: 700;
+                color: var(--text-main);
+                font-size: 1.1rem;
+            }
+
+            .sidebar-brand img { width: 28px; height: 28px; }
+
+            .close-sidebar {
+                background: none;
+                border: none;
+                color: var(--text-dim);
+                cursor: pointer;
+                padding: 0.25rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: color 0.2s;
+            }
+            .close-sidebar:hover { color: var(--primary); }
+
+            .sidebar ul { padding: 0 1rem 2rem; }
+            .sidebar-section-title { padding-left: 1rem; margin-top: 1rem; }
+
+            .sidebar-overlay {
+                position: fixed;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.6);
+                backdrop-filter: blur(4px);
+                z-index: 1040;
+                display: none;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+            .sidebar-overlay.active { display: block; opacity: 1; }
+
+            .content { padding-bottom: 2rem; }
+            h1 { font-size: 2.25rem; }
+            h2 { font-size: 1.5rem; margin-top: 2.5rem; }
+            h3 { font-size: 1.15rem; }
+            pre { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        }
+
+        @media (max-width: 640px) {
+            h1 { font-size: 1.75rem; }
+            .logo { font-size: 1.1rem; }
+            .logo img { width: 24px; height: 24px; }
+        }
     </style>
 </head>
 <body>
@@ -267,39 +388,57 @@
                 <a href="guide.html" style="color: var(--primary); font-weight: 600;">使用教程</a>
                 <a href="https://github.com/fugary/simple-boot-mock-server">GitHub</a>
             </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
         </nav>
 
         <div class="docs-layout">
             <aside class="sidebar">
-                <div class="sidebar-section-title">安装运行</div>
-                <ul>
-                    <li><a href="#install-run">下载运行</a></li>
-                    <li><a href="#docker-deploy">Docker 部署</a></li>
-                    <li><a href="#docker-config">Docker 配置</a></li>
-                </ul>
+                <div class="sidebar-header">
+                    <div class="sidebar-brand">
+                        <img src="./assets/logo.png" alt="Logo">
+                        <span>Mock Server</span>
+                    </div>
+                    <button class="close-sidebar" id="closeSidebar">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+                <div class="sidebar-nav">
+                    <div class="sidebar-section-title">安装运行</div>
+                    <ul>
+                        <li><a href="#install-run">下载运行</a></li>
+                        <li><a href="#docker-deploy">Docker 部署</a></li>
+                        <li><a href="#docker-config">Docker 配置</a></li>
+                    </ul>
 
-                <div class="sidebar-section-title">基础入门</div>
-                <ul>
-                    <li><a href="#login-usage">登录使用</a></li>
-                    <li><a href="#mock-group">Mock 分组</a></li>
-                    <li><a href="#mock-request">Mock 请求</a></li>
-                    <li><a href="#mock-response">Mock 响应</a></li>
-                    <li><a href="#request-object">请求对象</a></li>
-                    <li><a href="#response-object">响应对象</a></li>
-                    <li><a href="#js-support">JS & Mock.js</a></li>
-                    <li><a href="#match-pattern">匹配规则</a></li>
-                </ul>
+                    <div class="sidebar-section-title">基础入门</div>
+                    <ul>
+                        <li><a href="#login-usage">登录使用</a></li>
+                        <li><a href="#mock-group">Mock 分组</a></li>
+                        <li><a href="#mock-request">Mock 请求</a></li>
+                        <li><a href="#mock-response">Mock 响应</a></li>
+                        <li><a href="#request-object">请求对象</a></li>
+                        <li><a href="#response-object">响应对象</a></li>
+                        <li><a href="#js-support">JS & Mock.js</a></li>
+                        <li><a href="#match-pattern">匹配规则</a></li>
+                    </ul>
 
-                <div class="sidebar-section-title">高级功能</div>
-                <ul>
-                    <li><a href="#variable-support">变量支持</a></li>
-                    <li><a href="#xml-support">XML 支持</a></li>
-                    <li><a href="#built-in-functions">内置函数</a></li>
-                    <li><a href="#ex-fetch">Fetch 异步请求</a></li>
-                    <li><a href="#ex-require">动态加载库</a></li>
-                    <li><a href="#post-processor">后置处理</a></li>
-                    <li><a href="#sse-push">SSE 推送</a></li>
-                </ul>
+                    <div class="sidebar-section-title">高级功能</div>
+                    <ul>
+                        <li><a href="#variable-support">变量支持</a></li>
+                        <li><a href="#xml-support">XML 支持</a></li>
+                        <li><a href="#built-in-functions">内置函数</a></li>
+                        <li><a href="#ex-fetch">Fetch 异步请求</a></li>
+                        <li><a href="#ex-require">动态加载库</a></li>
+                        <li><a href="#post-processor">后置处理</a></li>
+                        <li><a href="#sse-push">SSE 推送</a></li>
+                    </ul>
+                </div>
             </aside>
 
             <main class="content">
@@ -597,6 +736,33 @@ request.params.type === 'vip' && request.headers.token</code></pre>
     <script>
         hljs.highlightAll();
         hljs.initLineNumbersOnLoad();
+
+        // Mobile Menu Logic
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+
+        function toggleMenu() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMenu);
+        if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        // Close sidebar when link clicked
+        sidebar.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 1024) {
+                    toggleMenu();
+                }
+            });
+        });
     </script>
 </body>
 </html>
