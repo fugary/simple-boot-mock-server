@@ -732,6 +732,7 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
       :save-current-item="saveGroupItem"
       inline-auto-mode
       width="800px"
+      :window-attrs="{modal:false,modalPenetrable:true}"
     >
       <template #proxyUrlParams="{option}">
         <common-form-control

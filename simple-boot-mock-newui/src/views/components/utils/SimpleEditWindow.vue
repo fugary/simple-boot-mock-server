@@ -28,6 +28,10 @@ const props = defineProps({
   inlineAutoMode: {
     type: Boolean,
     default: false
+  },
+  windowAttrs: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -78,6 +82,7 @@ const calcOptions = computed(() => {
     show-fullscreen
     :close-on-click-modal="false"
     :width="width"
+    v-bind="windowAttrs"
   >
     <common-form
       v-if="currentItem"
