@@ -65,6 +65,9 @@ const columns = computed(() => {
     },
     enabled: batchMode.value
   }, {
+    label: 'ID',
+    property: 'id'
+  }, {
     labelKey: 'mock.label.statusCode',
     property: 'statusCode',
     minWidth: '120px',
