@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Boot Mock Server - 强大的轻量级 Mock 数据服务器</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
@@ -44,7 +46,7 @@
             height: 100%;
             z-index: -1;
             background: radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
-                        radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 40%);
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 40%);
         }
 
         .container {
@@ -104,8 +106,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .hero h1 {
@@ -245,9 +254,17 @@
             border-radius: 50%;
         }
 
-        .dot-red { background: #ff5f56; }
-        .dot-yellow { background: #ffbd2e; }
-        .dot-green { background: #27c93f; }
+        .dot-red {
+            background: #ff5f56;
+        }
+
+        .dot-yellow {
+            background: #ffbd2e;
+        }
+
+        .dot-green {
+            background: #27c93f;
+        }
 
         .code-content {
             padding: 1.5rem;
@@ -257,9 +274,17 @@
             overflow-x: auto;
         }
 
-        .comment { color: #6b7280; }
-        .keyword { color: #818cf8; }
-        .string { color: #34d399; }
+        .comment {
+            color: #6b7280;
+        }
+
+        .keyword {
+            color: #818cf8;
+        }
+
+        .string {
+            color: #34d399;
+        }
 
         /* Footer */
         footer {
@@ -293,18 +318,24 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2.5rem; }
-            .nav-links { display: none; }
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="bg-gradient"></div>
 
     <div class="container">
         <nav>
             <a href="#" class="logo">
-                <img src="./assets/logo.png" alt="Logo">
+                <img src="./assets/logo.svg" alt="Logo">
                 Simple Boot Mock Server
             </a>
             <div class="nav-links">
@@ -367,7 +398,7 @@
                 <h2>一行命令开启 Mock 之旅</h2>
             </div>
             <p style="text-align: center; color: var(--text-dim);">支持 Windows/Linux/Docker 多种部署方式，开箱即用。</p>
-            
+
             <div class="code-window">
                 <div class="code-header">
                     <div class="dot dot-red"></div>
@@ -376,7 +407,8 @@
                 </div>
                 <div class="code-content">
                     <div class="comment"># 使用 Docker 快速启动</div>
-                    <div><span class="keyword">docker</span> run -d -p <span class="string">9086:9086</span> fugary/simple-boot-mock-server:latest</div>
+                    <div><span class="keyword">docker</span> run -d -p <span class="string">9086:9086</span>
+                        fugary/simple-boot-mock-server:latest</div>
                     <br>
                     <div class="comment"># 默认登录账号 (请及时修改)</div>
                     <div><span class="keyword">Admin:</span> admin / 12345678</div>
@@ -395,4 +427,5 @@
         </footer>
     </div>
 </body>
+
 </html>

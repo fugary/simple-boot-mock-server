@@ -79,7 +79,7 @@ const formRef = ref()
     <div class="login-branding">
       <div class="branding-content">
         <div class="branding-logo">
-          <img src="@/assets/logo.png" alt="Logo" />
+          <img src="@/assets/logo.svg" alt="Logo" />
         </div>
         <h1 class="branding-title">
           {{ $t('common.label.title') }}
