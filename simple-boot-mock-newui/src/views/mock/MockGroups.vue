@@ -218,8 +218,8 @@ const columns = computed(() => {
     minWidth: '150px',
     enabled: checkShowColumn(tableData.value, 'proxyUrl'),
     formatter (data) {
-      if (data.proxyUrl) {
-        const { value: proxyUrl, name } = calcProxyUrlParam(data.proxyUrl)
+      if (data.proxyUrl && data.proxyUrl !== '[]') {
+        const { value: proxyUrl, name } = calcProxyUrlParam(data.proxyUrl) || {}
         const calcName = name !== 'default' ? name : undefined
         return <>
           <MockUrlCopyLink class="margin-left1"
