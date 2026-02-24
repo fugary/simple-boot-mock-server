@@ -4,7 +4,7 @@ import MainContent from '@/layout/MainContent.vue'
 import GlobalSettings from '@/views/components/global/GlobalSettings.vue'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 import { GlobalLayoutMode } from '@/consts/GlobalConstants'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useMenuConfigStore } from '@/stores/MenuConfigStore'
 import { useTabModeScrollSaver } from '@/route/RouteUtils'
 
@@ -13,6 +13,16 @@ const showLeftMenu = computed(() => {
   return globalConfigStore.layoutMode === GlobalLayoutMode.LEFT
 })
 const leftMenuAsideRef = ref(null)
+
+const splitDisabled = ref(globalConfigStore.isCollapseLeft)
+const splitCollapsed = ref(globalConfigStore.isCollapseLeft)
+
+watch(() => globalConfigStore.isCollapseLeft, (newVal) => {
+  splitCollapsed.value = newVal
+  setTimeout(() => {
+    splitDisabled.value = newVal
+  }, 300)
+})
 
 const handleDragEnd = () => {
   if (leftMenuAsideRef.value) {
@@ -31,8 +41,8 @@ useMenuConfigStore().loadBusinessMenus()
   <el-container class="index-container">
     <common-split
       v-if="showLeftMenu"
-      :disabled="globalConfigStore.isCollapseLeft"
-      :class="{ 'collapsed-split': globalConfigStore.isCollapseLeft }"
+      :disabled="splitDisabled"
+      :class="{ 'collapsed-split': splitCollapsed }"
       :sizes="[20, 80]"
       :min-size="[60, 500]"
       :max-size="[500, Infinity]"
