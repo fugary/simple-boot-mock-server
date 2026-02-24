@@ -606,7 +606,7 @@ body,
     border-left: 4px solid var(--el-color-primary);
 }
 
-.request-table td {
+.request-table td:not(.el-table-column--selection) {
     border-left: 4px solid transparent;
 }
 
