@@ -41,7 +41,7 @@ import MockProjectApi, { checkProjectEdit, useProjectEditHook, useSelectProjects
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
 import CommonIcon from '@/components/common-icon/index.vue'
-import { toCopyGroupTo } from '@/utils/DynamicUtils'
+import { toCopyGroupTo, showHistoryListWindow } from '@/utils/DynamicUtils'
 import {
   calcProxyUrl,
   calcProxyUrlParam,
@@ -49,7 +49,6 @@ import {
   toProxyUrlParams,
   useContentTypeOption
 } from '@/services/mock/MockCommonService'
-import MockHistoryListWindow from '@/views/components/utils/MockHistoryListWindow.vue'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 
 // Add getGroupHistoryViewOptions
@@ -599,14 +598,19 @@ const historyColumns = computed(() => {
   }]
 })
 
-const historyWindowRef = ref()
 const showHistory = (group) => {
   currentGroup.value = group
-  historyWindowRef.value.showHistoryListWindow()
+  showHistoryListWindow({
+    columns: historyColumns.value,
+    searchFunc: searchHistories,
+    compareFunc: loadHistoryDiffFunc,
+    recoverFunc: recoverFromHistoryFunc,
+    onUpdateHistory: loadMockGroups
+  })
 }
-const searchHistories = (query, page) => {
+const searchHistories = (query, config) => {
   if (!currentGroup.value?.id) return Promise.resolve({ resultData: [], infos: {} })
-  return histories(currentGroup.value?.id, Object.assign(query, { page }))
+  return histories(currentGroup.value?.id, query, config)
 }
 
 const recoverFromHistoryFunc = (history) => {
@@ -783,14 +787,6 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
       @import-success="loadMockGroups()"
       @update-projects="reloadProjectsAndRefreshOptions"
       @changed-user="changedUser"
-    />
-    <mock-history-list-window
-      ref="historyWindowRef"
-      :columns="historyColumns"
-      :search-func="searchHistories"
-      :compare-func="loadHistoryDiffFunc"
-      :recover-func="recoverFromHistoryFunc"
-      @update-history="loadMockGroups()"
     />
   </el-container>
 </template>
