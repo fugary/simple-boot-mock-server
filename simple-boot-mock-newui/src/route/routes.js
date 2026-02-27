@@ -27,8 +27,7 @@ const router = createRouter({
         meta: {
           icon: 'HomeFilled',
           labelKey: 'common.label.index'
-        },
-        redirect: '/mock/groups'
+        }
       }, {
         path: 'about',
         name: 'about',
