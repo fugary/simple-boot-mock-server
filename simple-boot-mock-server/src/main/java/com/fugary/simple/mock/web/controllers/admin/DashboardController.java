@@ -69,9 +69,11 @@ public class DashboardController {
         String userName = all ? null : SecurityUtils.getLoginUserName();
 
         long todayTotal = mockLogService.count(Wrappers.<MockLog>query()
+                .eq("log_name", "MockController#doMock")
                 .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                 .ge("create_date", today));
         long totalCalls = mockLogService.count(Wrappers.<MockLog>query()
+                .eq("log_name", "MockController#doMock")
                 .eq(StringUtils.isNotBlank(userName), "user_name", userName));
         long totalMockGroups = mockGroupService.count(Wrappers.<MockGroup>query()
                 .eq(StringUtils.isNotBlank(userName), "user_name", userName)
@@ -101,6 +103,7 @@ public class DashboardController {
             Date startDate = DateUtils.addDays(today, -i);
             Date endDate = DateUtils.addDays(startDate, 1);
             long count = mockLogService.count(Wrappers.<MockLog>query()
+                    .eq("log_name", "MockController#doMock")
                     .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                     .ge("create_date", startDate)
                     .lt("create_date", endDate));
@@ -123,6 +126,7 @@ public class DashboardController {
         QueryWrapper<MockLog> queryWrapper = Wrappers.<MockLog>query()
                 .select("data_id, COUNT(*) as log_count")
                 .isNotNull("data_id")
+                .eq("log_name", "MockController#doMock")
                 .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                 .ge("create_date", startDate)
                 .groupBy("data_id");
@@ -178,6 +182,7 @@ public class DashboardController {
         QueryWrapper<MockLog> queryWrapper = Wrappers.<MockLog>query()
                 .select("data_id, COUNT(*) as log_count")
                 .isNotNull("data_id")
+                .eq("log_name", "MockController#doMock")
                 .eq(StringUtils.isNotBlank(logResult), "log_result", logResult)
                 .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                 .ge("create_date", startDate)
@@ -211,6 +216,10 @@ public class DashboardController {
                         vo.setName(mockRequest.getRequestName());
                         vo.setPath(mockRequest.getRequestPath());
                         vo.setValue(entry.getValue());
+                        MockGroup mockGroup = mockGroupService.getById(mockRequest.getGroupId());
+                        if (mockGroup != null) {
+                            vo.setGroupPath(mockGroup.getGroupPath());
+                        }
                         return vo;
                     }
                     return null;

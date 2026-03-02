@@ -6,5 +6,6 @@ import lombok.Data;
 public class DashboardTopApiVo {
     private String name;
     private String path;
+    private String groupPath;
     private Integer value;
 }

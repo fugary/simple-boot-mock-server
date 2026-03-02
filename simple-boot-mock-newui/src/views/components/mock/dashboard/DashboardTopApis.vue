@@ -49,7 +49,7 @@ const getRankTheme = (index) => {
       v-loading="topLoading"
       :data="topApis"
       style="width: 100%"
-      :header-cell-style="{ background: '#f5f7fa', color: '#606266', fontWeight: 'bold' }"
+      :header-cell-style="{ background: 'var(--el-fill-color-light)', color: 'var(--el-text-color-primary)', fontWeight: 'bold' }"
     >
       <el-table-column
         width="80"
@@ -90,6 +90,15 @@ const getRankTheme = (index) => {
               <Link />
             </el-icon>
             {{ row.path }}
+          </div>
+          <div
+            v-if="row.groupPath"
+            class="group-path"
+          >
+            <el-icon class="path-icon">
+              <Folder />
+            </el-icon>
+            {{ row.groupPath }}
           </div>
         </template>
       </el-table-column>
@@ -134,12 +143,12 @@ const getRankTheme = (index) => {
 
 .api-name {
   font-weight: bold;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .api-path {
-  color: #606266;
-  background: #f0f2f5;
+  color: var(--el-text-color-primary);
+  background: var(--el-fill-color-light);
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-flex;
@@ -147,9 +156,16 @@ const getRankTheme = (index) => {
   font-family: monospace;
   font-size: 13px;
 }
+.group-path {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+}
 .path-icon {
   margin-right: 4px;
-  color: #909399;
+  color: var(--el-text-color-placeholder);
 }
 
 .api-count {
