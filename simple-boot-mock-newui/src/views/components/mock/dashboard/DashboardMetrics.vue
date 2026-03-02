@@ -44,7 +44,7 @@ watch(all, () => {
     v-loading="loading"
     :gutter="20"
   >
-    <el-col :span="4">
+    <el-col :span="6">
       <el-card
         shadow="hover"
         class="metric-card bg-primary"
@@ -77,7 +77,7 @@ watch(all, () => {
       </el-card>
     </el-col>
 
-    <el-col :span="4">
+    <el-col :span="6">
       <el-card
         shadow="hover"
         class="metric-card bg-purple"
@@ -85,10 +85,12 @@ watch(all, () => {
         <div class="metric-content">
           <div class="metric-info">
             <div class="metric-title">
-              {{ $t('mock.label.mockRequestCount') }}
+              {{ $t('mock.label.mockRequestAndData') }}
             </div>
             <div class="metric-value">
-              {{ metrics.totalMockApis }}
+              <span>{{ metrics.totalMockApis }}</span>
+              <span class="slash-separator">/</span>
+              <span>{{ metrics.totalMockData }}</span>
             </div>
           </div>
           <div class="metric-icon">
@@ -108,38 +110,7 @@ watch(all, () => {
       </el-card>
     </el-col>
 
-    <el-col :span="4">
-      <el-card
-        shadow="hover"
-        class="metric-card bg-cyan"
-      >
-        <div class="metric-content">
-          <div class="metric-info">
-            <div class="metric-title">
-              {{ $t('mock.label.mockDataCount') }}
-            </div>
-            <div class="metric-value">
-              {{ metrics.totalMockData }}
-            </div>
-          </div>
-          <div class="metric-icon">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              class="icon-svg"
-            ><path
-              d="M12 2l10 5-10 5-10-5 10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            /></svg>
-          </div>
-        </div>
-      </el-card>
-    </el-col>
-
-    <el-col :span="4">
+    <el-col :span="6">
       <el-card
         shadow="hover"
         class="metric-card bg-success"
@@ -147,10 +118,12 @@ watch(all, () => {
         <div class="metric-content">
           <div class="metric-info">
             <div class="metric-title">
-              {{ $t('mock.label.todayTotal') }}
+              {{ $t('mock.label.todayCallsAndError') }}
             </div>
             <div class="metric-value">
-              {{ metrics.todayTotal }}
+              <span>{{ metrics.todayTotal }}</span>
+              <span class="slash-separator">/</span>
+              <span :class="{'error-count': metrics.todayError > 0}">{{ metrics.todayError }}</span>
             </div>
           </div>
           <div class="metric-icon">
@@ -170,7 +143,7 @@ watch(all, () => {
       </el-card>
     </el-col>
 
-    <el-col :span="4">
+    <el-col :span="6">
       <el-card
         shadow="hover"
         class="metric-card bg-warning"
@@ -191,37 +164,6 @@ watch(all, () => {
               class="icon-svg"
             ><path
               d="M22 12h-4l-3 9L9 3l-3 9H2"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            /></svg>
-          </div>
-        </div>
-      </el-card>
-    </el-col>
-
-    <el-col :span="4">
-      <el-card
-        shadow="hover"
-        class="metric-card bg-danger"
-      >
-        <div class="metric-content">
-          <div class="metric-info">
-            <div class="metric-title">
-              {{ $t('mock.label.todayError') }}
-            </div>
-            <div class="metric-value">
-              {{ metrics.todayError }}
-            </div>
-          </div>
-          <div class="metric-icon">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              class="icon-svg"
-            ><path
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               stroke="currentColor"
               stroke-width="2"
               stroke-linecap="round"
@@ -274,11 +216,25 @@ watch(all, () => {
 }
 
 .metric-value {
-  font-size: 36px;
+  font-size: 34px;
   font-weight: bold;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   text-shadow: 0 2px 4px rgba(0,0,0,0.1);
   line-height: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.slash-separator {
+  margin: 0 6px;
+  font-size: 24px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.error-count {
+  color: #ffcccc;
 }
 
 .metric-icon {
