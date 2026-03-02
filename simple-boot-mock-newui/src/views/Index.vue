@@ -3,6 +3,7 @@ import { ref, provide } from 'vue'
 import DashboardMetrics from './components/mock/dashboard/DashboardMetrics.vue'
 import DashboardTrendChart from './components/mock/dashboard/DashboardTrendChart.vue'
 import DashboardProjectActivity from './components/mock/dashboard/DashboardProjectActivity.vue'
+import DashboardPublicVsPrivate from './components/mock/dashboard/DashboardPublicVsPrivate.vue'
 import DashboardTopApis from './components/mock/dashboard/DashboardTopApis.vue'
 import DashboardMockVsProxy from './components/mock/dashboard/DashboardMockVsProxy.vue'
 
@@ -44,11 +45,20 @@ provide('dashboard-all', all)
       :gutter="20"
       class="margin-top3"
     >
-      <el-col :span="16">
-        <dashboard-top-apis />
-      </el-col>
-      <el-col :span="8">
+      <el-col :span="12">
         <dashboard-project-activity />
+      </el-col>
+      <el-col :span="12">
+        <dashboard-public-vs-private />
+      </el-col>
+    </el-row>
+
+    <el-row
+      :gutter="20"
+      class="margin-top3"
+    >
+      <el-col :span="24">
+        <dashboard-top-apis />
       </el-col>
     </el-row>
   </el-container>

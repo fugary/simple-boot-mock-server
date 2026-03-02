@@ -103,13 +103,9 @@ const columns = computed(() => [
         </div>
       </template>
       <template #path="{ item }">
-        <div class="api-path-container">
-          <div class="api-path">
-            <MockUrlCopyLink :url-path="item.path">
-              {{ item.path }}
-            </MockUrlCopyLink>
-          </div>
-        </div>
+        <MockUrlCopyLink :url-path="item.path">
+          {{ item.path }}
+        </MockUrlCopyLink>
       </template>
       <template #group="{ item }">
         <div

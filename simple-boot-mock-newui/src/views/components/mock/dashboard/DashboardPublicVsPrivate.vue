@@ -7,7 +7,6 @@ import { TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 import DashboardApi from '@/api/mock/DashboardApi'
 import { $i18nBundle } from '@/messages'
-
 use([CanvasRenderer, PieChart, TooltipComponent, LegendComponent])
 
 const ratioOption = ref({})
@@ -27,17 +26,16 @@ const chartLoading = ref(false)
 const loadRatioActivity = async () => {
   chartLoading.value = true
   try {
-    const res = await DashboardApi.getMockVsProxy(7, all.value)
+    const res = await DashboardApi.getPublicVsPrivate(all.value)
     if (res && res.success) {
       const data = res.resultData.map(item => {
         let name = item.name
-        if (name === 'Mock返回') name = $i18nBundle('mock.label.mockReturn')
-        else if (name === '代理返回') name = $i18nBundle('mock.label.proxyReturn')
-        else if (name === '无返回') name = $i18nBundle('mock.label.noReturn')
+        if (name === '公开项目') name = $i18nBundle('mock.label.publicMockProjects')
+        else if (name === '私有项目') name = $i18nBundle('mock.label.privateMockProjects')
         return { name, value: item.value }
       })
       ratioOption.value = {
-        color: ['#409EFF', '#E6A23C', '#F56C6C'],
+        color: ['#1890ff', '#52c41a'],
         tooltip: {
           trigger: 'item',
           formatter: '{a} <br/>{b}: {c} ({d}%)'
@@ -51,7 +49,7 @@ const loadRatioActivity = async () => {
         },
         series: [
           {
-            name: '调用类型分布',
+            name: $i18nBundle('mock.label.projectDistribution'),
             type: 'pie',
             radius: ['45%', '70%'],
             center: ['50%', '45%'],
@@ -88,8 +86,8 @@ const loadRatioActivity = async () => {
     class="chart-card"
   >
     <template #header>
-      <div class="card-header">
-        <span class="card-title">{{ $t('mock.label.mockVsProxy') }}</span>
+      <div class="header-container">
+        <span class="card-title">{{ $t('mock.label.projectDistribution') }}</span>
       </div>
     </template>
     <v-chart

@@ -35,5 +35,12 @@ export default {
       method: 'get',
       params: { days, all }
     }).then(res => res.data)
+  },
+  getPublicVsPrivate (all) {
+    return $http({
+      url: '/admin/dashboard/public-vs-private',
+      method: 'get',
+      params: { all }
+    }).then(res => res.data)
   }
 }

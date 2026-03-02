@@ -304,6 +304,13 @@ public class DashboardController {
                 .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                 .ge("create_date", startDate));
 
+        long noReturnCount = mockLogService.count(Wrappers.<MockLog>query()
+                .isNull("data_id")
+                .isNull("proxy_url")
+                .eq("log_name", "MockController#doMock")
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
+                .ge("create_date", startDate));
+
         List<NameValueObj> results = new ArrayList<>();
         NameValueObj mockVo = new NameValueObj();
         mockVo.setName("Mock返回");
@@ -314,6 +321,39 @@ public class DashboardController {
         proxyVo.setName("代理返回");
         proxyVo.setValue((int) proxyCount);
         results.add(proxyVo);
+
+        NameValueObj noReturnVo = new NameValueObj();
+        noReturnVo.setName("无返回");
+        noReturnVo.setValue((int) noReturnCount);
+        results.add(noReturnVo);
+
+        return SimpleResultUtils.createSimpleResult(results);
+    }
+
+    @GetMapping("/public-vs-private")
+    public SimpleResult<List<NameValueObj>> publicVsPrivate(@RequestParam(defaultValue = "false") boolean all) {
+        String userName = all ? null : SecurityUtils.getLoginUserName();
+
+        long publicProjects = mockProjectService.count(Wrappers.<MockProject>query()
+                .eq("public_flag", true)
+                .eq("status", 1));
+
+        long privateProjects = mockProjectService.count(Wrappers.<MockProject>query()
+                .and(StringUtils.isNotBlank(userName),
+                        w -> w.eq("user_name", userName).or().isNull("user_name").or().eq("user_name", ""))
+                .and(w -> w.eq("public_flag", false).or().isNull("public_flag"))
+                .eq("status", 1));
+
+        List<NameValueObj> results = new ArrayList<>();
+        NameValueObj pubVo = new NameValueObj();
+        pubVo.setName("公开项目");
+        pubVo.setValue((int) publicProjects);
+        results.add(pubVo);
+
+        NameValueObj privVo = new NameValueObj();
+        privVo.setName("私有项目");
+        privVo.setValue((int) privateProjects);
+        results.add(privVo);
 
         return SimpleResultUtils.createSimpleResult(results);
     }
