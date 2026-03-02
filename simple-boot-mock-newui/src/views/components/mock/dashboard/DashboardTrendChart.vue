@@ -6,6 +6,7 @@ import { LineChart } from 'echarts/charts'
 import { TooltipComponent, GridComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 import DashboardApi from '@/api/mock/DashboardApi'
+import { $i18nBundle } from '@/messages'
 
 use([CanvasRenderer, LineChart, TooltipComponent, GridComponent])
 
@@ -26,7 +27,7 @@ const chartLoading = ref(false)
 const loadTrend = async () => {
   chartLoading.value = true
   try {
-    const res = await DashboardApi.getTrend(7, all.value)
+    const res = await DashboardApi.getTrend(30, all.value)
     if (res && res.success) {
       const data = res.resultData
       const dates = data.map(item => item.name)
@@ -51,7 +52,7 @@ const loadTrend = async () => {
         grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
         series: [
           {
-            name: '调用量',
+            name: $i18nBundle('mock.label.totalCalls'),
             type: 'line',
             data: counts,
             smooth: true,
@@ -82,7 +83,7 @@ const loadTrend = async () => {
   >
     <template #header>
       <div class="card-header">
-        <span class="card-title">近 7 天调用趋势</span>
+        <span class="card-title">{{ $t('mock.label.trend30Days') }}</span>
       </div>
     </template>
     <v-chart

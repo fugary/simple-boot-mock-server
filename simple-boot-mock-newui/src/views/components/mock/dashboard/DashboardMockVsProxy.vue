@@ -27,7 +27,7 @@ const chartLoading = ref(false)
 const loadRatioActivity = async () => {
   chartLoading.value = true
   try {
-    const res = await DashboardApi.getMockVsProxy(7, all.value)
+    const res = await DashboardApi.getMockVsProxy(30, all.value)
     if (res && res.success) {
       const data = res.resultData.map(item => {
         let name = item.name
@@ -51,7 +51,7 @@ const loadRatioActivity = async () => {
         },
         series: [
           {
-            name: '调用类型分布',
+            name: $i18nBundle('mock.label.mockVsProxy'),
             type: 'pie',
             radius: ['45%', '70%'],
             center: ['50%', '45%'],

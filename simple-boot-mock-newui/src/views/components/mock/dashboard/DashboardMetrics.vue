@@ -5,9 +5,11 @@ import DashboardApi from '@/api/mock/DashboardApi'
 
 const metrics = ref({
   todayTotal: 0,
+  todayError: 0,
   totalCalls: 0,
   totalMockGroups: 0,
-  totalMockApis: 0
+  totalMockApis: 0,
+  totalMockData: 0
 })
 
 const router = useRouter()
@@ -42,7 +44,7 @@ watch(all, () => {
     v-loading="loading"
     :gutter="20"
   >
-    <el-col :span="6">
+    <el-col :span="4">
       <el-card
         shadow="hover"
         class="metric-card bg-primary"
@@ -75,7 +77,69 @@ watch(all, () => {
       </el-card>
     </el-col>
 
-    <el-col :span="6">
+    <el-col :span="4">
+      <el-card
+        shadow="hover"
+        class="metric-card bg-purple"
+      >
+        <div class="metric-content">
+          <div class="metric-info">
+            <div class="metric-title">
+              {{ $t('mock.label.mockRequestCount') }}
+            </div>
+            <div class="metric-value">
+              {{ metrics.totalMockApis }}
+            </div>
+          </div>
+          <div class="metric-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              class="icon-svg"
+            ><path
+              d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71m-2.22 8.7a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            /></svg>
+          </div>
+        </div>
+      </el-card>
+    </el-col>
+
+    <el-col :span="4">
+      <el-card
+        shadow="hover"
+        class="metric-card bg-cyan"
+      >
+        <div class="metric-content">
+          <div class="metric-info">
+            <div class="metric-title">
+              {{ $t('mock.label.mockDataCount') }}
+            </div>
+            <div class="metric-value">
+              {{ metrics.totalMockData }}
+            </div>
+          </div>
+          <div class="metric-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              class="icon-svg"
+            ><path
+              d="M12 2l10 5-10 5-10-5 10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            /></svg>
+          </div>
+        </div>
+      </el-card>
+    </el-col>
+
+    <el-col :span="4">
       <el-card
         shadow="hover"
         class="metric-card bg-success"
@@ -95,7 +159,7 @@ watch(all, () => {
               fill="none"
               class="icon-svg"
             ><path
-              d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"
+              d="M23 6l-9.5 9.5-5-5L1 18m22-12v6m0-6h-6"
               stroke="currentColor"
               stroke-width="2"
               stroke-linecap="round"
@@ -106,7 +170,7 @@ watch(all, () => {
       </el-card>
     </el-col>
 
-    <el-col :span="6">
+    <el-col :span="4">
       <el-card
         shadow="hover"
         class="metric-card bg-warning"
@@ -126,7 +190,7 @@ watch(all, () => {
               fill="none"
               class="icon-svg"
             ><path
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              d="M22 12h-4l-3 9L9 3l-3 9H2"
               stroke="currentColor"
               stroke-width="2"
               stroke-linecap="round"
@@ -137,7 +201,7 @@ watch(all, () => {
       </el-card>
     </el-col>
 
-    <el-col :span="6">
+    <el-col :span="4">
       <el-card
         shadow="hover"
         class="metric-card bg-danger"
@@ -145,10 +209,10 @@ watch(all, () => {
         <div class="metric-content">
           <div class="metric-info">
             <div class="metric-title">
-              {{ $t('mock.label.mockRequestCount') }}
+              {{ $t('mock.label.todayError') }}
             </div>
             <div class="metric-value">
-              {{ metrics.totalMockApis }}
+              {{ metrics.todayError }}
             </div>
           </div>
           <div class="metric-icon">
@@ -157,7 +221,7 @@ watch(all, () => {
               fill="none"
               class="icon-svg"
             ><path
-              d="M13 10V3L4 14h7v7l9-11h-7z"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               stroke="currentColor"
               stroke-width="2"
               stroke-linecap="round"
@@ -235,16 +299,22 @@ watch(all, () => {
 }
 
 .bg-primary {
-  background: linear-gradient(135deg, #1890ff 0%, #36cfc9 100%);
+  background: linear-gradient(135deg, #409EFF 0%, #79bbff 100%);
 }
-.bg-danger {
-  background: linear-gradient(135deg, #f5222d 0%, #ff7875 100%);
+.bg-purple {
+  background: linear-gradient(135deg, #B37FEB 0%, #D3ADF7 100%);
+}
+.bg-cyan {
+  background: linear-gradient(135deg, #36cfc9 0%, #87e8de 100%);
 }
 .bg-success {
-  background: linear-gradient(135deg, #52c41a 0%, #95de64 100%);
+  background: linear-gradient(135deg, #67C23A 0%, #95d475 100%);
 }
 .bg-warning {
-  background: linear-gradient(135deg, #fa8c16 0%, #ffd666 100%);
+  background: linear-gradient(135deg, #E6A23C 0%, #eebe77 100%);
+}
+.bg-danger {
+  background: linear-gradient(135deg, #F56C6C 0%, #fab6b6 100%);
 }
 
 .metric-card::after {

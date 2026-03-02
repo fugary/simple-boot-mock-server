@@ -72,6 +72,12 @@ public class DashboardController {
                 .eq("log_name", "MockController#doMock")
                 .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                 .ge("create_date", today));
+        long todayError = mockLogService.count(Wrappers.<MockLog>query()
+                .eq("log_name", "MockController#doMock")
+                .isNull("data_id")
+                .isNull("proxy_url")
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
+                .ge("create_date", today));
         long totalCalls = mockLogService.count(Wrappers.<MockLog>query()
                 .eq("log_name", "MockController#doMock")
                 .eq(StringUtils.isNotBlank(userName), "user_name", userName));
@@ -83,11 +89,17 @@ public class DashboardController {
                 .eq(StringUtils.isNotBlank(userName), "creator", userName)
                 .isNull(MockConstants.DB_MODIFY_FROM_KEY)
                 .eq("status", 1));
+        long totalMockData = mockDataService.count(Wrappers.<MockData>query()
+                .eq(StringUtils.isNotBlank(userName), "creator", userName)
+                .isNull(MockConstants.DB_MODIFY_FROM_KEY)
+                .eq("status", 1));
 
         metrics.setTodayTotal(todayTotal);
+        metrics.setTodayError(todayError);
         metrics.setTotalCalls(totalCalls);
         metrics.setTotalMockGroups(totalMockGroups);
         metrics.setTotalMockApis(totalMockApis);
+        metrics.setTotalMockData(totalMockData);
 
         return SimpleResultUtils.createSimpleResult(metrics);
     }

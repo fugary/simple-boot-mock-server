@@ -6,6 +6,7 @@ import { PieChart } from 'echarts/charts'
 import { TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 import DashboardApi from '@/api/mock/DashboardApi'
+import { $i18nBundle } from '@/messages'
 
 use([CanvasRenderer, PieChart, TooltipComponent, LegendComponent])
 
@@ -26,7 +27,7 @@ const chartLoading = ref(false)
 const loadProjectActivity = async () => {
   chartLoading.value = true
   try {
-    const res = await DashboardApi.getProjectActivity(7, all.value)
+    const res = await DashboardApi.getProjectActivity(30, all.value)
     if (res && res.success) {
       const data = res.resultData.map(item => ({ name: item.name, value: item.value }))
       projectOption.value = {
@@ -44,7 +45,7 @@ const loadProjectActivity = async () => {
         },
         series: [
           {
-            name: '项目调用分布',
+            name: $i18nBundle('mock.label.projectActivity'),
             type: 'pie',
             radius: ['45%', '70%'],
             center: ['50%', '45%'],
@@ -82,7 +83,7 @@ const loadProjectActivity = async () => {
   >
     <template #header>
       <div class="card-header">
-        <span class="card-title">项目调用分布 (近7天)</span>
+        <span class="card-title">{{ $t('mock.label.projectActivity30Days') }}</span>
       </div>
     </template>
     <v-chart
