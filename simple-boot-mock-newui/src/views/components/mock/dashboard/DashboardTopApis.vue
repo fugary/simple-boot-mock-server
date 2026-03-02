@@ -1,18 +1,24 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject, watch } from 'vue'
 import DashboardApi from '@/api/mock/DashboardApi'
 
 const topLoading = ref(false)
 const topApis = ref([])
 
+const all = inject('dashboard-all', ref(false))
+
 onMounted(() => {
+  loadTopApis()
+})
+
+watch(all, () => {
   loadTopApis()
 })
 
 const loadTopApis = async () => {
   topLoading.value = true
   try {
-    const res = await DashboardApi.getTopApis(10)
+    const res = await DashboardApi.getTopApis(10, null, all.value)
     if (res && res.success) {
       topApis.value = res.resultData
     }

@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.fugary.simple.mock.utils.security.SecurityUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -62,17 +63,22 @@ public class DashboardController {
     }
 
     @GetMapping("/metrics")
-    public SimpleResult<DashboardMetricsVo> metrics() {
+    public SimpleResult<DashboardMetricsVo> metrics(@RequestParam(defaultValue = "false") boolean all) {
         DashboardMetricsVo metrics = new DashboardMetricsVo();
         Date today = DateUtils.truncate(new Date(), Calendar.DATE);
+        String userName = all ? null : SecurityUtils.getLoginUserName();
 
         long todayTotal = mockLogService.count(Wrappers.<MockLog>query()
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                 .ge("create_date", today));
-        long totalCalls = mockLogService.count();
+        long totalCalls = mockLogService.count(Wrappers.<MockLog>query()
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName));
         long totalMockGroups = mockGroupService.count(Wrappers.<MockGroup>query()
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                 .isNull(MockConstants.DB_MODIFY_FROM_KEY)
                 .eq("status", 1));
         long totalMockApis = mockRequestService.count(Wrappers.<MockRequest>query()
+                .eq(StringUtils.isNotBlank(userName), "creator", userName)
                 .isNull(MockConstants.DB_MODIFY_FROM_KEY)
                 .eq("status", 1));
 
@@ -85,14 +91,17 @@ public class DashboardController {
     }
 
     @GetMapping("/trend")
-    public SimpleResult<List<NameValueObj>> trend(@RequestParam(defaultValue = "7") int days) {
+    public SimpleResult<List<NameValueObj>> trend(@RequestParam(defaultValue = "7") int days,
+            @RequestParam(defaultValue = "false") boolean all) {
         List<NameValueObj> trends = new ArrayList<>();
         Date now = new Date();
         Date today = DateUtils.truncate(now, Calendar.DATE);
+        String userName = all ? null : SecurityUtils.getLoginUserName();
         for (int i = days - 1; i >= 0; i--) {
             Date startDate = DateUtils.addDays(today, -i);
             Date endDate = DateUtils.addDays(startDate, 1);
             long count = mockLogService.count(Wrappers.<MockLog>query()
+                    .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                     .ge("create_date", startDate)
                     .lt("create_date", endDate));
 
@@ -105,13 +114,16 @@ public class DashboardController {
     }
 
     @GetMapping("/project-activity")
-    public SimpleResult<List<NameValueObj>> projectActivity(@RequestParam(defaultValue = "7") int days) {
+    public SimpleResult<List<NameValueObj>> projectActivity(@RequestParam(defaultValue = "7") int days,
+            @RequestParam(defaultValue = "false") boolean all) {
         Date startDate = DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DATE), -days + 1);
+        String userName = all ? null : SecurityUtils.getLoginUserName();
 
         // Group by data_id and map to actual Project
         QueryWrapper<MockLog> queryWrapper = Wrappers.<MockLog>query()
                 .select("data_id, COUNT(*) as log_count")
                 .isNotNull("data_id")
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                 .ge("create_date", startDate)
                 .groupBy("data_id");
 
@@ -159,13 +171,15 @@ public class DashboardController {
 
     @GetMapping("/top-apis")
     public SimpleResult<List<DashboardTopApiVo>> topApis(@RequestParam(required = false) String logResult,
-            @RequestParam(defaultValue = "10") int limit) {
+            @RequestParam(defaultValue = "10") int limit, @RequestParam(defaultValue = "false") boolean all) {
         Date startDate = DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DATE), -30); // limit to last 30 days
+        String userName = all ? null : SecurityUtils.getLoginUserName();
 
         QueryWrapper<MockLog> queryWrapper = Wrappers.<MockLog>query()
                 .select("data_id, COUNT(*) as log_count")
                 .isNotNull("data_id")
                 .eq(StringUtils.isNotBlank(logResult), "log_result", logResult)
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                 .ge("create_date", startDate)
                 .groupBy("data_id")
                 .orderByDesc("log_count")

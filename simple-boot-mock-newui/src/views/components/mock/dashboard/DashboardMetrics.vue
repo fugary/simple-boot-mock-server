@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import DashboardApi from '@/api/mock/DashboardApi'
 
@@ -12,11 +12,21 @@ const metrics = ref({
 
 const router = useRouter()
 
-onMounted(async () => {
-  const res = await DashboardApi.getMetrics()
+const all = inject('dashboard-all', ref(false))
+
+const loadMetrics = async () => {
+  const res = await DashboardApi.getMetrics(all.value)
   if (res && res.success) {
     metrics.value = res.resultData
   }
+}
+
+onMounted(() => {
+  loadMetrics()
+})
+
+watch(all, () => {
+  loadMetrics()
 })
 </script>
 

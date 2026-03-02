@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject, watch } from 'vue'
 import { use, graphic } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart } from 'echarts/charts'
@@ -11,12 +11,18 @@ use([CanvasRenderer, LineChart, TooltipComponent, GridComponent])
 
 const trendOption = ref({})
 
+const all = inject('dashboard-all', ref(false))
+
 onMounted(() => {
   loadTrend()
 })
 
+watch(all, () => {
+  loadTrend()
+})
+
 const loadTrend = async () => {
-  const res = await DashboardApi.getTrend(7)
+  const res = await DashboardApi.getTrend(7, all.value)
   if (res && res.success) {
     const data = res.resultData
     const dates = data.map(item => item.name)

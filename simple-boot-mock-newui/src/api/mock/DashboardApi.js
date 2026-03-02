@@ -1,31 +1,32 @@
 import { $http } from '@/vendors/axios'
 
 export default {
-  getMetrics () {
+  getMetrics (all) {
     return $http({
       url: '/admin/dashboard/metrics',
-      method: 'get'
+      method: 'get',
+      params: { all }
     }).then(res => res.data)
   },
-  getTrend (days) {
+  getTrend (days, all) {
     return $http({
       url: '/admin/dashboard/trend',
       method: 'get',
-      params: { days }
+      params: { days, all }
     }).then(res => res.data)
   },
-  getProjectActivity (days) {
+  getProjectActivity (days, all) {
     return $http({
       url: '/admin/dashboard/project-activity',
       method: 'get',
-      params: { days }
+      params: { days, all }
     }).then(res => res.data)
   },
-  getTopApis (limit, logResult) {
+  getTopApis (limit, logResult, all) {
     return $http({
       url: '/admin/dashboard/top-apis',
       method: 'get',
-      params: { limit, logResult }
+      params: { limit, logResult, all }
     }).then(res => res.data)
   }
 }

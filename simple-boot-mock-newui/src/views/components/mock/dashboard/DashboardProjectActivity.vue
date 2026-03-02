@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject, watch } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { PieChart } from 'echarts/charts'
@@ -11,12 +11,18 @@ use([CanvasRenderer, PieChart, TooltipComponent, LegendComponent])
 
 const projectOption = ref({})
 
+const all = inject('dashboard-all', ref(false))
+
 onMounted(() => {
   loadProjectActivity()
 })
 
+watch(all, () => {
+  loadProjectActivity()
+})
+
 const loadProjectActivity = async () => {
-  const res = await DashboardApi.getProjectActivity(7)
+  const res = await DashboardApi.getProjectActivity(7, all.value)
   if (res && res.success) {
     const data = res.resultData.map(item => ({ name: item.name, value: item.value }))
     projectOption.value = {
