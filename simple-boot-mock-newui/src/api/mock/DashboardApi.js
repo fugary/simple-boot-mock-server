@@ -28,5 +28,12 @@ export default {
       method: 'get',
       params: { limit, logResult, all }
     }).then(res => res.data)
+  },
+  getMockVsProxy (days, all) {
+    return $http({
+      url: '/admin/dashboard/mock-vs-proxy',
+      method: 'get',
+      params: { days, all }
+    }).then(res => res.data)
   }
 }

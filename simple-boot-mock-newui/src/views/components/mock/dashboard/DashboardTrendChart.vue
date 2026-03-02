@@ -21,54 +21,62 @@ watch(all, () => {
   loadTrend()
 })
 
+const chartLoading = ref(false)
+
 const loadTrend = async () => {
-  const res = await DashboardApi.getTrend(7, all.value)
-  if (res && res.success) {
-    const data = res.resultData
-    const dates = data.map(item => item.name)
-    const counts = data.map(item => item.value)
-    trendOption.value = {
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: { type: 'cross', label: { backgroundColor: '#6a7985' } }
-      },
-      xAxis: {
-        type: 'category',
-        data: dates,
-        boundaryGap: false,
-        axisLine: { lineStyle: { color: '#e0e6ed' } },
-        axisLabel: { color: '#606266' }
-      },
-      yAxis: {
-        type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: '#ebeef5' } },
-        axisLabel: { color: '#606266' }
-      },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      series: [
-        {
-          name: '调用量',
-          type: 'line',
-          data: counts,
-          smooth: true,
-          showSymbol: false,
-          areaStyle: {
-            color: new graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(58,119,255,0.6)' },
-              { offset: 1, color: 'rgba(58,119,255,0.05)' }
-            ])
-          },
-          lineStyle: { width: 3, color: '#3a77ff' },
-          itemStyle: { color: '#3a77ff' }
-        }
-      ]
+  chartLoading.value = true
+  try {
+    const res = await DashboardApi.getTrend(7, all.value)
+    if (res && res.success) {
+      const data = res.resultData
+      const dates = data.map(item => item.name)
+      const counts = data.map(item => item.value)
+      trendOption.value = {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'cross', label: { backgroundColor: '#6a7985' } }
+        },
+        xAxis: {
+          type: 'category',
+          data: dates,
+          boundaryGap: false,
+          axisLine: { lineStyle: { color: '#e0e6ed' } },
+          axisLabel: { color: '#606266' }
+        },
+        yAxis: {
+          type: 'value',
+          splitLine: { lineStyle: { type: 'dashed', color: '#ebeef5' } },
+          axisLabel: { color: '#606266' }
+        },
+        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+        series: [
+          {
+            name: '调用量',
+            type: 'line',
+            data: counts,
+            smooth: true,
+            showSymbol: false,
+            areaStyle: {
+              color: new graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(58,119,255,0.6)' },
+                { offset: 1, color: 'rgba(58,119,255,0.05)' }
+              ])
+            },
+            lineStyle: { width: 3, color: '#3a77ff' },
+            itemStyle: { color: '#3a77ff' }
+          }
+        ]
+      }
     }
+  } finally {
+    chartLoading.value = false
   }
 }
 </script>
 
 <template>
   <el-card
+    v-loading="chartLoading"
     shadow="hover"
     class="chart-card"
   >

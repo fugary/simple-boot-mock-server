@@ -9,28 +9,28 @@ import DashboardApi from '@/api/mock/DashboardApi'
 
 use([CanvasRenderer, PieChart, TooltipComponent, LegendComponent])
 
-const projectOption = ref({})
+const ratioOption = ref({})
 
 const all = inject('dashboard-all', ref(false))
 
 onMounted(() => {
-  loadProjectActivity()
+  loadRatioActivity()
 })
 
 watch(all, () => {
-  loadProjectActivity()
+  loadRatioActivity()
 })
 
 const chartLoading = ref(false)
 
-const loadProjectActivity = async () => {
+const loadRatioActivity = async () => {
   chartLoading.value = true
   try {
-    const res = await DashboardApi.getProjectActivity(7, all.value)
+    const res = await DashboardApi.getMockVsProxy(7, all.value)
     if (res && res.success) {
       const data = res.resultData.map(item => ({ name: item.name, value: item.value }))
-      projectOption.value = {
-        color: ['#3ba272', '#fc8452', '#9a60b4', '#ea7ccc', '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'],
+      ratioOption.value = {
+        color: ['#409EFF', '#E6A23C'],
         tooltip: {
           trigger: 'item',
           formatter: '{a} <br/>{b}: {c} ({d}%)'
@@ -44,7 +44,7 @@ const loadProjectActivity = async () => {
         },
         series: [
           {
-            name: '项目调用分布',
+            name: '调用类型分布',
             type: 'pie',
             radius: ['45%', '70%'],
             center: ['50%', '45%'],
@@ -82,12 +82,12 @@ const loadProjectActivity = async () => {
   >
     <template #header>
       <div class="card-header">
-        <span class="card-title">项目调用分布 (近7天)</span>
+        <span class="card-title">{{ $t('mock.label.mockVsProxy') }}</span>
       </div>
     </template>
     <v-chart
       class="chart"
-      :option="projectOption"
+      :option="ratioOption"
       autoresize
     />
   </el-card>
@@ -103,7 +103,7 @@ const loadProjectActivity = async () => {
   font-weight: bold;
   font-size: 16px;
   color: var(--el-text-color-primary);
-  border-left: 4px solid var(--el-color-success);
+  border-left: 4px solid var(--el-color-primary);
   padding-left: 10px;
 }
 .chart {

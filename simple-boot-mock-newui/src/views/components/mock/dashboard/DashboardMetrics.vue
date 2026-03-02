@@ -14,10 +14,17 @@ const router = useRouter()
 
 const all = inject('dashboard-all', ref(false))
 
+const loading = ref(false)
+
 const loadMetrics = async () => {
-  const res = await DashboardApi.getMetrics(all.value)
-  if (res && res.success) {
-    metrics.value = res.resultData
+  loading.value = true
+  try {
+    const res = await DashboardApi.getMetrics(all.value)
+    if (res && res.success) {
+      metrics.value = res.resultData
+    }
+  } finally {
+    loading.value = false
   }
 }
 
@@ -31,7 +38,10 @@ watch(all, () => {
 </script>
 
 <template>
-  <el-row :gutter="20">
+  <el-row
+    v-loading="loading"
+    :gutter="20"
+  >
     <el-col :span="6">
       <el-card
         shadow="hover"

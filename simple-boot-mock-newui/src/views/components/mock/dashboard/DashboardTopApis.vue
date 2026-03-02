@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted, inject, watch } from 'vue'
+import { ref, onMounted, inject, watch, computed } from 'vue'
 import DashboardApi from '@/api/mock/DashboardApi'
+import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 
 const topLoading = ref(false)
 const topApis = ref([])
@@ -33,6 +34,39 @@ const getRankTheme = (index) => {
   if (index === 2) return 'primary'
   return 'info'
 }
+
+const columns = computed(() => [
+  {
+    labelKey: 'mock.label.rank',
+    width: '80',
+    align: 'center',
+    slot: 'rank'
+  },
+  {
+    labelKey: 'mock.label.apiName',
+    prop: 'name',
+    minWidth: '150',
+    slot: 'name'
+  },
+  {
+    labelKey: 'mock.label.apiPath',
+    prop: 'path',
+    minWidth: '250',
+    slot: 'path'
+  },
+  {
+    labelKey: 'mock.label.groupName',
+    minWidth: '150',
+    slot: 'group'
+  },
+  {
+    labelKey: 'mock.label.interceptCount',
+    prop: 'value',
+    width: '180',
+    align: 'right',
+    slot: 'value'
+  }
+])
 </script>
 
 <template>
@@ -45,75 +79,61 @@ const getRankTheme = (index) => {
         <span class="card-title">{{ $t('mock.label.topIntercepted') }}</span>
       </div>
     </template>
-    <el-table
+    <common-table
       v-loading="topLoading"
       :data="topApis"
+      :columns="columns"
       style="width: 100%"
       :header-cell-style="{ background: 'var(--el-fill-color-light)', color: 'var(--el-text-color-primary)', fontWeight: 'bold' }"
     >
-      <el-table-column
-        width="80"
-        :label="$t('mock.label.rank')"
-        align="center"
-      >
-        <template #default="{ $index }">
-          <el-tag
-            :type="getRankTheme($index)"
-            effect="dark"
-            round
-            size="small"
-            class="rank-tag"
-          >
-            {{ $index + 1 }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="name"
-        :label="$t('mock.label.apiName')"
-        min-width="150"
-      >
-        <template #default="{ row }">
-          <div class="api-name">
-            {{ row.name || '未命名接口' }}
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="path"
-        :label="$t('mock.label.apiPath')"
-        min-width="300"
-      >
-        <template #default="{ row }">
+      <template #rank="{ $index }">
+        <el-tag
+          :type="getRankTheme($index)"
+          effect="dark"
+          round
+          size="small"
+          class="rank-tag"
+        >
+          {{ $index + 1 }}
+        </el-tag>
+      </template>
+      <template #name="{ item }">
+        <div class="api-name">
+          {{ item.name || $t('mock.label.unnamedApi') }}
+        </div>
+      </template>
+      <template #path="{ item }">
+        <div class="api-path-container">
           <div class="api-path">
-            <el-icon class="path-icon">
-              <Link />
-            </el-icon>
-            {{ row.path }}
+            <MockUrlCopyLink :url-path="item.path">
+              {{ item.path }}
+            </MockUrlCopyLink>
           </div>
-          <div
-            v-if="row.groupPath"
-            class="group-path"
+        </div>
+      </template>
+      <template #group="{ item }">
+        <div
+          v-if="item.group"
+          class="group-path"
+        >
+          <el-icon class="path-icon">
+            <Folder />
+          </el-icon>
+          <span class="group-name">{{ item.group.groupName || $t('mock.label.unnamedGroup') }}</span>
+          <el-text
+            v-if="item.group.userName"
+            type="info"
+            class="group-user"
           >
-            <el-icon class="path-icon">
-              <Folder />
-            </el-icon>
-            {{ row.groupPath }}
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="value"
-        :label="$t('mock.label.interceptCount')"
-        width="180"
-        align="right"
-      >
-        <template #default="{ row }">
-          <span class="api-count">{{ row.value }}</span>
-          <span class="api-count-unit">{{ $t('mock.label.times') }}</span>
-        </template>
-      </el-table-column>
-    </el-table>
+            ({{ item.group.userName }})
+          </el-text>
+        </div>
+      </template>
+      <template #value="{ item }">
+        <span class="api-count">{{ item.value }}</span>
+        <span class="api-count-unit">{{ $t('mock.label.times') }}</span>
+      </template>
+    </common-table>
   </el-card>
 </template>
 
@@ -146,26 +166,41 @@ const getRankTheme = (index) => {
   color: var(--el-text-color-primary);
 }
 
+.api-path-container {
+  margin-bottom: 4px;
+}
 .api-path {
   color: var(--el-text-color-primary);
   background: var(--el-fill-color-light);
   padding: 4px 8px;
   border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
+  word-break: break-all;
   font-family: monospace;
   font-size: 13px;
 }
 .group-path {
   color: var(--el-text-color-secondary);
   font-size: 12px;
-  margin-top: 4px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+}
+.group-name {
+  font-weight: bold;
+}
+.group-user {
+  margin-left: 6px;
+  font-style: italic;
+  font-size: 12px;
 }
 .path-icon {
   margin-right: 4px;
   color: var(--el-text-color-placeholder);
+  vertical-align: middle;
+}
+.path-icon.margin-left {
+  margin-left: 8px;
 }
 
 .api-count {

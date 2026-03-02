@@ -4,6 +4,7 @@ import DashboardMetrics from './components/mock/dashboard/DashboardMetrics.vue'
 import DashboardTrendChart from './components/mock/dashboard/DashboardTrendChart.vue'
 import DashboardProjectActivity from './components/mock/dashboard/DashboardProjectActivity.vue'
 import DashboardTopApis from './components/mock/dashboard/DashboardTopApis.vue'
+import DashboardMockVsProxy from './components/mock/dashboard/DashboardMockVsProxy.vue'
 
 const all = ref(false)
 provide('dashboard-all', all)
@@ -35,7 +36,7 @@ provide('dashboard-all', all)
         <dashboard-trend-chart />
       </el-col>
       <el-col :span="10">
-        <dashboard-project-activity />
+        <dashboard-mock-vs-proxy />
       </el-col>
     </el-row>
 
@@ -43,8 +44,11 @@ provide('dashboard-all', all)
       :gutter="20"
       class="margin-top3"
     >
-      <el-col :span="24">
+      <el-col :span="16">
         <dashboard-top-apis />
+      </el-col>
+      <el-col :span="8">
+        <dashboard-project-activity />
       </el-col>
     </el-row>
   </el-container>

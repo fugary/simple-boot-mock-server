@@ -179,56 +179,142 @@ public class DashboardController {
         Date startDate = DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DATE), -30); // limit to last 30 days
         String userName = all ? null : SecurityUtils.getLoginUserName();
 
-        QueryWrapper<MockLog> queryWrapper = Wrappers.<MockLog>query()
-                .select("data_id, COUNT(*) as log_count")
+        // 1. Mock Requests
+        QueryWrapper<MockLog> mockQueryWrapper = Wrappers.<MockLog>query()
+                .select("data_id, request_url, COUNT(*) as log_count")
                 .isNotNull("data_id")
                 .eq("log_name", "MockController#doMock")
                 .eq(StringUtils.isNotBlank(logResult), "log_result", logResult)
                 .eq(StringUtils.isNotBlank(userName), "user_name", userName)
                 .ge("create_date", startDate)
-                .groupBy("data_id")
+                .groupBy("data_id", "request_url")
                 .orderByDesc("log_count")
                 .last("LIMIT " + (limit * 2)); // fetch more in case multiple data map to same request
 
-        List<Map<String, Object>> maps = mockLogService.listMaps(queryWrapper);
+        List<Map<String, Object>> mockMaps = mockLogService.listMaps(mockQueryWrapper);
 
-        // Aggregate by request ID
-        Map<Integer, Integer> requestCounts = new HashMap<>(); // requestId -> count
-        for (Map<String, Object> map : maps) {
+        // Aggregate by request ID and requestUrl
+        Map<String, DashboardTopApiVo> requestMap = new HashMap<>();
+        for (Map<String, Object> map : mockMaps) {
             Object dataIdObj = getMapValue(map, "data_id");
             String dataId = dataIdObj != null ? String.valueOf(dataIdObj) : null;
+            String requestUrl = (String) getMapValue(map, "request_url");
             Number numValue = (Number) getMapValue(map, "log_count");
             Integer value = numValue != null ? numValue.intValue() : 0;
             if (dataId != null) {
                 MockData mockData = mockDataService.getById(dataId);
                 if (mockData != null && mockData.getModifyFrom() == null && mockData.isEnabled()
                         && mockData.getRequestId() != null) {
-                    requestCounts.merge(mockData.getRequestId(), value, (a, b) -> a + b);
+
+                    MockRequest mockRequest = mockRequestService.getById(mockData.getRequestId());
+                    if (mockRequest != null && mockRequest.getModifyFrom() == null && mockRequest.isEnabled()) {
+                        String key = mockRequest.getId() + "_" + requestUrl;
+                        DashboardTopApiVo vo = requestMap.get(key);
+                        if (vo == null) {
+                            vo = new DashboardTopApiVo();
+                            vo.setName(mockRequest.getRequestName());
+                            vo.setValue(0);
+                            MockGroup mockGroup = mockGroupService.getById(mockRequest.getGroupId());
+                            if (mockGroup != null) {
+                                vo.setGroup(mockGroup);
+                            }
+                            vo.setPath(StringUtils.isNotBlank(requestUrl) ? requestUrl
+                                    : StringUtils.defaultString(mockGroup != null ? mockGroup.getGroupPath() : "")
+                                            + StringUtils.defaultString(mockRequest.getRequestPath()));
+                            vo.setProxy(false);
+                            requestMap.put(key, vo);
+                        }
+                        vo.setValue(vo.getValue() + value);
+                    }
                 }
             }
         }
 
-        List<DashboardTopApiVo> topApis = requestCounts.entrySet().stream()
-                .map(entry -> {
-                    MockRequest mockRequest = mockRequestService.getById(entry.getKey());
-                    if (mockRequest != null && mockRequest.getModifyFrom() == null && mockRequest.isEnabled()) {
-                        DashboardTopApiVo vo = new DashboardTopApiVo();
-                        vo.setName(mockRequest.getRequestName());
-                        vo.setPath(mockRequest.getRequestPath());
-                        vo.setValue(entry.getValue());
-                        MockGroup mockGroup = mockGroupService.getById(mockRequest.getGroupId());
-                        if (mockGroup != null) {
-                            vo.setGroupPath(mockGroup.getGroupPath());
-                        }
-                        return vo;
-                    }
-                    return null;
-                })
-                .filter(Objects::nonNull)
+        List<DashboardTopApiVo> topApis = new ArrayList<>(requestMap.values());
+
+        // 2. Proxy requests
+        QueryWrapper<MockLog> proxyQueryWrapper = Wrappers.<MockLog>query()
+                .select("request_url, mock_group_path, COUNT(*) as log_count")
+                .isNull("data_id")
+                .isNotNull("proxy_url")
+                .eq("log_name", "MockController#doMock")
+                .eq(StringUtils.isNotBlank(logResult), "log_result", logResult)
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
+                .ge("create_date", startDate)
+                .groupBy("request_url", "mock_group_path")
+                .orderByDesc("log_count")
+                .last("LIMIT " + limit);
+        List<Map<String, Object>> proxyMaps = mockLogService.listMaps(proxyQueryWrapper);
+        for (Map<String, Object> map : proxyMaps) {
+            String requestUrl = (String) getMapValue(map, "request_url");
+            String mockGroupPath = (String) getMapValue(map, "mock_group_path");
+            Number numValue = (Number) getMapValue(map, "log_count");
+            Integer value = numValue != null ? numValue.intValue() : 0;
+
+            DashboardTopApiVo vo = new DashboardTopApiVo();
+            vo.setName("代理透传服务");
+            MockGroup mockGroup = null;
+            if (StringUtils.isNotBlank(mockGroupPath)) {
+                List<MockGroup> groups = mockGroupService.list(Wrappers.<MockGroup>query()
+                        .eq("group_path", mockGroupPath).isNull(MockConstants.DB_MODIFY_FROM_KEY));
+                if (!groups.isEmpty()) {
+                    mockGroup = groups.get(0);
+                }
+            }
+            if (mockGroup != null || StringUtils.isNotBlank(mockGroupPath)) {
+                if (mockGroup == null) {
+                    mockGroup = new MockGroup();
+                }
+                vo.setGroup(mockGroup);
+            } else {
+                MockGroup unknownGroup = new MockGroup();
+                unknownGroup.setGroupName(null); // Leave null so it triggers default i18n in front-end
+                vo.setGroup(unknownGroup);
+            }
+            vo.setPath(requestUrl);
+            vo.setValue(value);
+            vo.setProxy(true);
+            topApis.add(vo);
+        }
+
+        topApis = topApis.stream()
                 .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
                 .limit(limit)
                 .collect(Collectors.toList());
 
         return SimpleResultUtils.createSimpleResult(topApis);
+    }
+
+    @GetMapping("/mock-vs-proxy")
+    public SimpleResult<List<NameValueObj>> mockVsProxy(@RequestParam(defaultValue = "7") int days,
+            @RequestParam(defaultValue = "false") boolean all) {
+        Date startDate = DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DATE), -days + 1);
+        String userName = all ? null : SecurityUtils.getLoginUserName();
+
+        long mockCount = mockLogService.count(Wrappers.<MockLog>query()
+                .isNotNull("data_id")
+                .eq("log_name", "MockController#doMock")
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
+                .ge("create_date", startDate));
+
+        long proxyCount = mockLogService.count(Wrappers.<MockLog>query()
+                .isNull("data_id")
+                .isNotNull("proxy_url")
+                .eq("log_name", "MockController#doMock")
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
+                .ge("create_date", startDate));
+
+        List<NameValueObj> results = new ArrayList<>();
+        NameValueObj mockVo = new NameValueObj();
+        mockVo.setName("Mock返回");
+        mockVo.setValue((int) mockCount);
+        results.add(mockVo);
+
+        NameValueObj proxyVo = new NameValueObj();
+        proxyVo.setName("代理返回");
+        proxyVo.setValue((int) proxyCount);
+        results.add(proxyVo);
+
+        return SimpleResultUtils.createSimpleResult(results);
     }
 }
