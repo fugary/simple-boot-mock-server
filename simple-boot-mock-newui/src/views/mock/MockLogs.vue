@@ -8,6 +8,7 @@ import { showCodeWindow } from '@/utils/DynamicUtils'
 import { ElText, ElTag } from 'element-plus'
 import { useDefaultPage } from '@/config'
 import MethodTag from '@/views/components/utils/MethodTag.vue'
+import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { $i18nKey } from '@/messages'
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
@@ -42,9 +43,10 @@ const columns = computed(() => {
   }, {
     labelKey: 'mock.label.logName',
     prop: 'logName',
-    minWidth: '150px'
+    minWidth: '200px'
   }, {
     labelKey: 'mock.label.logResult',
+    minWidth: '100px',
     formatter (data) {
       if (data.logResult) {
         const type = data.logResult === 'SUCCESS' ? 'success' : 'danger'
@@ -63,13 +65,29 @@ const columns = computed(() => {
     }
   }, {
     labelKey: 'mock.label.ipAddress',
+    minWidth: '150px',
     prop: 'ipAddress'
   }, {
-    labelKey: 'mock.label.logMessage',
-    prop: 'logMessage'
+    labelKey: 'mock.label.mockReturn',
+    minWidth: '200px',
+    formatter (data) {
+      return <>
+        {data.dataId
+          ? <MockUrlCopyLink urlPath={data.dataId}>
+              {data.dataId}
+            </MockUrlCopyLink>
+          : ''}
+        {data.dataId && data.proxyUrl ? ' | ' : ''}
+        {data.proxyUrl
+          ? <MockUrlCopyLink urlPath={data.proxyUrl}>
+              {data.proxyUrl}
+            </MockUrlCopyLink>
+          : ''}
+      </>
+    }
   }, {
     labelKey: 'mock.label.logData',
-    minWidth: '150px',
+    minWidth: '200px',
     formatter (data) {
       const dataStr = data.logData || data.responseBody
       return <ElText onClick={() => showCodeWindow(dataStr)}
@@ -78,8 +96,13 @@ const columns = computed(() => {
       </ElText>
     }
   }, {
+    labelKey: 'mock.label.logMessage',
+    minWidth: '150px',
+    prop: 'logMessage'
+  }, {
     labelKey: 'mock.label.exceptions',
     enabled: checkShowColumn(tableData.value, 'exceptions'),
+    minWidth: '200px',
     formatter (data) {
       return <ElText onClick={() => showCodeWindow(data.exceptions)}
                      style="white-space: nowrap;cursor: pointer;">
@@ -89,6 +112,7 @@ const columns = computed(() => {
   }, {
     labelKey: 'common.label.createDate',
     property: 'createDate',
+    minWidth: '150px',
     dateFormat: 'YYYY-MM-DD HH:mm:ss'
   }]
 })
@@ -193,7 +217,7 @@ const searchFormOptions = computed(() => {
     <common-table
       v-model:page="searchParam.page"
       :data="tableData"
-      :buttons-column-attrs="{minWidth:'100px'}"
+      :buttons-column-attrs="{minWidth:'100px',fixed:'right'}"
       :columns="columns"
       :buttons="buttons"
       :loading="loading"

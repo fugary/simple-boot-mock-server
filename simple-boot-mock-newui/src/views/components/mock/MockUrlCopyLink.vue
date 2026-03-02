@@ -53,6 +53,7 @@ const tooltip = computed(() => props.tooltip ?? $i18nBundle('common.msg.clickToC
     v-if="showLink"
     v-common-tooltip="tooltip"
     v-open-new-window="externalLink"
+    class="copy-link"
     type="primary"
     underline="never"
     @click="copyInfo"
@@ -67,5 +68,8 @@ const tooltip = computed(() => props.tooltip ?? $i18nBundle('common.msg.clickToC
 </template>
 
 <style scoped>
-
+.copy-link {
+  word-break: break-all;
+  white-space: normal;
+}
 </style>
