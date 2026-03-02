@@ -68,16 +68,17 @@ public class DashboardController {
 
         long todayTotal = mockLogService.count(Wrappers.<MockLog>query()
                 .ge("create_date", today));
-        long todayError = mockLogService.count(Wrappers.<MockLog>query()
-                .ge("create_date", today)
-                .eq("log_result", MockConstants.FAIL));
-        long totalProjects = mockProjectService.count();
+        long totalCalls = mockLogService.count();
+        long totalMockGroups = mockGroupService.count(Wrappers.<MockGroup>query()
+                .isNull(MockConstants.DB_MODIFY_FROM_KEY)
+                .eq("status", 1));
         long totalMockApis = mockRequestService.count(Wrappers.<MockRequest>query()
-                .isNull(MockConstants.DB_MODIFY_FROM_KEY));
+                .isNull(MockConstants.DB_MODIFY_FROM_KEY)
+                .eq("status", 1));
 
         metrics.setTodayTotal(todayTotal);
-        metrics.setTodayError(todayError);
-        metrics.setTotalProjects(totalProjects);
+        metrics.setTotalCalls(totalCalls);
+        metrics.setTotalMockGroups(totalMockGroups);
         metrics.setTotalMockApis(totalMockApis);
 
         return SimpleResultUtils.createSimpleResult(metrics);
@@ -124,11 +125,14 @@ public class DashboardController {
             Integer value = numValue != null ? numValue.intValue() : 0;
             if (dataId != null) {
                 MockData mockData = mockDataService.getById(dataId);
-                if (mockData != null && mockData.getRequestId() != null) {
+                if (mockData != null && mockData.getModifyFrom() == null && mockData.isEnabled()
+                        && mockData.getRequestId() != null) {
                     MockRequest mockRequest = mockRequestService.getById(mockData.getRequestId());
-                    if (mockRequest != null && mockRequest.getGroupId() != null) {
+                    if (mockRequest != null && mockRequest.getModifyFrom() == null && mockRequest.isEnabled()
+                            && mockRequest.getGroupId() != null) {
                         MockGroup mockGroup = mockGroupService.getById(mockRequest.getGroupId());
-                        if (mockGroup != null && StringUtils.isNotBlank(mockGroup.getProjectCode())) {
+                        if (mockGroup != null && mockGroup.getModifyFrom() == null && mockGroup.isEnabled()
+                                && StringUtils.isNotBlank(mockGroup.getProjectCode())) {
                             String projectCode = mockGroup.getProjectCode();
                             MockProject mockProject = mockProjectService
                                     .getOne(Wrappers.<MockProject>query().eq("project_code", projectCode));
@@ -178,7 +182,8 @@ public class DashboardController {
             Integer value = numValue != null ? numValue.intValue() : 0;
             if (dataId != null) {
                 MockData mockData = mockDataService.getById(dataId);
-                if (mockData != null && mockData.getRequestId() != null) {
+                if (mockData != null && mockData.getModifyFrom() == null && mockData.isEnabled()
+                        && mockData.getRequestId() != null) {
                     requestCounts.merge(mockData.getRequestId(), value, (a, b) -> a + b);
                 }
             }
@@ -187,7 +192,7 @@ public class DashboardController {
         List<DashboardTopApiVo> topApis = requestCounts.entrySet().stream()
                 .map(entry -> {
                     MockRequest mockRequest = mockRequestService.getById(entry.getKey());
-                    if (mockRequest != null) {
+                    if (mockRequest != null && mockRequest.getModifyFrom() == null && mockRequest.isEnabled()) {
                         DashboardTopApiVo vo = new DashboardTopApiVo();
                         vo.setName(mockRequest.getRequestName());
                         vo.setPath(mockRequest.getRequestPath());

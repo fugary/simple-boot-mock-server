@@ -1,13 +1,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import DashboardApi from '@/api/mock/DashboardApi'
 
 const metrics = ref({
   todayTotal: 0,
-  todayError: 0,
-  totalProjects: 0,
+  totalCalls: 0,
+  totalMockGroups: 0,
   totalMockApis: 0
 })
+
+const router = useRouter()
 
 onMounted(async () => {
   const res = await DashboardApi.getMetrics()
@@ -23,6 +26,39 @@ onMounted(async () => {
       <el-card
         shadow="hover"
         class="metric-card bg-primary"
+        style="cursor: pointer;"
+        @click="router.push({ name: 'MockGroups' })"
+      >
+        <div class="metric-content">
+          <div class="metric-info">
+            <div class="metric-title">
+              {{ $t('mock.label.mockGroupCount') }}
+            </div>
+            <div class="metric-value">
+              {{ metrics.totalMockGroups }}
+            </div>
+          </div>
+          <div class="metric-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              class="icon-svg"
+            ><path
+              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            /></svg>
+          </div>
+        </div>
+      </el-card>
+    </el-col>
+
+    <el-col :span="6">
+      <el-card
+        shadow="hover"
+        class="metric-card bg-success"
       >
         <div class="metric-content">
           <div class="metric-info">
@@ -53,15 +89,15 @@ onMounted(async () => {
     <el-col :span="6">
       <el-card
         shadow="hover"
-        class="metric-card bg-danger"
+        class="metric-card bg-warning"
       >
         <div class="metric-content">
           <div class="metric-info">
             <div class="metric-title">
-              {{ $t('mock.label.todayError') }}
+              {{ $t('mock.label.totalCalls') }}
             </div>
             <div class="metric-value">
-              {{ metrics.todayError }}
+              {{ metrics.totalCalls }}
             </div>
           </div>
           <div class="metric-icon">
@@ -84,43 +120,12 @@ onMounted(async () => {
     <el-col :span="6">
       <el-card
         shadow="hover"
-        class="metric-card bg-success"
+        class="metric-card bg-danger"
       >
         <div class="metric-content">
           <div class="metric-info">
             <div class="metric-title">
-              {{ $t('mock.label.mockProjects') }}
-            </div>
-            <div class="metric-value">
-              {{ metrics.totalProjects }}
-            </div>
-          </div>
-          <div class="metric-icon">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              class="icon-svg"
-            ><path
-              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            /></svg>
-          </div>
-        </div>
-      </el-card>
-    </el-col>
-
-    <el-col :span="6">
-      <el-card
-        shadow="hover"
-        class="metric-card bg-warning"
-      >
-        <div class="metric-content">
-          <div class="metric-info">
-            <div class="metric-title">
-              {{ $t('mock.label.mockRequests') }}
+              {{ $t('mock.label.mockRequestCount') }}
             </div>
             <div class="metric-value">
               {{ metrics.totalMockApis }}

@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class DashboardMetricsVo {
     private Long todayTotal;
-    private Long todayError;
-    private Long totalProjects;
+    private Long totalCalls;
+    private Long totalMockGroups;
     private Long totalMockApis;
 }
