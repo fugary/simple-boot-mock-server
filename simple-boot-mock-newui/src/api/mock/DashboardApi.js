@@ -42,5 +42,19 @@ export default {
       method: 'get',
       params: { all }
     }).then(res => res.data)
+  },
+  getTopUserCalls (limit, days, all) {
+    return $http({
+      url: '/admin/dashboard/top-user-calls',
+      method: 'get',
+      params: { limit, days, all }
+    }).then(res => res.data)
+  },
+  getTopUserGroups (limit, all) {
+    return $http({
+      url: '/admin/dashboard/top-user-groups',
+      method: 'get',
+      params: { limit, all }
+    }).then(res => res.data)
   }
 }

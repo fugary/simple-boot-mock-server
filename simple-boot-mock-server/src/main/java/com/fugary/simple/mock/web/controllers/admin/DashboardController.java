@@ -342,6 +342,68 @@ public class DashboardController {
         return SimpleResultUtils.createSimpleResult(results);
     }
 
+    @GetMapping("/top-user-calls")
+    public SimpleResult<List<NameValueObj>> topUserCalls(
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "30") int days,
+            @RequestParam(defaultValue = "false") boolean all) {
+        Date startDate = DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DATE), -days);
+        String userName = all ? null : SecurityUtils.getLoginUserName();
+
+        QueryWrapper<MockLog> queryWrapper = Wrappers.<MockLog>query()
+                .select("user_name, COUNT(*) as log_count")
+                .eq("log_name", "MockController#doMock")
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
+                .isNotNull("user_name")
+                .ne("user_name", "")
+                .ge("create_date", startDate)
+                .groupBy("user_name")
+                .orderByDesc("log_count")
+                .last("LIMIT " + limit);
+
+        List<Map<String, Object>> maps = mockLogService.listMaps(queryWrapper);
+
+        List<NameValueObj> results = maps.stream().map(map -> {
+            NameValueObj vo = new NameValueObj();
+            vo.setName((String) getMapValue(map, "user_name"));
+            Number numValue = (Number) getMapValue(map, "log_count");
+            vo.setValue(numValue != null ? numValue.intValue() : 0);
+            return vo;
+        }).collect(Collectors.toList());
+
+        return SimpleResultUtils.createSimpleResult(results);
+    }
+
+    @GetMapping("/top-user-groups")
+    public SimpleResult<List<NameValueObj>> topUserGroups(
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "false") boolean all) {
+        String userName = all ? null : SecurityUtils.getLoginUserName();
+
+        QueryWrapper<MockGroup> queryWrapper = Wrappers.<MockGroup>query()
+                .select("user_name, COUNT(*) as log_count")
+                .eq(StringUtils.isNotBlank(userName), "user_name", userName)
+                .isNotNull("user_name")
+                .ne("user_name", "")
+                .isNull(MockConstants.DB_MODIFY_FROM_KEY)
+                .eq("status", 1)
+                .groupBy("user_name")
+                .orderByDesc("log_count")
+                .last("LIMIT " + limit);
+
+        List<Map<String, Object>> maps = mockGroupService.listMaps(queryWrapper);
+
+        List<NameValueObj> results = maps.stream().map(map -> {
+            NameValueObj vo = new NameValueObj();
+            vo.setName((String) getMapValue(map, "user_name"));
+            Number numValue = (Number) getMapValue(map, "log_count");
+            vo.setValue(numValue != null ? numValue.intValue() : 0);
+            return vo;
+        }).collect(Collectors.toList());
+
+        return SimpleResultUtils.createSimpleResult(results);
+    }
+
     @GetMapping("/public-vs-private")
     public SimpleResult<List<NameValueObj>> publicVsPrivate(@RequestParam(defaultValue = "false") boolean all) {
         String userName = all ? null : SecurityUtils.getLoginUserName();

@@ -6,6 +6,8 @@ import DashboardProjectActivity from './components/mock/dashboard/DashboardProje
 import DashboardPublicVsPrivate from './components/mock/dashboard/DashboardPublicVsPrivate.vue'
 import DashboardTopApis from './components/mock/dashboard/DashboardTopApis.vue'
 import DashboardMockVsProxy from './components/mock/dashboard/DashboardMockVsProxy.vue'
+import DashboardUserCalls from './components/mock/dashboard/DashboardUserCalls.vue'
+import DashboardUserGroups from './components/mock/dashboard/DashboardUserGroups.vue'
 
 const all = ref(false)
 provide('dashboard-all', all)
@@ -39,6 +41,19 @@ provide('dashboard-all', all)
     </el-row>
 
     <el-row
+      v-if="all"
+      :gutter="20"
+      class="margin-top3"
+    >
+      <el-col :span="12">
+        <dashboard-user-calls />
+      </el-col>
+      <el-col :span="12">
+        <dashboard-user-groups />
+      </el-col>
+    </el-row>
+
+    <el-row
       :gutter="20"
       class="margin-top3"
     >
@@ -68,7 +83,7 @@ provide('dashboard-all', all)
 .dashboard-header {
   margin-bottom: 20px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
 }
 .margin-top3 {
   margin-top: 20px;
