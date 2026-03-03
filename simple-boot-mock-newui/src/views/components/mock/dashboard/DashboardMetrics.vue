@@ -43,6 +43,7 @@ watch(all, () => {
   <el-row
     v-loading="loading"
     :gutter="20"
+    class="metric-row"
   >
     <el-col :span="6">
       <el-card
@@ -177,6 +178,16 @@ watch(all, () => {
 </template>
 
 <style scoped>
+.metric-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.metric-row > .el-col {
+  display: flex;
+  flex-direction: column;
+}
+
 .metric-card {
   border-radius: 12px;
   border: none;
@@ -184,6 +195,8 @@ watch(all, () => {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;
   position: relative;
+  flex: 1;
+  height: 100%;
 }
 .metric-card:hover {
   transform: translateY(-5px);
@@ -191,7 +204,12 @@ watch(all, () => {
 }
 
 .metric-card :deep(.el-card__body) {
-  padding: 24px;
+  padding: 20px;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .metric-content {
@@ -200,19 +218,24 @@ watch(all, () => {
   align-items: center;
   position: relative;
   z-index: 2;
+  width: 100%;
 }
 
 .metric-info {
   display: flex;
   flex-direction: column;
+  width: calc(100% - 66px); /* 100% minus icon width + gap */
 }
 
 .metric-title {
-  font-size: 15px;
+  font-size: 14px;
   opacity: 0.9;
   margin-bottom: 8px;
   font-weight: 500;
   letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .metric-value {
