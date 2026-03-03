@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, inject, watch } from 'vue'
+import { ref, onMounted, inject, watch, computed } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { PieChart } from 'echarts/charts'
@@ -7,7 +7,13 @@ import { TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 import DashboardApi from '@/api/mock/DashboardApi'
 import { $i18nBundle } from '@/messages'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
+
 use([CanvasRenderer, PieChart, TooltipComponent, LegendComponent])
+
+const globalConfigStore = useGlobalConfigStore()
+const isDark = computed(() => globalConfigStore.isDarkTheme)
+const themeStr = computed(() => isDark.value ? 'dark' : null)
 
 const ratioOption = ref({})
 
@@ -29,54 +35,72 @@ const loadRatioActivity = async () => {
     const res = await DashboardApi.getPublicVsPrivate(all.value)
     if (res && res.success) {
       const data = res.resultData.map(item => {
-        let name = item.name
-        if (name === '公开项目') name = $i18nBundle('mock.label.publicMockProjects')
-        else if (name === '私有项目') name = $i18nBundle('mock.label.privateMockProjects')
-        return { name, value: item.value }
+        return { rawName: item.name, value: item.value }
       })
       ratioOption.value = {
-        color: ['#1890ff', '#52c41a'],
-        tooltip: {
-          trigger: 'item',
-          formatter: '{a} <br/>{b}: {c} ({d}%)'
-        },
-        legend: {
-          bottom: '0%',
-          left: 'center',
-          icon: 'circle',
-          itemWidth: 10,
-          itemHeight: 10
-        },
-        series: [
-          {
-            name: $i18nBundle('mock.label.projectDistribution'),
-            type: 'pie',
-            radius: ['45%', '70%'],
-            center: ['50%', '45%'],
-            avoidLabelOverlap: false,
-            itemStyle: {
-              borderRadius: 10,
-              borderColor: '#fff',
-              borderWidth: 2
-            },
-            label: { show: false, position: 'center' },
-            emphasis: {
-              label: {
-                show: true,
-                fontSize: '18',
-                fontWeight: 'bold'
-              }
-            },
-            labelLine: { show: false },
-            data
-          }
-        ]
+        data
       }
     }
   } finally {
     chartLoading.value = false
   }
 }
+const computedOption = computed(() => {
+  // Trigger dependency to ensure reactivity on locale swap
+  globalConfigStore.currentLocale
+  const dynamicData = (ratioOption.value.data || []).map(item => {
+    let name = item.rawName
+    if (name === '公开项目') name = $i18nBundle('mock.label.publicMockProjects')
+    else if (name === '私有项目') name = $i18nBundle('mock.label.privateMockProjects')
+    return { name, value: item.value }
+  })
+
+  return {
+    color: ['#1890ff', '#52c41a'],
+    backgroundColor: 'transparent',
+    textStyle: {
+      color: isDark.value ? '#E5EAF3' : '#303133'
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    legend: {
+      bottom: '0%',
+      left: 'center',
+      icon: 'circle',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: {
+        color: isDark.value ? '#C0C4CC' : '#606266'
+      }
+    },
+    series: [
+      {
+        name: $i18nBundle('mock.label.projectDistribution'),
+        type: 'pie',
+        radius: ['45%', '70%'],
+        center: ['50%', '45%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: isDark.value ? '#141414' : '#fff',
+          borderWidth: 2
+        },
+        label: { show: false, position: 'center' },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: '18',
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: { show: false },
+        data: dynamicData
+      }
+    ]
+  }
+})
 </script>
 
 <template>
@@ -92,7 +116,9 @@ const loadRatioActivity = async () => {
     </template>
     <v-chart
       class="chart"
-      :option="ratioOption"
+      :option="computedOption"
+      :theme="themeStr"
+      :update-options="{ notMerge: true }"
       autoresize
     />
   </el-card>

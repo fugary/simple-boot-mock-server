@@ -14,10 +14,7 @@ provide('dashboard-all', all)
 <template>
   <el-container class="flex-column dashboard-container">
     <div class="dashboard-header">
-      <el-radio-group
-        v-model="all"
-        size="small"
-      >
+      <el-radio-group v-model="all">
         <el-radio-button :value="false">
           {{ $t('mock.label.myData') }}
         </el-radio-button>

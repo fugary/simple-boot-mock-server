@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, inject, watch } from 'vue'
+import { ref, onMounted, inject, watch, computed } from 'vue'
 import { use, graphic } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart } from 'echarts/charts'
@@ -7,8 +7,13 @@ import { TooltipComponent, GridComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 import DashboardApi from '@/api/mock/DashboardApi'
 import { $i18nBundle } from '@/messages'
+import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 use([CanvasRenderer, LineChart, TooltipComponent, GridComponent])
+
+const globalConfigStore = useGlobalConfigStore()
+const isDark = computed(() => globalConfigStore.isDarkTheme)
+const themeStr = computed(() => isDark.value ? 'dark' : null)
 
 const trendOption = ref({})
 
@@ -33,46 +38,56 @@ const loadTrend = async () => {
       const dates = data.map(item => item.name)
       const counts = data.map(item => item.value)
       trendOption.value = {
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: { type: 'cross', label: { backgroundColor: '#6a7985' } }
-        },
-        xAxis: {
-          type: 'category',
-          data: dates,
-          boundaryGap: false,
-          axisLine: { lineStyle: { color: '#e0e6ed' } },
-          axisLabel: { color: '#606266' }
-        },
-        yAxis: {
-          type: 'value',
-          splitLine: { lineStyle: { type: 'dashed', color: '#ebeef5' } },
-          axisLabel: { color: '#606266' }
-        },
-        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-        series: [
-          {
-            name: $i18nBundle('mock.label.totalCalls'),
-            type: 'line',
-            data: counts,
-            smooth: true,
-            showSymbol: false,
-            areaStyle: {
-              color: new graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: 'rgba(58,119,255,0.6)' },
-                { offset: 1, color: 'rgba(58,119,255,0.05)' }
-              ])
-            },
-            lineStyle: { width: 3, color: '#3a77ff' },
-            itemStyle: { color: '#3a77ff' }
-          }
-        ]
+        dates,
+        counts
       }
     }
   } finally {
     chartLoading.value = false
   }
 }
+
+const computedOption = computed(() => {
+  // Trigger dependency to ensure reactivity on locale swap
+  globalConfigStore.currentLocale
+  return {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'cross', label: { backgroundColor: '#6a7985' } }
+    },
+    backgroundColor: 'transparent',
+    xAxis: {
+      type: 'category',
+      data: trendOption.value.dates || [],
+      boundaryGap: false,
+      axisLine: { lineStyle: { color: isDark.value ? '#333' : '#e0e6ed' } },
+      axisLabel: { color: isDark.value ? '#C0C4CC' : '#606266' }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { type: 'dashed', color: isDark.value ? '#333' : '#ebeef5' } },
+      axisLabel: { color: isDark.value ? '#C0C4CC' : '#606266' }
+    },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    series: [
+      {
+        name: $i18nBundle('mock.label.totalCalls'),
+        type: 'line',
+        data: trendOption.value.counts || [],
+        smooth: true,
+        showSymbol: false,
+        areaStyle: {
+          color: new graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(58,119,255,0.6)' },
+            { offset: 1, color: 'rgba(58,119,255,0.05)' }
+          ])
+        },
+        lineStyle: { width: 3, color: '#3a77ff' },
+        itemStyle: { color: '#3a77ff' }
+      }
+    ]
+  }
+})
 </script>
 
 <template>
@@ -88,7 +103,9 @@ const loadTrend = async () => {
     </template>
     <v-chart
       class="chart"
-      :option="trendOption"
+      :option="computedOption"
+      :theme="themeStr"
+      :update-options="{ notMerge: true }"
       autoresize
     />
   </el-card>
