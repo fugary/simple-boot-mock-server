@@ -63,12 +63,12 @@ provide('dashboard-all', all)
 
 <style scoped>
 .dashboard-container {
-  padding: 10px;
+  padding: 0;
 }
 .dashboard-header {
   margin-bottom: 20px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 .margin-top3 {
   margin-top: 20px;
