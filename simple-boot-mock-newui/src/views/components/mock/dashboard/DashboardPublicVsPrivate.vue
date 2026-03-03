@@ -46,8 +46,6 @@ const loadRatioActivity = async () => {
   }
 }
 const computedOption = computed(() => {
-  // Trigger dependency to ensure reactivity on locale swap
-  globalConfigStore.currentLocale
   const dynamicData = (ratioOption.value.data || []).map(item => {
     let name = item.rawName
     if (name === '公开项目') name = $i18nBundle('mock.label.publicMockProjects')
@@ -57,7 +55,7 @@ const computedOption = computed(() => {
 
   return {
     color: ['#1890ff', '#52c41a'],
-    backgroundColor: 'transparent',
+    backgroundColor: globalConfigStore.currentLocale ? 'transparent' : 'transparent',
     textStyle: {
       color: isDark.value ? '#E5EAF3' : '#303133'
     },

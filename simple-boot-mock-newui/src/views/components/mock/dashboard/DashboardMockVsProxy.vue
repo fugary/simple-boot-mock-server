@@ -46,8 +46,6 @@ const loadRatioActivity = async () => {
   }
 }
 const computedOption = computed(() => {
-  // Trigger dependency to ensure reactivity on locale swap
-  globalConfigStore.currentLocale
   const dynamicData = (ratioOption.value.data || []).map(item => {
     let name = item.rawName
     if (name === 'Mock返回') name = $i18nBundle('mock.label.mockReturn')

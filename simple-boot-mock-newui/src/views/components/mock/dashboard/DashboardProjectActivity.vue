@@ -45,11 +45,9 @@ const loadProjectActivity = async () => {
 }
 
 const computedOption = computed(() => {
-  // Trigger dependency to ensure reactivity on locale swap
-  globalConfigStore.currentLocale
   return {
     color: ['#3ba272', '#fc8452', '#9a60b4', '#ea7ccc', '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'],
-    backgroundColor: 'transparent',
+    backgroundColor: globalConfigStore.currentLocale ? 'transparent' : 'transparent',
     textStyle: {
       color: isDark.value ? '#E5EAF3' : '#303133'
     },

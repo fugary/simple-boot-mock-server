@@ -43,12 +43,11 @@ const loadUserGroups = async () => {
 }
 
 const computedOption = computed(() => {
-  globalConfigStore.currentLocale // Dependency for i18n reactivity
   const textColor = isDark.value ? '#E5EAF3' : '#303133'
   const axisLineColor = isDark.value ? '#4C4D4F' : '#DCDFE6'
 
   return {
-    backgroundColor: 'transparent',
+    backgroundColor: globalConfigStore.currentLocale ? 'transparent' : 'transparent',
     tooltip: {
       trigger: 'axis',
       axisPointer: {

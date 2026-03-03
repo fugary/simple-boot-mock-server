@@ -48,14 +48,12 @@ const loadTrend = async () => {
 }
 
 const computedOption = computed(() => {
-  // Trigger dependency to ensure reactivity on locale swap
-  globalConfigStore.currentLocale
   return {
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'cross', label: { backgroundColor: '#6a7985' } }
     },
-    backgroundColor: 'transparent',
+    backgroundColor: globalConfigStore.currentLocale ? 'transparent' : 'transparent',
     xAxis: {
       type: 'category',
       data: trendOption.value.dates || [],
