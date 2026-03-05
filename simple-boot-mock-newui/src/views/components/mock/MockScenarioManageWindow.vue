@@ -63,7 +63,8 @@ const onAddScenario = () => {
     groupId: props.groupItem?.id,
     scenarioName: '',
     description: '',
-    status: 1
+    status: 1,
+    copyFromScenarioCode: undefined
   }
   showEditWindow.value = true
 }
@@ -166,22 +167,40 @@ const buttons = computed(() => defineTableButtons([{
   buttonIf: item => !item._default
 }]))
 
-const formOptions = computed(() => defineFormOptions([{
-  labelKey: 'mock.label.scenarioName',
-  prop: 'scenarioName',
-  required: true,
-  style: getStyleGrow(10)
-}, {
-  ...useFormStatus(),
-  style: getStyleGrow(10)
-}, {
-  labelKey: 'common.label.description',
-  prop: 'description',
-  attrs: {
-    type: 'textarea'
-  },
-  style: getStyleGrow(10)
-}]))
+const formOptions = computed(() => {
+  const options = [{
+    labelKey: 'mock.label.scenarioName',
+    prop: 'scenarioName',
+    required: true,
+    style: getStyleGrow(10)
+  }]
+
+  if (!currentScenario.value?.id) {
+    options.push({
+      labelKey: 'mock.label.copyFromScenario',
+      prop: 'copyFromScenarioCode',
+      type: 'select',
+      children: listData.value.map(item => ({
+        label: item.scenarioName || item.scenarioCode,
+        value: item.scenarioCode || '' // '' for default scenario
+      })),
+      style: getStyleGrow(10)
+    })
+  }
+
+  options.push({
+    ...useFormStatus(),
+    style: getStyleGrow(10)
+  }, {
+    labelKey: 'common.label.description',
+    prop: 'description',
+    attrs: {
+      type: 'textarea'
+    },
+    style: getStyleGrow(10)
+  })
+  return defineFormOptions(options)
+})
 
 </script>
 

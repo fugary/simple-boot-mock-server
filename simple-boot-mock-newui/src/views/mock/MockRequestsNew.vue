@@ -48,15 +48,19 @@ const { goBack } = useBackUrl('/mock/groups')
 const { groupItem, loadGroup, mockProject, groupUrl, loadSuccess } = useMockGroupItem(groupId)
 
 const scenarioList = ref([])
-const loadScenarios = () => {
+const loadScenarios = async () => {
+  await loadGroup()
   return MockScenarioApi.search({ groupId }).then(data => {
     scenarioList.value = data?.resultData || []
     let changed = false
-    if (scenarioList.value.length > 0 && searchParam.value?.scenarioCode === undefined) {
-      searchParam.value.scenarioCode = groupItem.value?.activeScenarioCode || ''
-      changed = true
+    if (scenarioList.value.length > 0 && (searchParam.value?.scenarioCode == null || searchParam.value.scenarioCode === '')) {
+      const activeScenario = groupItem.value?.activeScenarioCode || ''
+      if (searchParam.value.scenarioCode !== activeScenario) {
+        searchParam.value.scenarioCode = activeScenario
+        changed = true
+      }
     }
-    if (scenarioList.value.length === 0 && searchParam.value?.scenarioCode !== undefined) {
+    if (scenarioList.value.length === 0 && searchParam.value?.scenarioCode != null) {
       searchParam.value.scenarioCode = undefined
       changed = true
     }
@@ -81,7 +85,7 @@ const pageAttrs = {
 
 const loadMockRequests = (...args) => {
   const scenarioCode = searchParam.value?.scenarioCode
-  searchParam.value.scenarioCode = scenarioCode === undefined ? null : scenarioCode
+  searchParam.value.scenarioCode = scenarioCode == null ? '' : scenarioCode
   return searchMockRequests(...args).then((result) => {
     if (tableData.value?.length) {
       onSelectRequest(tableData.value.find(req => req.id === searchParam.value.selectRequestId) || tableData.value[0])
@@ -195,7 +199,7 @@ const newOrEdit = async id => {
   if (scenarioList.value.length > 0) {
     currentRequest.value.scenarioCode = currentRequest.value?.scenarioCode || ''
   } else {
-    currentRequest.value.scenarioCode = null
+    currentRequest.value.scenarioCode = undefined
   }
   showEditWindow.value = true
   // Auto-expand if any hidden field has a value
@@ -306,7 +310,7 @@ const editFormOptions = computed(() => {
 })
 
 const saveMockRequest = item => {
-  item.scenarioCode = item?.scenarioCode || null
+  item.scenarioCode = item?.scenarioCode || undefined
   return MockRequestApi.saveOrUpdate(item)
     .then((data) => {
       if (data.success && data.resultData && searchParam.value.selectRequestId !== data.resultData.id) {

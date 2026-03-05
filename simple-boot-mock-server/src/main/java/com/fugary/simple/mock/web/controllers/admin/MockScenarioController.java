@@ -81,6 +81,10 @@ public class MockScenarioController {
             scenario.setCreator(getLoginUser().getUserName());
         }
         mockScenarioService.saveOrUpdate(SimpleMockUtils.addAuditInfo(scenario));
+        if (scenario.getCopyFromScenarioCode() != null) {
+            mockScenarioService.copyScenarioRequests(group.getId(), scenario.getCopyFromScenarioCode(),
+                    scenario.getScenarioCode());
+        }
         if (!scenario.isEnabled() && StringUtils.equals(group.getActiveScenarioCode(), scenario.getScenarioCode())) {
             group.setActiveScenarioCode(null);
             mockGroupService.updateById(SimpleMockUtils.addAuditInfo(group));
@@ -153,9 +157,9 @@ public class MockScenarioController {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         List<Integer> requestIds = mockRequestService.list(Wrappers.<MockRequest>query()
-                        .eq("group_id", scenario.getGroupId())
-                        .eq("scenario_code", scenario.getScenarioCode())
-                        .isNull(DB_MODIFY_FROM_KEY))
+                .eq("group_id", scenario.getGroupId())
+                .eq("scenario_code", scenario.getScenarioCode())
+                .isNull(DB_MODIFY_FROM_KEY))
                 .stream().map(MockRequest::getId).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(requestIds)) {
             mockRequestService.deleteMockRequests(requestIds);

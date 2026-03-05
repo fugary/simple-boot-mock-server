@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.entity.mock;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,4 +20,7 @@ public class MockScenario extends MockBase {
     private String scenarioCode;
 
     private String description;
+
+    @TableField(exist = false)
+    private String copyFromScenarioCode;
 }
