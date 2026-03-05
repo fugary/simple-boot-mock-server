@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
 import static com.fugary.simple.mock.utils.security.SecurityUtils.getLoginUser;
 
 @RestController
@@ -80,6 +81,10 @@ public class MockScenarioController {
             scenario.setCreator(getLoginUser().getUserName());
         }
         mockScenarioService.saveOrUpdate(SimpleMockUtils.addAuditInfo(scenario));
+        if (!scenario.isEnabled() && StringUtils.equals(group.getActiveScenarioCode(), scenario.getScenarioCode())) {
+            group.setActiveScenarioCode(null);
+            mockGroupService.updateById(SimpleMockUtils.addAuditInfo(group));
+        }
         return SimpleResultUtils.createSimpleResult(scenario);
     }
 
@@ -149,7 +154,8 @@ public class MockScenarioController {
         }
         List<Integer> requestIds = mockRequestService.list(Wrappers.<MockRequest>query()
                         .eq("group_id", scenario.getGroupId())
-                        .eq("scenario_code", scenario.getScenarioCode()))
+                        .eq("scenario_code", scenario.getScenarioCode())
+                        .isNull(DB_MODIFY_FROM_KEY))
                 .stream().map(MockRequest::getId).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(requestIds)) {
             mockRequestService.deleteMockRequests(requestIds);

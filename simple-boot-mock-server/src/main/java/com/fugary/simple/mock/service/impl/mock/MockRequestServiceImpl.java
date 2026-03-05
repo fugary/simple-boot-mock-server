@@ -78,6 +78,8 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         List<MockRequest> existRequests = list(Wrappers.<MockRequest>query()
                 .eq("group_id", request.getGroupId())
                 .eq("request_path", request.getRequestPath())
+                .eq(StringUtils.isNotBlank(request.getScenarioCode()), "scenario_code", request.getScenarioCode())
+                .isNull(StringUtils.isBlank(request.getScenarioCode()), "scenario_code")
                 .eq("match_pattern", request.getMatchPattern()));
         return existRequests.stream()
                 .anyMatch(existRequest -> !existRequest.getId().equals(request.getId())

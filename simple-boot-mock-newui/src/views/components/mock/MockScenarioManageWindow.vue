@@ -1,9 +1,13 @@
-<script setup>
+<script setup lang="jsx">
 import { computed, ref, watch } from 'vue'
-import MockScenarioApi, { activateScenario, toggleScenarioStatus } from '@/api/mock/MockScenarioApi'
-import { $coreConfirm } from '@/utils'
-import { ElMessage } from 'element-plus'
+import { ElTag } from 'element-plus'
+import { defineFormOptions, defineTableButtons, defineTableColumns } from '@/components/utils'
 import { $i18nBundle } from '@/messages'
+import { $coreConfirm, getStyleGrow } from '@/utils'
+import { useFormStatus } from '@/consts/GlobalConstants'
+import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
+import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
+import MockScenarioApi, { activateScenario, toggleScenarioStatus } from '@/api/mock/MockScenarioApi'
 
 const props = defineProps({
   groupItem: {
@@ -19,11 +23,9 @@ const show = defineModel('show', {
   default: false
 })
 
-const showEdit = ref(false)
 const scenarios = ref([])
-const current = ref({})
-
-const defaultScenarioCode = null
+const showEditWindow = ref(false)
+const currentScenario = ref({})
 
 const loadScenarios = () => {
   if (!props.groupItem?.id) {
@@ -45,197 +47,180 @@ watch(show, val => {
 const listData = computed(() => {
   const defaultScenario = {
     id: 0,
+    scenarioCode: null,
     scenarioName: $i18nBundle('mock.label.defaultScenario'),
-    scenarioCode: defaultScenarioCode,
     status: 1,
+    description: '',
     _default: true
   }
   return [defaultScenario, ...scenarios.value]
 })
 
-const isActive = (item) => {
-  return (props.groupItem?.activeScenarioCode || null) === (item?.scenarioCode || null)
-}
+const isActive = (item) => (props.groupItem?.activeScenarioCode || null) === (item?.scenarioCode || null)
 
-const onAdd = () => {
-  current.value = {
+const onAddScenario = () => {
+  currentScenario.value = {
     groupId: props.groupItem?.id,
     scenarioName: '',
     description: '',
     status: 1
   }
-  showEdit.value = true
+  showEditWindow.value = true
 }
 
-const onEdit = (item) => {
-  current.value = { ...item }
-  showEdit.value = true
+const onEditScenario = (item) => {
+  currentScenario.value = { ...item }
+  showEditWindow.value = true
 }
 
-const onSave = () => {
-  if (!current.value?.scenarioName?.trim()) {
-    ElMessage.error($i18nBundle('common.msg.commonInput', $i18nBundle('mock.label.scenarioName')))
-    return
+const saveCurrentScenario = (item) => {
+  const scenarioName = item?.scenarioName?.trim()
+  if (!scenarioName) {
+    return Promise.reject(new Error($i18nBundle('common.msg.commonInput', $i18nBundle('mock.label.scenarioName'))))
   }
-  MockScenarioApi.saveOrUpdate({
-    ...current.value,
+  return MockScenarioApi.saveOrUpdate({
+    ...item,
     groupId: props.groupItem?.id,
-    scenarioName: current.value.scenarioName.trim()
-  }).then(data => {
-    if (data?.success) {
-      showEdit.value = false
-      loadScenarios().then(() => emit('updated'))
-      ElMessage.success($i18nBundle('common.msg.saveSuccess'))
-    }
-  })
+    scenarioName
+  }, { loading: true }).then(data => {
+    return loadScenarios().then(() => {
+      emit('updated')
+      return data
+    })
+  }).catch(err => Promise.reject(err))
 }
 
-const onDelete = (item) => {
-  $coreConfirm($i18nBundle('common.msg.deleteConfirm')).then(() => {
-    return MockScenarioApi.removeById(item.id)
-  }).then(() => {
-    loadScenarios().then(() => emit('updated'))
-  })
+const onDeleteScenario = (item) => {
+  return $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
+    .then(() => MockScenarioApi.deleteById(item.id, { loading: true }))
+    .then(() => loadScenarios())
+    .then(() => emit('updated'))
 }
 
-const onActivate = (item) => {
-  activateScenario({
+const onActivateScenario = (item) => {
+  return activateScenario({
     groupId: props.groupItem?.id,
     scenarioCode: item?.scenarioCode || null
-  }).then(data => {
-    if (data?.success) {
-      emit('updated')
-      ElMessage.success($i18nBundle('common.msg.saveSuccess'))
-    }
+  }, { loading: true }).then(() => {
+    emit('updated')
   })
 }
 
-const onToggleStatus = (item) => {
-  toggleScenarioStatus(item.id).then(data => {
-    if (data?.success) {
-      loadScenarios().then(() => emit('updated'))
-    }
+const onToggleScenarioStatus = (item) => {
+  if (item._default) {
+    return Promise.resolve(false)
+  }
+  return toggleScenarioStatus(item.id, { loading: true }).then(() => {
+    return loadScenarios().then(() => {
+      emit('updated')
+      return true
+    })
   })
 }
+
+const columns = computed(() => defineTableColumns([{
+  labelKey: 'mock.label.scenarioName',
+  minWidth: '220px',
+  formatter (item) {
+    return <>
+      {item.scenarioName}
+      {isActive(item) ? <ElTag type="success" size="small" class="margin-left1">{$i18nBundle('mock.label.activeScenario')}</ElTag> : ''}
+    </>
+  }
+}, {
+  labelKey: 'common.label.status',
+  width: '150px',
+  formatter (item) {
+    return <DelFlagTag
+      v-model={item.status}
+      clickToToggle={!item._default}
+      onToggleValue={() => onToggleScenarioStatus(item)}
+    />
+  }
+}, {
+  labelKey: 'common.label.description',
+  property: 'description',
+  minWidth: '240px'
+}]))
+
+const buttons = computed(() => defineTableButtons([{
+  tooltip: $i18nBundle('mock.label.activateScenario'),
+  icon: 'Flag',
+  round: true,
+  type: 'primary',
+  click: item => onActivateScenario(item),
+  buttonIf: item => !isActive(item)
+}, {
+  tooltip: $i18nBundle('common.label.edit'),
+  icon: 'Edit',
+  round: true,
+  type: 'primary',
+  click: item => onEditScenario(item),
+  buttonIf: item => !item._default
+}, {
+  tooltip: $i18nBundle('common.label.delete'),
+  icon: 'DeleteFilled',
+  round: true,
+  type: 'danger',
+  click: item => onDeleteScenario(item),
+  buttonIf: item => !item._default
+}]))
+
+const formOptions = computed(() => defineFormOptions([{
+  labelKey: 'mock.label.scenarioName',
+  prop: 'scenarioName',
+  required: true,
+  style: getStyleGrow(10)
+}, {
+  ...useFormStatus(),
+  style: getStyleGrow(10)
+}, {
+  labelKey: 'common.label.description',
+  prop: 'description',
+  attrs: {
+    type: 'textarea'
+  },
+  style: getStyleGrow(10)
+}]))
+
 </script>
 
 <template>
   <common-window
     v-model="show"
     :title="$t('mock.label.scenarioManage')"
-    width="760px"
-    :show-ok="false"
+    width="1000px"
+    :show-cancel="false"
+    :ok-label="$t('common.label.close')"
     append-to-body
   >
-    <div class="margin-bottom2">
-      <el-button
-        type="primary"
-        size="small"
-        @click="onAdd"
-      >
-        {{ $t('common.label.new') }}
-      </el-button>
-    </div>
-    <el-table
-      :data="listData"
-      border
-      size="small"
-    >
-      <el-table-column
-        :label="$t('mock.label.scenarioName')"
-        min-width="180"
-      >
-        <template #default="{ row }">
-          {{ row.scenarioName }}
-          <el-tag
-            v-if="isActive(row)"
-            class="margin-left1"
-            type="success"
-            size="small"
-          >
-            {{ $t('mock.label.activeScenario') }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="$t('common.label.status')"
-        width="120"
-      >
-        <template #default="{ row }">
-          <el-tag
-            :type="row.status===1?'success':'info'"
-            size="small"
-          >
-            {{ row.status===1?$t('common.label.statusEnabled'):$t('common.label.statusDisabled') }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="$t('common.label.description')"
-        min-width="220"
-      >
-        <template #default="{ row }">
-          {{ row.description }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="$t('common.label.operation')"
-        width="230"
-      >
-        <template #default="{ row }">
-          <el-button
-            link
-            type="primary"
-            @click="onActivate(row)"
-          >
-            {{ $t('mock.label.activateScenario') }}
-          </el-button>
-          <el-button
-            v-if="!row._default"
-            link
-            type="primary"
-            @click="onEdit(row)"
-          >
-            {{ $t('common.label.edit') }}
-          </el-button>
-          <el-button
-            v-if="!row._default"
-            link
-            type="warning"
-            @click="onToggleStatus(row)"
-          >
-            {{ row.status===1?$t('common.label.statusDisable'):$t('common.label.statusEnable') }}
-          </el-button>
-          <el-button
-            v-if="!row._default"
-            link
-            type="danger"
-            @click="onDelete(row)"
-          >
-            {{ $t('common.label.delete') }}
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-container class="flex-column">
+      <el-container class="margin-bottom2">
+        <el-button
+          type="info"
+          @click="onAddScenario"
+        >
+          {{ $t('common.label.new') }}
+        </el-button>
+      </el-container>
+      <common-table
+        :data="listData"
+        :columns="columns"
+        :buttons="buttons"
+        buttons-slot="buttons"
+        :buttons-column-attrs="{ width: '180px' }"
+      />
+    </el-container>
   </common-window>
-
-  <common-window
-    v-model="showEdit"
-    :title="current?.id?$t('common.label.edit'):$t('common.label.new')"
-    width="520px"
-    append-to-body
-    :ok-click="onSave"
-  >
-    <common-form
-      :model="current"
-      :show-buttons="false"
-      :options="[
-        { labelKey: 'mock.label.scenarioName', prop: 'scenarioName', required: true },
-        { labelKey: 'common.label.status', prop: 'status', type: 'select', children: [{value: 1, label: $t('common.label.statusEnabled')}, {value: 0, label: $t('common.label.statusDisabled')}] },
-        { labelKey: 'common.label.description', prop: 'description', attrs: { type: 'textarea' } }
-      ]"
-    />
-  </common-window>
+  <simple-edit-window
+    v-model="currentScenario"
+    v-model:show-edit-window="showEditWindow"
+    :form-options="formOptions"
+    :name="$t('mock.label.scenario')"
+    :save-current-item="saveCurrentScenario"
+    label-width="130px"
+    inline-auto-mode
+  />
 </template>
 
 <style scoped>

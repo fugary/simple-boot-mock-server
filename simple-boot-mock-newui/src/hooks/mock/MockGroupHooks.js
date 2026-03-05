@@ -7,10 +7,11 @@ export const useMockGroupItem = (groupId, load = true) => {
   const loadSuccess = ref(false)
 
   const loadGroup = () => {
-    MockGroupApi.getById(groupId).then(data => {
+    return MockGroupApi.getById(groupId).then(data => {
       groupItem.value = data.resultData
       mockProject.value = data.infos?.mockProject
       loadSuccess.value = !!data.resultData
+      return data
     })
   }
 

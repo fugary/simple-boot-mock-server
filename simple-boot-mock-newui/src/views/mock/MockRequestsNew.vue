@@ -28,6 +28,7 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import { checkProjectEdit } from '@/api/mock/MockProjectApi'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { ElTag, ElText } from 'element-plus'
+import MockScenarioApi from '@/api/mock/MockScenarioApi'
 import {
   getLoadBalancerLabel,
   getRequestHistoryViewOptions,
@@ -38,12 +39,33 @@ import { calcUrl, pasteCurl2Request } from '@/services/mock/CurlProcessService'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import { set } from 'lodash-es'
 import { useMockMonacoFieldOption } from '@/services/mock/MockEditService'
+import MockScenarioManageWindow from '@/views/components/mock/MockScenarioManageWindow.vue'
 
 const route = useRoute()
 const groupId = route.params.groupId
 
 const { goBack } = useBackUrl('/mock/groups')
 const { groupItem, loadGroup, mockProject, groupUrl, loadSuccess } = useMockGroupItem(groupId)
+
+const scenarioList = ref([])
+const loadScenarios = () => {
+  return MockScenarioApi.search({ groupId }).then(data => {
+    scenarioList.value = data?.resultData || []
+    let changed = false
+    if (scenarioList.value.length > 0 && searchParam.value?.scenarioCode === undefined) {
+      searchParam.value.scenarioCode = groupItem.value?.activeScenarioCode || ''
+      changed = true
+    }
+    if (scenarioList.value.length === 0 && searchParam.value?.scenarioCode !== undefined) {
+      searchParam.value.scenarioCode = undefined
+      changed = true
+    }
+    if (changed) {
+      loadMockRequests()
+    }
+    return scenarioList.value
+  })
+}
 
 const { tableData, loading, searchParam, searchMethod: searchMockRequests } = useTableAndSearchForm({
   defaultParam: { groupId, page: useDefaultPage(8) },
@@ -58,6 +80,8 @@ const pageAttrs = {
 }
 
 const loadMockRequests = (...args) => {
+  const scenarioCode = searchParam.value?.scenarioCode
+  searchParam.value.scenarioCode = scenarioCode === undefined ? null : scenarioCode
   return searchMockRequests(...args).then((result) => {
     if (tableData.value?.length) {
       onSelectRequest(tableData.value.find(req => req.id === searchParam.value.selectRequestId) || tableData.value[0])
@@ -73,6 +97,7 @@ const loadMockRequests = (...args) => {
 }
 
 loadMockRequests()
+loadScenarios()
 
 const methodOptions = ALL_METHODS.map(method => {
   return {
@@ -83,35 +108,52 @@ const methodOptions = ALL_METHODS.map(method => {
 
 //* ************搜索框**************//
 const searchFormOptions = computed(() => {
-  return [
-    {
-      labelKey: 'common.label.keywords',
-      prop: 'keyword'
-    }, {
-      labelKey: 'mock.label.method',
-      prop: 'method',
-      type: 'select',
-      children: methodOptions,
-      change () {
-        loadMockRequests()
-      }
-    },
-    useSearchStatus({ change () { loadMockRequests() } }), {
-      labelKey: 'mock.label.hasMockData',
-      prop: 'hasData',
+  const options = [{
+    labelKey: 'common.label.keywords',
+    prop: 'keyword'
+  }]
+  if (scenarioList.value.length > 0) {
+    options.push({
+      labelKey: 'mock.label.scenario',
+      prop: 'scenarioCode',
       type: 'select',
       children: [{
-        value: true,
-        label: $i18nBundle('common.label.yes')
-      }, {
-        value: false,
-        label: $i18nBundle('common.label.no')
-      }],
+        value: '',
+        label: $i18nBundle('mock.label.defaultScenario')
+      }, ...scenarioList.value.map(item => ({
+        value: item.scenarioCode,
+        label: item.scenarioName
+      }))],
       change () {
         loadMockRequests()
       }
+    })
+  }
+  options.push({
+    labelKey: 'mock.label.method',
+    prop: 'method',
+    type: 'select',
+    children: methodOptions,
+    change () {
+      loadMockRequests()
     }
-  ]
+  },
+  useSearchStatus({ change () { loadMockRequests() } }), {
+    labelKey: 'mock.label.hasMockData',
+    prop: 'hasData',
+    type: 'select',
+    children: [{
+      value: true,
+      label: $i18nBundle('common.label.yes')
+    }, {
+      value: false,
+      label: $i18nBundle('common.label.no')
+    }],
+    change () {
+      loadMockRequests()
+    }
+  })
+  return options
 })
 const resetSearchForm = () => {
   searchFormOptions.value.map(option => option.prop || option.property)
@@ -132,7 +174,10 @@ const deleteRequests = () => {
 const newRequestItem = () => ({
   status: 1,
   method: 'GET',
-  groupId
+  groupId,
+  scenarioCode: scenarioList.value.length > 0
+    ? (searchParam.value?.scenarioCode ?? '')
+    : null
 })
 const showEditWindow = ref(false)
 const showMore = ref(false)
@@ -146,6 +191,11 @@ const newOrEdit = async id => {
     })
   } else {
     currentRequest.value = newRequestItem()
+  }
+  if (scenarioList.value.length > 0) {
+    currentRequest.value.scenarioCode = currentRequest.value?.scenarioCode || ''
+  } else {
+    currentRequest.value.scenarioCode = null
   }
   showEditWindow.value = true
   // Auto-expand if any hidden field has a value
@@ -161,7 +211,7 @@ const onSelectRequest = request => {
   }
 }
 const editFormOptions = computed(() => {
-  const options = defineFormOptions([{
+  const options = [{
     labelKey: 'mock.label.requestPath',
     style: getStyleGrow(3.5),
     prop: 'method',
@@ -227,8 +277,24 @@ const editFormOptions = computed(() => {
     attrs: {
       type: 'textarea'
     }
-  }])
-  const filteredOptions = options.filter(option => {
+  }]
+  if (scenarioList.value.length > 0) {
+    options.splice(2, 0, {
+      labelKey: 'mock.label.scenario',
+      prop: 'scenarioCode',
+      type: 'select',
+      clearable: false,
+      children: [{
+        value: '',
+        label: $i18nBundle('mock.label.defaultScenario')
+      }, ...scenarioList.value.map(item => ({
+        value: item.scenarioCode,
+        label: item.scenarioName
+      }))]
+    })
+  }
+  const formOptions = defineFormOptions(options)
+  const filteredOptions = formOptions.filter(option => {
     if (!option.prop || !hiddenKeys.includes(option.prop)) return true
     return showMore.value
   })
@@ -240,6 +306,7 @@ const editFormOptions = computed(() => {
 })
 
 const saveMockRequest = item => {
+  item.scenarioCode = item?.scenarioCode || null
   return MockRequestApi.saveOrUpdate(item)
     .then((data) => {
       if (data.success && data.resultData && searchParam.value.selectRequestId !== data.resultData.id) {
@@ -248,6 +315,7 @@ const saveMockRequest = item => {
       loadMockRequests()
       return data
     })
+    .catch(err => Promise.reject(err))
 }
 
 const batchMode = ref(false)
@@ -288,7 +356,21 @@ const changeBatchMode = () => {
 
 const editGroupEnvParams = () => {
   toEditGroupEnvParams(groupItem.value?.id)
-    .then(() => loadGroup())
+    .then(() => Promise.resolve(loadGroup()))
+    .then(() => loadMockRequests())
+}
+
+const showScenarioManageWindow = ref(false)
+const activeScenarioLabel = computed(() => {
+  const code = groupItem.value?.activeScenarioCode
+  if (!code) {
+    return ''
+  }
+  const found = scenarioList.value.find(item => item.scenarioCode === code)
+  return found?.scenarioName || code
+})
+const onScenarioChanged = () => {
+  Promise.resolve(loadGroup()).then(() => loadScenarios())
     .then(() => loadMockRequests())
 }
 
@@ -403,6 +485,13 @@ const toShowHistoryWindow = (current) => {
           {{ groupItem?.groupName }} 【{{ groupUrl }}】
         </span>
         <mock-url-copy-link :url-path="groupUrl" />
+        <el-tag
+          v-if="activeScenarioLabel"
+          type="warning"
+          class="margin-left2"
+        >
+          {{ $t('mock.label.activeScenario') }}: {{ activeScenarioLabel }}
+        </el-tag>
       </template>
     </el-page-header>
     <common-form
@@ -434,6 +523,13 @@ const toShowHistoryWindow = (current) => {
           @click="editGroupEnvParams"
         >
           {{ $t('mock.label.mockEnv') }}
+        </el-button>
+        <el-button
+          v-if="projectEditable"
+          type="warning"
+          @click="showScenarioManageWindow=true"
+        >
+          {{ $t('mock.label.scenarioManage') }}
         </el-button>
         <el-button
           @click="goBack()"
@@ -554,6 +650,11 @@ const toShowHistoryWindow = (current) => {
         </div>
       </template>
     </simple-edit-window>
+    <mock-scenario-manage-window
+      v-model:show="showScenarioManageWindow"
+      :group-item="groupItem"
+      @updated="onScenarioChanged"
+    />
   </el-container>
 </template>
 

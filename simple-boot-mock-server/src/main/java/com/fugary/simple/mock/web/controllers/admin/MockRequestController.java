@@ -69,6 +69,13 @@ public class MockRequestController {
         if (queryVo.getGroupId() != null) {
             queryWrapper.eq("group_id", queryVo.getGroupId());
         }
+        if (queryVo.getScenarioCode() != null) {
+            if (queryVo.getScenarioCode().isBlank()) {
+                queryWrapper.isNull("scenario_code");
+            } else {
+                queryWrapper.eq("scenario_code", queryVo.getScenarioCode().trim());
+            }
+        }
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         if (StringUtils.isNotBlank(keyword)) {
             queryWrapper.and(wrapper -> wrapper

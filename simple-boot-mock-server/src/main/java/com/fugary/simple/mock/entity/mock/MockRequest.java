@@ -19,6 +19,7 @@ public class MockRequest extends MockBase implements HistoryBase{
     private String method;
     private String matchPattern;
     private String requestName;
+    private String scenarioCode;
     private Integer delay;
     private String contentType;
     private String description;

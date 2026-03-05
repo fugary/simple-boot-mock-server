@@ -13,6 +13,7 @@ import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
+import com.fugary.simple.mock.service.mock.MockScenarioService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
@@ -80,6 +81,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
 
     @Autowired
     private MockPostScriptProcessor mockPostScriptProcessor;
+
+    @Autowired
+    private MockScenarioService mockScenarioService;
 
     @Setter
     @Getter
@@ -151,6 +155,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         List<MockRequest> requests = mockRequestService.list(Wrappers.<MockRequest>query().eq("group_id", id));
         mockRequestService.deleteMockRequests(requests.stream().map(MockRequest::getId).collect(Collectors.toList()));
         mockSchemaService.remove(Wrappers.<MockSchema>query().eq("group_id", id));
+        mockScenarioService.remove(Wrappers.<MockScenario>query().eq("group_id", id));
         return this.removeById(id);
     }
 
@@ -162,6 +167,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         List<MockRequest> requests = mockRequestService.list(Wrappers.<MockRequest>query().in("group_id", ids));
         mockRequestService.deleteMockRequests(requests.stream().map(MockRequest::getId).collect(Collectors.toList()));
         mockSchemaService.remove(Wrappers.<MockSchema>query().in("group_id", ids));
+        mockScenarioService.remove(Wrappers.<MockScenario>query().in("group_id", ids));
         return this.removeByIds(ids);
     }
 
@@ -196,6 +202,12 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         .eq(!testRequest, "status", 1)
                         .eq(testRequest, "id", requestId)
                         .isNull(DB_MODIFY_FROM_KEY);
+                String activeScenarioCode = StringUtils.trimToNull(mockGroup.getActiveScenarioCode());
+                if (StringUtils.isBlank(activeScenarioCode)) {
+                    requestQuery.isNull("scenario_code");
+                } else {
+                    requestQuery.eq("scenario_code", activeScenarioCode);
+                }
                 List<MockRequest> mockRequests = mockRequestService.list(requestQuery);
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
                 // 请求是否匹配上Request，如果匹配上就查询Data
@@ -335,8 +347,11 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         List<MockData> mockDataList = mockDataService
                 .list(Wrappers.<MockData>query().in("group_id", groupIds).isNull(DB_MODIFY_FROM_KEY));
         List<MockSchema> mockSchemas = mockSchemaService.list(Wrappers.<MockSchema>query().in("group_id", groupIds));
+        List<MockScenario> scenarios = mockScenarioService.list(Wrappers.<MockScenario>query().in("group_id", groupIds));
         Map<Integer, List<MockRequest>> requestMap = mockRequests.stream()
                 .collect(Collectors.groupingBy(MockRequest::getGroupId));
+        Map<Integer, List<MockScenario>> scenarioMap = scenarios.stream()
+                .collect(Collectors.groupingBy(MockScenario::getGroupId));
         Map<Integer, List<MockData>> mockDataMap = mockDataList.stream()
                 .collect(Collectors.groupingBy(MockData::getRequestId));
         Map<String, List<MockSchema>> mockSchemaMap = mockSchemas.stream().collect(Collectors
@@ -367,6 +382,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 }).collect(Collectors.toList());
             }
             exportGroupVo.setRequests(exportRequests);
+            exportGroupVo.setScenarios(scenarioMap.getOrDefault(group.getId(), new ArrayList<>()));
             exportGroupVo.setSchemas(calcMockGroupSchemaVo(mockSchemaMap, group));
             return exportGroupVo;
         }).collect(Collectors.toList());
@@ -480,6 +496,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         saveOrUpdate(mockGroup);
         List<MockRequest> mockRequests = mockRequestService
                 .list(Wrappers.<MockRequest>query().eq("group_id", groupId).isNull(DB_MODIFY_FROM_KEY));
+        List<MockScenario> scenarios = mockScenarioService
+                .list(Wrappers.<MockScenario>query().eq("group_id", groupId));
+        for (MockScenario scenario : scenarios) {
+            scenario.setId(null);
+            scenario.setGroupId(mockGroup.getId());
+            mockScenarioService.saveOrUpdate(SimpleMockUtils.addAuditInfo(scenario));
+        }
         for (MockRequest mockRequest : mockRequests) {
             mockRequestService.copyMockRequest(mockRequest.getId(), mockGroup.getId());
         }
@@ -506,13 +529,46 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             group.setProjectCode(
                     StringUtils.defaultIfBlank(importVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
             boolean saved = saveOrUpdate(SimpleMockUtils.addAuditInfo(group));
+            if (CollectionUtils.isNotEmpty(group.getScenarios())) {
+                Set<String> scenarioCodes = new HashSet<>();
+                Set<String> enabledScenarioCodes = new HashSet<>();
+                for (MockScenario scenario : group.getScenarios()) {
+                    scenario.setId(null);
+                    scenario.setGroupId(group.getId());
+                    scenario.setScenarioCode(StringUtils.defaultIfBlank(scenario.getScenarioCode(), SimpleMockUtils.uuid()));
+                    if (scenario.getStatus() == null) {
+                        scenario.setStatus(1);
+                    }
+                    scenarioCodes.add(scenario.getScenarioCode());
+                    if (scenario.isEnabled()) {
+                        enabledScenarioCodes.add(scenario.getScenarioCode());
+                    }
+                    mockScenarioService.saveOrUpdate(SimpleMockUtils.addAuditInfo(scenario));
+                }
+                if (StringUtils.isNotBlank(group.getActiveScenarioCode())
+                        && (!scenarioCodes.contains(group.getActiveScenarioCode())
+                        || !enabledScenarioCodes.contains(group.getActiveScenarioCode()))) {
+                    group.setActiveScenarioCode(null);
+                    updateById(SimpleMockUtils.addAuditInfo(group));
+                }
+            } else {
+                group.setActiveScenarioCode(null);
+                updateById(SimpleMockUtils.addAuditInfo(group));
+            }
             ExportRequestVo groupRequestVo = new ExportRequestVo();
             groupRequestVo.setGroupId(group.getId());
             importSchemas(group.getSchemas(), groupRequestVo, null);
             if (saved && group.getRequests() != null) {
+                Set<String> scenarioCodes = CollectionUtils.isNotEmpty(group.getScenarios())
+                        ? group.getScenarios().stream().map(MockScenario::getScenarioCode).collect(Collectors.toSet())
+                        : new HashSet<>();
                 group.getRequests().forEach(request -> {
                     request.setId(null);
                     request.setGroupId(group.getId());
+                    request.setScenarioCode(StringUtils.trimToNull(request.getScenarioCode()));
+                    if (StringUtils.isNotBlank(request.getScenarioCode()) && !scenarioCodes.contains(request.getScenarioCode())) {
+                        request.setScenarioCode(null);
+                    }
                     boolean reqSaved = mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(request));
                     importSchemas(request.getSchemas(), request, null);
                     if (reqSaved && request.getDataList() != null) {
