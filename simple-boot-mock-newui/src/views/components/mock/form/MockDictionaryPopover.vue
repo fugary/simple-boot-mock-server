@@ -6,27 +6,44 @@ import { $i18nBundle } from '@/messages'
 const emit = defineEmits(['select'])
 
 const dictGroups = [
-  { name: 'mock.label.dict.basic', keys: ['boolean', 'natural', 'integer', 'float', 'character', 'string', 'range'] },
-  { name: 'mock.label.dict.dateTime', keys: ['date', 'time', 'datetime', 'now', 'timestamp'] },
-  { name: 'mock.label.dict.image', keys: ['image', 'dataImage'] },
-  { name: 'mock.label.dict.color', keys: ['color', 'hex', 'rgb', 'rgba', 'hsl'] },
-  { name: 'mock.label.dict.text', keys: ['paragraph', 'sentence', 'word', 'title', 'cparagraph', 'csentence', 'cword', 'ctitle'] },
-  { name: 'mock.label.dict.name', keys: ['first', 'last', 'name', 'cfirst', 'clast', 'cname'] },
-  { name: 'mock.label.dict.web', keys: ['url', 'protocol', 'domain', 'dtl', 'email', 'ip'] },
-  { name: 'mock.label.dict.address', keys: ['region', 'province', 'city', 'county', 'zip'] },
-  { name: 'mock.label.dict.helpers', keys: ['capitalize', 'upper', 'lower', 'pick', 'shuffle'] },
-  { name: 'mock.label.dict.id', keys: ['guid', 'id', 'increment'] },
-  { name: 'mock.label.dict.misc', keys: ['version', 'phone'] }
+  { name: 'mock.label.dictBasic', keys: ['boolean', 'natural', 'integer', 'float', 'character', 'string', 'range'] },
+  { name: 'mock.label.dictDateTime', keys: ['date', 'time', 'datetime', 'now', 'timestamp'] },
+  { name: 'mock.label.dictImage', keys: ['image', 'dataImage'] },
+  { name: 'mock.label.dictColor', keys: ['color', 'hex', 'rgb', 'rgba', 'hsl'] },
+  { name: 'mock.label.dictText', keys: ['paragraph', 'sentence', 'word', 'title', 'cparagraph', 'csentence', 'cword', 'ctitle'] },
+  { name: 'mock.label.dictName', keys: ['first', 'last', 'name', 'cfirst', 'clast', 'cname'] },
+  { name: 'mock.label.dictWeb', keys: ['url', 'protocol', 'domain', 'dtl', 'email', 'ip'] },
+  { name: 'mock.label.dictAddress', keys: ['region', 'province', 'city', 'county', 'zip'] },
+  { name: 'mock.label.dictHelpers', keys: ['capitalize', 'upper', 'lower', 'pick', 'shuffle'] },
+  { name: 'mock.label.dictId', keys: ['guid', 'id', 'increment'] },
+  { name: 'mock.label.dictMisc', keys: ['version', 'phone'] }
 ]
 
 const groupedDicts = computed(() => {
   return dictGroups.map(g => ({
     name: $i18nBundle(g.name),
-    items: g.keys.map(k => ({ key: k, desc: MockRandom[k]?.desc || k }))
+    items: g.keys.map(k => {
+      const mockObj = MockRandom[k]
+      const desc = mockObj?.desc || k
+      let params = ''
+      if (mockObj?.func) {
+        const fnStr = mockObj.func.toString()
+        const match = fnStr.match(/\(([^)]*)\)/)
+        if (match && match[1]) {
+          params = match[1].split(',').map(p => p.trim()).join(', ')
+        }
+      }
+      return {
+        key: k,
+        desc,
+        params,
+        tooltip: params ? `@${k}(${params}) - ${desc}` : `@${k} - ${desc}`
+      }
+    })
   }))
 })
 
-const activeNames = ref([$i18nBundle('mock.label.dict.basic'), $i18nBundle('mock.label.dict.name')])
+const activeNames = ref([$i18nBundle('mock.label.dictBasic'), $i18nBundle('mock.label.dictName')])
 
 const handleSelect = (item) => {
   emit('select', `@${item.key}`)
@@ -65,7 +82,7 @@ const handleSelect = (item) => {
             <el-tooltip
               v-for="item in group.items"
               :key="item.key"
-              :content="item.desc"
+              :content="item.tooltip"
               placement="top"
             >
               <el-tag
