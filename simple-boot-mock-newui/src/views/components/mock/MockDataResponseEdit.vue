@@ -1,12 +1,14 @@
 <script setup>
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { computed, ref } from 'vue'
+import { computed, ref, toRaw } from 'vue'
 import { cloneDeep, isString } from 'lodash-es'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { $i18nKey } from '@/messages'
 import { showCodeWindow, showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
+import MockDictionaryPopover from '@/views/components/mock/form/MockDictionaryPopover.vue'
+import { generateMockTemplateFromData } from '@/vendors/mockjs/MockDataTransformer'
 import {
   generateSampleCheckResults,
   generateSchemaSample,
@@ -31,7 +33,11 @@ defineProps({
   }
 })
 
+const isTransformed = ref(false)
+const originalMockDataStr = ref('')
+
 const toEditDataResponse = (mockData) => {
+  isTransformed.value = false
   currentMockData.value = cloneDeep(mockData)
   contentRef.value = mockData.responseBody
   showWindow.value = true
@@ -91,6 +97,50 @@ const langOption = {
 }
 const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.value, componentsSpec.value, schema.value?.responseMediaType))
 const isJsonOrXmlContent = computed(() => isJson(contentRef.value) || isXml(contentRef.value))
+
+const insertMockVariable = (val) => {
+  if (editorRef.value) {
+    const editor = toRaw(editorRef.value)
+    const selection = editor.getSelection()
+    if (selection) {
+      editor.executeEdits('mock-dict', [{
+        range: selection,
+        text: val,
+        forceMoveMarkers: true
+      }])
+    } else {
+      const position = editor.getPosition() || { lineNumber: 1, column: 1 }
+      editor.executeEdits('mock-dict', [{
+        range: {
+          startLineNumber: position.lineNumber,
+          startColumn: position.column,
+          endLineNumber: position.lineNumber,
+          endColumn: position.column
+        },
+        text: val,
+        forceMoveMarkers: true
+      }])
+    }
+    editor.focus()
+  }
+}
+
+const transformToMock = () => {
+  if (isTransformed.value) {
+    contentRef.value = originalMockDataStr.value
+    isTransformed.value = false
+    setTimeout(() => {
+      formatDocument()
+    }, 100)
+  } else if (contentRef.value) {
+    originalMockDataStr.value = contentRef.value
+    contentRef.value = generateMockTemplateFromData(contentRef.value)
+    isTransformed.value = true
+    setTimeout(() => {
+      formatDocument()
+    }, 100)
+  }
+}
 </script>
 
 <template>
@@ -193,6 +243,19 @@ const isJsonOrXmlContent = computed(() => isJson(contentRef.value) || isXml(cont
             :examples="responseExamples"
             @select-example="selectExample"
           />
+          <mock-dictionary-popover @select="insertMockVariable" />
+          <el-link
+            v-common-tooltip="isTransformed ? $t('mock.label.restoreOriginal') : $t('mock.label.toMockTemplate')"
+            :type="isTransformed ? 'warning' : 'primary'"
+            underline="never"
+            class="margin-left3"
+            @click="transformToMock"
+          >
+            <common-icon
+              :size="18"
+              icon="AutoAwesomeFilled"
+            />
+          </el-link>
           <el-link
             v-if="isJsonOrXmlContent"
             v-common-tooltip="$t('mock.label.viewAsTable')"

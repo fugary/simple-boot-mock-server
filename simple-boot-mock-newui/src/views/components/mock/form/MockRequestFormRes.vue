@@ -1,6 +1,6 @@
 <script setup>
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { computed, watch, ref, reactive, nextTick, useTemplateRef, onBeforeUnmount } from 'vue'
+import { computed, watch, ref, reactive, nextTick, useTemplateRef, onBeforeUnmount, toRaw } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import { showCodeWindow, showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
 import { $i18nKey, $i18nBundle } from '@/messages'
@@ -19,6 +19,8 @@ import { $coreConfirm, $coreError } from '@/utils'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import { calcContentLanguage, calcContentType, getMockConfirmConfig, isStreamContentType } from '@/consts/MockConstants'
 import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
+import MockDictionaryPopover from '@/views/components/mock/form/MockDictionaryPopover.vue'
+import { generateMockTemplateFromData } from '@/vendors/mockjs/MockDataTransformer'
 import { downloadByLink } from '@/api/mock/MockGroupApi'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
@@ -93,7 +95,11 @@ const downloadResponse = (url) => {
   const urlSegments = props.responseTarget?.requestInfo?.url?.split('/') || []
   downloadByLink(url, urlSegments[urlSegments.length - 1])
 }
+const isTransformed = ref(false)
+const originalMockDataStr = ref('')
+
 watch(() => props.responseTarget, async (responseTarget) => {
+  isTransformed.value = false
   currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
   const oriContentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type')?.value
   const contentType = isMediaContentType(oriContentType) || isStreamContentType(oriContentType) || isHtmlContentType(oriContentType) ? oriContentType : undefined
@@ -181,6 +187,51 @@ const langOption = {
 watch(contentRef2, val => {
   paramTarget.value.responseBody = val
 })
+
+const insertMockVariable = (val) => {
+  if (editorRef2.value) {
+    const editor = toRaw(editorRef2.value)
+    const selection = editor.getSelection()
+    if (selection) {
+      editor.executeEdits('mock-dict', [{
+        range: selection,
+        text: val,
+        forceMoveMarkers: true
+      }])
+    } else {
+      const position = editor.getPosition() || { lineNumber: 1, column: 1 }
+      editor.executeEdits('mock-dict', [{
+        range: {
+          startLineNumber: position.lineNumber,
+          startColumn: position.column,
+          endLineNumber: position.lineNumber,
+          endColumn: position.column
+        },
+        text: val,
+        forceMoveMarkers: true
+      }])
+    }
+    editor.focus()
+  }
+}
+
+const transformToMock = () => {
+  if (isTransformed.value) {
+    contentRef2.value = originalMockDataStr.value
+    isTransformed.value = false
+    setTimeout(() => {
+      formatDocument2()
+    }, 100)
+  } else if (contentRef2.value) {
+    originalMockDataStr.value = contentRef2.value
+    contentRef2.value = generateMockTemplateFromData(contentRef2.value)
+    isTransformed.value = true
+    setTimeout(() => {
+      formatDocument2()
+    }, 100)
+  }
+}
+
 const supportedGenerates = computed(() => generateSampleCheckResults(props.schemaBody, props.schemaSpec, props.schemaType))
 const redirectMockResponse = computed(() => {
   const status = paramTarget.value?.responseStatusCode || 200
@@ -564,6 +615,19 @@ const toShowJsonDataWindow = () => {
                 :examples="examples"
                 @select-example="selectExample"
               />
+              <mock-dictionary-popover @select="insertMockVariable" />
+              <el-link
+                v-common-tooltip="isTransformed ? $t('mock.label.restoreOriginal') : $t('mock.label.toMockTemplate')"
+                :type="isTransformed ? 'warning' : 'primary'"
+                underline="never"
+                class="margin-left3"
+                @click="transformToMock"
+              >
+                <common-icon
+                  :size="18"
+                  icon="AutoAwesomeFilled"
+                />
+              </el-link>
             </template>
           </common-form-control>
           <vue-monaco-editor
