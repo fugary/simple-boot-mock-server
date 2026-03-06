@@ -537,7 +537,7 @@ const toShowHistoryWindow = (current) => {
           {{ $t('mock.label.mockEnv') }}
         </el-button>
         <el-button
-          v-if="projectEditable"
+          v-if="scenarioList.length > 0 || projectEditable"
           type="warning"
           @click="showScenarioManageWindow=true"
         >
@@ -666,6 +666,7 @@ const toShowHistoryWindow = (current) => {
       v-model:show="showScenarioManageWindow"
       :group-item="groupItem"
       :search-param="searchParam"
+      :editable="projectEditable"
       @updated="onScenarioChanged"
     />
   </el-container>

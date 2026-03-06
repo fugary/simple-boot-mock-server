@@ -108,7 +108,9 @@ public class MockScenarioController {
         if (group == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!SecurityUtils.validateUserUpdate(group.getUserName())) {
+        MockProject mockProject = mockProjectService.loadMockProject(group.getUserName(), group.getProjectCode());
+        if (!Boolean.TRUE.equals(mockProject != null ? mockProject.getPublicFlag() : null)
+                && !SecurityUtils.validateUserUpdate(group.getUserName())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         String scenarioCode = StringUtils.trimToNull(queryVo.getScenarioCode());

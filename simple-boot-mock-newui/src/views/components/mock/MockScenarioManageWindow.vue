@@ -17,6 +17,10 @@ const props = defineProps({
   searchParam: {
     type: Object,
     default: () => ({})
+  },
+  editable: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -138,7 +142,7 @@ const columns = computed(() => defineTableColumns([{
   formatter (item) {
     return <DelFlagTag
       v-model={item.status}
-      clickToToggle={!item._default}
+      clickToToggle={!item._default && props.editable}
       onToggleValue={() => onToggleScenarioStatus(item)}
     />
   }
@@ -154,7 +158,7 @@ const buttons = computed(() => defineTableButtons([{
   round: true,
   type: 'primary',
   click: item => onEditScenario(item),
-  buttonIf: item => !item._default
+  buttonIf: item => !item._default && props.editable
 }, {
   tooltip: $i18nBundle('mock.label.activateScenario'),
   icon: 'Flag',
@@ -168,7 +172,7 @@ const buttons = computed(() => defineTableButtons([{
   round: true,
   type: 'danger',
   click: item => onDeleteScenario(item),
-  buttonIf: item => !item._default
+  buttonIf: item => !item._default && props.editable
 }]))
 
 const formOptions = computed(() => {
@@ -218,7 +222,10 @@ const formOptions = computed(() => {
     append-to-body
   >
     <el-container class="flex-column">
-      <el-container class="margin-bottom2">
+      <el-container
+        v-if="editable"
+        class="margin-bottom2"
+      >
         <el-button
           type="info"
           @click="onAddScenario"

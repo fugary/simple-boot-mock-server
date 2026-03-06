@@ -665,7 +665,7 @@ const showHistory = (group) => {
     columns: historyColumns.value,
     searchFunc: searchHistories,
     compareFunc: loadHistoryDiffFunc,
-    recoverFunc: recoverFromHistoryFunc,
+    recoverFunc: projectEditable.value ? recoverFromHistoryFunc : null,
     onUpdateHistory: loadMockGroups
   })
 }
