@@ -511,7 +511,7 @@ const editFormOptions = computed(() => {
     enabled: !!currentGroup.value?.id && (scenarioMap.value[currentGroup.value.id] || []).length > 0,
     children: (() => {
       const groupId = currentGroup.value?.id
-      const scenarios = scenarioMap.value[groupId] || []
+      const scenarios = (scenarioMap.value[groupId] || []).filter(s => s.status === 1)
       const defaultOption = { label: $i18nBundle('mock.label.defaultScenario'), value: '' }
       const options = scenarios.map(s => ({
         label: s.scenarioName,

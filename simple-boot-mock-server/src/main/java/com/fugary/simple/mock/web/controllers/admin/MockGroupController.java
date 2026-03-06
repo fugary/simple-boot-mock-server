@@ -367,7 +367,7 @@ public class MockGroupController {
             if (!sourceIds.isEmpty()) {
                 List<MockScenario> scenarios = mockScenarioService.list(Wrappers.<MockScenario>query()
                         .in("group_id", sourceIds)
-                        .select("group_id", "scenario_code", "scenario_name"));
+                        .select("group_id", "scenario_code", "scenario_name", "status"));
                 if (CollectionUtils.isNotEmpty(scenarios)) {
                     Map<Integer, List<MockScenario>> sourceMap = scenarios.stream()
                             .collect(Collectors.groupingBy(MockScenario::getGroupId));

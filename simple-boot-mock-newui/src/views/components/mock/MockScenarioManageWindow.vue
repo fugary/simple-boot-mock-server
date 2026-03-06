@@ -161,7 +161,7 @@ const buttons = computed(() => defineTableButtons([{
   round: true,
   type: 'primary',
   click: item => onActivateScenario(item),
-  buttonIf: item => !isActive(item)
+  buttonIf: item => !isActive(item) && !!item.status
 }, {
   tooltip: $i18nBundle('common.label.delete'),
   icon: 'DeleteFilled',
