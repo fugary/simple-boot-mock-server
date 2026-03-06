@@ -579,7 +579,18 @@ const historyColumns = computed(() => {
     labelKey: 'mock.label.groupName',
     minWidth: '130px',
     formatter (data) {
-      return data.groupName
+      let activeScenarioName = ''
+      if (data.activeScenarioCode) {
+        const scenarios = scenarioMap.value[data.id] || []
+        const found = scenarios.find(s => String(s.scenarioCode) === String(data.activeScenarioCode))
+        activeScenarioName = found?.scenarioName || data.activeScenarioCode
+      }
+      return <>
+        {data.groupName}
+        {data.activeScenarioCode
+          ? <><br/><ElTag size="small" type="warning">{activeScenarioName}</ElTag></>
+          : ''}
+      </>
     }
   }, {
     labelKey: 'mock.label.pathId',
