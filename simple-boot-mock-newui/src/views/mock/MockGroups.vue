@@ -500,7 +500,7 @@ const editFormOptions = computed(() => {
     labelKey: 'mock.label.activeScenario',
     prop: 'activeScenarioCode',
     type: 'select',
-    enabled: currentGroup.value && currentGroup.value.id && (scenarioMap.value[currentGroup.value?.id] || []).length > 0,
+    enabled: !!currentGroup.value?.id && (scenarioMap.value[currentGroup.value.id] || []).length > 0,
     children: (() => {
       const groupId = currentGroup.value?.id
       const scenarios = scenarioMap.value[groupId] || []
@@ -510,7 +510,10 @@ const editFormOptions = computed(() => {
         value: s.scenarioCode
       }))
       return [defaultOption, ...options]
-    })()
+    })(),
+    attrs: {
+      clearable: false
+    }
   }, {
     labelKey: 'mock.label.pathId',
     prop: 'groupPath',
