@@ -10,6 +10,7 @@ import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockLogService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
+import com.fugary.simple.mock.service.mock.MockScenarioService;
 import com.fugary.simple.mock.utils.AsyncUtils;
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
@@ -72,6 +73,9 @@ public class MockGroupController {
     private MockLogService mockLogService;
 
     @Autowired
+    private MockScenarioService mockScenarioService;
+
+    @Autowired
     @Qualifier("asyncQueryThreadPool")
     private ExecutorService asyncQueryThreadPool;
 
@@ -88,7 +92,9 @@ public class MockGroupController {
                 .or().like("group_path", keyword)
                 .or().like("proxy_url", keyword)
                 .or().like("description", keyword));
-        MockProject mockProject = StringUtils.isNotBlank(projectCode) ? mockProjectService.loadMockProject(queryUserName, projectCode) : null;
+        MockProject mockProject = StringUtils.isNotBlank(projectCode)
+                ? mockProjectService.loadMockProject(queryUserName, projectCode)
+                : null;
         if (mockProject == null && !queryVo.isPublicFlag()
                 && (SecurityUtils.isCurrentUser(queryUserName) || SecurityUtils.isAdminUser())
                 && StringUtils.isBlank(projectCode)) {
@@ -154,6 +160,7 @@ public class MockGroupController {
                                 CountData::getDataCount));
             });
         }
+        populateScenarioNames(pageResult.getRecords());
         return SimpleResultUtils.createSimpleResult(pageResult)
                 .addInfo("mockProject", mockProject)
                 .addInfo("historyCountMap", AsyncUtils.get(historyCountMapFuture, HashMap::new))
@@ -289,6 +296,11 @@ public class MockGroupController {
                 .orderByDesc("data_version");
         Page<MockGroup> pageResult = mockGroupService.page(page, queryWrapper);
         MockGroup current = mockGroupService.getById(id);
+        List<MockGroup> allGroups = new ArrayList<>(pageResult.getRecords());
+        if (current != null) {
+            allGroups.add(current);
+        }
+        populateScenarioNames(allGroups);
         return SimpleResultUtils.createSimpleResult(pageResult).addInfo("current", current);
     }
 
@@ -311,6 +323,8 @@ public class MockGroupController {
             dataList.stream().filter(data -> !data.getId().equals(modified.getId())).findFirst().ifPresent(data -> {
                 map.put("original", data);
             });
+            List<MockGroup> allGroups = new ArrayList<>(map.values());
+            populateScenarioNames(allGroups);
             return SimpleResultUtils.createSimpleResult(map);
         }
     }
@@ -327,5 +341,32 @@ public class MockGroupController {
         }
         SimpleMockUtils.copyFromHistory(history, target);
         return mockGroupService.newSaveOrUpdate(target);
+    }
+
+    private void populateScenarioNames(List<MockGroup> groups) {
+        if (CollectionUtils.isNotEmpty(groups)) {
+            List<String> scenarioCodes = groups.stream()
+                    .map(MockGroup::getActiveScenarioCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(scenarioCodes)) {
+                List<MockScenario> scenarios = mockScenarioService.list(Wrappers.<MockScenario>query()
+                        .in("scenario_code", scenarioCodes)
+                        .select("scenario_code", "scenario_name"));
+                if (CollectionUtils.isNotEmpty(scenarios)) {
+                    Map<String, String> scenarioNameMap = scenarios.stream()
+                            .collect(Collectors.toMap(MockScenario::getScenarioCode, MockScenario::getScenarioName,
+                                    (k1, k2) -> k1));
+                    groups.forEach(group -> {
+                        if (StringUtils.isNotBlank(group.getActiveScenarioCode())) {
+                            group.setActiveScenarioName((Math.abs(NumberUtils.toInt(group.getActiveScenarioCode()))
+                                    + "").equals(group.getActiveScenarioCode()) ? "默认场景"
+                                            : scenarioNameMap.get(group.getActiveScenarioCode()));
+                        }
+                    });
+                }
+            }
+        }
     }
 }

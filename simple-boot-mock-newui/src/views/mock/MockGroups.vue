@@ -61,7 +61,7 @@ const getGroupHistoryViewOptions = (group, history) => {
     prop: 'groupPath'
   }, {
     labelKey: 'mock.label.activeScenario',
-    prop: 'activeScenarioCode'
+    prop: (group) => group.activeScenarioName || group.activeScenarioCode
   }, {
     labelKey: 'mock.label.version',
     prop: () => `${group.version ?? ''}${group.current ? ` <${$i18nBundle('mock.label.current')}>` : ''}`
@@ -197,8 +197,11 @@ const columns = computed(() => {
         }
       }
       return <>
-        <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
+          <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
         {projectInfo ? <><br/><span class="el-text el-text--info">({projectInfo})</span></> : ''}
+        {data.activeScenarioCode
+          ? <><br/><ElTag size="small" type="warning">{data.activeScenarioName}</ElTag></>
+          : ''}
       </>
     }
   }, {
