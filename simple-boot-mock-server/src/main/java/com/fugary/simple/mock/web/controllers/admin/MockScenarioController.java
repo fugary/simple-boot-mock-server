@@ -3,9 +3,11 @@ package com.fugary.simple.mock.web.controllers.admin;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockGroup;
+import com.fugary.simple.mock.entity.mock.MockProject;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockScenario;
 import com.fugary.simple.mock.service.mock.MockGroupService;
+import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockScenarioService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
@@ -36,6 +38,9 @@ public class MockScenarioController {
     private MockGroupService mockGroupService;
 
     @Autowired
+    private MockProjectService mockProjectService;
+
+    @Autowired
     private MockRequestService mockRequestService;
 
     @GetMapping
@@ -47,7 +52,9 @@ public class MockScenarioController {
         if (group == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!SecurityUtils.validateUserUpdate(group.getUserName())) {
+        MockProject mockProject = mockProjectService.loadMockProject(group.getUserName(), group.getProjectCode());
+        if (!Boolean.TRUE.equals(mockProject != null ? mockProject.getPublicFlag() : null)
+                && !SecurityUtils.validateUserUpdate(group.getUserName())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockScenarioService.list(Wrappers.<MockScenario>query()
