@@ -128,18 +128,26 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
         sb.append(MockJsUtils.getJsExpression(postProcessor));
         sb.append(");\n");
         sb.append("const responseStr = mockStringify(response);");
-        sb.append("return {bodyStr, responseStr};");
+        sb.append("return JSON.stringify({bodyStr, responseStr});");
         sb.append("})()");
         Object mockRes = scriptEngineProvider.eval(sb.toString());
         String responseBody = StringUtils.EMPTY;
         String responseStr = null;
         if (mockRes instanceof SimpleResult) {
             responseBody = JsonUtils.toJson(mockRes);
+        } else if (mockRes instanceof String) {
+            Map<String, String> resultMap = JsonUtils.fromJson((String) mockRes, Map.class);
+            if (resultMap != null) {
+                responseBody = resultMap.get("bodyStr");
+                responseStr = resultMap.get("responseStr");
+            }
         } else if (mockRes instanceof Map) {
             String json = JsonUtils.toJson(mockRes);
-            mockRes = JsonUtils.fromJson(json, Map.class);
-            responseBody = ((Map<String, String>) mockRes).get("bodyStr");
-            responseStr = ((Map<String, String>) mockRes).get("responseStr");
+            Map<String, String> resultMap = JsonUtils.fromJson(json, Map.class);
+            if (resultMap != null) {
+                responseBody = resultMap.get("bodyStr");
+                responseStr = resultMap.get("responseStr");
+            }
         }
         return Pair.of(responseBody, checkResponseVo(responseStr));
     }
