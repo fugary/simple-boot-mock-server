@@ -61,10 +61,15 @@ const getGroupHistoryViewOptions = (group, history) => {
     prop: 'groupPath'
   }, {
     labelKey: 'mock.label.activeScenario',
+    enabled: (scenarioMap.value[group.id] || []).length > 0,
     prop: (group) => {
       const scenarios = scenarioMap.value[group.id] || []
-      const found = scenarios.find(s => String(s.scenarioCode) === String(group.activeScenarioCode))
-      return found?.scenarioName || group.activeScenarioCode || ''
+      if (!scenarios.length) return ''
+      if (group.activeScenarioCode) {
+        const found = scenarios.find(s => String(s.scenarioCode) === String(group.activeScenarioCode))
+        return found?.scenarioName || group.activeScenarioCode
+      }
+      return $i18nBundle('mock.label.defaultScenario')
     }
   }, {
     labelKey: 'mock.label.version',
@@ -205,16 +210,19 @@ const columns = computed(() => {
           projectInfo = data.projectCode
         }
       }
+      const hasScenarios = (scenarioMap.value[data.id] || []).length > 0
       let activeScenarioName = ''
       if (data.activeScenarioCode) {
         const scenarios = scenarioMap.value[data.id] || []
         const found = scenarios.find(s => String(s.scenarioCode) === String(data.activeScenarioCode))
         activeScenarioName = found?.scenarioName || data.activeScenarioCode
+      } else if (hasScenarios) {
+        activeScenarioName = $i18nBundle('mock.label.defaultScenario')
       }
       return <>
           <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
         {projectInfo ? <><br/><span class="el-text el-text--info">({projectInfo})</span></> : ''}
-        {data.activeScenarioCode
+        {activeScenarioName
           ? <><br/><ElTag size="small" type="warning">{activeScenarioName}</ElTag></>
           : ''}
       </>
@@ -582,15 +590,18 @@ const historyColumns = computed(() => {
     labelKey: 'mock.label.groupName',
     minWidth: '130px',
     formatter (data) {
+      const hasScenarios = (scenarioMap.value[data.id] || []).length > 0
       let activeScenarioName = ''
       if (data.activeScenarioCode) {
         const scenarios = scenarioMap.value[data.id] || []
         const found = scenarios.find(s => String(s.scenarioCode) === String(data.activeScenarioCode))
         activeScenarioName = found?.scenarioName || data.activeScenarioCode
+      } else if (hasScenarios) {
+        activeScenarioName = $i18nBundle('mock.label.defaultScenario')
       }
       return <>
         {data.groupName}
-        {data.activeScenarioCode
+        {activeScenarioName
           ? <><br/><ElTag size="small" type="warning">{activeScenarioName}</ElTag></>
           : ''}
       </>
