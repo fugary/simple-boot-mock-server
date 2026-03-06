@@ -116,6 +116,7 @@ public class MockGroupController {
             queryWrapper.notExists(!queryVo.getHasRequest(),
                     "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
         }
+        queryWrapper.orderByDesc("id");
         boolean isExport = queryVo instanceof MockGroupExportParamVo;
         Page<MockGroup> pageResult = mockGroupService.page(page, queryWrapper);
         Future<Map<Integer, Long>> countMapFuture = null;

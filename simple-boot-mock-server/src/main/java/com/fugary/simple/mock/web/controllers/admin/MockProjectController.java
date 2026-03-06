@@ -51,6 +51,7 @@ public class MockProjectController {
             queryWrapper.and(wrapper -> wrapper.and(wrapper1 -> wrapper1.eq("user_name", userName)
                     .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)));
         }
+        queryWrapper.orderByDesc("id");
         return SimpleResultUtils.createSimpleResult(mockProjectService.page(page, queryWrapper));
     }
 
@@ -71,7 +72,7 @@ public class MockProjectController {
 
     @PostMapping("/copyMockProject/{projectId}")
     public SimpleResult<MockProject> copyMockProject(@PathVariable("projectId") Integer id,
-                                                     @RequestBody MockProjectQueryVo copyVo) {
+            @RequestBody MockProjectQueryVo copyVo) {
         return mockProjectService.copyMockProject(id, copyVo.getUserName());
     }
 
@@ -101,6 +102,7 @@ public class MockProjectController {
             queryWrapper.and(wrapper -> wrapper.and(wrapper1 -> wrapper1.eq("user_name", userName)
                     .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)));
         }
+        queryWrapper.orderByDesc("id");
         return SimpleResultUtils.createSimpleResult(mockProjectService.list(queryWrapper));
     }
 }
