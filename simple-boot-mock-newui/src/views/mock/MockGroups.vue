@@ -109,6 +109,9 @@ const loadHistoryDiffFunc = async (history, current, isView) => {
       modified = result.modified || {}
       original = result.original || {}
       modified.current = !modified.modifyFrom
+      if (data.infos?.scenarioMap) {
+        Object.assign(scenarioMap.value, data.infos.scenarioMap)
+      }
     })
   }
   showCompareWindowNew({

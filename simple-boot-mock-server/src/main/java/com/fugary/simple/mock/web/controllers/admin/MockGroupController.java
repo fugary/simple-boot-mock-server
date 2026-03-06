@@ -350,18 +350,33 @@ public class MockGroupController {
     private Map<Integer, List<MockScenario>> loadScenarioMap(List<MockGroup> groups) {
         Map<Integer, List<MockScenario>> scenarioMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(groups)) {
-            List<Integer> groupIds = groups.stream()
-                    .map(MockGroup::getId)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(groupIds)) {
+            // Collect the "source" group IDs: for history records use modifyFrom, otherwise
+            // use id
+            Map<Integer, Integer> groupIdToSourceId = new HashMap<>();
+            Set<Integer> sourceIds = new HashSet<>();
+            for (MockGroup group : groups) {
+                if (group.getId() == null)
+                    continue;
+                Integer sourceId = (group.getModifyFrom() != null && group.getModifyFrom() > 0)
+                        ? group.getModifyFrom()
+                        : group.getId();
+                groupIdToSourceId.put(group.getId(), sourceId);
+                sourceIds.add(sourceId);
+            }
+            if (!sourceIds.isEmpty()) {
                 List<MockScenario> scenarios = mockScenarioService.list(Wrappers.<MockScenario>query()
-                        .in("group_id", groupIds)
+                        .in("group_id", sourceIds)
                         .select("group_id", "scenario_code", "scenario_name"));
                 if (CollectionUtils.isNotEmpty(scenarios)) {
-                    scenarioMap = scenarios.stream()
+                    Map<Integer, List<MockScenario>> sourceMap = scenarios.stream()
                             .collect(Collectors.groupingBy(MockScenario::getGroupId));
+                    // Map each group's own id to its source group's scenarios
+                    groupIdToSourceId.forEach((groupId, sourceId) -> {
+                        List<MockScenario> list = sourceMap.get(sourceId);
+                        if (list != null) {
+                            scenarioMap.put(groupId, list);
+                        }
+                    });
                 }
             }
         }
