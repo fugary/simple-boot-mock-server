@@ -13,6 +13,10 @@ const props = defineProps({
   groupItem: {
     type: Object,
     default: () => ({})
+  },
+  searchParam: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -64,7 +68,7 @@ const onAddScenario = () => {
     scenarioName: '',
     description: '',
     status: 1,
-    copyFromScenarioCode: undefined
+    copyFromScenarioCode: props.searchParam?.scenarioCode === undefined ? (props.groupItem?.activeScenarioCode || '') : props.searchParam?.scenarioCode
   }
   showEditWindow.value = true
 }
@@ -85,7 +89,7 @@ const saveCurrentScenario = (item) => {
     scenarioName
   }, { loading: true }).then(data => {
     return loadScenarios().then(() => {
-      emit('updated')
+      emit('updated', data.resultData || item)
       return data
     })
   }).catch(err => Promise.reject(err))
@@ -103,7 +107,7 @@ const onActivateScenario = (item) => {
     groupId: props.groupItem?.id,
     scenarioCode: item?.scenarioCode || null
   }, { loading: true }).then(() => {
-    emit('updated')
+    emit('updated', item)
   })
 }
 
@@ -145,19 +149,19 @@ const columns = computed(() => defineTableColumns([{
 }]))
 
 const buttons = computed(() => defineTableButtons([{
-  tooltip: $i18nBundle('mock.label.activateScenario'),
-  icon: 'Flag',
-  round: true,
-  type: 'primary',
-  click: item => onActivateScenario(item),
-  buttonIf: item => !isActive(item)
-}, {
   tooltip: $i18nBundle('common.label.edit'),
   icon: 'Edit',
   round: true,
   type: 'primary',
   click: item => onEditScenario(item),
   buttonIf: item => !item._default
+}, {
+  tooltip: $i18nBundle('mock.label.activateScenario'),
+  icon: 'Flag',
+  round: true,
+  type: 'primary',
+  click: item => onActivateScenario(item),
+  buttonIf: item => !isActive(item)
 }, {
   tooltip: $i18nBundle('common.label.delete'),
   icon: 'DeleteFilled',

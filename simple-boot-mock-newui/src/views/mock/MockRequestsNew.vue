@@ -49,24 +49,18 @@ const { groupItem, loadGroup, mockProject, groupUrl, loadSuccess } = useMockGrou
 
 const scenarioList = ref([])
 const loadScenarios = async () => {
-  await loadGroup()
   return MockScenarioApi.search({ groupId }).then(data => {
     scenarioList.value = data?.resultData || []
-    let changed = false
     if (scenarioList.value.length > 0 && (searchParam.value?.scenarioCode == null || searchParam.value.scenarioCode === '')) {
       const activeScenario = groupItem.value?.activeScenarioCode || ''
       if (searchParam.value.scenarioCode !== activeScenario) {
         searchParam.value.scenarioCode = activeScenario
-        changed = true
       }
     }
     if (scenarioList.value.length === 0 && searchParam.value?.scenarioCode != null) {
       searchParam.value.scenarioCode = undefined
-      changed = true
     }
-    if (changed) {
-      loadMockRequests()
-    }
+    loadMockRequests()
     return scenarioList.value
   })
 }
@@ -100,7 +94,7 @@ const loadMockRequests = (...args) => {
   })
 }
 
-loadMockRequests()
+// loadMockRequests() is called inside loadScenarios
 loadScenarios()
 
 const methodOptions = ALL_METHODS.map(method => {
@@ -310,11 +304,19 @@ const editFormOptions = computed(() => {
 })
 
 const saveMockRequest = item => {
-  item.scenarioCode = item?.scenarioCode || undefined
-  return MockRequestApi.saveOrUpdate(item)
+  const saveItem = { ...item }
+  saveItem.scenarioCode = saveItem?.scenarioCode || undefined
+  return MockRequestApi.saveOrUpdate(saveItem)
     .then((data) => {
-      if (data.success && data.resultData && searchParam.value.selectRequestId !== data.resultData.id) {
-        onSelectRequest(data.resultData)
+      if (data.success && data.resultData) {
+        // Update the form item with the real saved data including scenarioCode
+        Object.assign(item, data.resultData)
+        if (scenarioList.value.length > 0) {
+          item.scenarioCode = item.scenarioCode || '' // restore '' for ui binding
+        }
+        if (searchParam.value.selectRequestId !== data.resultData.id) {
+          onSelectRequest(data.resultData)
+        }
       }
       loadMockRequests()
       return data
@@ -366,16 +368,22 @@ const editGroupEnvParams = () => {
 
 const showScenarioManageWindow = ref(false)
 const activeScenarioLabel = computed(() => {
-  const code = groupItem.value?.activeScenarioCode
+  if (scenarioList.value.length === 0) {
+    return '' // Do not show if no scenarios exist
+  }
+  const code = groupItem.value?.activeScenarioCode || ''
   if (!code) {
-    return ''
+    return $i18nBundle('mock.label.defaultScenario')
   }
   const found = scenarioList.value.find(item => item.scenarioCode === code)
-  return found?.scenarioName || code
+  return found ? found.scenarioName : '' // Only show if found in loaded scenarios
 })
-const onScenarioChanged = () => {
+const onScenarioChanged = (scenario) => {
+  if (scenario != null && scenario.scenarioCode !== undefined) {
+    searchParam.value.scenarioCode = scenario.scenarioCode || '' // '' handles defaults or explicit empty codes
+  }
   Promise.resolve(loadGroup()).then(() => loadScenarios())
-    .then(() => loadMockRequests())
+  // loadScenarios already calls loadMockRequests() internally now, so we don't need to chain it again unless changed inside
 }
 
 const projectEditable = computed(() => checkProjectEdit(mockProject.value))
@@ -657,6 +665,7 @@ const toShowHistoryWindow = (current) => {
     <mock-scenario-manage-window
       v-model:show="showScenarioManageWindow"
       :group-item="groupItem"
+      :search-param="searchParam"
       @updated="onScenarioChanged"
     />
   </el-container>
