@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>使用教程 - Simple Boot Mock Server</title>
+    <title>Guide - Simple Boot Mock Server</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap"
@@ -595,11 +595,11 @@
                 Simple Boot Mock Server
             </a>
             <div class="nav-links">
-                <a href="index.html#features">功能特性</a>
-                <a href="guide.html" style="color: var(--primary); font-weight: 600;">使用教程</a>
+                <a href="index_en.html#features">Features</a>
+                <a href="guide_en.html" style="color: var(--primary); font-weight: 600;">Guide</a>
                 <a href="https://github.com/fugary/simple-boot-mock-server">GitHub</a>
-                <a href="guide_en.html"
-                    style="margin-left: 1rem; padding: 0.25rem 0.75rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; color: var(--text-main);">En</a>
+                <a href="guide.html"
+                    style="margin-left: 1rem; padding: 0.25rem 0.75rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; color: var(--text-main);">中</a>
             </div>
             <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -627,126 +627,127 @@
                     </button>
                 </div>
                 <div class="sidebar-nav">
-                    <div class="sidebar-section-title">安装运行</div>
+                    <div class="sidebar-section-title">Installation</div>
                     <ul>
-                        <li><a href="#install-run">下载运行</a></li>
-                        <li><a href="#docker-deploy">Docker 部署</a></li>
-                        <li><a href="#docker-config">Docker 配置</a></li>
+                        <li><a href="#install-run">Download & Run</a></li>
+                        <li><a href="#docker-deploy">Docker Deploy</a></li>
+                        <li><a href="#docker-config">Docker Config</a></li>
                     </ul>
 
-                    <div class="sidebar-section-title">基础入门</div>
+                    <div class="sidebar-section-title">Basics</div>
                     <ul>
-                        <li><a href="#login-usage">登录使用</a></li>
-                        <li><a href="#mock-group">Mock 分组</a></li>
-                        <li><a href="#mock-scenario">Mock 场景</a></li>
-                        <li><a href="#mock-request">Mock 请求</a></li>
-                        <li><a href="#mock-response">Mock 响应</a></li>
-                        <li><a href="#request-object">请求对象</a></li>
-                        <li><a href="#response-object">响应对象</a></li>
+                        <li><a href="#login-usage">Login & Usage</a></li>
+                        <li><a href="#mock-group">Mock Groups</a></li>
+                        <li><a href="#mock-scenario">Mock Scenarios</a></li>
+                        <li><a href="#mock-request">Mock Requests</a></li>
+                        <li><a href="#mock-response">Mock Responses</a></li>
+                        <li><a href="#request-object">Request Object</a></li>
+                        <li><a href="#response-object">Response Object</a></li>
                         <li><a href="#js-support">JS & Mock.js</a></li>
-                        <li><a href="#match-pattern">匹配规则</a></li>
+                        <li><a href="#match-pattern">Match Patterns</a></li>
                     </ul>
 
-                    <div class="sidebar-section-title">高级功能</div>
+                    <div class="sidebar-section-title">Advanced</div>
                     <ul>
-                        <li><a href="#variable-support">变量支持</a></li>
-                        <li><a href="#xml-support">XML 支持</a></li>
-                        <li><a href="#built-in-functions">内置函数</a></li>
-                        <li><a href="#ex-fetch">Fetch 异步请求</a></li>
-                        <li><a href="#ex-require">动态加载库</a></li>
-                        <li><a href="#post-processor">后置处理</a></li>
-                        <li><a href="#sse-push">SSE 推送</a></li>
+                        <li><a href="#variable-support">Variables</a></li>
+                        <li><a href="#xml-support">XML Support</a></li>
+                        <li><a href="#built-in-functions">Built-in Functions</a></li>
+                        <li><a href="#ex-fetch">Fetch Details</a></li>
+                        <li><a href="#ex-require">Dynamic Import</a></li>
+                        <li><a href="#post-processor">Post Processor</a></li>
+                        <li><a href="#sse-push">SSE Push</a></li>
                     </ul>
                 </div>
             </aside>
 
             <main class="content">
-                <h1>使用指南</h1>
-                <p>Simple Boot Mock Server 是一个功能强大的 Mock 服务，支持基于 JavaScript (GraalJS) 的脚本引擎，允许您通过编写脚本来动态生成响应数据，实现高度灵活的
-                    Mock 逻辑。</p>
+                <h1>Guide</h1>
+                <p>Simple Boot Mock Server is a powerful mock service that supports a JavaScript (GraalJS) script
+                    engine, allowing you to dynamically generate response data by writing scripts, enabling highly
+                    flexible mock logic.</p>
 
-                <h2 id="install-run">安装运行</h2>
-                <h3 id="download-run">1. 下载运行</h3>
-                <p>下载最新版发行包 (Zip)：<a href="https://github.com/fugary/simple-boot-mock-server/releases" target="_blank"
-                        style="color: var(--primary);">GitHub Releases</a></p>
-                <p><strong>注意：</strong> 本地运行需要安装 Java 环境 (JRE/JDK 11+)。</p>
+                <h2 id="install-run">Installation</h2>
+                <h3 id="download-run">1. Download & Run</h3>
+                <p>Download the latest release zip: <a href="https://github.com/fugary/simple-boot-mock-server/releases"
+                        target="_blank" style="color: var(--primary);">GitHub Releases</a></p>
+                <p><strong>Note:</strong> Local execution requires Java environment (JRE/JDK 11+).</p>
                 <ol>
-                    <li>下载并解压 zip 文件。</li>
-                    <li>运行 <code>bin/start.sh</code> (Linux/macOS) 或 <code>bin/start.bat</code> (Windows)。</li>
+                    <li>Download and extract the zip file.</li>
+                    <li>Run <code>bin/start.sh</code> (Linux/macOS) or <code>bin/start.bat</code> (Windows).</li>
                 </ol>
 
-                <h3 id="docker-deploy">2. Docker 部署</h3>
-                <p>使用 Docker 容器化部署是最简单快捷的方式：</p>
+                <h3 id="docker-deploy">2. Docker Deploy</h3>
+                <p>Containerized deployment with Docker is the simplest and fastest method:</p>
                 <pre><code class="language-bash">docker run -d -p 9086:9086 fugary/simple-boot-mock-server:latest</code></pre>
-                <p>Docker Hub 地址: <a href="https://hub.docker.com/r/fugary/simple-boot-mock-server" target="_blank"
+                <p>Docker Hub URL: <a href="https://hub.docker.com/r/fugary/simple-boot-mock-server" target="_blank"
                         style="color: var(--primary);">fugary/simple-boot-mock-server</a></p>
 
-                <h3 id="docker-config">Docker 配置参数</h3>
-                <p>支持以下环境变量配置 (<code>-e</code>)：</p>
+                <h3 id="docker-config">Docker Configuration</h3>
+                <p>Supports the following environment variables via (<code>-e</code>):</p>
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
-                                <th>变量名</th>
-                                <th>默认值</th>
-                                <th>说明</th>
+                                <th>Variable</th>
+                                <th>Default</th>
+                                <th>Description</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td><code>JAVA_OPTS</code></td>
                                 <td><code>-Xmx512M</code></td>
-                                <td>JVM 启动参数</td>
+                                <td>JVM startup arguments</td>
                             </tr>
                             <tr>
                                 <td><code>MOCK_DB_TYPE</code></td>
                                 <td><code>h2</code></td>
-                                <td>数据库类型，支持 <code>h2</code> 或 <code>mysql</code></td>
+                                <td>Database type, supports <code>h2</code> or <code>mysql</code></td>
                             </tr>
                             <tr>
                                 <td><code>MOCK_DB_DATA_DIR</code></td>
                                 <td><code>/data</code></td>
-                                <td>H2 数据库文件存放路径 (建议挂载)</td>
+                                <td>H2 database files path (recommended to mount)</td>
                             </tr>
                             <tr>
                                 <td><code>MOCK_DB_H2_CONSOLE</code></td>
                                 <td><code>false</code></td>
-                                <td>是否开启 H2 控制台</td>
+                                <td>Whether to enable H2 console</td>
                             </tr>
                             <tr>
                                 <td><code>MOCK_DB_MYSQL_SERVER</code></td>
                                 <td><code>localhost</code></td>
-                                <td>MySQL 服务器地址 (仅 mysql 模式)</td>
+                                <td>MySQL server address (mysql mode only)</td>
                             </tr>
                             <tr>
                                 <td><code>MOCK_DB_MYSQL_PORT</code></td>
                                 <td><code>3306</code></td>
-                                <td>MySQL 端口 (仅 mysql 模式)</td>
+                                <td>MySQL port (mysql mode only)</td>
                             </tr>
                             <tr>
                                 <td><code>MOCK_DB_MYSQL_DBNAME</code></td>
                                 <td><code>mock-db</code></td>
-                                <td>MySQL 数据库名称 (仅 mysql 模式)</td>
+                                <td>MySQL database name (mysql mode only)</td>
                             </tr>
                             <tr>
                                 <td><code>MOCK_DB_USERNAME</code></td>
                                 <td><code>root</code></td>
-                                <td>数据库用户名</td>
+                                <td>Database username</td>
                             </tr>
                             <tr>
                                 <td><code>MOCK_DB_PASSWORD</code></td>
                                 <td><code>12345678</code></td>
-                                <td>数据库密码</td>
+                                <td>Database password</td>
                             </tr>
                             <tr>
                                 <td><code>MOCK_DB_POOL_SIZE</code></td>
                                 <td><code>5</code></td>
-                                <td>数据库连接池大小</td>
+                                <td>Database connection pool size</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <p><strong>示例：使用 MySQL</strong></p>
+                <p><strong>Example: Using MySQL</strong></p>
                 <pre><code class="language-bash">docker run -d -p 9086:9086 \
   -e MOCK_DB_TYPE=mysql \
   -e MOCK_DB_MYSQL_SERVER=192.168.1.100 \
@@ -754,183 +755,199 @@
   -e MOCK_DB_PASSWORD=secret \
   fugary/simple-boot-mock-server:latest</code></pre>
 
-                <h2 id="login-usage">基础入门</h2>
-                <h3 id="default-accounts">登录使用</h3>
-                <p>默认启动后访问：<a href="http://localhost:9086" target="_blank"
+                <h2 id="login-usage">Basics</h2>
+                <h3 id="default-accounts">Login</h3>
+                <p>After default startup, visit: <a href="http://localhost:9086" target="_blank"
                         style="color: var(--primary);">http://localhost:9086</a></p>
-                <p>系统预置了两个账号：</p>
+                <p>The system comes with two built-in accounts:</p>
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
-                                <th>角色</th>
-                                <th>用户名</th>
-                                <th>密码</th>
-                                <th>说明</th>
+                                <th>Role</th>
+                                <th>Username</th>
+                                <th>Password</th>
+                                <th>Description</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>管理员</td>
+                                <td>Admin</td>
                                 <td><code>admin</code></td>
                                 <td><code>12345678</code></td>
-                                <td>拥有所有权限</td>
+                                <td>Has all permissions</td>
                             </tr>
                             <tr>
-                                <td>普通用户</td>
+                                <td>User</td>
                                 <td><code>mock</code></td>
                                 <td><code>mock</code></td>
-                                <td>仅能管理自己的项目</td>
+                                <td>Can only manage their own projects</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h3 id="change-password">修改密码</h3>
-                <p>登录后请第一时间修改密码。点击右上角头像进入【个人资料】，清空旧密码并设置新密码即可。</p>
-                <img src="./assets/docs-images/image-20240710215302252.png" alt="修改密码"
+                <h3 id="change-password">Change Password</h3>
+                <p>Please change your password immediately after logging in. Click your avatar in the top right to enter
+                    [Profile], clear the old password, and set a new one.</p>
+                <img src="./assets/docs-images/image-20240710215302252.png" alt="Change Password"
                     style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
 
-                <h2 id="mock-group">Mock 分组</h2>
-                <p>Mock 分组用于组织和管理接口。每个分组对应一组 API 接口。</p>
-                <img src="./assets/docs-images/image-20240710215424610.png" alt="Mock 分组列表"
-                    style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
-
-                <h3>新增分组</h3>
-                <p>点击【新增】，填写【分组名称】。可以直接设置【代理地址】，当 Mock 规则未匹配时，请求会自动转发到该地址。</p>
-                <img src="./assets/docs-images/image-20240710215951061.png" alt="新增分组"
-                    style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
-
-                <h2 id="mock-scenario">Mock 场景 (Scenarios)</h2>
-                <p>场景 (Scenario) 用于在同一个 API 集合下管理不同的测试状态（如：正常、异常、超时等）。</p>
-                <ul>
-                    <li>由于不同的测试用例往往需要接口表现出不同的响应，通过创建并切换场景，可以一键切换整个分组下所有请求的激活响应状态。</li>
-                    <li>分组始终会有一个默认场景，所有的请求响应都可以归属于特定场景。</li>
-                </ul>
-                <img src="./assets/docs-images/image-20260306151045697.png" alt="场景管理"
-                    style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
-
-                <h3>激活场景</h3>
-                <p>在场景管理列表中，点击【激活】按钮即可将该场景设为当前激活场景。在激活特定场景后，所有关联了该场景的响应都会生效；如果没有特定场景响应，则降级使用默认场景的响应。修改响应数据时，也可以指定它属于哪个具体的场景。
+                <h2 id="mock-group">Mock Groups</h2>
+                <p>Mock Groups are used to organize and manage APIs. Each group corresponds to a set of API interfaces.
                 </p>
-
-                <h2 id="mock-request">Mock 请求</h2>
-                <p>一个 Mock 分组下可以包含多个 Mock 请求。请求由 <strong>路径</strong>、<strong>方法</strong> 和 <strong>匹配规则</strong> 唯一确定。
-                </p>
-                <img src="./assets/docs-images/image-20240710220339217.png" alt="Mock 请求列表"
+                <img src="./assets/docs-images/image-20240710215424610.png" alt="Mock Groups List"
                     style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
 
-                <h3>新建请求</h3>
-                <p>填写请求路径（如 <code>/api/user/info</code>）和请求方法。</p>
-                <img src="./assets/docs-images/image-20240710220501949.png" alt="新建请求"
+                <h3>Add Group</h3>
+                <p>Click [New] and fill in the [Group Name]. You can directly set a [Proxy URL]; when no Mock rules
+                    match, requests will be automatically forwarded to this address.</p>
+                <img src="./assets/docs-images/image-20240710215951061.png" alt="Add Group"
                     style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
 
-                <h3>测试请求</h3>
-                <p>保存后点击【测试】按钮可直接测试 API。</p>
+                <h2 id="mock-scenario">Mock Scenarios</h2>
+                <p>Scenarios are used to manage different testing states within the same API collection (e.g., normal,
+                    exception, timeout).</p>
                 <ul>
-                    <li>如果未配置响应且未配置代理：返回 404。</li>
-                    <li>如果配置了代理：转发请求到代理地址。</li>
-                    <li>如果配置了响应：返回配置的 Mock 数据。</li>
+                    <li>Because different test cases often require the API to exhibit different responses, creating and
+                        switching scenarios allows you to 1-click switch the active response state for all requests
+                        under the entire group.</li>
+                    <li>A group will always have a default scenario, and all request responses can belong to a specific
+                        scenario.</li>
                 </ul>
-                <img src="./assets/docs-images/image-20240710220804994.png" alt="测试请求"
+                <img src="./assets/docs-images/image-20260306151045697.png" alt="Scenario Management"
                     style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
 
-                <h2 id="mock-response">Mock 响应</h2>
-                <p>每个请求可以配置多个响应数据（例如：成功、失败、异常），便于覆盖不同测试场景。</p>
+                <h3>Activate Scenario</h3>
+                <p>In the scenario management list, click the [Activate] button to set it as the currently active
+                    scenario. After activating a specific scenario, all responses associated with that scenario will
+                    take effect; if there is no specific scenario response, it degrades to use the default scenario's
+                    response. When modifying response data, you can also specify which exact scenario it belongs to.</p>
 
-                <h3>新建响应数据</h3>
-                <p>支持配置 HTTP 状态码、响应头、延迟时间等。响应体支持 JSON、XML 等格式。</p>
-                <img src="./assets/docs-images/image-20240710221322130.png" alt="新建响应"
+                <h2 id="mock-request">Mock Requests</h2>
+                <p>A Mock Group can contain multiple Mock Requests. A request is uniquely identified by its
+                    <strong>Path</strong>, <strong>Method</strong>, and <strong>Match Pattern</strong>.
+                </p>
+                <img src="./assets/docs-images/image-20240710220339217.png" alt="Mock Request List"
                     style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
 
-                <h3>默认响应与切换</h3>
-                <p>当存在多条响应数据时，可以点击【设为默认】来指定当前生效的响应。这对于快速切换 "成功" / "失败" 场景非常有用。</p>
-                <img src="./assets/docs-images/image-20240710222933373.png" alt="默认响应切换"
+                <h3>Create Request</h3>
+                <p>Fill in the request path (e.g., <code>/api/user/info</code>) and request method.</p>
+                <img src="./assets/docs-images/image-20240710220501949.png" alt="Create Request"
                     style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
 
-                <h3>历史版本</h3>
-                <p>每次修改响应数据都会自动记录历史版本，支持版本对比和回滚。</p>
-                <img src="./assets/docs-images/image-20250530155754546.png" alt="历史版本"
+                <h3>Test Request</h3>
+                <p>After saving, you can click the [Test] button to test the API directly.</p>
+                <ul>
+                    <li>If no response and no proxy is configured: Returns 404.</li>
+                    <li>If proxy is configured: Forwards request to proxy address.</li>
+                    <li>If response is configured: Returns configured Mock data.</li>
+                </ul>
+                <img src="./assets/docs-images/image-20240710220804994.png" alt="Test Request"
                     style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
 
-                <h2 id="request-object">请求对象 (Request)</h2>
+                <h2 id="mock-response">Mock Responses</h2>
+                <p>Each request can be configured with multiple response data (e.g., success, fail, exception) to easily
+                    cover different testing scenarios.</p>
+
+                <h3>Create Response Data</h3>
+                <p>Supports configuring HTTP status codes, response headers, delay times, etc. The response body
+                    supports formats such as JSON and XML.</p>
+                <img src="./assets/docs-images/image-20240710221322130.png" alt="Create Response"
+                    style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h3>Default Response & Switching</h3>
+                <p>When there are multiple response data entries, you can click [Set Default] to specify the currently
+                    active response. This is very useful for quickly switching between "Success" / "Fail" scenarios.</p>
+                <img src="./assets/docs-images/image-20240710222933373.png" alt="Default Response Switch"
+                    style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h3>History Versions</h3>
+                <p>Every modification to the response data automatically records a history version, supporting version
+                    comparison and rollback.</p>
+                <img src="./assets/docs-images/image-20250530155754546.png" alt="History Versions"
+                    style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
+
+                <h2 id="request-object">Request Object</h2>
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
-                                <th>属性</th>
-                                <th>说明</th>
+                                <th>Property</th>
+                                <th>Description</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td><code>request.body</code></td>
-                                <td>Body 内容对象</td>
+                                <td>Body content object</td>
                             </tr>
                             <tr>
                                 <td><code>request.bodyStr</code></td>
-                                <td>Body 原始内容字符串</td>
+                                <td>Body raw content string</td>
                             </tr>
                             <tr>
                                 <td><code>request.headers</code></td>
-                                <td>请求头 Map</td>
+                                <td>Request headers Map</td>
                             </tr>
                             <tr>
                                 <td><code>request.parameters</code></td>
-                                <td>Query 参数</td>
+                                <td>Query parameters</td>
                             </tr>
                             <tr>
                                 <td><code>request.pathParameters</code></td>
-                                <td>路径参数</td>
+                                <td>Path parameters</td>
                             </tr>
                             <tr>
                                 <td><code>request.params</code></td>
-                                <td>请求参数和路径参数合并 (快捷访问)</td>
+                                <td>Merged Query and Path parameters (shortcut access)</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h2 id="response-object">响应对象 (Response)</h2>
+                <h2 id="response-object">Response Object</h2>
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
-                                <th>属性</th>
-                                <th>说明</th>
+                                <th>Property</th>
+                                <th>Description</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td><code>response.statusCode</code></td>
-                                <td>状态码 (默认 200)</td>
+                                <td>Status code (default 200)</td>
                             </tr>
                             <tr>
                                 <td><code>response.headers</code></td>
-                                <td>响应头 Map</td>
+                                <td>Response headers Map</td>
                             </tr>
                             <tr>
                                 <td><code>response.body</code></td>
-                                <td>响应体对象</td>
+                                <td>Response body object</td>
                             </tr>
                             <tr>
                                 <td><code>response.bodyStr</code></td>
-                                <td>响应体字符串 (原始内容)</td>
+                                <td>Response body string (raw content)</td>
                             </tr>
                             <tr>
                                 <td><code>response.headers</code></td>
-                                <td>响应头 Map (可修改)</td>
+                                <td>Response headers Map (modifiable)</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h2 id="js-support">JS & Mock.js 支持</h2>
-                <p>系统内置 JavaScript 引擎 (基于 JDK ScriptEngine)，支持 ES6 语法 (箭头函数等)。</p>
-                <p>支持使用 <a href="http://mockjs.com/" target="_blank" style="color: var(--primary);">Mock.js</a>
-                    语法生成随机数据。</p>
+                <h2 id="js-support">JS & Mock.js Support</h2>
+                <p>The system has a built-in JavaScript engine (based on JDK ScriptEngine), supporting ES6 syntax (arrow
+                    functions, etc.).</p>
+                <p>Supports using <a href="http://mockjs.com/" target="_blank"
+                        style="color: var(--primary);">Mock.js</a>
+                    syntax to generate random data.</p>
 
-                <h3>Mock.js 模板</h3>
+                <h3>Mock.js Template</h3>
                 <pre><code class="language-javascript">Mock.mock({
     "code": "success",
     "data|10": [{
@@ -942,30 +959,32 @@
                 <img src="./assets/docs-images/image-20240710224052933.png" alt="Mock.js 示例"
                     style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
 
-                <h2 id="match-pattern">匹配规则</h2>
-                <p>当同一个 URL 需要根据不同参数返回不同结果时，使用匹配规则。规则为 JS 表达式，返回 <code>true</code> 即匹配成功。</p>
-                <pre><code class="language-javascript">// 示例: 当参数 type 为 'vip' 且 header 中有 token 时匹配
+                <h2 id="match-pattern">Match Patterns</h2>
+                <p>When the same URL needs to return different results based on different parameters, use Match
+                    Patterns. A pattern is a JS expression; returning <code>true</code> means a successful match.</p>
+                <pre><code class="language-javascript">// Example: Match when parameter type is 'vip' and token exists in header
 request.params.type === 'vip' && request.headers.token</code></pre>
 
-                <p>也支持使用自执行函数 (IIFE) 处理更复杂的逻辑：</p>
+                <p>You can also use Immediately Invoked Function Expressions (IIFE) for more complex logic:</p>
                 <pre><code class="language-javascript">(function () {
     if (request.params.name === "admin" && request.params.password === "123456") {
         return true;
     }
     return false;
 }())</code></pre>
-                <img src="./assets/docs-images/image-20240710230952984.png" alt="匹配规则"
+                <img src="./assets/docs-images/image-20240710230952984.png" alt="Match Pattern"
                     style="max-width: 100%; border-radius: 8px; margin: 1rem 0; border: 1px solid var(--glass-border);">
 
 
 
 
-                <h2 id="variable-support">变量支持</h2>
-                <p>在响应数据中，可以使用 <code>request</code> 对象获取请求参数，实现动态响应。</p>
+                <h2 id="variable-support">Variables Support</h2>
+                <p>In response data, you can use the <code>request</code> object to get request parameters, achieving
+                    dynamic responses.</p>
                 <ul>
-                    <li><code>request.body</code>: 请求体对象</li>
-                    <li><code>request.params</code>: 所有参数集合 (Path + Query)</li>
-                    <li><code>request.headers</code>: 请求头</li>
+                    <li><code>request.body</code>: Request body object</li>
+                    <li><code>request.params</code>: All parameters collection (Path + Query)</li>
+                    <li><code>request.headers</code>: Request headers</li>
                 </ul>
                 <pre><code class="language-javascript">Mock.mock({
     "input_id": request.params.id,
@@ -973,92 +992,95 @@ request.params.type === 'vip' && request.headers.token</code></pre>
     "timestamp": Date.now()
 })</code></pre>
 
-                <h2 id="xml-support">XML 支持</h2>
-                <p>XML 响应同样支持 JS 模板语法 and 变量替换。</p>
+                <h2 id="xml-support">XML Support</h2>
+                <p>XML responses also support JS template syntax and variable replacement.</p>
                 <pre><code class="language-xml">&lt;user&gt;
     &lt;id&gt;{{request.params.id}}&lt;/id&gt;
     &lt;name&gt;{{Mock.mock('@cname')}}&lt;/name&gt;
 &lt;/user&gt;</code></pre>
 
 
-                <h2 id="built-in-functions">内置函数</h2>
-                <p>除了 Mock.js，系统还预置了大量工具函数，用于加密、解码和日期处理。</p>
+                <h2 id="built-in-functions">Built-in Functions</h2>
+                <p>Besides Mock.js, the system provides numerous utility functions for encryption, decryption, and date
+                    processing.</p>
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
-                                <th>函数签名</th>
-                                <th>说明</th>
+                                <th>Function Signature</th>
+                                <th>Description</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td><code>decodeHex(hex)</code></td>
-                                <td>Hex 解码为字符串</td>
+                                <td>Decode Hex to String</td>
                             </tr>
                             <tr>
                                 <td><code>encodeHex(data)</code></td>
-                                <td>字符串编码为 Hex</td>
+                                <td>Encode String to Hex</td>
                             </tr>
                             <tr>
                                 <td><code>md5Hex(data)</code></td>
-                                <td>MD5 加密 (Hex 输出)</td>
+                                <td>MD5 Encryption (Hex output)</td>
                             </tr>
                             <tr>
                                 <td><code>md5Base64(data)</code></td>
-                                <td>MD5 加密 (Base64 输出)</td>
+                                <td>MD5 Encryption (Base64 output)</td>
                             </tr>
                             <tr>
                                 <td><code>sha1Hex(data)</code> / <code>sha1Base64(data)</code></td>
-                                <td>SHA1 加密</td>
+                                <td>SHA1 Encryption</td>
                             </tr>
                             <tr>
                                 <td><code>sha256Hex(data)</code> / <code>sha256Base64(data)</code></td>
-                                <td>SHA256 加密</td>
+                                <td>SHA256 Encryption</td>
                             </tr>
                             <tr>
                                 <td><code>btoa(data)</code> / <code>atob(data)</code></td>
-                                <td>Base64 编码 / 解码</td>
+                                <td>Base64 Encode / Decode</td>
                             </tr>
                             <tr>
                                 <td><code>encryptAES(data, key)</code></td>
-                                <td>AES 加密 (Base64)</td>
+                                <td>AES Encryption (Base64)</td>
                             </tr>
                             <tr>
                                 <td><code>decryptAES(data, key)</code></td>
-                                <td>AES 解密</td>
+                                <td>AES Decryption</td>
                             </tr>
                             <tr>
                                 <td><code>encryptRSA(data, key)</code> / <code>decryptRSA(data, key)</code></td>
-                                <td>RSA 加密 / 解密</td>
+                                <td>RSA Encryption / Decryption</td>
                             </tr>
                             <tr>
                                 <td><code>dayjs(date)</code></td>
-                                <td>日期处理 (Day.js)</td>
+                                <td>Date Processing (Day.js)</td>
                             </tr>
                             <tr>
                                 <td><code>xml2Json(xmlStr)</code></td>
-                                <td>XML 字符串转 JSON</td>
+                                <td>XML String to JSON</td>
                             </tr>
                             <tr>
                                 <td><code>json2Xml(json, root)</code></td>
-                                <td>JSON 转 XML 字符串</td>
+                                <td>JSON to XML String</td>
                             </tr>
                             <tr>
                                 <td><code>fetch(url, options)</code></td>
-                                <td>发送 HTTP 请求 (支持 async/await)</td>
+                                <td>Send HTTP Request (supports async/await)</td>
                             </tr>
                             <tr>
                                 <td><code>require(url)</code></td>
-                                <td>动态加载远程 JS 库 (如 CryptoJS)</td>
+                                <td>Dynamically load remote JS library (e.g. CryptoJS)</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h2 id="ex-fetch">Fetch 异步请求</h2>
-                <p>可以使用 <code>fetch</code> 请求第三方 API 并返回结果，支持 <code>async/await</code>。</p>
-                <p><strong>获取 JSON 数据：</strong></p>
+                <h2 id="ex-fetch">Fetch Async Requests</h2>
+                <p>You can use <code>fetch</code> to request third-party APIs and return results, supporting
+                    <code>async/await</code>.
+                </p>
+                <p><strong>Get JSON Data:</strong></p>
                 <pre><code class="language-javascript">(async function () {
     const response = await fetch('https://httpbin.org/get?name=mock');
     const json = await response.json();
@@ -1069,16 +1091,17 @@ request.params.type === 'vip' && request.headers.token</code></pre>
     };
 }())</code></pre>
 
-                <p><strong>获取并返回二进制图片：</strong></p>
+                <p><strong>Get and Return Binary Image:</strong></p>
                 <pre><code class="language-javascript">(async function () {
     const response = await fetch('https://httpbin.org/image/png');
     return await response.blob();
 }())</code></pre>
 
-                <h2 id="ex-require">动态加载库 (CryptoJS)</h2>
-                <p>通过 <code>require</code> 可以加载远程 JS 库，处理复杂的加密逻辑 or 使用第三方算法。</p>
+                <h2 id="ex-require">Dynamic Import (CryptoJS)</h2>
+                <p>With <code>require</code>, you can load remote JS libraries, handle complex encryption logic, or use
+                    third-party algorithms.</p>
                 <pre><code class="language-javascript">(async function () {
-    // 加载 CryptoJS 库
+    // Load CryptoJS library
     const CryptoJS = await require('https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js');
     
     const message = "hello world";
@@ -1092,28 +1115,32 @@ request.params.type === 'vip' && request.headers.token</code></pre>
     };
 }())</code></pre>
 
-                <h2 id="post-processor">后置处理 (Post-Processor)</h2>
-                <p>后置处理器允许您在响应生成后对其进行二次加工。支持修改状态码、头信息，或者将响应体从一种格式转换为另一种格式。</p>
-                <p><strong>示例：将 XML 响应转换为 JSON</strong></p>
+                <h2 id="post-processor">Post-Processor</h2>
+                <p>Post-processors allow you to perform secondary processing on the response after it's generated.
+                    Supports modifying status codes, headers, or converting the response body format.</p>
+                <p><strong>Example: Convert XML Response to JSON</strong></p>
                 <pre><code class="language-javascript">(function () {
   response.statusCode = 200;
   response.headers['Content-Type'] = 'application/json';
   return xml2Json(response.bodyStr);
 }())</code></pre>
 
-                <h2 id="sse-push">SSE 推送 (Event Stream)</h2>
-                <p>对于需要模拟多消息推送 (Server-Sent Events) 的场景，可以返回一个特定的数组结构：</p>
+                <h2 id="sse-push">SSE Push (Event Stream)</h2>
+                <p>For scenarios requiring simulated multi-message push (Server-Sent Events), you can return a specific
+                    array structure:</p>
                 <pre><code class="language-javascript">[{
-  "data": "连接成功",
+  "data": "Connection successful",
   "delay": 0
 }, {
-  "data": {"msg": "这是一条消息", "id": 1},
+  "data": {"msg": "This is a message", "id": 1},
   "delay": 1000
 }, {
-  "data": "结束",
+  "data": "End",
   "delay": 500
 }]</code></pre>
-                <p>系统会自动识别此格式并按照 <code>delay</code> 设定的毫秒数分段推送数据。</p>
+                <p>The system automatically recognizes this format and pushes data in segments according to the
+                    <code>delay</code> milliseconds.
+                </p>
 
 
             </main>
@@ -1121,8 +1148,8 @@ request.params.type === 'vip' && request.headers.token</code></pre>
 
         <footer>
             <div class="footer-links">
-                <a href="https://fugary.com/?p=626">架构设计</a>
-                <a href="https://github.com/fugary/simple-boot-mock-server">源码仓库</a>
+                <a href="https://fugary.com/?p=626">Architecture</a>
+                <a href="https://github.com/fugary/simple-boot-mock-server">Source Code</a>
             </div>
             <p class="copyright">&copy; 2024 Simple Boot Mock Server. Developed by Fugary.</p>
         </footer>

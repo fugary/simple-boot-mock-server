@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Boot Mock Server - 强大的轻量级 Mock 数据服务器</title>
+    <title>Simple Boot Mock Server - Powerful Lightweight Mock Data Server</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap"
@@ -123,6 +123,7 @@
             letter-spacing: -0.025em;
             margin-bottom: 1.5rem;
             background: linear-gradient(to right, #fff, #a5b4fc);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -339,72 +340,82 @@
                 Simple Boot Mock Server
             </a>
             <div class="nav-links">
-                <a href="index.html#features">功能特性</a>
-                <a href="guide.html" style="color: var(--primary); font-weight: 600;">使用教程</a>
+                <a href="index_en.html#features">Features</a>
+                <a href="guide_en.html">Guide</a>
                 <a href="https://github.com/fugary/simple-boot-mock-server">GitHub</a>
-                <a href="index_en.html"
-                    style="margin-left: 1rem; padding: 0.25rem 0.75rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; color: var(--text-main);">En</a>
+                <a href="index.html"
+                    style="margin-left: 1rem; padding: 0.25rem 0.75rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; color: var(--text-main);">中</a>
             </div>
         </nav>
 
         <header class="hero">
-            <h1>让 API 模拟变得简单而强大</h1>
-            <p>基于 Spring Boot 开发的高性能 Mock 数据服务器。支持 MockJS、反向代理、动态响应、加解密等众多进阶功能，为前端开发和接口测试提速。</p>
+            <h1>Make API Mocking Simple & Powerful</h1>
+            <p>High-performance mock data server based on Spring Boot. Supports MockJS, reverse proxy, dynamic
+                responses, encryption/decryption, accelerating frontend dev and API testing.</p>
             <div class="cta-group">
-                <a href="guide.html" class="btn btn-primary">快速开始</a>
-                <a href="https://github.com/fugary/simple-boot-mock-server/releases" class="btn btn-secondary">立即下载</a>
-                <a href="#features" class="btn btn-secondary">查看特性</a>
+                <a href="guide_en.html" class="btn btn-primary">Get Started</a>
+                <a href="https://github.com/fugary/simple-boot-mock-server/releases" class="btn btn-secondary">Download
+                    Now</a>
+                <a href="#features" class="btn btn-secondary">View Features</a>
             </div>
         </header>
 
         <section id="features" class="features">
             <div class="section-title">
-                <h2>核心功能</h2>
+                <h2>Core Features</h2>
             </div>
             <div class="feature-grid">
                 <div class="feature-card">
                     <div class="feature-icon">🚀</div>
-                    <h3>局部 Mock & 反向代理</h3>
-                    <p>支持配置代理地址。可以只 Mock 部分请求，其余请求自动转发至真实后端服务，极大地简化了联调过程。</p>
+                    <h3>Partial Mock & Reverse Proxy</h3>
+                    <p>Configure a proxy address. Mock only specific requests, while others are auto-forwarded to real
+                        backend services, drastically simplifying integration.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">✨</div>
-                    <h3>MockJS 完全集成</h3>
-                    <p>内置 MockJS 支持，通过简单的语法即可生成复杂的随机 JSON 数据，满足各类 UI 展示需求。</p>
+                    <h3>Full MockJS Integration</h3>
+                    <p>Built-in MockJS support. Generate complex random JSON data with simple syntax to satisfy all UI
+                        display needs.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🎬</div>
-                    <h3>多场景切片管理</h3>
-                    <p>支持为同一个 API 集合创建多个场景，在不同测试环境或测试用例间一键切换，互不干扰，自由组合响应状态。</p>
+                    <h3>Multi-Scenario Management</h3>
+                    <p>Create multiple scenarios for the same API. Switch between test cases or environments with one
+                        click without interference, combining response statuses freely.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🛠️</div>
-                    <h3>动态响应 & 脚本引擎</h3>
-                    <p>支持使用 JavaScript 脚本生成响应数据。内置加解密函数（AES, RSA, MD5等），轻松应对复杂的业务场景。</p>
+                    <h3>Dynamic & Script Engine</h3>
+                    <p>Generate responsive data dynamically using JavaScript. Built-in crypto functions (AES, RSA, MD5)
+                        smoothly handle complex business cases.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔗</div>
-                    <h3>变量灵活替换</h3>
-                    <p>支持响应内容使用请求参数替换。使用 <code>{{request.params.id}}</code> 语法即可在响应中实时回显请求的数据。</p>
+                    <h3>Flexible Variables</h3>
+                    <p>Replace response content with request parameters. Echo data back easily using the
+                        <code>{{request.params.id}}</code> syntax.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🎯</div>
-                    <h3>多重匹配规则</h3>
-                    <p>除了路径匹配，还支持根据请求体、头信息、参数等多维度的表达式计算来精确分发请求。</p>
+                    <h3>Multi-Rule Matcher</h3>
+                    <p>Beyond path matching, precisely dispatch requests using multi-dimensional expression calculations
+                        over body, headers, and params.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">👥</div>
-                    <h3>多用户 & 权限管理</h3>
-                    <p>支持多用户隔离管理自己的分组数据，管理员可透视全局。基于 H2/MySQL 数据库，稳定可靠。</p>
+                    <h3>Multi-User & Permissions</h3>
+                    <p>Isolated data management for multiple users, with global visibility for admins. Reliable storage
+                        via H2 or MySQL.</p>
                 </div>
             </div>
         </section>
 
         <section id="getting-started" class="quick-start">
             <div class="section-title">
-                <h2>一行命令开启 Mock 之旅</h2>
+                <h2>1-Line Quick Start</h2>
             </div>
-            <p style="text-align: center; color: var(--text-dim);">支持 Windows/Linux/Docker 多种部署方式，开箱即用。</p>
+            <p style="text-align: center; color: var(--text-dim);">Ready out-of-the-box Windows/Linux/Docker deployment.
+            </p>
 
             <div class="code-window">
                 <div class="code-header">
@@ -413,22 +424,22 @@
                     <div class="dot dot-green"></div>
                 </div>
                 <div class="code-content">
-                    <div class="comment"># 使用 Docker 快速启动</div>
+                    <div class="comment"># Fast boot via Docker</div>
                     <div><span class="keyword">docker</span> run -d -p <span class="string">9086:9086</span>
                         fugary/simple-boot-mock-server:latest</div>
                     <br>
-                    <div class="comment"># 默认登录账号 (请及时修改)</div>
+                    <div class="comment"># Default Accounts (Please change immediately)</div>
                     <div><span class="keyword">Admin:</span> admin / 12345678</div>
-                    <div><span class="keyword">Mock:</span> mock / mock</div>
+                    <div><span class="keyword">User:</span> mock / mock</div>
                 </div>
             </div>
         </section>
 
         <footer>
             <div class="footer-links">
-                <a href="https://fugary.com/?p=626">架构设计</a>
-                <a href="guide.html">使用教程</a>
-                <a href="https://github.com/fugary/simple-boot-mock-server">源码仓库</a>
+                <a href="https://fugary.com/?p=626">Architecture</a>
+                <a href="guide_en.html">Guide</a>
+                <a href="https://github.com/fugary/simple-boot-mock-server">Source Code</a>
             </div>
             <p class="copyright">&copy; 2024 Simple Boot Mock Server. Developed by Fugary.</p>
         </footer>
