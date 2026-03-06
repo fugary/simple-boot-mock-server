@@ -25,8 +25,6 @@ public class MockGroup extends MockBase implements HistoryBase {
     private String description;
     private String groupConfig;
     private String activeScenarioCode;
-    @TableField(exist = false)
-    private String activeScenarioName;
     private Boolean disableMock;
     @Version
     @TableField("data_version")

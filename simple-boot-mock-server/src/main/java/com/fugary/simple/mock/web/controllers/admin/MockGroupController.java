@@ -160,9 +160,10 @@ public class MockGroupController {
                                 CountData::getDataCount));
             });
         }
-        populateScenarioNames(pageResult.getRecords());
+        Map<Integer, List<MockScenario>> scenarioMap = loadScenarioMap(pageResult.getRecords());
         return SimpleResultUtils.createSimpleResult(pageResult)
                 .addInfo("mockProject", mockProject)
+                .addInfo("scenarioMap", scenarioMap)
                 .addInfo("historyCountMap", AsyncUtils.get(historyCountMapFuture, HashMap::new))
                 .addInfo("countMap", AsyncUtils.get(countMapFuture, HashMap::new))
                 .addInfo("accessDateMap", AsyncUtils.get(accessDateMapFuture, HashMap::new));
@@ -300,8 +301,10 @@ public class MockGroupController {
         if (current != null) {
             allGroups.add(current);
         }
-        populateScenarioNames(allGroups);
-        return SimpleResultUtils.createSimpleResult(pageResult).addInfo("current", current);
+        Map<Integer, List<MockScenario>> scenarioMap = loadScenarioMap(allGroups);
+        return SimpleResultUtils.createSimpleResult(pageResult)
+                .addInfo("current", current)
+                .addInfo("scenarioMap", scenarioMap);
     }
 
     @PostMapping("/loadHistoryDiff")
@@ -324,8 +327,9 @@ public class MockGroupController {
                 map.put("original", data);
             });
             List<MockGroup> allGroups = new ArrayList<>(map.values());
-            populateScenarioNames(allGroups);
-            return SimpleResultUtils.createSimpleResult(map);
+            Map<Integer, List<MockScenario>> scenarioMap = loadScenarioMap(allGroups);
+            return SimpleResultUtils.createSimpleResult(map)
+                    .addInfo("scenarioMap", scenarioMap);
         }
     }
 
@@ -343,30 +347,24 @@ public class MockGroupController {
         return mockGroupService.newSaveOrUpdate(target);
     }
 
-    private void populateScenarioNames(List<MockGroup> groups) {
+    private Map<Integer, List<MockScenario>> loadScenarioMap(List<MockGroup> groups) {
+        Map<Integer, List<MockScenario>> scenarioMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(groups)) {
-            List<String> scenarioCodes = groups.stream()
-                    .map(MockGroup::getActiveScenarioCode)
-                    .filter(StringUtils::isNotBlank)
+            List<Integer> groupIds = groups.stream()
+                    .map(MockGroup::getId)
+                    .filter(Objects::nonNull)
                     .distinct()
                     .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(scenarioCodes)) {
+            if (CollectionUtils.isNotEmpty(groupIds)) {
                 List<MockScenario> scenarios = mockScenarioService.list(Wrappers.<MockScenario>query()
-                        .in("scenario_code", scenarioCodes)
-                        .select("scenario_code", "scenario_name"));
+                        .in("group_id", groupIds)
+                        .select("group_id", "scenario_code", "scenario_name"));
                 if (CollectionUtils.isNotEmpty(scenarios)) {
-                    Map<String, String> scenarioNameMap = scenarios.stream()
-                            .collect(Collectors.toMap(MockScenario::getScenarioCode, MockScenario::getScenarioName,
-                                    (k1, k2) -> k1));
-                    groups.forEach(group -> {
-                        if (StringUtils.isNotBlank(group.getActiveScenarioCode())) {
-                            group.setActiveScenarioName((Math.abs(NumberUtils.toInt(group.getActiveScenarioCode()))
-                                    + "").equals(group.getActiveScenarioCode()) ? "默认场景"
-                                            : scenarioNameMap.get(group.getActiveScenarioCode()));
-                        }
-                    });
+                    scenarioMap = scenarios.stream()
+                            .collect(Collectors.groupingBy(MockScenario::getGroupId));
                 }
             }
         }
+        return scenarioMap;
     }
 }

@@ -61,7 +61,11 @@ const getGroupHistoryViewOptions = (group, history) => {
     prop: 'groupPath'
   }, {
     labelKey: 'mock.label.activeScenario',
-    prop: (group) => group.activeScenarioName || group.activeScenarioCode
+    prop: (group) => {
+      const scenarios = scenarioMap.value[group.id] || []
+      const found = scenarios.find(s => String(s.scenarioCode) === String(group.activeScenarioCode))
+      return found?.scenarioName || group.activeScenarioCode || ''
+    }
   }, {
     labelKey: 'mock.label.version',
     prop: () => `${group.version ?? ''}${group.current ? ` <${$i18nBundle('mock.label.current')}>` : ''}`
@@ -127,9 +131,11 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
   searchMethod: search
 })
 const mockProject = ref()
+const scenarioMap = ref({})
 const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
   .then(data => {
     mockProject.value = data.infos?.mockProject
+    scenarioMap.value = data.infos?.scenarioMap || {}
     const countMap = data.infos?.countMap || {}
     const historyCountMap = data.infos?.historyCountMap || {}
     const accessDateMap = data.infos?.accessDateMap || {}
@@ -196,11 +202,17 @@ const columns = computed(() => {
           projectInfo = data.projectCode
         }
       }
+      let activeScenarioName = ''
+      if (data.activeScenarioCode) {
+        const scenarios = scenarioMap.value[data.id] || []
+        const found = scenarios.find(s => String(s.scenarioCode) === String(data.activeScenarioCode))
+        activeScenarioName = found?.scenarioName || data.activeScenarioCode
+      }
       return <>
           <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
         {projectInfo ? <><br/><span class="el-text el-text--info">({projectInfo})</span></> : ''}
         {data.activeScenarioCode
-          ? <><br/><ElTag size="small" type="warning">{data.activeScenarioName}</ElTag></>
+          ? <><br/><ElTag size="small" type="warning">{activeScenarioName}</ElTag></>
           : ''}
       </>
     }
@@ -482,6 +494,21 @@ const editFormOptions = computed(() => {
     prop: 'groupName',
     required: true
   }, {
+    labelKey: 'mock.label.activeScenario',
+    prop: 'activeScenarioCode',
+    type: 'select',
+    enabled: currentGroup.value && currentGroup.value.id && (scenarioMap.value[currentGroup.value?.id] || []).length > 0,
+    children: (() => {
+      const groupId = currentGroup.value?.id
+      const scenarios = scenarioMap.value[groupId] || []
+      const defaultOption = { label: $i18nBundle('mock.label.defaultScenario'), value: '' }
+      const options = scenarios.map(s => ({
+        label: s.scenarioName,
+        value: s.scenarioCode
+      }))
+      return [defaultOption, ...options]
+    })()
+  }, {
     labelKey: 'mock.label.pathId',
     prop: 'groupPath',
     placeholder: $i18nBundle('mock.msg.pathIdMsg')
@@ -616,7 +643,12 @@ const showHistory = (group) => {
 }
 const searchHistories = (query, config) => {
   if (!currentGroup.value?.id) return Promise.resolve({ resultData: [], infos: {} })
-  return histories(currentGroup.value?.id, query, config)
+  return histories(currentGroup.value?.id, query, config).then(data => {
+    if (data.infos?.scenarioMap) {
+      Object.assign(scenarioMap.value, data.infos.scenarioMap)
+    }
+    return data
+  })
 }
 
 const recoverFromHistoryFunc = (history) => {
@@ -742,6 +774,7 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
       :save-current-item="saveGroupItem"
       inline-auto-mode
       width="800px"
+      label-width="120px"
       :window-attrs="{modal:false,modalPenetrable:true}"
     >
       <template #proxyUrlParams="{option}">
