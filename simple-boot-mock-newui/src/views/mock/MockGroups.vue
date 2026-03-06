@@ -60,6 +60,9 @@ const getGroupHistoryViewOptions = (group, history) => {
     labelKey: 'mock.label.pathId',
     prop: 'groupPath'
   }, {
+    labelKey: 'mock.label.activeScenario',
+    prop: 'activeScenarioCode'
+  }, {
     labelKey: 'mock.label.version',
     prop: () => `${group.version ?? ''}${group.current ? ` <${$i18nBundle('mock.label.current')}>` : ''}`
   }, {

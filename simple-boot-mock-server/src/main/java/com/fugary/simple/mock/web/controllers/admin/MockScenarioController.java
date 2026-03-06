@@ -115,7 +115,7 @@ public class MockScenarioController {
             }
         }
         group.setActiveScenarioCode(scenarioCode);
-        mockGroupService.updateById(SimpleMockUtils.addAuditInfo(group));
+        mockGroupService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(group));
         return SimpleResultUtils.createSimpleResult(group);
     }
 
@@ -137,7 +137,7 @@ public class MockScenarioController {
         mockScenarioService.updateById(SimpleMockUtils.addAuditInfo(scenario));
         if (!scenario.isEnabled() && StringUtils.equals(group.getActiveScenarioCode(), scenario.getScenarioCode())) {
             group.setActiveScenarioCode(null);
-            mockGroupService.updateById(SimpleMockUtils.addAuditInfo(group));
+            mockGroupService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(group));
         }
         return SimpleResultUtils.createSimpleResult(scenario);
     }
@@ -167,7 +167,7 @@ public class MockScenarioController {
         mockScenarioService.removeById(id);
         if (StringUtils.equals(group.getActiveScenarioCode(), scenario.getScenarioCode())) {
             group.setActiveScenarioCode(null);
-            mockGroupService.updateById(SimpleMockUtils.addAuditInfo(group));
+            mockGroupService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(group));
         }
         return SimpleResultUtils.createSimpleResult(true);
     }
