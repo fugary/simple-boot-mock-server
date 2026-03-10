@@ -17,6 +17,10 @@ const props = defineProps({
     type: String,
     required: true
   },
+  proxyRequestPath: {
+    type: String,
+    default: ''
+  },
   affixEnabled: {
     type: Boolean,
     default: false
@@ -47,20 +51,24 @@ const paramTarget = defineModel('modelValue', {
   default: () => ({})
 })
 
-const requestUrl = computed(() => {
-  let reqUrl = props.requestPath
+const buildFullUrl = (basePath) => {
+  if (!basePath) return ''
+  let fullPath = basePath
   paramTarget.value?.pathParams?.forEach(pathParam => {
-    reqUrl = reqUrl.replace(new RegExp(`:${pathParam.name}`, 'g'), pathParam.value)
+    fullPath = fullPath.replace(new RegExp(`:${pathParam.name}`, 'g'), pathParam.value)
       .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), processEvnParams(paramTarget.value.groupConfig, pathParam.value, true))
   })
   if (paramTarget.value?.method?.toLowerCase() === 'get') {
     const calcReqParams = paramTarget.value?.requestParams?.filter(requestParam => !!requestParam.name && requestParam.enabled).reduce((results, item) => {
       return addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value, true))
     }, {})
-    reqUrl = addParamsToURL(reqUrl, calcReqParams)
+    fullPath = addParamsToURL(fullPath, calcReqParams)
   }
-  return reqUrl
-})
+  return fullPath
+}
+
+const requestUrl = computed(() => buildFullUrl(props.requestPath))
+const proxyRequestUrl = computed(() => buildFullUrl(props.proxyRequestPath))
 
 const emit = defineEmits(['sendRequest', 'saveMockResponseBody', 'saveMatchPattern', 'resetRequestForm'])
 const formRef = ref()
@@ -118,16 +126,24 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
                         :label="paramTarget.method"
                         min-width="40px"
                       >
-                        <el-text
-                          class="padding-right1"
-                          truncated
-                          style="white-space: break-spaces;word-break: break-all;display: inline;"
-                        >
-                          {{ requestUrl }}
-                        </el-text>
                         <mock-url-copy-link
                           style="vertical-align: unset;"
                           :url-path="requestUrl"
+                        >
+                          <el-text
+                            class="padding-right1"
+                            truncated
+                            type="primary"
+                            style="white-space: break-spaces;word-break: break-all;display: inline;"
+                          >
+                            {{ requestUrl }}
+                          </el-text>
+                        </mock-url-copy-link>
+                        <mock-url-copy-link
+                          v-if="proxyRequestUrl"
+                          :url-path="proxyRequestUrl"
+                          :tooltip="`${$t('mock.label.proxyUrl')}: ${proxyRequestUrl}`"
+                          icon="Link"
                         />
                         <affix-toggle-button
                           v-if="affixEnabled"

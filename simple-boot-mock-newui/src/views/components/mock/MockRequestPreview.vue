@@ -14,7 +14,7 @@ import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
 import { cloneDeep, isArray, pickBy, isString } from 'lodash-es'
-import { addRequestParamsToResult, calcPreviewHeaders, processEvnParams } from '@/services/mock/MockCommonService'
+import { addRequestParamsToResult, calcPreviewHeaders, processEvnParams, calcProxyUrl } from '@/services/mock/MockCommonService'
 import { toGetParams } from '@/utils'
 import { useInjectDataLoading } from '@/hooks/CommonHooks'
 
@@ -65,6 +65,14 @@ const requestPath = computed(() => {
     return `/mock/${groupItem.value.groupPath}${requestItem.value.requestPath}`
   }
   return ''
+})
+
+const proxyRequestPath = computed(() => {
+  const proxyUrl = calcProxyUrl(requestItem.value?.proxyUrl) || calcProxyUrl(groupItem.value?.proxyUrl) || ''
+  if (!proxyUrl || !requestItem.value?.requestPath) return ''
+  const normalizedProxy = proxyUrl.endsWith('/') ? proxyUrl.slice(0, -1) : proxyUrl
+  const normalizedPath = requestItem.value.requestPath.startsWith('/') ? requestItem.value.requestPath : `/${requestItem.value.requestPath}`
+  return `${normalizedProxy}${normalizedPath}`
 })
 
 const doDataPreview = async () => {
@@ -203,6 +211,7 @@ defineExpose({
       v-if="requestItem && paramTarget"
       v-model="paramTarget"
       :request-path="requestPath"
+      :proxy-request-path="proxyRequestPath"
       :response-target="responseTarget"
       :mock-response-editable="!!previewData"
       :editable="editable"
