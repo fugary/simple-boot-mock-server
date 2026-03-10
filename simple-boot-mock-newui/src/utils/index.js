@@ -296,7 +296,8 @@ export const $logout = () => {
 const globalLoadingConfig = {
   delay: LOADING_DELAY,
   globalLoading: null,
-  delayLoadingId: null
+  delayLoadingId: null,
+  loadingCount: 0
 }
 /**
  * loading窗口
@@ -308,9 +309,9 @@ export const $coreShowLoading = (message, config) => {
     config = message
     message = config.message
   }
-  const globalLoading = globalLoadingConfig.globalLoading
-  if (globalLoading) {
-    globalLoading.close()
+  globalLoadingConfig.loadingCount += 1
+  if (globalLoadingConfig.loadingCount > 1) {
+    return
   }
   const openLoading = () => ElLoading.service(Object.assign({
     lock: true,
@@ -319,8 +320,12 @@ export const $coreShowLoading = (message, config) => {
   }))
   const delay = config?.delay ?? globalLoadingConfig.delay
   if (delay >= 0) {
+    globalLoadingConfig.delayLoadingId && clearTimeout(globalLoadingConfig.delayLoadingId)
     globalLoadingConfig.delayLoadingId = setTimeout(() => {
-      globalLoadingConfig.globalLoading = openLoading()
+      globalLoadingConfig.delayLoadingId = null
+      if (globalLoadingConfig.loadingCount > 0 && !globalLoadingConfig.globalLoading) {
+        globalLoadingConfig.globalLoading = openLoading()
+      }
     }, delay)
   } else {
     globalLoadingConfig.globalLoading = openLoading()
@@ -328,9 +333,17 @@ export const $coreShowLoading = (message, config) => {
 }
 
 export const $coreHideLoading = () => {
+  if (globalLoadingConfig.loadingCount > 0) {
+    globalLoadingConfig.loadingCount -= 1
+  }
+  if (globalLoadingConfig.loadingCount > 0) {
+    return
+  }
+  globalLoadingConfig.loadingCount = 0
   globalLoadingConfig.delayLoadingId && clearTimeout(globalLoadingConfig.delayLoadingId)
   globalLoadingConfig.delayLoadingId = null
   globalLoadingConfig.globalLoading?.close()
+  globalLoadingConfig.globalLoading = null
 }
 
 export const $coreAlert = (message, title = $i18nBundle('common.label.reminder'), options = undefined) => {
