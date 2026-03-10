@@ -109,7 +109,7 @@ public class MockRequestController {
         }
         Future<Map<Integer, Long>> historyMapFuture = null;
         if (CollectionUtils.isNotEmpty(pageResult.getRecords())) {
-            asyncQueryThreadPool.submit(() -> {
+            historyMapFuture = asyncQueryThreadPool.submit(() -> {
                 List<Integer> dataIds = pageResult.getRecords().stream().map(MockRequest::getId)
                         .collect(Collectors.toList());
                 QueryWrapper<MockRequest> countQuery = Wrappers.<MockRequest>query()
