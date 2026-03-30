@@ -8,6 +8,7 @@ import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockProject;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.service.mock.MockProjectService;
+import com.fugary.simple.mock.service.mock.MockProjectUserService;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
@@ -32,6 +33,9 @@ public class MockProjectController {
     @Autowired
     private MockProjectService mockProjectService;
 
+    @Autowired
+    private MockProjectUserService mockProjectUserService;
+
     @GetMapping
     public SimpleResult<List<MockProject>> search(@ModelAttribute MockProjectQueryVo queryVo) {
         Page<MockProject> page = SimpleResultUtils.toPage(queryVo);
@@ -49,10 +53,13 @@ public class MockProjectController {
                     .eq("status", 1);
         } else {
             queryWrapper.and(wrapper -> wrapper.and(wrapper1 -> wrapper1.eq("user_name", userName)
-                    .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)));
+                    .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)
+                    .or().exists("select 1 from t_mock_project_user pu where pu.project_code = t_mock_project.project_code and pu.user_name = '" + userName + "'")));
         }
         queryWrapper.orderByDesc("id");
-        return SimpleResultUtils.createSimpleResult(mockProjectService.page(page, queryWrapper));
+        SimpleResult<List<MockProject>> result = SimpleResultUtils.createSimpleResult(mockProjectService.page(page, queryWrapper));
+        populateProjectUsers(result.getResultData());
+        return result;
     }
 
     @GetMapping("/{id}")
@@ -82,7 +89,7 @@ public class MockProjectController {
         if (StringUtils.isBlank(project.getUserName()) && loginUser != null) {
             project.setUserName(loginUser.getUserName());
         }
-        if (!SecurityUtils.validateUserUpdate(project.getUserName())) {
+        if (!mockProjectService.hasProjectAuthority(project.getUserName(), project.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         if (mockProjectService.existsMockProject(project)) {
@@ -100,9 +107,18 @@ public class MockProjectController {
             queryWrapper.eq("public_flag", true).eq("status", 1);
         } else {
             queryWrapper.and(wrapper -> wrapper.and(wrapper1 -> wrapper1.eq("user_name", userName)
-                    .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)));
+                    .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)
+                    .or().exists("select 1 from t_mock_project_user pu where pu.project_code = t_mock_project.project_code and pu.user_name = '" + userName + "'")));
         }
         queryWrapper.orderByDesc("id");
         return SimpleResultUtils.createSimpleResult(mockProjectService.list(queryWrapper));
+    }
+
+    private void populateProjectUsers(List<MockProject> projects) {
+        if (projects != null) {
+            for (MockProject project : projects) {
+                project.setProjectUsers(mockProjectUserService.loadProjectUsers(project.getProjectCode()));
+            }
+        }
     }
 }

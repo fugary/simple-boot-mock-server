@@ -11,7 +11,10 @@ import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
+import com.fugary.simple.mock.entity.mock.MockProjectUser;
+import com.fugary.simple.mock.service.mock.MockProjectUserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,9 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
 
     @Autowired
     private MockGroupService mockGroupService;
+
+    @Autowired
+    private MockProjectUserService mockProjectUserService;
 
     @Override
     public boolean deleteMockProject(Integer id) {
@@ -120,5 +126,23 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
         }
         saveOrUpdate(SimpleMockUtils.addAuditInfo(project));
         return SimpleResultUtils.createSimpleResult(project);
+    }
+
+    @Override
+    public boolean hasProjectAuthority(String targetUserName, String projectCode, String authority) {
+        if (SecurityUtils.validateUserUpdate(targetUserName)) {
+            return true;
+        }
+        if (StringUtils.isBlank(projectCode) || MockConstants.MOCK_DEFAULT_PROJECT.equals(projectCode)) {
+            return false;
+        }
+        String currentUserName = SecurityUtils.getLoginUserName();
+        if (StringUtils.isBlank(currentUserName)) {
+            return false;
+        }
+        return mockProjectUserService.exists(Wrappers.<MockProjectUser>query()
+                .eq("project_code", projectCode)
+                .eq("user_name", currentUserName)
+                .like(StringUtils.isNotBlank(authority), "authorities", authority));
     }
 }

@@ -106,6 +106,22 @@ public class MockGroupController {
             userName = queryUserName; // 允许查询
         }
         queryWrapper.eq("user_name", userName);
+        if (StringUtils.isBlank(userName) && mockProject != null) {
+            // 检查是否为共享用户
+            String loginUserName = SecurityUtils.getLoginUserName();
+            if (StringUtils.isNotBlank(loginUserName)
+                    && mockProjectService.hasProjectAuthority(mockProject.getUserName(), mockProject.getProjectCode(), MockConstants.AUTHORITY_READABLE)) {
+                userName = mockProject.getUserName();
+                queryWrapper = Wrappers.<MockGroup>query()
+                        .eq(queryVo.getStatus() != null, "status", queryVo.getStatus())
+                        .isNull(DB_MODIFY_FROM_KEY);
+                queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("group_name", keyword)
+                        .or().like("group_path", keyword)
+                        .or().like("proxy_url", keyword)
+                        .or().like("description", keyword));
+                queryWrapper.eq("user_name", userName);
+            }
+        }
         boolean emptyProjectCode = StringUtils.isNotBlank(userName) && StringUtils.isBlank(projectCode);
         if (!emptyProjectCode) {
             queryWrapper.eq("project_code", projectCode);
@@ -213,7 +229,7 @@ public class MockGroupController {
         if (StringUtils.isBlank(group.getUserName()) && loginUser != null) {
             group.setUserName(loginUser.getUserName());
         }
-        if (!SecurityUtils.validateUserUpdate(group.getUserName())) {
+        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return mockGroupService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(group));

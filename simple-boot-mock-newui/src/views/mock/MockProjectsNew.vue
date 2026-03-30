@@ -11,6 +11,7 @@ import { useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { chunk } from 'lodash-es'
 import CommonIcon from '@/components/common-icon/index.vue'
+import MockProjectUserManageWindow from '@/views/components/mock/MockProjectUserManageWindow.vue'
 import { useRoute } from 'vue-router'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useWindowSize } from '@vueuse/core'
@@ -172,6 +173,14 @@ const dataRows = computed(() => {
 
 const selectedRows = computed(() => tableProjectItems.value.map(item => item.project).filter(project => project?.selected))
 
+const showProjectUserWindow = ref(false)
+const projectUserManageTarget = ref(null)
+
+const toManageUsers = (project) => {
+  projectUserManageTarget.value = project
+  showProjectUserWindow.value = true
+}
+
 const copyToModel = ref({})
 const showCopyToWindow = ref(false)
 const copyToOptions = computed(() => {
@@ -322,6 +331,16 @@ const pageAttrs = {
                     <common-icon icon="Edit" />
                   </el-button>
                   <el-button
+                    v-if="checkProjectEdit(project)&&!defaultProject"
+                    v-common-tooltip="$t('common.label.authorities')"
+                    type="info"
+                    size="small"
+                    round
+                    @click.stop="toManageUsers(project)"
+                  >
+                    <common-icon icon="UserFilled" />
+                  </el-button>
+                  <el-button
                     v-if="!defaultProject"
                     v-common-tooltip="$t('common.label.copy')"
                     type="warning"
@@ -377,6 +396,10 @@ const pageAttrs = {
       :form-options="copyToOptions"
       :title="$i18nConcat($i18nBundle('common.label.copyTo'), $i18nBundle('common.label.user'))"
       :save-current-item="saveCopyProject"
+    />
+    <mock-project-user-manage-window
+      v-model:show-window="showProjectUserWindow"
+      :project="projectUserManageTarget"
     />
   </el-container>
 </template>

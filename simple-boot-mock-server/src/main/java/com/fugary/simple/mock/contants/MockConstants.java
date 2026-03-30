@@ -97,4 +97,18 @@ public class MockConstants {
      * 导出文件名
      */
     public static final String OUTPUT_FILE_NAME = "yyyyMMddHHmmss";
+    /**
+     * 可读(浏览项目内的分组、查询、数据)
+     */
+    public static final String AUTHORITY_READABLE = "readable";
+
+    /**
+     * 可写(新增修改分组、请求、数据等)
+     */
+    public static final String AUTHORITY_WRITABLE = "writable";
+
+    /**
+     * 可删除(能够删除分组、请求、数据等)
+     */
+    public static final String AUTHORITY_DELETABLE = "deletable";
 }

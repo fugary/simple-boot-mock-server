@@ -1,6 +1,7 @@
 package com.fugary.simple.mock.web.controllers.admin;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockProject;
@@ -54,7 +55,7 @@ public class MockScenarioController {
         }
         MockProject mockProject = mockProjectService.loadMockProject(group.getUserName(), group.getProjectCode());
         if (!Boolean.TRUE.equals(mockProject != null ? mockProject.getPublicFlag() : null)
-                && !SecurityUtils.validateUserUpdate(group.getUserName())) {
+                && !mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_READABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockScenarioService.list(Wrappers.<MockScenario>query()
@@ -72,7 +73,7 @@ public class MockScenarioController {
         if (group == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!SecurityUtils.validateUserUpdate(group.getUserName())) {
+        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         if (scenario.getId() == null) {
@@ -110,7 +111,7 @@ public class MockScenarioController {
         }
         MockProject mockProject = mockProjectService.loadMockProject(group.getUserName(), group.getProjectCode());
         if (!Boolean.TRUE.equals(mockProject != null ? mockProject.getPublicFlag() : null)
-                && !SecurityUtils.validateUserUpdate(group.getUserName())) {
+                && !mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         String scenarioCode = StringUtils.trimToNull(queryVo.getScenarioCode());
@@ -139,7 +140,7 @@ public class MockScenarioController {
         if (group == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!SecurityUtils.validateUserUpdate(group.getUserName())) {
+        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         scenario.setStatus(scenario.isEnabled() ? 0 : 1);
@@ -162,7 +163,7 @@ public class MockScenarioController {
         if (group == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!SecurityUtils.validateUserUpdate(group.getUserName())) {
+        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_DELETABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         List<Integer> requestIds = mockRequestService.list(Wrappers.<MockRequest>query()

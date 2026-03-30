@@ -99,6 +99,13 @@ common.label.value = 'Value'
 common.label.files = 'Files'
 common.label.originalContent = 'Original Content'
 common.label.modifiedContent = 'Modified Content'
+common.label.remove = 'Remove'
+common.label.authorities = 'Authorities'
+common.label.authorityReadable = 'Readable'
+common.label.authorityWritable = 'Writable'
+common.label.authorityDeletable = 'Deletable'
+common.label.authorityForbidden = 'Forbidden'
+common.label.authorityFullAccess = 'Full Access'
 
 //= ============通用============
 common.label.commonConfig = 'Config {0}'

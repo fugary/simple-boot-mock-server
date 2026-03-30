@@ -70,4 +70,14 @@ public interface MockProjectService extends IService<MockProject> {
      * @return
      */
     SimpleResult<MockProject> saveMockProject(MockProject project);
+
+    /**
+     * 检查当前用户是否有目标项目的对应权限
+     *
+     * @param targetUserName 目标项目的所有者
+     * @param projectCode 目标项目的代码
+     * @param authority 需要的权限 (例如 readable, writable, deletable)
+     * @return
+     */
+    boolean hasProjectAuthority(String targetUserName, String projectCode, String authority);
 }
