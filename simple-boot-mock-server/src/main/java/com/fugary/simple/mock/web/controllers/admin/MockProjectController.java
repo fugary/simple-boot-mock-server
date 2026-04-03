@@ -46,15 +46,12 @@ public class MockProjectController {
                 .or().like("project_code", keyword)
                 .or().like("description", keyword));
         String queryUserName = queryVo.getUserName();
-        String userName = SecurityUtils.getUserName(queryUserName);
         if (queryVo.isPublicFlag()) {
             queryWrapper.eq("public_flag", true)
                     .eq(StringUtils.isNotBlank(queryUserName), "user_name", queryUserName)
                     .eq("status", 1);
         } else {
-            queryWrapper.and(wrapper -> wrapper.and(wrapper1 -> wrapper1.eq("user_name", userName)
-                    .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)
-                    .or().exists("select 1 from t_mock_project_user pu where pu.project_code = t_mock_project.project_code and pu.user_name = '" + userName + "'")));
+            appendProjectAuthorityCondition(queryWrapper, queryUserName);
         }
         queryWrapper.orderByDesc("id");
         SimpleResult<List<MockProject>> result = SimpleResultUtils.createSimpleResult(mockProjectService.page(page, queryWrapper));
@@ -101,17 +98,41 @@ public class MockProjectController {
     @GetMapping("/selectProjects")
     public SimpleResult<List<MockProject>> selectProjects(@ModelAttribute MockProjectQueryVo queryVo) {
         QueryWrapper<MockProject> queryWrapper = Wrappers.<MockProject>query();
-        String userName = SecurityUtils.getUserName(queryVo.getUserName());
         queryWrapper.eq("status", 1);
         if (queryVo.isPublicFlag()) {
             queryWrapper.eq("public_flag", true).eq("status", 1);
         } else {
-            queryWrapper.and(wrapper -> wrapper.and(wrapper1 -> wrapper1.eq("user_name", userName)
-                    .or().eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)
-                    .or().exists("select 1 from t_mock_project_user pu where pu.project_code = t_mock_project.project_code and pu.user_name = '" + userName + "'")));
+            appendProjectAuthorityCondition(queryWrapper, queryVo.getUserName());
         }
         queryWrapper.orderByDesc("id");
         return SimpleResultUtils.createSimpleResult(mockProjectService.list(queryWrapper));
+    }
+
+    private void appendProjectAuthorityCondition(QueryWrapper<MockProject> queryWrapper, String queryUserName) {
+        final String loginUserName = SecurityUtils.getLoginUserName();
+        final String targetUserName = StringUtils.trimToNull(queryUserName);
+        final boolean canQueryTargetUser = StringUtils.isNotBlank(targetUserName)
+                && SecurityUtils.validateUserUpdate(targetUserName);
+        queryWrapper.and(wrapper -> {
+            wrapper.eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT);
+            if (canQueryTargetUser && StringUtils.equalsIgnoreCase(targetUserName, loginUserName)) {
+                wrapper.or().eq("user_name", targetUserName)
+                        .or().exists(buildProjectUserExistsSql(loginUserName));
+            } else if (canQueryTargetUser) {
+                wrapper.or().eq("user_name", targetUserName);
+            } else if (StringUtils.isNotBlank(targetUserName) && StringUtils.isNotBlank(loginUserName)) {
+                wrapper.or().and(projectWrapper -> projectWrapper.eq("user_name", targetUserName)
+                        .exists(buildProjectUserExistsSql(loginUserName)));
+            } else if (StringUtils.isNotBlank(loginUserName)) {
+                wrapper.or().eq("user_name", loginUserName)
+                        .or().exists(buildProjectUserExistsSql(loginUserName));
+            }
+        });
+    }
+
+    private String buildProjectUserExistsSql(String userName) {
+        return "select 1 from t_mock_project_user pu where pu.project_code = t_mock_project.project_code and pu.user_name = '"
+                + userName + "'";
     }
 
     private void populateProjectUsers(List<MockProject> projects) {

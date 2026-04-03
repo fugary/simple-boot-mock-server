@@ -13,7 +13,11 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  editable: {
+  writable: {
+    type: Boolean,
+    default: false
+  },
+  deletable: {
     type: Boolean,
     default: false
   }
@@ -50,7 +54,7 @@ const buttons = computed(() => {
     label: $i18nBundle('common.label.commonDelay', [requestItem.value?.delay]),
     icon: 'MoreTimeFilled',
     type: 'success',
-    enabled: !!requestItem.value?.delay,
+    enabled: !!requestItem.value?.delay && props.writable,
     click: (item) => {
       emit('toEditDelay', item, props.groupItem)
     }
@@ -62,6 +66,7 @@ const moreButtons = computed(() => {
     labelKey: 'common.label.edit',
     icon: 'Edit',
     type: 'primary',
+    enabled: props.writable,
     click: (item) => {
       emit('toEditMockRequest', item, props.groupItem)
     }
@@ -69,7 +74,7 @@ const moreButtons = computed(() => {
     labelKey: 'common.label.copy',
     type: 'warning',
     icon: 'FileCopyFilled',
-    enabled: props.editable,
+    enabled: props.writable,
     click: (item) => {
       $coreConfirm($i18nBundle('common.msg.confirmCopy'))
         .then(() => copyMockRequest(item.id))
@@ -96,7 +101,7 @@ const moreButtons = computed(() => {
     labelKey: 'common.label.delete',
     type: 'danger',
     icon: 'DeleteFilled',
-    enabled: props.editable,
+    enabled: props.deletable,
     click: item => {
       $coreConfirm($i18nBundle('common.msg.commonDeleteConfirm', [`${item.requestPath}#${item.method}`]))
         .then(() => MockRequestApi.deleteById(item.id))
@@ -163,7 +168,7 @@ const requestProxyUrl = computed(() => {
         <del-flag-tag
           v-model="requestItem.status"
           class="margin-left1"
-          :click-to-toggle="editable"
+          :click-to-toggle="writable"
           @toggle-value="changeStatus"
         />
         <el-tag
@@ -183,8 +188,8 @@ const requestProxyUrl = computed(() => {
           v-common-tooltip="$t('mock.label.disabledMock')"
           type="danger"
           style="vertical-align: sub;"
-          class="margin-left1 pointer"
-          @click="confirmResumeMock"
+          :class="['margin-left1', writable ? 'pointer' : '']"
+          @click="writable && confirmResumeMock()"
         >
           <common-icon
             :size="18"

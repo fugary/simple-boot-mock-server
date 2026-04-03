@@ -1,5 +1,5 @@
 <script setup lang="jsx">
-import { computed, onActivated, onMounted, ref } from 'vue'
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
@@ -37,7 +37,12 @@ import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { getMockUrl } from '@/api/mock/MockRequestApi'
 import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
 import { ElLink, ElText, ElTag } from 'element-plus'
-import MockProjectApi, { checkProjectEdit, useProjectEditHook, useSelectProjects } from '@/api/mock/MockProjectApi'
+import MockProjectApi, {
+  checkProjectDeletable,
+  checkProjectWritable,
+  useProjectEditHook,
+  useSelectProjects
+} from '@/api/mock/MockProjectApi'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
 import CommonIcon from '@/components/common-icon/index.vue'
@@ -156,22 +161,43 @@ const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
   })
 
 const { backUrl, goBack } = useBackUrl()
-searchParam.value.projectCode = route.params.projectCode || searchParam.value.projectCode
-searchParam.value.userName = route.params.userName || searchParam.value.userName
-searchParam.value.publicFlag = props.publicFlag
-const projectEditable = computed(() => checkProjectEdit(mockProject.value))
+const syncRouteSearchParam = () => {
+  const routeProjectCode = route.params.projectCode ? String(route.params.projectCode) : null
+  const routeUserName = route.params.userName ? String(route.params.userName) : null
+  searchParam.value.projectCode = routeProjectCode
+  if (routeProjectCode) {
+    searchParam.value.userName = routeUserName || searchParam.value.userName || useCurrentUserName()
+  } else if (props.publicFlag) {
+    searchParam.value.userName = routeUserName || null
+  } else {
+    searchParam.value.userName = routeUserName || useCurrentUserName()
+  }
+  searchParam.value.publicFlag = props.publicFlag
+}
+syncRouteSearchParam()
+const projectWritable = computed(() => checkProjectWritable(mockProject.value))
+const projectDeletable = computed(() => checkProjectDeletable(mockProject.value))
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
+  syncRouteSearchParam()
   await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
+  syncRouteSearchParam()
   return loadMockGroups()
 })
 
 onMounted(initLoadOnce)
 
 onActivated(initLoadOnce)
+
+watch(() => route.fullPath, async () => {
+  syncRouteSearchParam()
+  await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
+  syncRouteSearchParam()
+  loadMockGroups(1)
+})
 
 /**
  *
@@ -267,7 +293,7 @@ const columns = computed(() => {
       const confirmResumeMock = () => $coreConfirm($i18nKey('common.msg.commonConfirm', 'mock.label.resumeMock'))
         .then(() => saveGroupItem({ ...data, disableMock: false }))
       return <>
-        <DelFlagTag v-model={data.status} clickToToggle={projectEditable.value}
+        <DelFlagTag v-model={data.status} clickToToggle={projectWritable.value}
                     onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
         {data.requestCount
           ? <ElTag
@@ -328,7 +354,7 @@ const buttons = computed(() => defineTableButtons([{
   icon: 'Edit',
   round: true,
   type: 'primary',
-  enabled: !!projectEditable.value,
+  enabled: !!projectWritable.value,
   click: item => {
     newOrEdit(item.id)
   }
@@ -361,7 +387,7 @@ const buttons = computed(() => defineTableButtons([{
   icon: 'DeleteFilled',
   round: true,
   type: 'danger',
-  enabled: !!projectEditable.value,
+  enabled: !!projectDeletable.value,
   click: item => deleteGroup(item)
 }]))
 const changedUser = async (userName) => {
@@ -665,7 +691,7 @@ const showHistory = (group) => {
     columns: historyColumns.value,
     searchFunc: searchHistories,
     compareFunc: loadHistoryDiffFunc,
-    recoverFunc: projectEditable.value ? recoverFromHistoryFunc : null,
+    recoverFunc: projectWritable.value ? recoverFromHistoryFunc : null,
     onUpdateHistory: loadMockGroups
   })
 }
@@ -725,14 +751,14 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
     >
       <template #buttons>
         <el-button
-          v-if="projectEditable"
+          v-if="projectWritable"
           type="info"
           @click="newOrEdit()"
         >
           {{ $t('common.label.new') }}
         </el-button>
         <el-button
-          v-if="projectEditable"
+          v-if="projectWritable"
           type="warning"
           @click="showImportWindow = true"
         >
@@ -760,14 +786,14 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
           </template>
         </el-dropdown>
         <el-button
-          v-if="selectedRows?.length>1&&projectEditable"
+          v-if="selectedRows?.length>1&&projectWritable"
           type="warning"
           @click="toCopyGroups(selectedRows)"
         >
           {{ $t('common.label.copy') }}
         </el-button>
         <el-button
-          v-if="selectedRows?.length&&projectEditable"
+          v-if="selectedRows?.length&&projectDeletable"
           type="danger"
           @click="deleteGroups()"
         >
@@ -800,6 +826,7 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
       :form-options="editFormOptions"
       :name="$t('mock.label.mockGroups')"
       :save-current-item="saveGroupItem"
+      :editable="projectWritable"
       inline-auto-mode
       width="800px"
       label-width="120px"

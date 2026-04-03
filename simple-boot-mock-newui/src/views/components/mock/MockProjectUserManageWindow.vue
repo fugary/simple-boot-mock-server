@@ -37,6 +37,20 @@ const canManage = computed(() => {
   return isAdminUser() || props.project?.userName === currentUserName
 })
 
+const selectableUserOptions = computed(() => {
+  const excludedUsers = new Set(projectUsers.value.map(item => item.userName))
+  if (currentUserName) {
+    excludedUsers.add(currentUserName)
+  }
+  if (props.project?.userName) {
+    excludedUsers.add(props.project.userName)
+  }
+  if (currentUser.value?.userName) {
+    excludedUsers.delete(currentUser.value.userName)
+  }
+  return userOptions.value.filter(item => !excludedUsers.has(item?.value || item?.userName))
+})
+
 const loadProjectUsers = () => {
   if (!props.project?.projectCode) {
     projectUsers.value = []
@@ -110,7 +124,7 @@ const editFormOptions = computed(() => defineFormOptions([
     prop: 'userName',
     type: 'select',
     required: true,
-    children: userOptions.value,
+    children: selectableUserOptions.value,
     attrs: {
       filterable: true
     }

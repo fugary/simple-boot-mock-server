@@ -79,6 +79,17 @@ public class MockGroupController {
     @Qualifier("asyncQueryThreadPool")
     private ExecutorService asyncQueryThreadPool;
 
+    protected boolean checkGroupAuthority(Integer groupId, String authority) {
+        if (groupId == null) {
+            return false;
+        }
+        MockGroup group = mockGroupService.getById(groupId);
+        if (group == null) {
+            return false;
+        }
+        return mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), authority);
+    }
+
     @GetMapping
     public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
@@ -197,7 +208,7 @@ public class MockGroupController {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
         if (!Boolean.TRUE.equals(mockProject.getPublicFlag())
-                && !SecurityUtils.validateUserUpdate(mockGroup.getUserName())) {
+                && !checkGroupAuthority(id, MockConstants.AUTHORITY_READABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockGroup)
@@ -206,11 +217,21 @@ public class MockGroupController {
 
     @DeleteMapping("/{id}")
     public SimpleResult remove(@PathVariable("id") Integer id) {
+        if (!checkGroupAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+        }
         return SimpleResultUtils.createSimpleResult(mockGroupService.deleteMockGroup(id));
     }
 
     @DeleteMapping("/removeByIds/{ids}")
     public SimpleResult<Object> removeByIds(@PathVariable("ids") List<Integer> ids) {
+        if (ids != null) {
+            for (Integer id : ids) {
+                if (!checkGroupAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
+                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+                }
+            }
+        }
         return SimpleResultUtils.createSimpleResult(mockGroupService.deleteMockGroups(ids));
     }
 
@@ -359,6 +380,9 @@ public class MockGroupController {
         }
         if (history == null || target == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        if (!checkGroupAuthority(target.getId(), MockConstants.AUTHORITY_WRITABLE)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         SimpleMockUtils.copyFromHistory(history, target);
         return mockGroupService.newSaveOrUpdate(target);

@@ -41,7 +41,11 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  editable: {
+  writable: {
+    type: Boolean,
+    default: false
+  },
+  deletable: {
     type: Boolean,
     default: false
   }
@@ -107,13 +111,13 @@ const columns = computed(() => {
       const showStr = limitStr(data.matchPattern, 60)
       return <ViewDataLink data={showStr} icon="RuleFilled" style="word-break: break-all;"
                              tooltip={$i18nKey('common.label.commonConfig', 'mock.label.matchPattern')}
-                             onViewDataDetails={() => toTestMatchPattern(props.groupItem, requestItem.value, data, props.editable)
+                             onViewDataDetails={() => toTestMatchPattern(props.groupItem, requestItem.value, data, props.writable)
                                .then(() => loadMockData())}/>
     }
   }, {
     minWidth: '100px',
     formatter (data) {
-      return <DelFlagTag v-model={data.status} clickToToggle={props.editable}
+      return <DelFlagTag v-model={data.status} clickToToggle={props.writable}
                          onToggleValue={(status) => saveMockData({ ...data, status })}/>
     },
     headerFormatter () {
@@ -181,6 +185,7 @@ const buttons = computed(() => defineTableButtons([{
   labelKey: 'common.label.edit',
   type: 'primary',
   icon: 'Edit',
+  enabled: props.writable,
   click: item => {
     newOrEdit(item.id)
   }
@@ -188,7 +193,7 @@ const buttons = computed(() => defineTableButtons([{
   labelKey: 'common.label.copy',
   type: 'warning',
   icon: 'FileCopyFilled',
-  enabled: props.editable,
+  enabled: props.writable,
   click: item => {
     $coreConfirm($i18nBundle('common.msg.confirmCopy'))
       .then(() => copyMockData(item.id))
@@ -209,7 +214,7 @@ const buttons = computed(() => defineTableButtons([{
   type: 'primary',
   icon: 'Flag',
   buttonIf (item) {
-    return !item.defaultFlag && !item.matchPattern && props.editable
+    return !item.defaultFlag && !item.matchPattern && props.writable
   },
   click: item => {
     $coreConfirm($i18nBundle('mock.msg.configSetDefault'))
@@ -223,7 +228,7 @@ const buttons = computed(() => defineTableButtons([{
   labelKey: 'common.label.delete',
   type: 'danger',
   icon: 'DeleteFilled',
-  enabled: props.editable,
+  enabled: props.deletable,
   click: item => {
     $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
       .then(() => MockDataApi.deleteById(item.id, { loading: true }))
@@ -431,7 +436,7 @@ const onSelectDataItem = (dataItem) => {
     startLoading()
     mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, dataItem => {
       Object.assign(selectDataItem.value, dataItem)
-    }, props.editable)
+    }, props.writable)
   }
 }
 
@@ -512,7 +517,7 @@ const toShowHistoryWindow = (current) => {
         historyOptionsMethod: getDataHistoryViewOptions
       })
     },
-    recoverFunc: props.editable ? recoverFromHistory : null,
+    recoverFunc: props.writable ? recoverFromHistory : null,
     onUpdateHistory: () => loadMockData()
   })
 }
@@ -554,8 +559,9 @@ const pageAttrs = {
         >
           <span v-if="selectedRows.length">{{ selectedRows.length }}/</span><span>{{ searchParam.page?.totalCount }}</span>
         </el-tag>
-        <template v-if="editable">
+        <template v-if="writable || deletable">
           <el-button
+            v-if="deletable"
             v-common-tooltip="$t('common.label.batchMode')"
             class="margin-left2"
             round
@@ -566,7 +572,7 @@ const pageAttrs = {
             <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
           </el-button>
           <el-button
-            v-if="!batchMode"
+            v-if="writable && !batchMode"
             v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockData')"
             type="primary"
             size="small"
@@ -576,7 +582,7 @@ const pageAttrs = {
             <common-icon icon="Plus" />
           </el-button>
           <el-button
-            v-if="selectedRows.length"
+            v-if="deletable && selectedRows.length"
             v-common-tooltip="$t('common.label.delete')"
             type="danger"
             size="small"
@@ -613,7 +619,7 @@ const pageAttrs = {
       label-width="160px"
       :save-current-item="saveMockData"
       inline-auto-mode
-      :editable="editable"
+      :editable="writable"
       width="900px"
     >
       <template #moreOptions>
@@ -662,12 +668,12 @@ const pageAttrs = {
     </simple-edit-window>
     <mock-data-response-edit
       ref="dataResponseEditRef"
-      :editable="editable"
+      :editable="writable"
       @save-data-response="saveDataResponse"
     />
     <mock-request-preview
       ref="mockPreviewRef"
-      :mock-response-editable="editable"
+      :mock-response-editable="writable"
       class="margin-top2"
       affix-enabled
     />

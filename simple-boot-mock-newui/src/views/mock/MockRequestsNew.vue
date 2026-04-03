@@ -25,7 +25,7 @@ import {
 } from '@/utils/DynamicUtils'
 import MockRequestMenuItem from '@/views/components/mock/MockRequestMenuItem.vue'
 import CommonIcon from '@/components/common-icon/index.vue'
-import { checkProjectEdit } from '@/api/mock/MockProjectApi'
+import { checkProjectDeletable, checkProjectWritable } from '@/api/mock/MockProjectApi'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { ElTag, ElText } from 'element-plus'
 import MockScenarioApi from '@/api/mock/MockScenarioApi'
@@ -338,9 +338,10 @@ const newColumns = computed(() => {
     property: 'requestPath',
     formatter (data) {
       return <MockRequestMenuItem v-model={data}
-                                  editable={projectEditable.value}
-                                  onToTestMockRequest={() => previewMockRequest(groupItem.value, data, null, () => loadMockRequests(), projectEditable.value)}
-                                  onToTestMatchPattern={() => { toTestMatchPattern(groupItem.value, data, null, projectEditable.value) }}
+                                  writable={projectWritable.value}
+                                  deletable={projectDeletable.value}
+                                  onToTestMockRequest={() => previewMockRequest(groupItem.value, data, null, () => loadMockRequests(), projectWritable.value)}
+                                  onToTestMatchPattern={() => { toTestMatchPattern(groupItem.value, data, null, projectWritable.value) }}
                                   onToEditMockRequest={() => { newOrEdit(data.id) }}
                                   onToShowRequestHistory={() => toShowHistoryWindow(data)}
                                   onToEditDelay={() => { newOrEdit(data.id) }}
@@ -386,7 +387,8 @@ const onScenarioChanged = (scenario) => {
   // loadScenarios already calls loadMockRequests() internally now, so we don't need to chain it again unless changed inside
 }
 
-const projectEditable = computed(() => checkProjectEdit(mockProject.value))
+const projectWritable = computed(() => checkProjectWritable(mockProject.value))
+const projectDeletable = computed(() => checkProjectDeletable(mockProject.value))
 const methodsConfig = Object.fromEntries(ALL_METHODS.map(method => [method.method, method]))
 
 const methodFormatter = item => {
@@ -482,7 +484,7 @@ const toShowHistoryWindow = (current) => {
         historyOptionsMethod: getRequestHistoryViewOptions
       })
     },
-    recoverFunc: projectEditable.value ? recoverFromHistory : null,
+    recoverFunc: projectWritable.value ? recoverFromHistory : null,
     onUpdateHistory: () => loadMockRequests()
   })
 }
@@ -522,7 +524,7 @@ const toShowHistoryWindow = (current) => {
           {{ $t('common.label.reset') }}
         </el-button>
         <el-button
-          v-if="projectEditable"
+          v-if="projectWritable"
           v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockRequest')"
           type="info"
           @click="newOrEdit()"
@@ -530,14 +532,14 @@ const toShowHistoryWindow = (current) => {
           {{ $t('common.label.new') }}
         </el-button>
         <el-button
-          v-if="projectEditable"
+          v-if="projectWritable"
           type="success"
           @click="editGroupEnvParams"
         >
           {{ $t('mock.label.mockEnv') }}
         </el-button>
         <el-button
-          v-if="scenarioList.length > 0 || projectEditable"
+          v-if="scenarioList.length > 0 || projectWritable || projectDeletable"
           type="warning"
           @click="showScenarioManageWindow=true"
         >
@@ -588,10 +590,11 @@ const toShowHistoryWindow = (current) => {
                     <span v-if="selectedRows.length">{{ selectedRows.length }}/</span><span>{{ searchParam.page?.totalCount }}</span>
                   </el-tag>
                   <div
-                    v-if="projectEditable"
+                    v-if="projectWritable || projectDeletable"
                     class="float-right"
                   >
                     <el-button
+                      v-if="projectDeletable"
                       v-common-tooltip="$t('common.label.batchMode')"
                       round
                       :type="batchMode?'success':'default'"
@@ -601,7 +604,7 @@ const toShowHistoryWindow = (current) => {
                       <common-icon :icon="batchMode?'LibraryAddCheckFilled':'LibraryAddCheckOutlined'" />
                     </el-button>
                     <el-button
-                      v-if="!batchMode"
+                      v-if="projectWritable && !batchMode"
                       v-common-tooltip="$i18nKey('common.label.commonAdd', 'mock.label.mockRequest')"
                       round
                       type="primary"
@@ -611,7 +614,7 @@ const toShowHistoryWindow = (current) => {
                       <common-icon icon="Plus" />
                     </el-button>
                     <el-button
-                      v-if="selectedRows.length"
+                      v-if="projectDeletable && selectedRows.length"
                       v-common-tooltip="$t('common.label.delete')"
                       round
                       type="danger"
@@ -630,7 +633,8 @@ const toShowHistoryWindow = (current) => {
               v-if="selectRequest"
               v-model:request-item="selectRequest"
               v-model:select-data-id="searchParam.selectDataId"
-              :editable="projectEditable"
+              :writable="projectWritable"
+              :deletable="projectDeletable"
               class="form-edit-width-100"
               :group-item="groupItem"
             />
@@ -647,7 +651,7 @@ const toShowHistoryWindow = (current) => {
       :save-current-item="saveMockRequest"
       label-width="160px"
       inline-auto-mode
-      :editable="projectEditable"
+      :editable="projectWritable"
     >
       <template #moreOptions>
         <div class="form-edit-width-100 flex-center">
@@ -666,7 +670,8 @@ const toShowHistoryWindow = (current) => {
       v-model:show="showScenarioManageWindow"
       :group-item="groupItem"
       :search-param="searchParam"
-      :editable="projectEditable"
+      :writable="projectWritable"
+      :deletable="projectDeletable"
       @updated="onScenarioChanged"
     />
   </el-container>

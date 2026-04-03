@@ -73,7 +73,12 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
         }
         List<MockProject> existProjects = list(Wrappers.<MockProject>query().eq("user_name", userName)
                 .eq("project_code", projectCode));
-        return existProjects.isEmpty() ? null : existProjects.get(0);
+        if (existProjects.isEmpty()) {
+            return null;
+        }
+        MockProject mockProject = existProjects.get(0);
+        mockProject.setProjectUsers(mockProjectUserService.loadProjectUsers(mockProject.getProjectCode()));
+        return mockProject;
     }
 
     @Override

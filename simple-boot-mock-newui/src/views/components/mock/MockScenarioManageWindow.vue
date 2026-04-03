@@ -18,7 +18,11 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   },
-  editable: {
+  writable: {
+    type: Boolean,
+    default: true
+  },
+  deletable: {
     type: Boolean,
     default: true
   }
@@ -142,7 +146,7 @@ const columns = computed(() => defineTableColumns([{
   formatter (item) {
     return <DelFlagTag
       v-model={item.status}
-      clickToToggle={!item._default && props.editable}
+      clickToToggle={!item._default && props.writable}
       onToggleValue={() => onToggleScenarioStatus(item)}
     />
   }
@@ -158,21 +162,21 @@ const buttons = computed(() => defineTableButtons([{
   round: true,
   type: 'primary',
   click: item => onEditScenario(item),
-  buttonIf: item => !item._default && props.editable
+  buttonIf: item => !item._default && props.writable
 }, {
   tooltip: $i18nBundle('mock.label.activateScenario'),
   icon: 'Flag',
   round: true,
   type: 'primary',
   click: item => onActivateScenario(item),
-  buttonIf: item => !isActive(item) && !!item.status
+  buttonIf: item => !isActive(item) && !!item.status && props.writable
 }, {
   tooltip: $i18nBundle('common.label.delete'),
   icon: 'DeleteFilled',
   round: true,
   type: 'danger',
   click: item => onDeleteScenario(item),
-  buttonIf: item => !item._default && props.editable
+  buttonIf: item => !item._default && props.deletable
 }]))
 
 const formOptions = computed(() => {
@@ -223,7 +227,7 @@ const formOptions = computed(() => {
   >
     <el-container class="flex-column">
       <el-container
-        v-if="editable"
+        v-if="writable"
         class="margin-bottom2"
       >
         <el-button

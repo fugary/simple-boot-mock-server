@@ -160,7 +160,18 @@ public class SimpleResultUtils {
     public static String getErrorMsg(Integer code, Locale locale) {
         String messageKey = "simple.error.code." + code;
         if (messageSource != null) {
-            return messageSource.getMessage(messageKey, null, locale);
+            String message = messageSource.getMessage(messageKey, null, null, locale);
+            if (message != null) {
+                return message;
+            }
+            message = messageSource.getMessage(messageKey, null, null, Locale.CHINA);
+            if (message != null) {
+                return message;
+            }
+            message = messageSource.getMessage(messageKey, null, null, Locale.US);
+            if (message != null) {
+                return message;
+            }
         }
         return messageKey;
     }

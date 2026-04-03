@@ -3,7 +3,7 @@ import { computed, onMounted, onActivated, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
-import MockProjectApi, { checkProjectEdit, copyMockProject, useProjectEditHook } from '@/api/mock/MockProjectApi'
+import MockProjectApi, { checkProjectEdit, copyMockProject, sortProjects, useProjectEditHook } from '@/api/mock/MockProjectApi'
 import { $coreConfirm, $goto, formatDate, isAdminUser, useCurrentUserName } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
@@ -105,7 +105,7 @@ const saveProjectItem = (item) => {
 const minWidth = '100px'
 
 const tableProjectItems = computed(() => {
-  return tableData.value.map(project => {
+  return sortProjects(tableData.value).map(project => {
     const defaultProject = isDefaultProject(project.projectCode)
     const publicProject = !!project.publicFlag
     const editable = !defaultProject && checkProjectEdit(project)

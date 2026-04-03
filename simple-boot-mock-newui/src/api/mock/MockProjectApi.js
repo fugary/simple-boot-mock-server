@@ -9,6 +9,48 @@ import { useFormStatus } from '@/consts/GlobalConstants'
 
 const MOCK_PROJECT_URL = '/admin/projects'
 const MockProjectApi = useResourceApi(MOCK_PROJECT_URL)
+const FULL_PROJECT_AUTHORITIES = ['readable', 'writable', 'deletable']
+
+export const sortProjects = (projects = []) => {
+  return [...projects].sort((left, right) => {
+    const leftDefault = isDefaultProject(left?.projectCode) ? 0 : 1
+    const rightDefault = isDefaultProject(right?.projectCode) ? 0 : 1
+    return leftDefault - rightDefault
+  })
+}
+
+const normalizeAuthorities = (authorities) => {
+  if (Array.isArray(authorities)) {
+    return authorities.filter(Boolean)
+  }
+  if (typeof authorities === 'string') {
+    return authorities.split(',').map(item => item.trim()).filter(Boolean)
+  }
+  return []
+}
+
+export const getProjectAuthorities = (project) => {
+  if (!project) {
+    return []
+  }
+  if (isAdminUser() || isCurrentUser(project.userName) || isDefaultProject(project.projectCode)) {
+    return [...FULL_PROJECT_AUTHORITIES]
+  }
+  const sharedUser = project.projectUsers?.find(item => isCurrentUser(item.userName))
+  return normalizeAuthorities(sharedUser?.authorities)
+}
+
+export const hasProjectAuthority = (project, authority) => {
+  const authorities = getProjectAuthorities(project)
+  if (!authority) {
+    return authorities.length > 0
+  }
+  return authorities.includes(authority)
+}
+
+export const checkProjectWritable = (project) => hasProjectAuthority(project, 'writable')
+
+export const checkProjectDeletable = (project) => hasProjectAuthority(project, 'deletable')
 
 /**
  * 加载当前用户可选项目
@@ -27,7 +69,7 @@ export const useSelectProjects = (searchParam, autoSelect) => {
   const projectOptions = ref([])
   const loadSelectProjects = (data, config) => {
     return selectProjects(data, config).then(result => {
-      projects.value = result || []
+      projects.value = sortProjects(result || [])
       projectOptions.value = projects.value.map(project => {
         if (project.projectCode === MOCK_DEFAULT_PROJECT) {
           return { labelKey: 'mock.label.defaultProject', value: project.projectCode }

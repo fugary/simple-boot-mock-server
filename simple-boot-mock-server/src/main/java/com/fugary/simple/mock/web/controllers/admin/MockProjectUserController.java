@@ -63,6 +63,10 @@ public class MockProjectUserController {
         if (!SecurityUtils.validateUserUpdate(project.getUserName())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403, null);
         }
+        if (StringUtils.equals(project.getUserName(), projectUser.getUserName())
+                || SecurityUtils.isCurrentUser(projectUser.getUserName())) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, null);
+        }
         // 检查是否已存在
         if (projectUser.getId() == null) {
             boolean exists = mockProjectUserService.exists(Wrappers.<MockProjectUser>query()
