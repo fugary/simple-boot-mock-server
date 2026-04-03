@@ -45,6 +45,8 @@ public interface MockProjectService extends IService<MockProject> {
      */
     MockProject loadMockProject(String userName, String projectCode);
 
+    MockProject loadMockProject(String userName, Integer projectId, String projectCode);
+
     /**
      * 检查project是否正常
      *
@@ -53,6 +55,8 @@ public interface MockProjectService extends IService<MockProject> {
      * @return
      */
     boolean checkProjectValid(String userName, String projectCode);
+
+    boolean checkProjectValid(String userName, Integer projectId, String projectCode);
 
     /**
      * 复制一份数据
@@ -80,4 +84,6 @@ public interface MockProjectService extends IService<MockProject> {
      * @return
      */
     boolean hasProjectAuthority(String targetUserName, String projectCode, String authority);
+
+    boolean hasProjectAuthority(String targetUserName, Integer projectId, String projectCode, String authority);
 }

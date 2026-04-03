@@ -92,7 +92,7 @@ public class MockController {
                     if (StringUtils.isBlank(requestId) && StringUtils.isBlank(dataId)) {
                         MockUser mockUser = mockUserService.loadValidUser(mockGroup.getUserName());
                         return mockUser != null && mockProjectService.checkProjectValid(mockGroup.getUserName(),
-                                mockGroup.getProjectCode());
+                                mockGroup.getProjectId(), mockGroup.getProjectCode());
                     }
                     return true;
                 });

@@ -12,6 +12,7 @@ public class MockGroupQueryVo extends SimpleQueryVo {
 
     private static final long serialVersionUID = -5645692057415199643L;
     private String userName;
+    private Integer projectId;
     private String projectCode;
     private boolean publicFlag;
     private Boolean hasRequest;

@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.service.impl.mock;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.contants.MockConstants;
@@ -40,10 +41,9 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
     public boolean deleteMockProject(Integer id) {
         MockProject mockProject = getById(id);
         if (mockProject != null) {
-            List<MockGroup> mockGroups = mockGroupService.list(Wrappers.<MockGroup>query()
-                    .eq("project_code", mockProject.getProjectCode())
-                    .eq("user_name", mockProject.getUserName()));
+            List<MockGroup> mockGroups = mockGroupService.list(buildProjectGroupQuery(mockProject));
             mockGroupService.deleteMockGroups(mockGroups.stream().map(MockGroup::getId).collect(Collectors.toList()));
+            mockProjectUserService.remove(buildProjectUserQuery(mockProject));
         }
         return removeById(id);
     }
@@ -69,27 +69,57 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
 
     @Override
     public MockProject loadMockProject(String userName, String projectCode) {
-        if (MockConstants.MOCK_DEFAULT_PROJECT.equals(projectCode)) {
-            userName = "";
+        return loadMockProject(userName, null, projectCode);
+    }
+
+    @Override
+    public MockProject loadMockProject(String userName, Integer projectId, String projectCode) {
+        MockProject mockProject = null;
+        if (projectId != null) {
+            mockProject = getById(projectId);
+            if (mockProject != null && StringUtils.isNotBlank(userName)
+                    && !StringUtils.equals(userName, mockProject.getUserName())
+                    && !isDefaultProjectCode(mockProject.getProjectCode())) {
+                mockProject = null;
+            }
         }
-        List<MockProject> existProjects = list(Wrappers.<MockProject>query().eq("user_name", userName)
-                .eq("project_code", projectCode));
-        if (existProjects.isEmpty()) {
-            return null;
+        String normalizedProjectCode = StringUtils.trimToNull(projectCode);
+        if (mockProject == null && normalizedProjectCode != null) {
+            QueryWrapper<MockProject> queryWrapper = Wrappers.<MockProject>query()
+                    .eq("project_code", normalizedProjectCode);
+            if (isDefaultProjectCode(normalizedProjectCode)) {
+                queryWrapper.eq("user_name", "");
+            } else if (StringUtils.isNotBlank(userName)) {
+                queryWrapper.eq("user_name", userName);
+            }
+            mockProject = getOne(queryWrapper, false);
         }
-        MockProject mockProject = existProjects.get(0);
-        mockProject.setProjectUsers(mockProjectUserService.loadProjectUsers(mockProject.getId()));
+        if (mockProject != null) {
+            mockProject.setProjectUsers(mockProjectUserService.loadProjectUsers(mockProject.getId()));
+        }
         return mockProject;
     }
 
     @Override
     public boolean checkProjectValid(String userName, String projectCode) {
-        if (MockConstants.MOCK_DEFAULT_PROJECT.equalsIgnoreCase(projectCode)) {
+        return checkProjectValid(userName, null, projectCode);
+    }
+
+    @Override
+    public boolean checkProjectValid(String userName, Integer projectId, String projectCode) {
+        if (projectId != null) {
+            return exists(Wrappers.<MockProject>query().eq("id", projectId).eq("status", 1));
+        }
+        if (isDefaultProjectCode(projectCode)) {
             return true;
         }
-        return exists(Wrappers.<MockProject>query().eq("user_name", userName)
+        QueryWrapper<MockProject> queryWrapper = Wrappers.<MockProject>query()
                 .eq("project_code", projectCode)
-                .eq("status", 1));
+                .eq("status", 1);
+        if (StringUtils.isNotBlank(userName)) {
+            queryWrapper.eq("user_name", userName);
+        }
+        return exists(queryWrapper);
     }
 
     @Override
@@ -106,10 +136,8 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
             mockProject.setPublicFlag(false);
         }
         mockProject.setProjectName(StringUtils.join(mockProject.getProjectName(), "-copy"));
-        saveOrUpdate(mockProject);
-        List<MockGroup> mockGroups = mockGroupService.list(Wrappers.<MockGroup>query()
-                .eq("user_name", oldProject.getUserName())
-                .eq("project_code", oldProject.getProjectCode()));
+        saveOrUpdate(SimpleMockUtils.addAuditInfo(mockProject));
+        List<MockGroup> mockGroups = mockGroupService.list(buildProjectGroupQuery(oldProject));
         for (MockGroup mockGroup : mockGroups) {
             mockGroupService.copyMockGroup(mockGroup.getId(), mockProject);
         }
@@ -132,14 +160,18 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
                     || !StringUtils.equals(project.getUserName(), oldProject.getUserName())) {
                 mockGroupService.update(Wrappers.<MockGroup>update()
                         .set("user_name", project.getUserName())
+                        .set("project_id", oldProject.getId())
                         .set("project_code", project.getProjectCode())
                         .eq("user_name", oldProject.getUserName())
-                        .eq("project_code", oldProject.getProjectCode()));
-                if (!StringUtils.equals(project.getProjectCode(), oldProject.getProjectCode())) {
-                    mockProjectUserService.update(Wrappers.<MockProjectUser>update()
-                            .set("project_code", project.getProjectCode())
-                            .eq("project_id", oldProject.getId()));
-                }
+                        .and(wrapper -> wrapper.eq("project_id", oldProject.getId())
+                                .or(legacy -> legacy.isNull("project_id")
+                                        .eq("project_code", oldProject.getProjectCode()))));
+                mockProjectUserService.update(Wrappers.<MockProjectUser>update()
+                        .set("project_id", oldProject.getId())
+                        .set("project_code", project.getProjectCode())
+                        .and(wrapper -> wrapper.eq("project_id", oldProject.getId())
+                                .or(legacy -> legacy.isNull("project_id")
+                                        .eq("project_code", oldProject.getProjectCode()))));
             }
         } else {
             project.setProjectCode(nextProjectCode());
@@ -150,24 +182,55 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
 
     @Override
     public boolean hasProjectAuthority(String targetUserName, String projectCode, String authority) {
+        return hasProjectAuthority(targetUserName, null, projectCode, authority);
+    }
+
+    @Override
+    public boolean hasProjectAuthority(String targetUserName, Integer projectId, String projectCode, String authority) {
         if (SecurityUtils.validateUserUpdate(targetUserName)) {
             return true;
-        }
-        if (StringUtils.isBlank(projectCode) || MockConstants.MOCK_DEFAULT_PROJECT.equals(projectCode)) {
-            return false;
         }
         String currentUserName = SecurityUtils.getLoginUserName();
         if (StringUtils.isBlank(currentUserName)) {
             return false;
         }
-        MockProject project = loadMockProject(targetUserName, projectCode);
-        if (project == null) {
+        MockProject project = loadMockProject(targetUserName, projectId, projectCode);
+        if (project == null || isDefaultProjectCode(project.getProjectCode())) {
             return false;
         }
         return mockProjectUserService.exists(Wrappers.<MockProjectUser>query()
                 .eq("project_id", project.getId())
                 .eq("user_name", currentUserName)
                 .like(StringUtils.isNotBlank(authority), "authorities", authority));
+    }
+
+    private QueryWrapper<MockGroup> buildProjectGroupQuery(MockProject project) {
+        QueryWrapper<MockGroup> queryWrapper = Wrappers.<MockGroup>query()
+                .eq("user_name", project.getUserName());
+        if (isDefaultProjectCode(project.getProjectCode())) {
+            queryWrapper.eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT);
+        } else {
+            queryWrapper.and(wrapper -> wrapper.eq("project_id", project.getId())
+                    .or(legacy -> legacy.isNull("project_id")
+                            .eq("project_code", project.getProjectCode())));
+        }
+        return queryWrapper;
+    }
+
+    private QueryWrapper<MockProjectUser> buildProjectUserQuery(MockProject project) {
+        QueryWrapper<MockProjectUser> queryWrapper = Wrappers.<MockProjectUser>query();
+        if (isDefaultProjectCode(project.getProjectCode())) {
+            queryWrapper.eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT);
+        } else {
+            queryWrapper.and(wrapper -> wrapper.eq("project_id", project.getId())
+                    .or(legacy -> legacy.isNull("project_id")
+                            .eq("project_code", project.getProjectCode())));
+        }
+        return queryWrapper;
+    }
+
+    private boolean isDefaultProjectCode(String projectCode) {
+        return StringUtils.equalsIgnoreCase(MockConstants.MOCK_DEFAULT_PROJECT, StringUtils.trimToEmpty(projectCode));
     }
 
     private String nextProjectCode() {

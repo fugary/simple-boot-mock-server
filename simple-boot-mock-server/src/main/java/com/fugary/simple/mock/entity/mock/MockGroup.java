@@ -19,6 +19,7 @@ public class MockGroup extends MockBase implements HistoryBase {
     private String groupName;
     private String groupPath;
     private String proxyUrl;
+    private Integer projectId;
     private String projectCode;
     private Integer delay;
     private String contentType;

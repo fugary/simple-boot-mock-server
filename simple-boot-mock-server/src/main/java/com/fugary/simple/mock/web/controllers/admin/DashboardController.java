@@ -160,11 +160,10 @@ public class DashboardController {
                             && mockRequest.getGroupId() != null) {
                         MockGroup mockGroup = mockGroupService.getById(mockRequest.getGroupId());
                         if (mockGroup != null && mockGroup.getModifyFrom() == null && mockGroup.isEnabled()
-                                && StringUtils.isNotBlank(mockGroup.getProjectCode())) {
-                            String projectCode = mockGroup.getProjectCode();
-                            MockProject mockProject = mockProjectService
-                                    .getOne(Wrappers.<MockProject>query().eq("project_code", projectCode));
-                            String name = mockProject != null ? mockProject.getProjectName() : projectCode;
+                                && (mockGroup.getProjectId() != null || StringUtils.isNotBlank(mockGroup.getProjectCode()))) {
+                            MockProject mockProject = mockProjectService.loadMockProject(mockGroup.getUserName(),
+                                    mockGroup.getProjectId(), mockGroup.getProjectCode());
+                            String name = mockProject != null ? mockProject.getProjectName() : mockGroup.getProjectCode();
                             projectActivityMap.merge(name, value, (a, b) -> a + b);
                         }
                     }

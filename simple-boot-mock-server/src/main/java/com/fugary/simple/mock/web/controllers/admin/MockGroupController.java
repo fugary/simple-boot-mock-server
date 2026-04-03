@@ -87,7 +87,8 @@ public class MockGroupController {
         if (group == null) {
             return false;
         }
-        return mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), authority);
+        return mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), authority);
     }
 
     @GetMapping
@@ -95,47 +96,34 @@ public class MockGroupController {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
         String queryUserName = queryVo.getUserName();
-        String projectCode = queryVo.getProjectCode();
-        QueryWrapper<MockGroup> queryWrapper = Wrappers.<MockGroup>query()
-                .eq(queryVo.getStatus() != null, "status", queryVo.getStatus())
-                .isNull(DB_MODIFY_FROM_KEY);
-        queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("group_name", keyword)
-                .or().like("group_path", keyword)
-                .or().like("proxy_url", keyword)
-                .or().like("description", keyword));
-        MockProject mockProject = StringUtils.isNotBlank(projectCode)
-                ? mockProjectService.loadMockProject(queryUserName, projectCode)
-                : null;
+        Integer projectId = queryVo.getProjectId();
+        String projectCode = StringUtils.trimToNull(queryVo.getProjectCode());
+        QueryWrapper<MockGroup> queryWrapper = buildGroupQuery(queryVo.getStatus(), keyword);
+        MockProject mockProject = resolveTargetProject(queryUserName, projectId, projectCode);
         if (mockProject == null && !queryVo.isPublicFlag()
                 && (SecurityUtils.isCurrentUser(queryUserName) || SecurityUtils.isAdminUser())
-                && StringUtils.isBlank(projectCode)) {
+                && projectId == null && StringUtils.isBlank(projectCode)) {
             mockProject = mockProjectService.loadMockProject(queryUserName, MockConstants.MOCK_DEFAULT_PROJECT);
         }
         String userName = SecurityUtils.getUserName(queryUserName);
         if (StringUtils.isBlank(userName) && queryVo.isPublicFlag()
                 && mockProject != null && mockProject.isEnabled() && Boolean.TRUE.equals(mockProject.getPublicFlag())) {
-            userName = queryUserName; // 允许查询
+            userName = queryUserName; // 鍏佽鏌ヨ
         }
         queryWrapper.eq("user_name", userName);
         if (StringUtils.isBlank(userName) && mockProject != null) {
-            // 检查是否为共享用户
             String loginUserName = SecurityUtils.getLoginUserName();
             if (StringUtils.isNotBlank(loginUserName)
-                    && mockProjectService.hasProjectAuthority(mockProject.getUserName(), mockProject.getProjectCode(), MockConstants.AUTHORITY_READABLE)) {
+                    && mockProjectService.hasProjectAuthority(mockProject.getUserName(), mockProject.getId(),
+                    mockProject.getProjectCode(), MockConstants.AUTHORITY_READABLE)) {
                 userName = mockProject.getUserName();
-                queryWrapper = Wrappers.<MockGroup>query()
-                        .eq(queryVo.getStatus() != null, "status", queryVo.getStatus())
-                        .isNull(DB_MODIFY_FROM_KEY);
-                queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("group_name", keyword)
-                        .or().like("group_path", keyword)
-                        .or().like("proxy_url", keyword)
-                        .or().like("description", keyword));
+                queryWrapper = buildGroupQuery(queryVo.getStatus(), keyword);
                 queryWrapper.eq("user_name", userName);
             }
         }
-        boolean emptyProjectCode = StringUtils.isNotBlank(userName) && StringUtils.isBlank(projectCode);
-        if (!emptyProjectCode) {
-            queryWrapper.eq("project_code", projectCode);
+        boolean emptyProject = StringUtils.isNotBlank(userName) && projectId == null && StringUtils.isBlank(projectCode);
+        if (!emptyProject) {
+            appendProjectFilter(queryWrapper, mockProject, projectId, projectCode);
         }
         if (queryVo.getHasRequest() != null) {
             queryWrapper.exists(queryVo.getHasRequest(),
@@ -171,7 +159,6 @@ public class MockGroupController {
                         .groupBy("mock_group_path");
                 return mockLogService.listMaps(countQuery).stream().map(map -> new GroupByData<>(map, Date.class))
                         .collect(Collectors.toMap(GroupByData::getGroupKey, GroupByData::getGroupValue));
-
             });
         }
         Future<Map<Integer, Long>> historyCountMapFuture = null;
@@ -202,7 +189,8 @@ public class MockGroupController {
         MockGroup mockGroup = mockGroupService.getById(id);
         MockProject mockProject = null;
         if (mockGroup != null) {
-            mockProject = mockProjectService.loadMockProject(mockGroup.getUserName(), mockGroup.getProjectCode());
+            mockProject = mockProjectService.loadMockProject(mockGroup.getUserName(), mockGroup.getProjectId(),
+                    mockGroup.getProjectCode());
         }
         if (mockGroup == null || mockProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
@@ -240,9 +228,6 @@ public class MockGroupController {
         if (StringUtils.isBlank(group.getGroupPath())) {
             group.setGroupPath(SimpleMockUtils.uuid());
         }
-        if (StringUtils.isBlank(group.getProjectCode())) {
-            group.setProjectCode(MockConstants.MOCK_DEFAULT_PROJECT);
-        }
         if (mockGroupService.existsMockGroup(group)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
         }
@@ -250,7 +235,17 @@ public class MockGroupController {
         if (StringUtils.isBlank(group.getUserName()) && loginUser != null) {
             group.setUserName(loginUser.getUserName());
         }
-        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+        MockProject project = resolveTargetProject(group.getUserName(), group.getProjectId(), group.getProjectCode());
+        if (project != null) {
+            group.setProjectId(project.getId());
+            group.setProjectCode(project.getProjectCode());
+            group.setUserName(project.getUserName());
+        } else {
+            group.setProjectId(null);
+            group.setProjectCode(MockConstants.MOCK_DEFAULT_PROJECT);
+        }
+        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return mockGroupService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(group));
@@ -259,7 +254,7 @@ public class MockGroupController {
     @PostMapping("/copyMockGroup/{groupId}")
     public SimpleResult<MockGroup> copyMockGroup(@PathVariable("groupId") String groupIdsStr,
             @RequestBody MockGroupQueryVo copyVo) {
-        MockProject existsProject = mockProjectService.loadMockProject(copyVo.getUserName(), copyVo.getProjectCode());
+        MockProject existsProject = resolveTargetProject(copyVo.getUserName(), copyVo.getProjectId(), copyVo.getProjectCode());
         if (existsProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
@@ -283,6 +278,15 @@ public class MockGroupController {
         }
         SimpleResult<List<ExportGroupVo>> importGroupsResult = mockGroupService.toImportGroups(files, importVo);
         if (importGroupsResult.isSuccess()) {
+            MockProject project = resolveTargetProject(importVo.getUserName(), importVo.getProjectId(), importVo.getProjectCode());
+            if (project != null) {
+                importVo.setProjectId(project.getId());
+                importVo.setProjectCode(project.getProjectCode());
+                importVo.setUserName(project.getUserName());
+            } else {
+                importVo.setProjectId(null);
+                importVo.setProjectCode(MockConstants.MOCK_DEFAULT_PROJECT);
+            }
             return mockGroupService.importGroups(importGroupsResult.getResultData(), importVo);
         }
         return SimpleResultUtils.createSimpleResult(importGroupsResult.getCode(), 0);
@@ -391,13 +395,12 @@ public class MockGroupController {
     private Map<Integer, List<MockScenario>> loadScenarioMap(List<MockGroup> groups) {
         Map<Integer, List<MockScenario>> scenarioMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(groups)) {
-            // Collect the "source" group IDs: for history records use modifyFrom, otherwise
-            // use id
             Map<Integer, Integer> groupIdToSourceId = new HashMap<>();
             Set<Integer> sourceIds = new HashSet<>();
             for (MockGroup group : groups) {
-                if (group.getId() == null)
+                if (group.getId() == null) {
                     continue;
+                }
                 Integer sourceId = (group.getModifyFrom() != null && group.getModifyFrom() > 0)
                         ? group.getModifyFrom()
                         : group.getId();
@@ -411,7 +414,6 @@ public class MockGroupController {
                 if (CollectionUtils.isNotEmpty(scenarios)) {
                     Map<Integer, List<MockScenario>> sourceMap = scenarios.stream()
                             .collect(Collectors.groupingBy(MockScenario::getGroupId));
-                    // Map each group's own id to its source group's scenarios
                     groupIdToSourceId.forEach((groupId, sourceId) -> {
                         List<MockScenario> list = sourceMap.get(sourceId);
                         if (list != null) {
@@ -422,5 +424,41 @@ public class MockGroupController {
             }
         }
         return scenarioMap;
+    }
+
+    private QueryWrapper<MockGroup> buildGroupQuery(Integer status, String keyword) {
+        QueryWrapper<MockGroup> queryWrapper = Wrappers.<MockGroup>query()
+                .eq(status != null, "status", status)
+                .isNull(DB_MODIFY_FROM_KEY);
+        queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("group_name", keyword)
+                .or().like("group_path", keyword)
+                .or().like("proxy_url", keyword)
+                .or().like("description", keyword));
+        return queryWrapper;
+    }
+
+    private void appendProjectFilter(QueryWrapper<MockGroup> queryWrapper, MockProject mockProject,
+            Integer projectId, String projectCode) {
+        if (projectId != null) {
+            queryWrapper.eq("project_id", projectId);
+            return;
+        }
+        if (StringUtils.isBlank(projectCode)) {
+            return;
+        }
+        if (mockProject != null && !StringUtils.equals(projectCode, MockConstants.MOCK_DEFAULT_PROJECT)) {
+            queryWrapper.and(wrapper -> wrapper.eq("project_id", mockProject.getId())
+                    .or(legacy -> legacy.isNull("project_id").eq("project_code", projectCode)));
+            return;
+        }
+        queryWrapper.eq("project_code", projectCode);
+    }
+
+    private MockProject resolveTargetProject(String userName, Integer projectId, String projectCode) {
+        String normalizedProjectCode = StringUtils.trimToNull(projectCode);
+        if (projectId != null || StringUtils.isNotBlank(normalizedProjectCode)) {
+            return mockProjectService.loadMockProject(userName, projectId, normalizedProjectCode);
+        }
+        return null;
     }
 }

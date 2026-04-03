@@ -73,7 +73,8 @@ public class MockRequestController {
         if (groupId == null) return false;
         MockGroup group = mockGroupService.getById(groupId);
         if (group == null) return false;
-        return mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), authority);
+        return mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), authority);
     }
 
     protected boolean checkRequestAuthority(Integer requestId, String authority) {

@@ -16,6 +16,7 @@ public class MockGroupImportParamVo implements Serializable {
     private String userName;
     private String type;
     private Integer duplicateStrategy;
+    private Integer projectId;
     private String projectCode;
     private Boolean singleGroup; // 合并到单个组
     private String groupName;

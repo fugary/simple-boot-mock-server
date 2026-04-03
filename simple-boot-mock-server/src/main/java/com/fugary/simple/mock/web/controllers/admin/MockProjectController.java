@@ -86,7 +86,8 @@ public class MockProjectController {
         if (StringUtils.isBlank(project.getUserName()) && loginUser != null) {
             project.setUserName(loginUser.getUserName());
         }
-        if (!mockProjectService.hasProjectAuthority(project.getUserName(), project.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasProjectAuthority(project.getUserName(), project.getId(),
+                project.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         if (project.getId() != null && mockProjectService.existsMockProject(project)) {
@@ -131,7 +132,7 @@ public class MockProjectController {
     }
 
     private String buildProjectUserExistsSql(String userName) {
-        return "select 1 from t_mock_project_user pu where pu.project_code = t_mock_project.project_code and pu.user_name = '"
+        return "select 1 from t_mock_project_user pu where pu.project_id = t_mock_project.id and pu.user_name = '"
                 + userName + "'";
     }
 

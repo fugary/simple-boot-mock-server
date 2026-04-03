@@ -486,7 +486,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         boolean sameProject = true;
         if (newProject != null) {
             sameProject = StringUtils.equals(newProject.getUserName(), mockGroup.getUserName())
+                    && Objects.equals(newProject.getId(), mockGroup.getProjectId())
                     && StringUtils.equals(newProject.getProjectCode(), mockGroup.getProjectCode());
+            mockGroup.setProjectId(newProject.getId());
             mockGroup.setProjectCode(newProject.getProjectCode());
             mockGroup.setUserName(newProject.getUserName());
         }
@@ -526,6 +528,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             group.setUserName(SecurityUtils.getUserName(importVo.getUserName()));
             group.setGroupPath(
                     StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
+            group.setProjectId(importVo.getProjectId());
             group.setProjectCode(
                     StringUtils.defaultIfBlank(importVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
             boolean saved = saveOrUpdate(SimpleMockUtils.addAuditInfo(group));

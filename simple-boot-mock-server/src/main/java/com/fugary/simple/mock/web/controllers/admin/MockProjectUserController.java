@@ -1,6 +1,7 @@
 package com.fugary.simple.mock.web.controllers.admin;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockProject;
 import com.fugary.simple.mock.entity.mock.MockProjectUser;
@@ -58,6 +59,9 @@ public class MockProjectUserController {
         if (project == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404, null);
         }
+        if (StringUtils.equals(project.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, null);
+        }
         if (!SecurityUtils.validateUserUpdate(project.getUserName())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403, null);
         }
@@ -96,7 +100,7 @@ public class MockProjectUserController {
         }
         MockProject project = projectUser.getProjectId() != null
                 ? mockProjectService.getById(projectUser.getProjectId())
-                : mockProjectService.getOne(Wrappers.<MockProject>query().eq("project_code", projectUser.getProjectCode()));
+                : mockProjectService.loadMockProject(null, projectUser.getProjectId(), projectUser.getProjectCode());
         if (project == null || !SecurityUtils.validateUserUpdate(project.getUserName())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403, false);
         }

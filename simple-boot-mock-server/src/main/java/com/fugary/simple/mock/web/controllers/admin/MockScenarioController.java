@@ -53,9 +53,11 @@ public class MockScenarioController {
         if (group == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        MockProject mockProject = mockProjectService.loadMockProject(group.getUserName(), group.getProjectCode());
+        MockProject mockProject = mockProjectService.loadMockProject(group.getUserName(), group.getProjectId(),
+                group.getProjectCode());
         if (!Boolean.TRUE.equals(mockProject != null ? mockProject.getPublicFlag() : null)
-                && !mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_READABLE)) {
+                && !mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), MockConstants.AUTHORITY_READABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockScenarioService.list(Wrappers.<MockScenario>query()
@@ -73,7 +75,8 @@ public class MockScenarioController {
         if (group == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         if (scenario.getId() == null) {
@@ -109,9 +112,11 @@ public class MockScenarioController {
         if (group == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        MockProject mockProject = mockProjectService.loadMockProject(group.getUserName(), group.getProjectCode());
+        MockProject mockProject = mockProjectService.loadMockProject(group.getUserName(), group.getProjectId(),
+                group.getProjectCode());
         if (!Boolean.TRUE.equals(mockProject != null ? mockProject.getPublicFlag() : null)
-                && !mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+                && !mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         String scenarioCode = StringUtils.trimToNull(queryVo.getScenarioCode());
@@ -140,7 +145,8 @@ public class MockScenarioController {
         if (group == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         scenario.setStatus(scenario.isEnabled() ? 0 : 1);
@@ -163,7 +169,8 @@ public class MockScenarioController {
         if (group == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), MockConstants.AUTHORITY_DELETABLE)) {
+        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), MockConstants.AUTHORITY_DELETABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         List<Integer> requestIds = mockRequestService.list(Wrappers.<MockRequest>query()

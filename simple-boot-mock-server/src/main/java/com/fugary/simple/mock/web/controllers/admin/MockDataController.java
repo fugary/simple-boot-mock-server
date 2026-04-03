@@ -68,7 +68,8 @@ public class MockDataController {
         if (request == null) return false;
         MockGroup group = mockGroupService.getById(request.getGroupId());
         if (group == null) return false;
-        return mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectCode(), authority);
+        return mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), authority);
     }
 
     protected boolean checkDataAuthority(Integer dataId, String authority) {
