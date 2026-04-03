@@ -64,6 +64,30 @@ export const selectProjects = (params, config) => {
   }, config)).then(response => response.data?.resultData)
 }
 
+export const assignProjectValue = (target, project) => {
+  if (!target) {
+    return
+  }
+  if (!project) {
+    target.projectId = null
+    target.projectCode = null
+    return
+  }
+  const defaultProject = isDefaultProject(project.projectCode)
+  target.projectId = defaultProject ? null : (project.projectId || project.id || null)
+  target.projectCode = project.projectCode || (defaultProject ? MOCK_DEFAULT_PROJECT : null)
+}
+
+export const findProjectByValue = (projects = [], searchParam = {}) => {
+  if (searchParam?.projectId != null) {
+    return projects.find(proj => `${proj.id}` === `${searchParam.projectId}`)
+  }
+  if (searchParam?.projectCode) {
+    return projects.find(proj => proj.projectCode === searchParam.projectCode)
+  }
+  return null
+}
+
 export const useSelectProjects = (searchParam, autoSelect) => {
   const projects = ref([])
   const projectOptions = ref([])
@@ -72,10 +96,22 @@ export const useSelectProjects = (searchParam, autoSelect) => {
       projects.value = sortProjects(result || [])
       projectOptions.value = projects.value.map(project => {
         if (project.projectCode === MOCK_DEFAULT_PROJECT) {
-          return { labelKey: 'mock.label.defaultProject', value: project.projectCode }
+          return {
+            labelKey: 'mock.label.defaultProject',
+            value: project.projectCode,
+            projectCode: project.projectCode,
+            projectId: null,
+            userName: project.userName
+          }
         }
         const label = data.publicFlag ? `${project.projectName}-${project.userName}` : project.projectName
-        return { label, value: project.projectCode, userName: project.userName }
+        return {
+          label,
+          value: project.projectCode,
+          userName: project.userName,
+          projectId: project.id,
+          projectCode: project.projectCode
+        }
       })
     })
   }
@@ -84,12 +120,16 @@ export const useSelectProjects = (searchParam, autoSelect) => {
       userName: searchParam.value?.userName || useCurrentUserName(),
       publicFlag: searchParam.value?.publicFlag
     })
-    const currentProj = projects.value.find(proj => proj.projectCode === searchParam.value.projectCode)
+    const currentProj = findProjectByValue(projects.value, searchParam.value)
     if (autoSelect) {
-      searchParam.value.projectCode = currentProj?.projectCode || MOCK_DEFAULT_PROJECT
+      assignProjectValue(searchParam.value, currentProj || { projectCode: MOCK_DEFAULT_PROJECT, projectId: null })
+      if (!searchParam.value.projectCode) {
+        searchParam.value.projectCode = MOCK_DEFAULT_PROJECT
+      }
     } else if (currentProj?.projectCode) {
-      searchParam.value.projectCode = currentProj.projectCode
+      assignProjectValue(searchParam.value, currentProj)
     } else {
+      searchParam.value.projectId = null
       searchParam.value.projectCode = null
     }
     if (isAdminUser() && currentProj?.userName) {

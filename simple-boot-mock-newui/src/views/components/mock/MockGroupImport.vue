@@ -23,6 +23,10 @@ const props = defineProps({
     type: String,
     default: MOCK_DEFAULT_PROJECT
   },
+  defaultProjectId: {
+    type: Number,
+    default: null
+  },
   projectOptions: {
     type: Array,
     default: () => []
@@ -33,6 +37,7 @@ const accountInfo = useLoginConfigStore().accountInfo
 const importModel = ref({
   userName: !isAdminUser() ? accountInfo?.userName : (props.defaultUser || accountInfo?.userName),
   type: 'simple',
+  projectId: props.defaultProjectId,
   projectCode: props.defaultProject,
   duplicateStrategy: IMPORT_DUPLICATE_STRATEGY[0].value,
   singleGroup: true // 调整为默认为单个组
@@ -42,6 +47,9 @@ watch(() => props.defaultUser, (val) => {
 })
 watch(() => props.defaultProject, (val) => {
   importModel.value.projectCode = val
+})
+watch(() => props.defaultProjectId, (val) => {
+  importModel.value.projectId = val
 })
 const importFiles = ref([])
 const calcUserOptions = computed(() => props.userOptions)
@@ -61,6 +69,7 @@ const formOptions = computed(() => {
       clearable: false
     },
     change (value) {
+      importModel.value.projectId = null
       importModel.value.projectCode = MOCK_DEFAULT_PROJECT
       emit('changedUser', value)
     }
@@ -71,6 +80,11 @@ const formOptions = computed(() => {
     children: props.projectOptions,
     attrs: {
       clearable: false
+    },
+    change (value) {
+      const option = props.projectOptions.find(item => item.value === value)
+      importModel.value.projectId = option?.projectId || null
+      importModel.value.projectCode = option?.projectCode || value || null
     },
     tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
     tooltipIcon: 'CirclePlusFilled',

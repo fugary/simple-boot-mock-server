@@ -52,7 +52,11 @@ onActivated(initLoadOnce)
 
 const gotoMockGroups = (project) => {
   if (project.status === 1) {
-    $goto(`/mock/groups/${props.publicFlag ? 'pubProject' : 'project'}/${project.projectCode}/${project.userName}?backUrl=${route.fullPath}`)
+    const query = new URLSearchParams({ backUrl: route.fullPath })
+    if (!isDefaultProject(project.projectCode) && project.id != null) {
+      query.set('projectId', `${project.id}`)
+    }
+    $goto(`/mock/groups/${props.publicFlag ? 'pubProject' : 'project'}/${project.projectCode}/${project.userName}?${query.toString()}`)
   }
 }
 

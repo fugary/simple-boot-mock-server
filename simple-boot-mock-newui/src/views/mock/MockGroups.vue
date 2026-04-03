@@ -140,7 +140,7 @@ const route = useRoute()
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
-  defaultParam: { page: useDefaultPage(), userName: useCurrentUserName() },
+  defaultParam: { page: useDefaultPage(), userName: useCurrentUserName(), projectId: null },
   searchMethod: search
 })
 const mockProject = ref()
@@ -163,7 +163,9 @@ const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
 const { backUrl, goBack } = useBackUrl()
 const syncRouteSearchParam = () => {
   const routeProjectCode = route.params.projectCode ? String(route.params.projectCode) : null
+  const routeProjectId = route.query.projectId ? Number(route.query.projectId) : null
   const routeUserName = route.params.userName ? String(route.params.userName) : null
+  searchParam.value.projectId = Number.isFinite(routeProjectId) ? routeProjectId : null
   searchParam.value.projectCode = routeProjectCode
   if (routeProjectCode) {
     searchParam.value.userName = routeUserName || searchParam.value.userName || useCurrentUserName()
@@ -230,7 +232,8 @@ const columns = computed(() => {
       const url = `/mock/groups/${data.id}?backUrl=${route.fullPath}`
       let projectInfo = ''
       if (data.projectCode && !isDefaultProject(data.projectCode)) {
-        const projectOption = projectOptions.value.find(proj => proj.value === data.projectCode)
+        const projectOption = projectOptions.value.find(proj => `${proj.projectId || ''}` === `${data.projectId || ''}`) ||
+          projectOptions.value.find(proj => proj.projectCode === data.projectCode)
         projectInfo = projectOption?.label || $i18nBundle(projectOption?.labelKey) || mockProject.value?.projectName
         if (!projectInfo) {
           projectInfo = data.projectCode
@@ -419,7 +422,10 @@ const searchFormOptions = computed(() => {
       clearable: !props.publicFlag
     },
     change (value) {
-      searchParam.value.userName = projectOptions.value.find(option => option.value === value)?.userName || searchParam.value.userName
+      const option = projectOptions.value.find(item => item.value === value)
+      searchParam.value.projectId = option?.projectId || null
+      searchParam.value.projectCode = option?.projectCode || value || null
+      searchParam.value.userName = option?.userName || searchParam.value.userName
       loadMockGroups(1)
     }
   },
@@ -472,6 +478,7 @@ const newOrEdit = async id => {
     currentGroup.value = {
       status: 1,
       userName: searchParam.value?.userName || useCurrentUserName(),
+      projectId: searchParam.value?.projectId || null,
       projectCode: searchParam.value?.projectCode || MOCK_DEFAULT_PROJECT,
       proxyUrlParams: []
     }
@@ -484,8 +491,13 @@ const { showEditWindow: showEditProjectWindow, currentProject, newOrEditProject,
 const reloadProjectsAndRefreshOptions = async (item, importModel) => {
   await loadProjectsAndRefreshOptions()
   const formModel = importModel?.value ? importModel : currentGroup
-  if (formModel?.value && projectOptions.value?.find(option => option.value === item.projectCode)) {
-    formModel.value.projectCode = item.projectCode
+  if (formModel?.value) {
+    const option = projectOptions.value?.find(project => `${project.projectId || ''}` === `${item.id || item.projectId || ''}`) ||
+      projectOptions.value?.find(project => project.projectCode === item.projectCode)
+    if (option) {
+      formModel.value.projectId = option.projectId || null
+      formModel.value.projectCode = option.projectCode
+    }
   }
 }
 const saveProjectItem = (item) => {
@@ -505,6 +517,7 @@ const editFormOptions = computed(() => {
     },
     change (value) {
       if (currentGroup.value) {
+        currentGroup.value.projectId = null
         currentGroup.value.projectCode = MOCK_DEFAULT_PROJECT
       }
       changedUser(value)
@@ -516,6 +529,11 @@ const editFormOptions = computed(() => {
     children: projectOptions.value,
     attrs: {
       clearable: false
+    },
+    change (value) {
+      const option = projectOptions.value.find(item => item.value === value)
+      currentGroup.value.projectId = option?.projectId || null
+      currentGroup.value.projectCode = option?.projectCode || value || null
     },
     tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
     tooltipIcon: 'CirclePlusFilled',
@@ -875,6 +893,7 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
     <mock-group-import
       v-model="showImportWindow"
       :default-user="searchParam.userName"
+      :default-project-id="searchParam.projectId"
       :user-options="userOptions"
       :default-project="searchParam.projectCode"
       :project-options="projectOptions"

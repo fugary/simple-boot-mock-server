@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { computed, ref } from 'vue'
 import { isAdminUser, isCurrentUser, useCurrentUserName } from '@/utils'
-import { useSelectProjects } from '@/api/mock/MockProjectApi'
+import { assignProjectValue, useSelectProjects } from '@/api/mock/MockProjectApi'
 import { defineFormOptions } from '@/components/utils'
 import { $i18nBundle, $i18nConcat } from '@/messages'
 import { ElMessage, ElText } from 'element-plus'
@@ -12,6 +12,7 @@ import { isArray } from 'lodash-es'
 
 const showWindow = ref(false)
 const searchParam = ref({
+  projectId: null,
   userName: useCurrentUserName(),
   publicFlag: false
 })
@@ -22,7 +23,11 @@ const toCopyGroupTo = async (group) => {
   currentGroups.value = isArray(group) ? group : [group]
   searchParam.value.groupId = currentGroups.value.map(grp => grp.id).join(',')
   searchParam.value.userName = isAdminUser() ? group.userName : useCurrentUserName()
-  searchParam.value.projectCode = isAdminUser() || isCurrentUser(group.userName) ? group.projectCode : MOCK_DEFAULT_PROJECT
+  if (isAdminUser() || isCurrentUser(group.userName)) {
+    assignProjectValue(searchParam.value, group)
+  } else {
+    assignProjectValue(searchParam.value, { projectCode: MOCK_DEFAULT_PROJECT, projectId: null })
+  }
   await loadUsersAndRefreshOptions()
   await loadProjectsAndRefreshOptions()
   showWindow.value = true
@@ -72,6 +77,11 @@ const options = computed(() => {
     attrs: {
       filterable: true,
       clearable: false
+    },
+    change (value) {
+      const option = projectOptions.value.find(item => item.value === value)
+      searchParam.value.projectId = option?.projectId || null
+      searchParam.value.projectCode = option?.projectCode || value || null
     }
   }])
 })
@@ -81,6 +91,7 @@ const saveCopyGroupTo = ({ form }) => {
     if (valid) {
       copyMockGroup({
         groupId: searchParam.value.groupId,
+        projectId: searchParam.value.projectId,
         projectCode: searchParam.value.projectCode,
         userName: searchParam.value.userName
       }).then((data) => {
