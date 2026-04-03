@@ -35,12 +35,12 @@ public class MockProjectUserController {
     /**
      * 查询某项目的协作成员列表
      *
-     * @param projectCode
+     * @param projectId 项目ID
      * @return
      */
     @GetMapping
-    public SimpleResult<List<MockProjectUser>> search(@RequestParam("projectCode") String projectCode) {
-        return SimpleResultUtils.createSimpleResult(mockProjectUserService.loadProjectUsers(projectCode));
+    public SimpleResult<List<MockProjectUser>> search(@RequestParam("projectId") Integer projectId) {
+        return SimpleResultUtils.createSimpleResult(mockProjectUserService.loadProjectUsers(projectId));
     }
 
     /**
@@ -51,12 +51,10 @@ public class MockProjectUserController {
      */
     @PostMapping
     public SimpleResult<MockProjectUser> save(@RequestBody MockProjectUser projectUser) {
-        if (StringUtils.isBlank(projectUser.getProjectCode()) || StringUtils.isBlank(projectUser.getUserName())) {
+        if (projectUser.getProjectId() == null || StringUtils.isBlank(projectUser.getUserName())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, null);
         }
-        // 只有项目的 owner 或者 admin 才能管理协作成员
-        MockProject project = mockProjectService.getOne(Wrappers.<MockProject>query()
-                .eq("project_code", projectUser.getProjectCode()));
+        MockProject project = mockProjectService.getById(projectUser.getProjectId());
         if (project == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404, null);
         }
@@ -67,10 +65,10 @@ public class MockProjectUserController {
                 || SecurityUtils.isCurrentUser(projectUser.getUserName())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, null);
         }
-        // 检查是否已存在
+        projectUser.setProjectCode(project.getProjectCode());
         if (projectUser.getId() == null) {
             boolean exists = mockProjectUserService.exists(Wrappers.<MockProjectUser>query()
-                    .eq("project_code", projectUser.getProjectCode())
+                    .eq("project_id", projectUser.getProjectId())
                     .eq("user_name", projectUser.getUserName()));
             if (exists) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001, null);
@@ -96,8 +94,9 @@ public class MockProjectUserController {
         if (projectUser == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404, false);
         }
-        MockProject project = mockProjectService.getOne(Wrappers.<MockProject>query()
-                .eq("project_code", projectUser.getProjectCode()));
+        MockProject project = projectUser.getProjectId() != null
+                ? mockProjectService.getById(projectUser.getProjectId())
+                : mockProjectService.getOne(Wrappers.<MockProject>query().eq("project_code", projectUser.getProjectCode()));
         if (project == null || !SecurityUtils.validateUserUpdate(project.getUserName())) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403, false);
         }

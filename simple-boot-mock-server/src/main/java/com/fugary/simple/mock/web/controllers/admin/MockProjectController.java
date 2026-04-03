@@ -89,7 +89,7 @@ public class MockProjectController {
         if (!mockProjectService.hasProjectAuthority(project.getUserName(), project.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
-        if (mockProjectService.existsMockProject(project)) {
+        if (project.getId() != null && mockProjectService.existsMockProject(project)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
         }
         return mockProjectService.saveMockProject(project);
@@ -138,7 +138,7 @@ public class MockProjectController {
     private void populateProjectUsers(List<MockProject> projects) {
         if (projects != null) {
             for (MockProject project : projects) {
-                project.setProjectUsers(mockProjectUserService.loadProjectUsers(project.getProjectCode()));
+                project.setProjectUsers(mockProjectUserService.loadProjectUsers(project.getId()));
             }
         }
     }

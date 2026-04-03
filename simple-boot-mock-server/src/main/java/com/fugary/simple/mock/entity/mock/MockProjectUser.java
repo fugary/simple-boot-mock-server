@@ -28,6 +28,8 @@ public class MockProjectUser extends MockBase {
      */
     private String projectCode;
 
+    private Integer projectId;
+
     /**
      * 操作权限(readable,writable,deletable等逗号分隔)
      */

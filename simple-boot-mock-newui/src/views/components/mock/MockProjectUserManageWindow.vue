@@ -52,12 +52,12 @@ const selectableUserOptions = computed(() => {
 })
 
 const loadProjectUsers = () => {
-  if (!props.project?.projectCode) {
+  if (!props.project?.id) {
     projectUsers.value = []
     return Promise.resolve([])
   }
   loading.value = true
-  return MockProjectUserApi.search({ projectCode: props.project.projectCode }).then(res => {
+  return MockProjectUserApi.search({ projectId: props.project.id }).then(res => {
     projectUsers.value = res?.resultData || []
     return projectUsers.value
   }).finally(() => {
@@ -86,7 +86,7 @@ const removeUser = (id) => {
 
 const newUser = () => {
   currentUser.value = {
-    projectCode: props.project?.projectCode,
+    projectId: props.project?.id,
     authorities: ['readable']
   }
   showEditWindow.value = true

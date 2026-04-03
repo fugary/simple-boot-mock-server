@@ -19,6 +19,6 @@ public interface MockProjectUserService extends IService<MockProjectUser> {
      * @param projectCode
      * @return
      */
-    List<MockProjectUser> loadProjectUsers(String projectCode);
+    List<MockProjectUser> loadProjectUsers(Integer projectId);
 
 }

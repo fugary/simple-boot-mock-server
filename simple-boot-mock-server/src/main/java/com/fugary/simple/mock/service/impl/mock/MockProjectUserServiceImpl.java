@@ -19,8 +19,8 @@ import java.util.List;
 public class MockProjectUserServiceImpl extends ServiceImpl<MockProjectUserMapper, MockProjectUser> implements MockProjectUserService {
 
     @Override
-    public List<MockProjectUser> loadProjectUsers(String projectCode) {
-        return this.list(Wrappers.<MockProjectUser>query().eq("project_code", projectCode));
+    public List<MockProjectUser> loadProjectUsers(Integer projectId) {
+        return this.list(Wrappers.<MockProjectUser>query().eq("project_id", projectId));
     }
 
 }

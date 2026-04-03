@@ -140,14 +140,16 @@ export const useProjectEditHook = (searchParam, userOptions) => {
     labelKey: 'mock.label.projectCode',
     prop: 'projectCode',
     tooltip: $i18nBundle('mock.msg.projectCodeTooltip'),
-    required: true,
-    upperCase: true,
+    enabled: !!currentProject.value?.id,
     rules: [{
       validator (_, value) {
-        return /^[A-Z0-9_-]+$/ig.test(value)
+        return !value || /^[A-Z0-9_-]+$/ig.test(value)
       },
       message: $i18nBundle('mock.msg.projectCodeTooltip')
-    }]
+    }],
+    attrs: {
+      clearable: true
+    }
   }, {
     labelKey: 'mock.label.projectName',
     prop: 'projectName',
