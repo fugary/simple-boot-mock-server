@@ -99,6 +99,7 @@ public class MockGroupController {
         Integer projectId = queryVo.getProjectId();
         String projectCode = StringUtils.trimToNull(queryVo.getProjectCode());
         QueryWrapper<MockGroup> queryWrapper = buildGroupQuery(queryVo.getStatus(), keyword);
+        String loginUserName = SecurityUtils.getLoginUserName();
         MockProject mockProject = resolveTargetProject(queryUserName, projectId, projectCode);
         if (mockProject != null && !isDefaultProjectCode(mockProject.getProjectCode())) {
             if (!hasProjectReadAccess(mockProject, queryVo.isPublicFlag())) {
@@ -112,12 +113,7 @@ public class MockGroupController {
             }
             queryWrapper.eq("user_name", mockProject.getUserName());
             appendProjectFilter(queryWrapper, mockProject, mockProject.getId(), mockProject.getProjectCode());
-            if (queryVo.getHasRequest() != null) {
-                queryWrapper.exists(queryVo.getHasRequest(),
-                        "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
-                queryWrapper.notExists(!queryVo.getHasRequest(),
-                        "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
-            }
+            applyHasRequestFilter(queryWrapper, queryVo.getHasRequest());
             return queryGroupPage(page, queryWrapper, mockProject, queryVo);
         }
         if (mockProject == null && !queryVo.isPublicFlag()
@@ -126,13 +122,21 @@ public class MockGroupController {
             mockProject = mockProjectService.loadMockProject(queryUserName, MockConstants.MOCK_DEFAULT_PROJECT);
         }
         String userName = SecurityUtils.getUserName(queryUserName);
+        boolean noProjectSelected = projectId == null && StringUtils.isBlank(projectCode);
+        if (!queryVo.isPublicFlag() && noProjectSelected
+                && StringUtils.isNotBlank(userName)
+                && StringUtils.equals(userName, loginUserName)
+                && !SecurityUtils.isAdminUser()) {
+            appendAccessibleProjectsScope(queryWrapper, userName);
+            applyHasRequestFilter(queryWrapper, queryVo.getHasRequest());
+            return queryGroupPage(page, queryWrapper, mockProject, queryVo);
+        }
         if (StringUtils.isBlank(userName) && queryVo.isPublicFlag()
                 && mockProject != null && mockProject.isEnabled() && Boolean.TRUE.equals(mockProject.getPublicFlag())) {
             userName = queryUserName; // 鍏佽鏌ヨ
         }
         queryWrapper.eq("user_name", userName);
         if (StringUtils.isBlank(userName) && mockProject != null) {
-            String loginUserName = SecurityUtils.getLoginUserName();
             if (StringUtils.isNotBlank(loginUserName)
                     && mockProjectService.hasProjectAuthority(mockProject.getUserName(), mockProject.getId(),
                     mockProject.getProjectCode(), MockConstants.AUTHORITY_READABLE)) {
@@ -145,12 +149,7 @@ public class MockGroupController {
         if (!emptyProject) {
             appendProjectFilter(queryWrapper, mockProject, projectId, projectCode);
         }
-        if (queryVo.getHasRequest() != null) {
-            queryWrapper.exists(queryVo.getHasRequest(),
-                    "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
-            queryWrapper.notExists(!queryVo.getHasRequest(),
-                    "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
-        }
+        applyHasRequestFilter(queryWrapper, queryVo.getHasRequest());
         return queryGroupPage(page, queryWrapper, mockProject, queryVo);
     }
 
@@ -525,6 +524,29 @@ public class MockGroupController {
 
     private boolean isDefaultProjectCode(String projectCode) {
         return StringUtils.equalsIgnoreCase(MockConstants.MOCK_DEFAULT_PROJECT, StringUtils.trimToEmpty(projectCode));
+    }
+
+    private void applyHasRequestFilter(QueryWrapper<MockGroup> queryWrapper, Boolean hasRequest) {
+        if (hasRequest != null) {
+            queryWrapper.exists(hasRequest,
+                    "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
+            queryWrapper.notExists(!hasRequest,
+                    "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
+        }
+    }
+
+    private void appendAccessibleProjectsScope(QueryWrapper<MockGroup> queryWrapper, String userName) {
+        queryWrapper.and(wrapper -> {
+            wrapper.eq("user_name", userName);
+            wrapper.or().exists(buildReadableProjectExistsSql(userName));
+        });
+    }
+
+    private String buildReadableProjectExistsSql(String userName) {
+        return "select 1 from t_mock_project p join t_mock_project_user pu on pu.project_id = p.id "
+                + "where pu.user_name = '" + userName + "' and p.status = 1 and p.project_code <> '"
+                + MockConstants.MOCK_DEFAULT_PROJECT + "' and (p.id = t_mock_group.project_id "
+                + "or (t_mock_group.project_id is null and p.project_code = t_mock_group.project_code))";
     }
 
     private void applyProjectRelation(MockGroup group, MockProject project) {
