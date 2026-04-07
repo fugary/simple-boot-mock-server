@@ -333,9 +333,10 @@ const pageAttrs = {
             @click="gotoMockGroups(project)"
           >
             <template #header>
-              <div class="card-header">
+              <div class="card-header project-card__header">
                 <el-checkbox
                   v-model="project.selected"
+                  class="project-card__title"
                   style="margin-right: auto;"
                   :disabled="defaultProject||!checkProjectEdit(project)"
                   @click="$event.stopPropagation()"
@@ -524,6 +525,32 @@ const pageAttrs = {
   padding: 14px 16px;
 }
 
+.project-card__header {
+  display: block;
+  position: relative;
+  min-height: 32px;
+}
+
+.project-card__title {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 100%;
+}
+
+.project-card__title :deep(.el-checkbox__input) {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.project-card__title :deep(.el-checkbox__label) {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.5;
+}
+
 /* Project title styling */
 .project-title {
   font-size: 15px;
@@ -533,13 +560,24 @@ const pageAttrs = {
 /* Operation buttons */
 .project-operations {
   display: flex;
+  align-items: center;
   gap: 6px;
+  position: absolute;
+  top: 0;
+  right: 0;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
 
 .project-card:hover .project-operations {
   opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .project-card__header {
+    padding-right: 0;
+    padding-top: 40px;
+  }
 }
 
 /* Disabled project styling */
