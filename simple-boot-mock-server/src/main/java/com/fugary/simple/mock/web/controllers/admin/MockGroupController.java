@@ -259,14 +259,7 @@ public class MockGroupController {
             group.setUserName(loginUser.getUserName());
         }
         MockProject project = resolveTargetProject(group.getUserName(), group.getProjectId(), group.getProjectCode());
-        if (project != null) {
-            group.setProjectId(project.getId());
-            group.setProjectCode(project.getProjectCode());
-            group.setUserName(project.getUserName());
-        } else {
-            group.setProjectId(null);
-            group.setProjectCode(MockConstants.MOCK_DEFAULT_PROJECT);
-        }
+        applyProjectRelation(group, project);
         if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
                 group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
@@ -303,9 +296,14 @@ public class MockGroupController {
         if (importGroupsResult.isSuccess()) {
             MockProject project = resolveTargetProject(importVo.getUserName(), importVo.getProjectId(), importVo.getProjectCode());
             if (project != null) {
-                importVo.setProjectId(project.getId());
-                importVo.setProjectCode(project.getProjectCode());
-                importVo.setUserName(project.getUserName());
+                if (StringUtils.equals(project.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT)) {
+                    importVo.setProjectId(null);
+                    importVo.setProjectCode(MockConstants.MOCK_DEFAULT_PROJECT);
+                } else {
+                    importVo.setProjectId(project.getId());
+                    importVo.setProjectCode(project.getProjectCode());
+                    importVo.setUserName(project.getUserName());
+                }
             } else {
                 importVo.setProjectId(null);
                 importVo.setProjectCode(MockConstants.MOCK_DEFAULT_PROJECT);
@@ -483,5 +481,16 @@ public class MockGroupController {
             return mockProjectService.loadMockProject(userName, projectId, normalizedProjectCode);
         }
         return null;
+    }
+
+    private void applyProjectRelation(MockGroup group, MockProject project) {
+        if (project == null || StringUtils.equals(project.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT)) {
+            group.setProjectId(null);
+            group.setProjectCode(MockConstants.MOCK_DEFAULT_PROJECT);
+            return;
+        }
+        group.setProjectId(project.getId());
+        group.setProjectCode(project.getProjectCode());
+        group.setUserName(project.getUserName());
     }
 }

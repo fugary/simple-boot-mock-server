@@ -485,16 +485,18 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         mockGroup.setGroupPath(SimpleMockUtils.uuid()); // 新路径
         boolean sameProject = true;
         if (newProject != null) {
+            boolean defaultProject = MockConstants.MOCK_DEFAULT_PROJECT.equals(newProject.getProjectCode());
             sameProject = StringUtils.equals(newProject.getUserName(), mockGroup.getUserName())
-                    && Objects.equals(newProject.getId(), mockGroup.getProjectId())
+                    && Objects.equals(defaultProject ? null : newProject.getId(), mockGroup.getProjectId())
                     && StringUtils.equals(newProject.getProjectCode(), mockGroup.getProjectCode());
-            mockGroup.setProjectId(newProject.getId());
+            mockGroup.setProjectId(defaultProject ? null : newProject.getId());
             mockGroup.setProjectCode(newProject.getProjectCode());
             mockGroup.setUserName(newProject.getUserName());
         }
         if (sameProject) {
             mockGroup.setGroupName(StringUtils.join(mockGroup.getGroupName(), "-copy"));
         }
+        mockGroup.setVersion(1);
         saveOrUpdate(mockGroup);
         List<MockRequest> mockRequests = mockRequestService
                 .list(Wrappers.<MockRequest>query().eq("group_id", groupId).isNull(DB_MODIFY_FROM_KEY));
@@ -524,7 +526,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         importGroups.forEach(group -> {
             group.setId(null);
             group.setModifyFrom(null);
-            group.setVersion(null);
+            group.setVersion(1);
             group.setUserName(SecurityUtils.getUserName(importVo.getUserName()));
             group.setGroupPath(
                     StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
