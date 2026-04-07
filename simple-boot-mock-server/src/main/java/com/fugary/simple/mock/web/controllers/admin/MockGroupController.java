@@ -262,16 +262,16 @@ public class MockGroupController {
                 group.setUserName(existGroup.getUserName());
             }
             if (!SecurityUtils.validateUserUpdate(existGroup.getUserName())) {
+                boolean sourceWritable = mockProjectService.hasProjectAuthority(existGroup.getUserName(),
+                        existGroup.getProjectId(), existGroup.getProjectCode(), MockConstants.AUTHORITY_WRITABLE);
+                if (!sourceWritable) {
+                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+                }
                 boolean projectChanged = (group.getProjectId() != null && !Objects.equals(group.getProjectId(), existGroup.getProjectId()))
                         || (StringUtils.isNotBlank(group.getProjectCode())
                         && !StringUtils.equals(StringUtils.trimToEmpty(group.getProjectCode()), StringUtils.trimToEmpty(existGroup.getProjectCode())))
                         || (StringUtils.isNotBlank(group.getUserName())
                         && !StringUtils.equals(group.getUserName(), existGroup.getUserName()));
-                boolean sourceWritable = mockProjectService.hasProjectAuthority(existGroup.getUserName(),
-                        existGroup.getProjectId(), existGroup.getProjectCode(), MockConstants.AUTHORITY_WRITABLE);
-                if (projectChanged && !sourceWritable) {
-                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
-                }
                 if (!projectChanged) {
                     group.setUserName(existGroup.getUserName());
                     group.setProjectId(existGroup.getProjectId());
@@ -547,7 +547,8 @@ public class MockGroupController {
     }
 
     private String buildReadableProjectExistsSql(String userName) {
-        return "select 1 from t_mock_project p join t_mock_project_user pu on pu.project_id = p.id "
+        return "select 1 from t_mock_project p join t_mock_project_user pu "
+                + "on (pu.project_id = p.id or (pu.project_id is null and pu.project_code = p.project_code)) "
                 + "where pu.user_name = '" + userName + "' and p.status = 1 and p.project_code <> '"
                 + MockConstants.MOCK_DEFAULT_PROJECT + "' and (p.id = t_mock_group.project_id "
                 + "or (t_mock_group.project_id is null and p.project_code = t_mock_group.project_code))";

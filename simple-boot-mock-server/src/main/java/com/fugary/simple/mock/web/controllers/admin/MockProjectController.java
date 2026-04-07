@@ -108,6 +108,7 @@ public class MockProjectController {
         queryWrapper.orderByDesc("id");
         List<MockProject> projects = mockProjectService.list(queryWrapper);
         appendSelectedProject(projects, queryVo);
+        populateProjectUsers(projects);
         return SimpleResultUtils.createSimpleResult(projects);
     }
 
@@ -134,14 +135,16 @@ public class MockProjectController {
     }
 
     private String buildProjectUserExistsSql(String userName) {
-        return "select 1 from t_mock_project_user pu where pu.project_id = t_mock_project.id and pu.user_name = '"
+        return "select 1 from t_mock_project_user pu where (pu.project_id = t_mock_project.id "
+                + "or (pu.project_id is null and pu.project_code = t_mock_project.project_code)) and pu.user_name = '"
                 + userName + "'";
     }
 
     private void populateProjectUsers(List<MockProject> projects) {
         if (projects != null) {
             for (MockProject project : projects) {
-                project.setProjectUsers(mockProjectUserService.loadProjectUsers(project.getId()));
+                project.setProjectUsers(mockProjectUserService.loadProjectUsers(project.getId(),
+                        project.getProjectCode()));
             }
         }
     }
@@ -164,7 +167,6 @@ public class MockProjectController {
                 : mockProjectService.hasProjectAuthority(project.getUserName(), project.getId(),
                 project.getProjectCode(), null);
         if (allowed) {
-            project.setProjectUsers(mockProjectUserService.loadProjectUsers(project.getId()));
             projects.add(project);
         }
     }

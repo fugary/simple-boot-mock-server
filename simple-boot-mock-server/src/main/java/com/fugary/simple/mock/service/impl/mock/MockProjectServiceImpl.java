@@ -90,7 +90,8 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
             mockProject = getOne(queryWrapper, false);
         }
         if (mockProject != null) {
-            mockProject.setProjectUsers(mockProjectUserService.loadProjectUsers(mockProject.getId()));
+            mockProject.setProjectUsers(mockProjectUserService.loadProjectUsers(mockProject.getId(),
+                    mockProject.getProjectCode()));
         }
         return mockProject;
     }
@@ -192,8 +193,10 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
                 return false;
             }
             return mockProjectUserService.exists(Wrappers.<MockProjectUser>query()
-                    .eq("project_id", project.getId())
                     .eq("user_name", currentUserName)
+                    .and(wrapper -> wrapper.eq("project_id", project.getId())
+                            .or(legacy -> legacy.isNull("project_id")
+                                    .eq("project_code", project.getProjectCode())))
                     .like(StringUtils.isNotBlank(authority), "authorities", authority));
         }
         return SecurityUtils.validateUserUpdate(targetUserName);

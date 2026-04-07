@@ -189,16 +189,9 @@ const syncRouteSearchParam = () => {
 }
 syncRouteSearchParam()
 const projectWritable = computed(() => checkProjectWritable(mockProject.value))
-const projectDeletable = computed(() => checkProjectDeletable(mockProject.value))
-const canChangeCurrentGroupProject = computed(() => {
-  if (!currentGroup.value?.id) {
-    return true
-  }
-  return isAdminUser() || !!projectWritable.value
-})
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
-const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
+const { projects, projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
   syncRouteSearchParam()
@@ -317,7 +310,7 @@ const columns = computed(() => {
       const confirmResumeMock = () => $coreConfirm($i18nKey('common.msg.commonConfirm', 'mock.label.resumeMock'))
         .then(() => saveGroupItem({ ...data, disableMock: false }))
       return <>
-        <DelFlagTag v-model={data.status} clickToToggle={projectWritable.value}
+        <DelFlagTag v-model={data.status} clickToToggle={groupWritable(data)}
                     onToggleValue={(status) => saveGroupItem({ ...data, status })}/>
         {data.requestCount
           ? <ElTag
@@ -363,6 +356,53 @@ const columns = computed(() => {
     }
   }]
 })
+const matchesProject = (project, target) => {
+  if (!project || !target) {
+    return false
+  }
+  if (target.projectId != null && `${project.id || project.projectId || ''}` === `${target.projectId}`) {
+    return true
+  }
+  return !!target.projectCode && project.projectCode === target.projectCode
+}
+const currentGroup = ref()
+const currentGroupProject = ref()
+const resolveGroupProject = (group) => {
+  if (!group) {
+    return null
+  }
+  const matchedProject = projects.value.find(project => matchesProject(project, group))
+  if (matchedProject) {
+    return matchedProject
+  }
+  if (currentGroupProject.value && (currentGroup.value?.id == null || `${currentGroup.value?.id}` === `${group.id}`)) {
+    return currentGroupProject.value
+  }
+  if (matchesProject(mockProject.value, group)) {
+    return mockProject.value
+  }
+  if (isDefaultProject(group.projectCode)) {
+    return {
+      projectCode: MOCK_DEFAULT_PROJECT,
+      userName: group.userName
+    }
+  }
+  return null
+}
+const groupWritable = (group) => checkProjectWritable(resolveGroupProject(group))
+const groupDeletable = (group) => checkProjectDeletable(resolveGroupProject(group))
+const currentGroupWritable = computed(() => {
+  if (!currentGroup.value?.id) {
+    return !!projectWritable.value
+  }
+  return groupWritable(currentGroup.value)
+})
+const canChangeCurrentGroupProject = computed(() => {
+  if (!currentGroup.value?.id) {
+    return true
+  }
+  return !!currentGroupWritable.value
+})
 const toCopyGroups = (group) => {
   return toCopyGroupTo(group, {
     onCopySuccess: () => loadMockGroups()
@@ -373,7 +413,7 @@ const buttons = computed(() => defineTableButtons([{
   icon: 'Edit',
   round: true,
   type: 'primary',
-  enabled: !!projectWritable.value,
+  buttonIf: item => groupWritable(item),
   click: item => {
     newOrEdit(item.id)
   }
@@ -406,7 +446,7 @@ const buttons = computed(() => defineTableButtons([{
   icon: 'DeleteFilled',
   round: true,
   type: 'danger',
-  enabled: !!projectDeletable.value,
+  buttonIf: item => groupDeletable(item),
   click: item => deleteGroup(item)
 }]))
 const changedUser = async (userName) => {
@@ -482,13 +522,13 @@ const deleteGroups = () => {
 const showEditWindow = ref(false)
 const showMore = ref(false)
 const hiddenKeys = ['disableMock', 'delay', 'contentType', 'description']
-const currentGroup = ref()
 const newOrEdit = async id => {
   if (id) {
     await getById(id).then(data => {
       if (data.resultData) {
         currentGroup.value = data.resultData
         currentGroup.value.proxyUrlParams = toProxyUrlParams(currentGroup.value.proxyUrl)
+        currentGroupProject.value = data.infos?.mockProject || resolveGroupProject(currentGroup.value)
       }
     })
   } else {
@@ -499,6 +539,7 @@ const newOrEdit = async id => {
       projectCode: searchParam.value?.projectCode || MOCK_DEFAULT_PROJECT,
       proxyUrlParams: []
     }
+    currentGroupProject.value = resolveGroupProject(currentGroup.value) || mockProject.value
   }
   showEditWindow.value = true
   // Auto-expand if any hidden field has a value
@@ -552,6 +593,10 @@ const editFormOptions = computed(() => {
       const option = projectOptions.value.find(item => item.value === value)
       currentGroup.value.projectId = option?.projectId || null
       currentGroup.value.projectCode = option?.projectCode || value || null
+      currentGroupProject.value = projects.value.find(project => `${project.id || ''}` === `${option?.projectId || ''}`) ||
+        (option?.projectCode === MOCK_DEFAULT_PROJECT
+          ? { projectCode: MOCK_DEFAULT_PROJECT, userName: currentGroup.value?.userName }
+          : null)
     },
     tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
     tooltipIcon: 'CirclePlusFilled',
@@ -619,6 +664,8 @@ const saveGroupItem = (item) => {
   })
 }
 const selectedRows = ref([])
+const selectedRowsWritable = computed(() => selectedRows.value?.length > 0 && selectedRows.value.every(item => groupWritable(item)))
+const selectedRowsDeletable = computed(() => selectedRows.value?.length > 0 && selectedRows.value.every(item => groupDeletable(item)))
 const exportGroups = (groupIds) => {
   $coreConfirm($i18nBundle('mock.msg.exportConfirm')).then(() => {
     const exportConfig = normalizeGroupProjectRelation({
@@ -723,11 +770,12 @@ const historyColumns = computed(() => {
 
 const showHistory = (group) => {
   currentGroup.value = group
+  currentGroupProject.value = resolveGroupProject(group)
   showHistoryListWindow({
     columns: historyColumns.value,
     searchFunc: searchHistories,
     compareFunc: loadHistoryDiffFunc,
-    recoverFunc: projectWritable.value ? recoverFromHistoryFunc : null,
+    recoverFunc: groupWritable(group) ? recoverFromHistoryFunc : null,
     onUpdateHistory: loadMockGroups
   })
 }
@@ -822,14 +870,14 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
           </template>
         </el-dropdown>
         <el-button
-          v-if="selectedRows?.length>1&&projectWritable"
+          v-if="selectedRows?.length>1&&selectedRowsWritable"
           type="warning"
           @click="toCopyGroups(selectedRows)"
         >
           {{ $t('common.label.copy') }}
         </el-button>
         <el-button
-          v-if="selectedRows?.length&&projectDeletable"
+          v-if="selectedRows?.length&&selectedRowsDeletable"
           type="danger"
           @click="deleteGroups()"
         >
@@ -862,7 +910,7 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
       :form-options="editFormOptions"
       :name="$t('mock.label.mockGroups')"
       :save-current-item="saveGroupItem"
-      :editable="projectWritable"
+      :editable="currentGroupWritable"
       inline-auto-mode
       width="800px"
       label-width="120px"
