@@ -137,7 +137,7 @@ const editFormOptions = computed(() => defineFormOptions([
     children: authOptions.value.map(item => ({
       ...item,
       attrs: {
-        class: 'authority-checkbox-item'
+        class: `authority-checkbox-item ${item.tagType}`
       }
     })),
     attrs: {
@@ -257,16 +257,47 @@ const buttons = computed(() => defineTableButtons([
   flex-wrap: wrap;
   align-items: center;
 }
+</style>
 
-:deep(.project-user-authorities) {
+<style>
+.project-user-authorities {
   display: flex;
   flex-wrap: wrap;
   gap: 14px 18px;
 }
 
-:deep(.project-user-authorities .authority-checkbox-item) {
+.project-user-authorities .authority-checkbox-item {
   margin-right: 0;
   min-width: 96px;
 }
 
+.project-user-authorities .authority-checkbox-item.primary {
+  --el-checkbox-text-color: var(--el-color-primary);
+  --el-checkbox-checked-text-color: var(--el-color-primary);
+}
+
+.project-user-authorities .authority-checkbox-item.success {
+  --el-checkbox-text-color: var(--el-color-success);
+  --el-checkbox-checked-text-color: var(--el-color-success);
+}
+
+.project-user-authorities .authority-checkbox-item.warning {
+  --el-checkbox-text-color: var(--el-color-warning);
+  --el-checkbox-checked-text-color: var(--el-color-warning);
+}
+
+.project-user-authorities .authority-checkbox-item.primary .el-checkbox__label,
+.project-user-authorities .authority-checkbox-item.primary .el-checkbox__input.is-checked + .el-checkbox__label {
+  color: var(--el-color-primary) !important;
+}
+
+.project-user-authorities .authority-checkbox-item.success .el-checkbox__label,
+.project-user-authorities .authority-checkbox-item.success .el-checkbox__input.is-checked + .el-checkbox__label {
+  color: var(--el-color-success) !important;
+}
+
+.project-user-authorities .authority-checkbox-item.warning .el-checkbox__label,
+.project-user-authorities .authority-checkbox-item.warning .el-checkbox__input.is-checked + .el-checkbox__label {
+  color: var(--el-color-warning) !important;
+}
 </style>
