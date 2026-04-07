@@ -230,7 +230,7 @@ const columns = computed(() => {
     }
   }, {
     labelKey: 'mock.label.groupName',
-    minWidth: '130px',
+    minWidth: '180px',
     headerFormatter () {
       return <>
         {$i18nBundle('mock.label.groupName')}
@@ -361,11 +361,6 @@ const columns = computed(() => {
           : ''}
       </>
     }
-  }, {
-    labelKey: 'common.label.description',
-    property: 'description',
-    minWidth: '100px',
-    enabled: checkShowColumn(tableData.value, 'description')
   }]
 })
 const toCopyGroups = (group) => {
