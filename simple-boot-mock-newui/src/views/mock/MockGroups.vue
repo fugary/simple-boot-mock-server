@@ -367,6 +367,7 @@ const matchesProject = (project, target) => {
 }
 const currentGroup = ref()
 const currentGroupProject = ref()
+const currentGroupEditable = ref(true)
 const resolveGroupProject = (group) => {
   if (!group) {
     return null
@@ -391,17 +392,11 @@ const resolveGroupProject = (group) => {
 }
 const groupWritable = (group) => checkProjectWritable(resolveGroupProject(group))
 const groupDeletable = (group) => checkProjectDeletable(resolveGroupProject(group))
-const currentGroupWritable = computed(() => {
-  if (!currentGroup.value?.id) {
-    return !!projectWritable.value
-  }
-  return groupWritable(currentGroup.value)
-})
 const canChangeCurrentGroupProject = computed(() => {
   if (!currentGroup.value?.id) {
     return true
   }
-  return !!currentGroupWritable.value
+  return !!currentGroupEditable.value
 })
 const toCopyGroups = (group) => {
   return toCopyGroupTo(group, {
@@ -529,6 +524,7 @@ const newOrEdit = async id => {
         currentGroup.value = data.resultData
         currentGroup.value.proxyUrlParams = toProxyUrlParams(currentGroup.value.proxyUrl)
         currentGroupProject.value = data.infos?.mockProject || resolveGroupProject(currentGroup.value)
+        currentGroupEditable.value = checkProjectWritable(currentGroupProject.value)
       }
     })
   } else {
@@ -540,6 +536,7 @@ const newOrEdit = async id => {
       proxyUrlParams: []
     }
     currentGroupProject.value = resolveGroupProject(currentGroup.value) || mockProject.value
+    currentGroupEditable.value = !!projectWritable.value
   }
   showEditWindow.value = true
   // Auto-expand if any hidden field has a value
@@ -591,8 +588,12 @@ const editFormOptions = computed(() => {
     },
     change (value) {
       const option = projectOptions.value.find(item => item.value === value)
+      const switchToDefaultProject = option?.projectCode === MOCK_DEFAULT_PROJECT
       currentGroup.value.projectId = option?.projectId || null
       currentGroup.value.projectCode = option?.projectCode || value || null
+      if (switchToDefaultProject) {
+        currentGroup.value.userName = searchParam.value?.userName || useCurrentUserName()
+      }
       currentGroupProject.value = projects.value.find(project => `${project.id || ''}` === `${option?.projectId || ''}`) ||
         (option?.projectCode === MOCK_DEFAULT_PROJECT
           ? { projectCode: MOCK_DEFAULT_PROJECT, userName: currentGroup.value?.userName }
@@ -910,7 +911,7 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
       :form-options="editFormOptions"
       :name="$t('mock.label.mockGroups')"
       :save-current-item="saveGroupItem"
-      :editable="currentGroupWritable"
+      :editable="currentGroupEditable"
       inline-auto-mode
       width="800px"
       label-width="120px"

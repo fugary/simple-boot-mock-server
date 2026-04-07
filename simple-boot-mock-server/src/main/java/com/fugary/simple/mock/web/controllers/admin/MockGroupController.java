@@ -558,6 +558,12 @@ public class MockGroupController {
         if (project == null || StringUtils.equals(project.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT)) {
             group.setProjectId(null);
             group.setProjectCode(MockConstants.MOCK_DEFAULT_PROJECT);
+            if (StringUtils.isBlank(group.getUserName()) || !SecurityUtils.validateUserUpdate(group.getUserName())) {
+                MockUser loginUser = getLoginUser();
+                if (loginUser != null) {
+                    group.setUserName(loginUser.getUserName());
+                }
+            }
             return;
         }
         group.setProjectId(project.getId());
