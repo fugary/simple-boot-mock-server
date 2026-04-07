@@ -9,6 +9,7 @@ import MockGroupApi, {
   MOCK_GROUP_URL,
   histories,
   loadHistoryDiff,
+  normalizeGroupProjectRelation,
   recoverFromHistory
 } from '@/api/mock/MockGroupApi'
 import { useAllUsers } from '@/api/mock/MockUserApi'
@@ -621,11 +622,11 @@ const saveGroupItem = (item) => {
 const selectedRows = ref([])
 const exportGroups = (groupIds) => {
   $coreConfirm($i18nBundle('mock.msg.exportConfirm')).then(() => {
-    const exportConfig = {
+    const exportConfig = normalizeGroupProjectRelation({
       exportAll: !groupIds,
       groupIds,
       ...searchParam.value
-    }
+    })
     delete exportConfig.page
     checkExport(exportConfig, { loading: true, showErrorMessage: false }).then((data) => {
       if (data.success) {
