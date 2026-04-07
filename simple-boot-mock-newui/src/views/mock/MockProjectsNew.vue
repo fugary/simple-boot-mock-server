@@ -109,12 +109,53 @@ const saveProjectItem = (item) => {
 
 const minWidth = '100px'
 
+const projectAuthorityOptions = computed(() => {
+  return [{
+    label: $i18nBundle('common.label.authorityReadable'),
+    shortLabel: 'R',
+    value: 'readable'
+  }, {
+    label: $i18nBundle('common.label.authorityWritable'),
+    shortLabel: 'W',
+    value: 'writable'
+  }, {
+    label: $i18nBundle('common.label.authorityDeletable'),
+    shortLabel: 'D',
+    value: 'deletable'
+  }]
+})
+
+const normalizeProjectAuthorities = (authorities) => {
+  if (Array.isArray(authorities)) {
+    return authorities.filter(Boolean)
+  }
+  if (typeof authorities === 'string') {
+    return authorities.split(',').map(item => item.trim()).filter(Boolean)
+  }
+  return []
+}
+
+const getProjectAuthorityItems = (authorities) => {
+  return normalizeProjectAuthorities(authorities).map(authority => {
+    return projectAuthorityOptions.value.find(item => item.value === authority) || {
+      label: authority,
+      shortLabel: authority.slice(0, 1).toUpperCase(),
+      value: authority
+    }
+  })
+}
+
+const getProjectAuthorityCode = (authorities) => {
+  return getProjectAuthorityItems(authorities).map(item => item.shortLabel).join('') || '-'
+}
+
 const tableProjectItems = computed(() => {
   return sortProjects(tableData.value).map(project => {
     const defaultProject = isDefaultProject(project.projectCode)
     const publicProject = !!project.publicFlag
     const editable = !defaultProject && checkProjectEdit(project)
     return {
+      projectUsers: project.projectUsers || [],
       defaultProject,
       project,
       projectItems: [{
@@ -275,7 +316,7 @@ const pageAttrs = {
         :class="{'margin-top2': index>0}"
       >
         <el-col
-          v-for="{project, projectItems, defaultProject} in dataRow"
+          v-for="{project, projectItems, defaultProject, projectUsers} in dataRow"
           :key="project.id"
           :span="Math.floor(24/colSize)"
           @mouseenter="project.showOperations=true"
@@ -368,6 +409,42 @@ const pageAttrs = {
               :min-width="minWidth"
               :items="projectItems"
             />
+            <div
+              v-if="projectUsers.length"
+              class="project-authority-row"
+              @click.stop="toManageUsers(project)"
+            >
+              <span class="project-authority-row__label">
+                {{ $t('common.label.authorities') }}
+              </span>
+              <el-text
+                tag="div"
+                class="project-authority-row__content"
+              >
+                <template
+                  v-for="(projectUser, userIndex) in projectUsers"
+                  :key="`${project.id}-${projectUser.userName}`"
+                >
+                  <span class="project-authority-inline">
+                    <span class="project-authority-inline__name">
+                      {{ projectUser.userName }}
+                    </span>
+                    <el-tag
+                      size="small"
+                      type="primary"
+                      effect="plain"
+                      class="project-authority-inline__tag"
+                    >
+                      {{ getProjectAuthorityCode(projectUser.authorities) }}
+                    </el-tag>
+                  </span>
+                  <span
+                    v-if="userIndex < projectUsers.length - 1"
+                    class="project-authority-inline__separator"
+                  >, </span>
+                </template>
+              </el-text>
+            </div>
           </el-card>
         </el-col>
       </el-row>
@@ -478,6 +555,65 @@ const pageAttrs = {
 /* Description items styling */
 .project-card :deep(.el-descriptions__label) {
   font-weight: 500;
+  color: var(--el-text-color-secondary);
+}
+
+.project-authority-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.project-authority-row:hover {
+  opacity: 0.85;
+}
+
+.project-authority-row__label {
+  flex-shrink: 0;
+  min-width: 42px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--el-text-color-secondary);
+}
+
+.project-authority-row__content {
+  flex: 1;
+  min-width: 0;
+  line-height: 24px;
+  color: var(--el-text-color-primary);
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.project-authority-inline {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.project-authority-inline__name {
+  display: inline-block;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.project-authority-inline__tag {
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.project-authority-inline__separator {
+  margin-right: 4px;
   color: var(--el-text-color-secondary);
 }
 </style>
