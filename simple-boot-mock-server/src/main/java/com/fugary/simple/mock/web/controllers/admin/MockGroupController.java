@@ -267,12 +267,16 @@ public class MockGroupController {
                         && !StringUtils.equals(StringUtils.trimToEmpty(group.getProjectCode()), StringUtils.trimToEmpty(existGroup.getProjectCode())))
                         || (StringUtils.isNotBlank(group.getUserName())
                         && !StringUtils.equals(group.getUserName(), existGroup.getUserName()));
-                if (projectChanged) {
+                boolean sourceWritable = mockProjectService.hasProjectAuthority(existGroup.getUserName(),
+                        existGroup.getProjectId(), existGroup.getProjectCode(), MockConstants.AUTHORITY_WRITABLE);
+                if (projectChanged && !sourceWritable) {
                     return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
                 }
-                group.setUserName(existGroup.getUserName());
-                group.setProjectId(existGroup.getProjectId());
-                group.setProjectCode(existGroup.getProjectCode());
+                if (!projectChanged) {
+                    group.setUserName(existGroup.getUserName());
+                    group.setProjectId(existGroup.getProjectId());
+                    group.setProjectCode(existGroup.getProjectCode());
+                }
             }
         }
         if (mockGroupService.existsMockGroup(group)) {

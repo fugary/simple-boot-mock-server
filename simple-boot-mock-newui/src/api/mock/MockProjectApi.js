@@ -104,7 +104,9 @@ export const useSelectProjects = (searchParam, autoSelect) => {
             userName: project.userName
           }
         }
-        const label = data.publicFlag ? `${project.projectName}-${project.userName}` : project.projectName
+        const label = project.userName && project.userName !== useCurrentUserName()
+          ? `${project.projectName} - ${project.userName}`
+          : project.projectName
         return {
           label,
           value: project.projectCode,

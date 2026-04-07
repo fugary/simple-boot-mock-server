@@ -194,7 +194,7 @@ const canChangeCurrentGroupProject = computed(() => {
   if (!currentGroup.value?.id) {
     return true
   }
-  return isAdminUser() || currentGroup.value.userName === useCurrentUserName()
+  return isAdminUser() || !!projectWritable.value
 })
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
@@ -254,6 +254,10 @@ const columns = computed(() => {
         projectInfo = projectOption?.label || $i18nBundle(projectOption?.labelKey) || mockProject.value?.projectName
         if (!projectInfo) {
           projectInfo = data.projectCode
+        }
+        const projectUserName = projectOption?.userName || mockProject.value?.userName || data.userName
+        if (!projectOption && projectUserName && projectUserName !== useCurrentUserName()) {
+          projectInfo = `${projectInfo} - ${projectUserName}`
         }
       }
       const hasScenarios = (scenarioMap.value[data.id] || []).length > 0

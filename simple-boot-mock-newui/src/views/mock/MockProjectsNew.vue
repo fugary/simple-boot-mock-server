@@ -131,19 +131,6 @@ const tableProjectItems = computed(() => {
           </>
         }
       }, {
-        labelKey: 'mock.label.projectCode',
-        formatter () {
-          let userNameStr = ''
-          if (!!project.userName && project.userName !== useCurrentUserName()) {
-            userNameStr = <ElText class="margin-left1" type="primary" tag="b"
-                                  v-common-tooltip={$i18nBundle('mock.label.owner')}>({project.userName})</ElText>
-          }
-          return <>
-          {project.projectCode}
-          {userNameStr}
-          </>
-        }
-      }, {
         labelKey: 'common.label.createDate',
         enabled: !!project.createDate || !!project.modifyDate,
         formatter () {
@@ -322,6 +309,14 @@ const pageAttrs = {
                       :size="16"
                     />
                     {{ project.projectCode===MOCK_DEFAULT_PROJECT?$t('mock.label.defaultProject'):project.projectName }}
+                    <el-text
+                      v-if="project.userName && project.userName !== useCurrentUserName()"
+                      class="margin-left1"
+                      type="primary"
+                      tag="b"
+                    >
+                      ({{ project.userName }})
+                    </el-text>
                   </el-text>
                 </el-checkbox>
                 <div class="project-operations">
