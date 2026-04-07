@@ -228,6 +228,29 @@ public class MockGroupController {
         if (StringUtils.isBlank(group.getGroupPath())) {
             group.setGroupPath(SimpleMockUtils.uuid());
         }
+        MockGroup existGroup = null;
+        if (group.getId() != null) {
+            existGroup = mockGroupService.getById(group.getId());
+            if (existGroup == null) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+            }
+            if (StringUtils.isBlank(group.getUserName())) {
+                group.setUserName(existGroup.getUserName());
+            }
+            if (!SecurityUtils.validateUserUpdate(existGroup.getUserName())) {
+                boolean projectChanged = (group.getProjectId() != null && !Objects.equals(group.getProjectId(), existGroup.getProjectId()))
+                        || (StringUtils.isNotBlank(group.getProjectCode())
+                        && !StringUtils.equals(StringUtils.trimToEmpty(group.getProjectCode()), StringUtils.trimToEmpty(existGroup.getProjectCode())))
+                        || (StringUtils.isNotBlank(group.getUserName())
+                        && !StringUtils.equals(group.getUserName(), existGroup.getUserName()));
+                if (projectChanged) {
+                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+                }
+                group.setUserName(existGroup.getUserName());
+                group.setProjectId(existGroup.getProjectId());
+                group.setProjectCode(existGroup.getProjectCode());
+            }
+        }
         if (mockGroupService.existsMockGroup(group)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
         }

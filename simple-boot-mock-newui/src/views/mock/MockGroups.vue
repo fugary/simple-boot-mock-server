@@ -138,9 +138,10 @@ const props = defineProps({
 })
 const route = useRoute()
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
+const defaultSearchParam = { page: useDefaultPage(), userName: useCurrentUserName(), projectId: null }
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
-  defaultParam: { page: useDefaultPage(), userName: useCurrentUserName(), projectId: null },
+  defaultParam: defaultSearchParam,
   searchMethod: search
 })
 const mockProject = ref()
@@ -165,20 +166,28 @@ const syncRouteSearchParam = () => {
   const routeProjectCode = route.params.projectCode ? String(route.params.projectCode) : null
   const routeProjectId = route.query.projectId ? Number(route.query.projectId) : null
   const routeUserName = route.params.userName ? String(route.params.userName) : null
-  searchParam.value.projectId = Number.isFinite(routeProjectId) ? routeProjectId : null
-  searchParam.value.projectCode = routeProjectCode
   if (routeProjectCode) {
+    searchParam.value.projectId = Number.isFinite(routeProjectId) ? routeProjectId : null
+    searchParam.value.projectCode = routeProjectCode
     searchParam.value.userName = routeUserName || searchParam.value.userName || useCurrentUserName()
   } else if (props.publicFlag) {
+    searchParam.value.projectId = Number.isFinite(routeProjectId) ? routeProjectId : searchParam.value.projectId
+    searchParam.value.projectCode = routeProjectCode || searchParam.value.projectCode
     searchParam.value.userName = routeUserName || null
-  } else {
-    searchParam.value.userName = routeUserName || useCurrentUserName()
+  } else if (routeUserName) {
+    searchParam.value.userName = routeUserName
   }
   searchParam.value.publicFlag = props.publicFlag
 }
 syncRouteSearchParam()
 const projectWritable = computed(() => checkProjectWritable(mockProject.value))
 const projectDeletable = computed(() => checkProjectDeletable(mockProject.value))
+const canChangeCurrentGroupProject = computed(() => {
+  if (!currentGroup.value?.id) {
+    return true
+  }
+  return isAdminUser() || currentGroup.value.userName === useCurrentUserName()
+})
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
@@ -526,6 +535,7 @@ const editFormOptions = computed(() => {
     labelKey: 'mock.label.project',
     prop: 'projectCode',
     type: 'select',
+    enabled: canChangeCurrentGroupProject.value,
     children: projectOptions.value,
     attrs: {
       clearable: false
