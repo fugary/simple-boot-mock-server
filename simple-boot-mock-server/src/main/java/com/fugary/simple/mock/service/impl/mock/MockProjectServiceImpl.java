@@ -77,11 +77,6 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
         MockProject mockProject = null;
         if (projectId != null) {
             mockProject = getById(projectId);
-            if (mockProject != null && StringUtils.isNotBlank(userName)
-                    && !StringUtils.equals(userName, mockProject.getUserName())
-                    && !isDefaultProjectCode(mockProject.getProjectCode())) {
-                mockProject = null;
-            }
         }
         String normalizedProjectCode = StringUtils.trimToNull(projectCode);
         if (mockProject == null && normalizedProjectCode != null) {
@@ -187,21 +182,21 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
 
     @Override
     public boolean hasProjectAuthority(String targetUserName, Integer projectId, String projectCode, String authority) {
-        if (SecurityUtils.validateUserUpdate(targetUserName)) {
-            return true;
-        }
-        String currentUserName = SecurityUtils.getLoginUserName();
-        if (StringUtils.isBlank(currentUserName)) {
-            return false;
-        }
         MockProject project = loadMockProject(targetUserName, projectId, projectCode);
-        if (project == null || isDefaultProjectCode(project.getProjectCode())) {
-            return false;
+        if (project != null && !isDefaultProjectCode(project.getProjectCode())) {
+            if (SecurityUtils.isAdminUser() || SecurityUtils.isCurrentUser(project.getUserName())) {
+                return true;
+            }
+            String currentUserName = SecurityUtils.getLoginUserName();
+            if (StringUtils.isBlank(currentUserName)) {
+                return false;
+            }
+            return mockProjectUserService.exists(Wrappers.<MockProjectUser>query()
+                    .eq("project_id", project.getId())
+                    .eq("user_name", currentUserName)
+                    .like(StringUtils.isNotBlank(authority), "authorities", authority));
         }
-        return mockProjectUserService.exists(Wrappers.<MockProjectUser>query()
-                .eq("project_id", project.getId())
-                .eq("user_name", currentUserName)
-                .like(StringUtils.isNotBlank(authority), "authorities", authority));
+        return SecurityUtils.validateUserUpdate(targetUserName);
     }
 
     private QueryWrapper<MockGroup> buildProjectGroupQuery(MockProject project) {

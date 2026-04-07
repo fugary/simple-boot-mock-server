@@ -100,6 +100,26 @@ public class MockGroupController {
         String projectCode = StringUtils.trimToNull(queryVo.getProjectCode());
         QueryWrapper<MockGroup> queryWrapper = buildGroupQuery(queryVo.getStatus(), keyword);
         MockProject mockProject = resolveTargetProject(queryUserName, projectId, projectCode);
+        if (mockProject != null && !isDefaultProjectCode(mockProject.getProjectCode())) {
+            if (!hasProjectReadAccess(mockProject, queryVo.isPublicFlag())) {
+                Page<MockGroup> emptyPage = new Page<>(page.getCurrent(), page.getSize());
+                return SimpleResultUtils.createSimpleResult(emptyPage)
+                        .addInfo("mockProject", null)
+                        .addInfo("scenarioMap", new HashMap<>())
+                        .addInfo("historyCountMap", new HashMap<>())
+                        .addInfo("countMap", new HashMap<>())
+                        .addInfo("accessDateMap", new HashMap<>());
+            }
+            queryWrapper.eq("user_name", mockProject.getUserName());
+            appendProjectFilter(queryWrapper, mockProject, mockProject.getId(), mockProject.getProjectCode());
+            if (queryVo.getHasRequest() != null) {
+                queryWrapper.exists(queryVo.getHasRequest(),
+                        "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
+                queryWrapper.notExists(!queryVo.getHasRequest(),
+                        "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
+            }
+            return queryGroupPage(page, queryWrapper, mockProject, queryVo);
+        }
         if (mockProject == null && !queryVo.isPublicFlag()
                 && (SecurityUtils.isCurrentUser(queryUserName) || SecurityUtils.isAdminUser())
                 && projectId == null && StringUtils.isBlank(projectCode)) {
@@ -131,6 +151,11 @@ public class MockGroupController {
             queryWrapper.notExists(!queryVo.getHasRequest(),
                     "select 1 from t_mock_request where t_mock_request.group_id=t_mock_group.id");
         }
+        return queryGroupPage(page, queryWrapper, mockProject, queryVo);
+    }
+
+    private SimpleResult<List<MockGroup>> queryGroupPage(Page<MockGroup> page, QueryWrapper<MockGroup> queryWrapper,
+            MockProject mockProject, MockGroupQueryVo queryVo) {
         queryWrapper.orderByDesc("id");
         boolean isExport = queryVo instanceof MockGroupExportParamVo;
         Page<MockGroup> pageResult = mockGroupService.page(page, queryWrapper);
@@ -461,7 +486,13 @@ public class MockGroupController {
     private void appendProjectFilter(QueryWrapper<MockGroup> queryWrapper, MockProject mockProject,
             Integer projectId, String projectCode) {
         if (projectId != null) {
-            queryWrapper.eq("project_id", projectId);
+            if (mockProject != null && !isDefaultProjectCode(mockProject.getProjectCode())) {
+                queryWrapper.and(wrapper -> wrapper.eq("project_id", projectId)
+                        .or(legacy -> legacy.isNull("project_id")
+                                .eq("project_code", mockProject.getProjectCode())));
+            } else {
+                queryWrapper.eq("project_id", projectId);
+            }
             return;
         }
         if (StringUtils.isBlank(projectCode)) {
@@ -481,6 +512,19 @@ public class MockGroupController {
             return mockProjectService.loadMockProject(userName, projectId, normalizedProjectCode);
         }
         return null;
+    }
+
+    private boolean hasProjectReadAccess(MockProject project, boolean publicFlag) {
+        if (project == null || !project.isEnabled()) {
+            return false;
+        }
+        return (publicFlag && Boolean.TRUE.equals(project.getPublicFlag()))
+                || mockProjectService.hasProjectAuthority(project.getUserName(), project.getId(),
+                project.getProjectCode(), MockConstants.AUTHORITY_READABLE);
+    }
+
+    private boolean isDefaultProjectCode(String projectCode) {
+        return StringUtils.equalsIgnoreCase(MockConstants.MOCK_DEFAULT_PROJECT, StringUtils.trimToEmpty(projectCode));
     }
 
     private void applyProjectRelation(MockGroup group, MockProject project) {

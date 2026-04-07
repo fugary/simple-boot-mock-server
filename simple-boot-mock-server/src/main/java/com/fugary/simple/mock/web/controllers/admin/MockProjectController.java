@@ -106,7 +106,9 @@ public class MockProjectController {
             appendProjectAuthorityCondition(queryWrapper, queryVo.getUserName());
         }
         queryWrapper.orderByDesc("id");
-        return SimpleResultUtils.createSimpleResult(mockProjectService.list(queryWrapper));
+        List<MockProject> projects = mockProjectService.list(queryWrapper);
+        appendSelectedProject(projects, queryVo);
+        return SimpleResultUtils.createSimpleResult(projects);
     }
 
     private void appendProjectAuthorityCondition(QueryWrapper<MockProject> queryWrapper, String queryUserName) {
@@ -141,6 +143,29 @@ public class MockProjectController {
             for (MockProject project : projects) {
                 project.setProjectUsers(mockProjectUserService.loadProjectUsers(project.getId()));
             }
+        }
+    }
+
+    private void appendSelectedProject(List<MockProject> projects, MockProjectQueryVo queryVo) {
+        Integer projectId = queryVo.getProjectId();
+        if (projectId == null) {
+            return;
+        }
+        boolean existsProject = projects.stream().anyMatch(project -> projectId.equals(project.getId()));
+        if (existsProject) {
+            return;
+        }
+        MockProject project = mockProjectService.loadMockProject(queryVo.getUserName(), projectId, null);
+        if (project == null || !project.isEnabled()) {
+            return;
+        }
+        boolean allowed = queryVo.isPublicFlag()
+                ? Boolean.TRUE.equals(project.getPublicFlag())
+                : mockProjectService.hasProjectAuthority(project.getUserName(), project.getId(),
+                project.getProjectCode(), null);
+        if (allowed) {
+            project.setProjectUsers(mockProjectUserService.loadProjectUsers(project.getId()));
+            projects.add(project);
         }
     }
 }

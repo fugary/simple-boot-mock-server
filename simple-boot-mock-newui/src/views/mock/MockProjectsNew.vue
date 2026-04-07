@@ -56,7 +56,8 @@ const gotoMockGroups = (project) => {
     if (!isDefaultProject(project.projectCode) && project.id != null) {
       query.set('projectId', `${project.id}`)
     }
-    $goto(`/mock/groups/${props.publicFlag ? 'pubProject' : 'project'}/${project.projectCode}/${project.userName}?${query.toString()}`)
+    const userPath = isDefaultProject(project.projectCode) && project.userName ? `/${project.userName}` : ''
+    $goto(`/mock/groups/${props.publicFlag ? 'pubProject' : 'project'}/${project.projectCode}${userPath}?${query.toString()}`)
   }
 }
 

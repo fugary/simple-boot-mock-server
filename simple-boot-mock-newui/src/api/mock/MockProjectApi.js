@@ -118,7 +118,8 @@ export const useSelectProjects = (searchParam, autoSelect) => {
   const loadProjectsAndRefreshOptions = async () => {
     await loadSelectProjects({
       userName: searchParam.value?.userName || useCurrentUserName(),
-      publicFlag: searchParam.value?.publicFlag
+      publicFlag: searchParam.value?.publicFlag,
+      projectId: searchParam.value?.projectId || undefined
     })
     const currentProj = findProjectByValue(projects.value, searchParam.value)
     if (autoSelect) {
@@ -128,12 +129,9 @@ export const useSelectProjects = (searchParam, autoSelect) => {
       }
     } else if (currentProj?.projectCode) {
       assignProjectValue(searchParam.value, currentProj)
-    } else {
+    } else if (searchParam.value?.projectId == null && !searchParam.value?.projectCode) {
       searchParam.value.projectId = null
       searchParam.value.projectCode = null
-    }
-    if (isAdminUser() && currentProj?.userName) {
-      searchParam.value.userName = currentProj.userName
     }
   }
   return {

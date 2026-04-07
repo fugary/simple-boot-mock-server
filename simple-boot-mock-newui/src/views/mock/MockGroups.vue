@@ -166,14 +166,21 @@ const syncRouteSearchParam = () => {
   const routeProjectCode = route.params.projectCode ? String(route.params.projectCode) : null
   const routeProjectId = route.query.projectId ? Number(route.query.projectId) : null
   const routeUserName = route.params.userName ? String(route.params.userName) : null
+  const hasRouteProjectId = Number.isFinite(routeProjectId) && routeProjectId > 0
   if (routeProjectCode) {
-    searchParam.value.projectId = Number.isFinite(routeProjectId) ? routeProjectId : null
+    searchParam.value.projectId = hasRouteProjectId ? routeProjectId : null
     searchParam.value.projectCode = routeProjectCode
-    searchParam.value.userName = routeUserName || searchParam.value.userName || useCurrentUserName()
+    if (!hasRouteProjectId || isDefaultProject(routeProjectCode) || isAdminUser()) {
+      searchParam.value.userName = routeUserName || searchParam.value.userName || useCurrentUserName()
+    } else if (!searchParam.value.userName) {
+      searchParam.value.userName = useCurrentUserName()
+    }
   } else if (props.publicFlag) {
-    searchParam.value.projectId = Number.isFinite(routeProjectId) ? routeProjectId : searchParam.value.projectId
+    searchParam.value.projectId = hasRouteProjectId ? routeProjectId : searchParam.value.projectId
     searchParam.value.projectCode = routeProjectCode || searchParam.value.projectCode
-    searchParam.value.userName = routeUserName || null
+    if (!hasRouteProjectId || isAdminUser()) {
+      searchParam.value.userName = routeUserName || null
+    }
   } else if (routeUserName) {
     searchParam.value.userName = routeUserName
   }
@@ -404,6 +411,8 @@ const buttons = computed(() => defineTableButtons([{
 }]))
 const changedUser = async (userName) => {
   userName && (searchParam.value.userName = userName)
+  searchParam.value.projectId = null
+  searchParam.value.projectCode = null
   await loadProjectsAndRefreshOptions()
   loadMockGroups(1)
 }
@@ -424,7 +433,7 @@ const searchFormOptions = computed(() => {
     labelKey: 'mock.label.project',
     prop: 'projectCode',
     type: 'select',
-    enabled: projectOptions.value.length > 1,
+    enabled: projectOptions.value.length > 1 || searchParam.value?.projectId != null || !!searchParam.value?.projectCode,
     children: projectOptions.value,
     attrs: {
       filterable: true,
@@ -434,7 +443,6 @@ const searchFormOptions = computed(() => {
       const option = projectOptions.value.find(item => item.value === value)
       searchParam.value.projectId = option?.projectId || null
       searchParam.value.projectCode = option?.projectCode || value || null
-      searchParam.value.userName = option?.userName || searchParam.value.userName
       loadMockGroups(1)
     }
   },
