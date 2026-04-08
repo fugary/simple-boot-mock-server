@@ -3,7 +3,7 @@ import { computed, onMounted, onActivated, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
-import MockProjectApi, { checkProjectEdit, copyMockProject, sortProjects, useProjectEditHook } from '@/api/mock/MockProjectApi'
+import MockProjectApi, { checkProjectEdit, copyMockProject, selectProjects, sortProjects, useProjectEditHook } from '@/api/mock/MockProjectApi'
 import { $coreConfirm, $goto, formatDate, isAdminUser, useCurrentUserName } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
@@ -32,6 +32,26 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
   defaultParam: { page: useDefaultPage(50), publicFlag: props.publicFlag, onlyMine: false },
   searchMethod: search
 })
+const sharedProjectOptions = ref([])
+const showOnlyMineFilter = computed(() => !props.publicFlag && sharedProjectOptions.value.length > 0)
+const loadSharedProjectOptions = () => {
+  if (props.publicFlag) {
+    sharedProjectOptions.value = []
+    return Promise.resolve([])
+  }
+  return selectProjects({
+    userName: searchParam.value?.userName || useCurrentUserName(),
+    publicFlag: false
+  }).then(result => {
+    sharedProjectOptions.value = (result || []).filter(project => {
+      return !isDefaultProject(project?.projectCode) && project?.userName && project.userName !== useCurrentUserName()
+    })
+    if (!sharedProjectOptions.value.length) {
+      searchParam.value.onlyMine = false
+    }
+    return sharedProjectOptions.value
+  })
+}
 const loadMockProjects = (pageNumber) => {
   tableData.value = []
   if (colSize.value && searchParam.value.page) {
@@ -43,6 +63,7 @@ const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam, { c
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
   await loadUsersAndRefreshOptions()
+  await loadSharedProjectOptions()
   return loadMockProjects()
 })
 
@@ -54,6 +75,11 @@ const handleOnlyMineChange = (value) => {
   if (value) {
     searchParam.value.userName = useCurrentUserName()
   }
+  loadMockProjects(1)
+}
+
+const handleUserChange = async () => {
+  await loadSharedProjectOptions()
   loadMockProjects(1)
 }
 
@@ -80,16 +106,17 @@ const searchFormOptions = computed(() => {
       filterable: true,
       clearable: props.publicFlag
     },
-    change () {
-      loadMockProjects(1)
-    }
-  }, {
-    labelKey: 'mock.label.myData',
-    prop: 'onlyMine',
-    type: 'switch',
-    enabled: !props.publicFlag,
-    change: handleOnlyMineChange
+    change: handleUserChange
   },
+  ...(showOnlyMineFilter.value
+    ? [{
+        labelKey: 'mock.label.myData',
+        prop: 'onlyMine',
+        type: 'switch',
+        enabled: true,
+        change: handleOnlyMineChange
+      }]
+    : []),
   {
     ...useSearchStatus({ change () { loadMockProjects(1) } }),
     enabled: !props.publicFlag

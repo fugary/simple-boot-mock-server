@@ -192,10 +192,18 @@ const projectWritable = computed(() => checkProjectWritable(mockProject.value))
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projects, projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
+const showOnlyMineFilter = computed(() => {
+  return !props.publicFlag && projects.value.some(project => {
+    return !isDefaultProject(project?.projectCode) && project?.userName && project.userName !== useCurrentUserName()
+  })
+})
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
   syncRouteSearchParam()
   await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
+  if (!showOnlyMineFilter.value) {
+    searchParam.value.onlyMine = false
+  }
   syncRouteSearchParam()
   return loadMockGroups()
 })
@@ -207,6 +215,9 @@ onActivated(initLoadOnce)
 watch(() => route.fullPath, async () => {
   syncRouteSearchParam()
   await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
+  if (!showOnlyMineFilter.value) {
+    searchParam.value.onlyMine = false
+  }
   syncRouteSearchParam()
   loadMockGroups(1)
 })
@@ -449,6 +460,9 @@ const changedUser = async (userName) => {
   searchParam.value.projectId = null
   searchParam.value.projectCode = null
   await loadProjectsAndRefreshOptions()
+  if (!showOnlyMineFilter.value) {
+    searchParam.value.onlyMine = false
+  }
   loadMockGroups(1)
 }
 const handleOnlyMineChange = async (value) => {
@@ -473,17 +487,20 @@ const searchFormOptions = computed(() => {
       clearable: false
     },
     change: changedUser
-  }, {
-    labelKey: 'mock.label.myData',
-    prop: 'onlyMine',
-    type: 'switch',
-    enabled: !props.publicFlag,
-    change: handleOnlyMineChange
-  }, {
+  },
+  ...(showOnlyMineFilter.value
+    ? [{
+        labelKey: 'mock.label.myData',
+        prop: 'onlyMine',
+        type: 'switch',
+        enabled: true,
+        change: handleOnlyMineChange
+      }]
+    : []), {
     labelKey: 'mock.label.project',
     prop: 'projectCode',
     type: 'select',
-    enabled: projectOptions.value.length > 1 || searchParam.value?.projectId != null || !!searchParam.value?.projectCode,
+    enabled: projectOptions.value.length > 0 || searchParam.value?.projectId != null || !!searchParam.value?.projectCode,
     children: projectOptions.value,
     attrs: {
       filterable: true,
