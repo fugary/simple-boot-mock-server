@@ -1,7 +1,10 @@
 package com.fugary.simple.mock.service.mock;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.fugary.simple.mock.entity.mock.MockData;
+import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockProject;
+import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 
 import java.util.List;
@@ -76,14 +79,76 @@ public interface MockProjectService extends IService<MockProject> {
     SimpleResult<MockProject> saveMockProject(MockProject project);
 
     /**
-     * 检查当前用户是否有目标项目的对应权限
+     * 检查当前用户是否有目标项目的对应权限。
+     *
+     * @param project 目标项目对象
+     * @param authority 需要的权限（例如 readable、writable、deletable）
+     * @return 是否有权限
+     */
+    boolean hasProjectAuthority(MockProject project, String authority);
+
+    /**
+     * 检查当前用户是否有目标项目的对应权限。
      *
      * @param targetUserName 目标项目的所有者
+     * @param projectId 目标项目的Id
      * @param projectCode 目标项目的代码
-     * @param authority 需要的权限 (例如 readable, writable, deletable)
-     * @return
+     * @param authority 需要的权限（例如 readable、writable、deletable）
+     * @return 是否有权限
      */
-    boolean hasProjectAuthority(String targetUserName, String projectCode, String authority);
-
     boolean hasProjectAuthority(String targetUserName, Integer projectId, String projectCode, String authority);
+
+    /**
+     * 根据分组Id检查当前用户是否有对应权限。
+     *
+     * @param groupId 分组Id
+     * @param authority 需要的权限
+     * @return 是否有权限
+     */
+    boolean hasGroupAuthority(Integer groupId, String authority);
+
+    /**
+     * 根据分组对象检查当前用户是否有对应权限。
+     *
+     * @param group 分组对象
+     * @param authority 需要的权限
+     * @return 是否有权限
+     */
+    boolean hasGroupAuthority(MockGroup group, String authority);
+
+    /**
+     * 根据请求Id检查当前用户是否有对应权限。
+     *
+     * @param requestId 请求Id
+     * @param authority 需要的权限
+     * @return 是否有权限
+     */
+    boolean hasRequestAuthority(Integer requestId, String authority);
+
+    /**
+     * 根据请求对象检查当前用户是否有对应权限。
+     *
+     * @param request 请求对象
+     * @param authority 需要的权限
+     * @return 是否有权限
+     */
+    boolean hasRequestAuthority(MockRequest request, String authority);
+
+    /**
+     * 根据响应数据Id检查当前用户是否有对应权限。
+     *
+     * @param dataId 响应数据Id
+     * @param authority 需要的权限
+     * @return 是否有权限
+     */
+    boolean hasDataAuthority(Integer dataId, String authority);
+
+    /**
+     * 根据响应数据对象检查当前用户是否有对应权限。
+     *
+     * @param data 响应数据对象
+     * @param authority 需要的权限
+     * @return 是否有权限
+     */
+    boolean hasDataAuthority(MockData data, String authority);
 }

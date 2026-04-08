@@ -5,13 +5,17 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
+import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockProject;
 import com.fugary.simple.mock.entity.mock.MockProjectUser;
+import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.mapper.mock.MockProjectMapper;
+import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockProjectUserService;
+import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
@@ -36,6 +40,12 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
 
     @Autowired
     private MockProjectUserService mockProjectUserService;
+
+    @Autowired
+    private MockRequestService mockRequestService;
+
+    @Autowired
+    private MockDataService mockDataService;
 
     @Override
     public boolean deleteMockProject(Integer id) {
@@ -177,13 +187,7 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
     }
 
     @Override
-    public boolean hasProjectAuthority(String targetUserName, String projectCode, String authority) {
-        return hasProjectAuthority(targetUserName, null, projectCode, authority);
-    }
-
-    @Override
-    public boolean hasProjectAuthority(String targetUserName, Integer projectId, String projectCode, String authority) {
-        MockProject project = loadMockProject(targetUserName, projectId, projectCode);
+    public boolean hasProjectAuthority(MockProject project, String authority) {
         if (project != null && !isDefaultProjectCode(project.getProjectCode())) {
             if (SecurityUtils.isAdminUser() || SecurityUtils.isCurrentUser(project.getUserName())) {
                 return true;
@@ -199,7 +203,59 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
                                     .eq("project_code", project.getProjectCode())))
                     .like(StringUtils.isNotBlank(authority), "authorities", authority));
         }
+        return project != null && SecurityUtils.validateUserUpdate(project.getUserName());
+    }
+
+    @Override
+    public boolean hasProjectAuthority(String targetUserName, Integer projectId, String projectCode, String authority) {
+        MockProject project = loadMockProject(targetUserName, projectId, projectCode);
+        if (project != null && !isDefaultProjectCode(project.getProjectCode())) {
+            return hasProjectAuthority(project, authority);
+        }
         return SecurityUtils.validateUserUpdate(targetUserName);
+    }
+
+    @Override
+    public boolean hasGroupAuthority(Integer groupId, String authority) {
+        if (groupId == null) {
+            return false;
+        }
+        MockGroup group = mockGroupService.getById(groupId);
+        return group != null && hasGroupAuthority(group, authority);
+    }
+
+    @Override
+    public boolean hasGroupAuthority(MockGroup group, String authority) {
+        return group != null && hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), authority);
+    }
+
+    @Override
+    public boolean hasRequestAuthority(Integer requestId, String authority) {
+        if (requestId == null) {
+            return false;
+        }
+        MockRequest request = mockRequestService.getById(requestId);
+        return request == null || hasRequestAuthority(request, authority);
+    }
+
+    @Override
+    public boolean hasRequestAuthority(MockRequest request, String authority) {
+        return request != null && hasGroupAuthority(request.getGroupId(), authority);
+    }
+
+    @Override
+    public boolean hasDataAuthority(Integer dataId, String authority) {
+        if (dataId == null) {
+            return false;
+        }
+        MockData data = mockDataService.getById(dataId);
+        return data == null || hasDataAuthority(data, authority);
+    }
+
+    @Override
+    public boolean hasDataAuthority(MockData data, String authority) {
+        return data != null && hasRequestAuthority(data.getRequestId(), authority);
     }
 
     private QueryWrapper<MockGroup> buildProjectGroupQuery(MockProject project) {

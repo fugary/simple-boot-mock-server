@@ -89,8 +89,7 @@ public class MockProjectController {
         if (StringUtils.isBlank(project.getUserName()) && loginUser != null) {
             project.setUserName(loginUser.getUserName());
         }
-        if (!mockProjectService.hasProjectAuthority(project.getUserName(), project.getId(),
-                project.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasProjectAuthority(project, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         if (project.getId() != null && mockProjectService.existsMockProject(project)) {
@@ -218,6 +217,7 @@ public class MockProjectController {
         if (project == null || !project.isEnabled()) {
             return;
         }
+        decorateDefaultProject(project, resolveDefaultProjectOwner(queryVo));
         if (Boolean.TRUE.equals(queryVo.getOnlyMine())
                 && !MockConstants.MOCK_DEFAULT_PROJECT.equalsIgnoreCase(StringUtils.trimToEmpty(project.getProjectCode()))
                 && !SecurityUtils.isCurrentUser(project.getUserName())) {
@@ -225,8 +225,7 @@ public class MockProjectController {
         }
         boolean allowed = queryVo.isPublicFlag()
                 ? Boolean.TRUE.equals(project.getPublicFlag())
-                : mockProjectService.hasProjectAuthority(project.getUserName(), project.getId(),
-                project.getProjectCode(), null);
+                : mockProjectService.hasProjectAuthority(project, null);
         if (allowed) {
             projects.add(project);
         }

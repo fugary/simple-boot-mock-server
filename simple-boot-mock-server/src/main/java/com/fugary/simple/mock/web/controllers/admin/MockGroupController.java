@@ -80,18 +80,6 @@ public class MockGroupController {
     @Qualifier("asyncQueryThreadPool")
     private ExecutorService asyncQueryThreadPool;
 
-    protected boolean checkGroupAuthority(Integer groupId, String authority) {
-        if (groupId == null) {
-            return false;
-        }
-        MockGroup group = mockGroupService.getById(groupId);
-        if (group == null) {
-            return false;
-        }
-        return mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
-                group.getProjectCode(), authority);
-    }
-
     @GetMapping
     public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
@@ -144,8 +132,7 @@ public class MockGroupController {
         queryWrapper.eq("user_name", userName);
         if (StringUtils.isBlank(userName) && mockProject != null) {
             if (StringUtils.isNotBlank(loginUserName)
-                    && mockProjectService.hasProjectAuthority(mockProject.getUserName(), mockProject.getId(),
-                    mockProject.getProjectCode(), MockConstants.AUTHORITY_READABLE)) {
+                    && mockProjectService.hasProjectAuthority(mockProject, MockConstants.AUTHORITY_READABLE)) {
                 userName = mockProject.getUserName();
                 queryWrapper = buildGroupQuery(queryVo.getStatus(), keyword);
                 queryWrapper.eq("user_name", userName);
@@ -244,7 +231,7 @@ public class MockGroupController {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
         if (!Boolean.TRUE.equals(mockProject.getPublicFlag())
-                && !checkGroupAuthority(id, MockConstants.AUTHORITY_READABLE)) {
+                && !mockProjectService.hasGroupAuthority(mockGroup, MockConstants.AUTHORITY_READABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockGroup)
@@ -253,7 +240,7 @@ public class MockGroupController {
 
     @DeleteMapping("/{id}")
     public SimpleResult remove(@PathVariable("id") Integer id) {
-        if (!checkGroupAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
+        if (!mockProjectService.hasGroupAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockGroupService.deleteMockGroup(id));
@@ -263,7 +250,7 @@ public class MockGroupController {
     public SimpleResult<Object> removeByIds(@PathVariable("ids") List<Integer> ids) {
         if (ids != null) {
             for (Integer id : ids) {
-                if (!checkGroupAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
+                if (!mockProjectService.hasGroupAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
                     return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
                 }
             }
@@ -301,13 +288,11 @@ public class MockGroupController {
             String sourceAuthority = projectChanged
                     ? MockConstants.AUTHORITY_DELETABLE
                     : MockConstants.AUTHORITY_WRITABLE;
-            if (!mockProjectService.hasProjectAuthority(existGroup.getUserName(), existGroup.getProjectId(),
-                    existGroup.getProjectCode(), sourceAuthority)) {
+            if (!mockProjectService.hasGroupAuthority(existGroup, sourceAuthority)) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
             }
         }
-        if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
-                group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasGroupAuthority(group, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         if (mockGroupService.existsMockGroup(group)) {
@@ -323,8 +308,7 @@ public class MockGroupController {
         if (existsProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!mockProjectService.hasProjectAuthority(existsProject.getUserName(), existsProject.getId(),
-                existsProject.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasProjectAuthority(existsProject, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         String[] groupIds = groupIdsStr.split("\\s*,\\s*");
@@ -335,7 +319,7 @@ public class MockGroupController {
             if (mockGroup == null) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
             }
-            if (!checkGroupAuthority(id, MockConstants.AUTHORITY_READABLE)) {
+            if (!mockProjectService.hasGroupAuthority(mockGroup, MockConstants.AUTHORITY_READABLE)) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
             }
             result = mockGroupService.copyMockGroup(SimpleMockUtils.copy(mockGroup, MockGroup.class), existsProject);
@@ -356,8 +340,7 @@ public class MockGroupController {
         if (targetProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!mockProjectService.hasProjectAuthority(targetProject.getUserName(), targetProject.getId(),
-                targetProject.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasProjectAuthority(targetProject, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         boolean moveAction = StringUtils.equalsIgnoreCase("move", transferVo.getAction());
@@ -371,7 +354,7 @@ public class MockGroupController {
             String sourceAuthority = moveAction
                     ? MockConstants.AUTHORITY_DELETABLE
                     : MockConstants.AUTHORITY_READABLE;
-            if (!checkGroupAuthority(groupId, sourceAuthority)) {
+            if (!mockProjectService.hasGroupAuthority(sourceGroup, sourceAuthority)) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
             }
             if (moveAction && isSameProjectRelation(sourceGroup, targetProject)) {
@@ -523,7 +506,7 @@ public class MockGroupController {
         if (history == null || target == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!checkGroupAuthority(target.getId(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasGroupAuthority(target, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         SimpleMockUtils.copyFromHistory(history, target);
@@ -611,8 +594,7 @@ public class MockGroupController {
             return false;
         }
         return (publicFlag && Boolean.TRUE.equals(project.getPublicFlag()))
-                || mockProjectService.hasProjectAuthority(project.getUserName(), project.getId(),
-                project.getProjectCode(), MockConstants.AUTHORITY_READABLE);
+                || mockProjectService.hasProjectAuthority(project, MockConstants.AUTHORITY_READABLE);
     }
 
     private boolean isDefaultProjectCode(String projectCode) {

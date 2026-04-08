@@ -7,16 +7,13 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.CountData;
 import com.fugary.simple.mock.entity.mock.MockData;
-import com.fugary.simple.mock.entity.mock.MockGroup;
-import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.service.mock.MockDataService;
-import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
-import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.XmlUtils;
@@ -57,27 +54,7 @@ public class MockDataController {
     private MockRequestService mockRequestService;
 
     @Autowired
-    private MockGroupService mockGroupService;
-
-    @Autowired
     private MockProjectService mockProjectService;
-
-    protected boolean checkRequestAuthority(Integer requestId, String authority) {
-        if (requestId == null) return false;
-        MockRequest request = mockRequestService.getById(requestId);
-        if (request == null) return false;
-        MockGroup group = mockGroupService.getById(request.getGroupId());
-        if (group == null) return false;
-        return mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
-                group.getProjectCode(), authority);
-    }
-
-    protected boolean checkDataAuthority(Integer dataId, String authority) {
-        if (dataId == null) return false;
-        MockData data = mockDataService.getById(dataId);
-        if (data == null) return true;
-        return checkRequestAuthority(data.getRequestId(), authority);
-    }
 
     @GetMapping
     public SimpleResult<List<MockData>> search(@ModelAttribute MockDataQueryVo queryVo) {
@@ -153,7 +130,7 @@ public class MockDataController {
         if (history == null || target == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!checkRequestAuthority(target.getRequestId(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasDataAuthority(target, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         SimpleMockUtils.copyFromHistory(history, target);
@@ -167,7 +144,7 @@ public class MockDataController {
 
     @DeleteMapping("/{id}")
     public SimpleResult remove(@PathVariable("id") Integer id) {
-        if (!checkDataAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
+        if (!mockProjectService.hasDataAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockDataService.deleteMockData(id));
@@ -177,7 +154,7 @@ public class MockDataController {
     public SimpleResult removeByIds(@PathVariable("ids") List<Integer> ids) {
         if (ids != null && !ids.isEmpty()) {
             for (Integer id : ids) {
-                if (!checkDataAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
+                if (!mockProjectService.hasDataAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
                     return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
                 }
             }
@@ -187,14 +164,13 @@ public class MockDataController {
 
     @PostMapping
     public SimpleResult<MockData> save(@RequestBody MockData data) {
-        Integer requestId = data.getRequestId();
         if (data.getId() != null) {
             MockData existData = mockDataService.getById(data.getId());
-            if (existData != null) {
-                requestId = existData.getRequestId();
+            if (existData != null
+                    && !mockProjectService.hasDataAuthority(existData, MockConstants.AUTHORITY_WRITABLE)) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
             }
-        }
-        if (!checkRequestAuthority(requestId, MockConstants.AUTHORITY_WRITABLE)) {
+        } else if (!mockProjectService.hasRequestAuthority(data.getRequestId(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return mockDataService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(data));
@@ -202,7 +178,7 @@ public class MockDataController {
 
     @PostMapping("/copyMockData/{dataId}")
     public SimpleResult copyMockData(@PathVariable("dataId") Integer id) {
-        if (!checkDataAuthority(id, MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasDataAuthority(id, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockDataService.copyMockData(id, null));
@@ -210,7 +186,7 @@ public class MockDataController {
 
     @PostMapping("/markDefault")
     public SimpleResult markDefault(@RequestBody MockData data) {
-        if (!checkDataAuthority(data.getId(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasDataAuthority(data.getId(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockDataService.markMockDataDefault(data));

@@ -11,11 +11,9 @@ import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockSchema;
 import com.fugary.simple.mock.service.mock.MockDataService;
-import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
-import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.utils.AsyncUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
@@ -64,25 +62,7 @@ public class MockRequestController {
     private ExecutorService asyncQueryThreadPool;
 
     @Autowired
-    private MockGroupService mockGroupService;
-
-    @Autowired
     private MockProjectService mockProjectService;
-
-    protected boolean checkGroupAuthority(Integer groupId, String authority) {
-        if (groupId == null) return false;
-        MockGroup group = mockGroupService.getById(groupId);
-        if (group == null) return false;
-        return mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
-                group.getProjectCode(), authority);
-    }
-
-    protected boolean checkRequestAuthority(Integer requestId, String authority) {
-        if (requestId == null) return false;
-        MockRequest request = mockRequestService.getById(requestId);
-        if (request == null) return true; 
-        return checkGroupAuthority(request.getGroupId(), authority);
-    }
 
     @GetMapping
     public SimpleResult<List<MockRequest>> search(@ModelAttribute MockRequestQueryVo queryVo) {
@@ -192,7 +172,7 @@ public class MockRequestController {
         if (history == null || target == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!checkGroupAuthority(target.getGroupId(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasRequestAuthority(target, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         SimpleMockUtils.copyFromHistory(history, target);
@@ -206,7 +186,7 @@ public class MockRequestController {
 
     @PostMapping("/saveMockParams")
     public SimpleResult saveMockParams(@RequestBody MockData data) {
-        if (!checkRequestAuthority(data.getRequestId(), MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasRequestAuthority(data.getRequestId(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockRequestService.saveMockParams(data));
@@ -214,7 +194,7 @@ public class MockRequestController {
 
     @PostMapping("/copyMockRequest/{requestId}")
     public SimpleResult copyMockRequest(@PathVariable("requestId") Integer id) {
-        if (!checkRequestAuthority(id, MockConstants.AUTHORITY_WRITABLE)) {
+        if (!mockProjectService.hasRequestAuthority(id, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockRequestService.copyMockRequest(id, null));
@@ -222,7 +202,7 @@ public class MockRequestController {
 
     @DeleteMapping("/{id}")
     public SimpleResult remove(@PathVariable("id") Integer id) {
-        if (!checkRequestAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
+        if (!mockProjectService.hasRequestAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return SimpleResultUtils.createSimpleResult(mockRequestService.deleteMockRequest(id));
@@ -232,7 +212,7 @@ public class MockRequestController {
     public SimpleResult removeByIds(@PathVariable("ids") List<Integer> ids) {
         if (ids != null && !ids.isEmpty()) {
             for (Integer id : ids) {
-                if (!checkRequestAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
+                if (!mockProjectService.hasRequestAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {
                     return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
                 }
             }
@@ -242,14 +222,13 @@ public class MockRequestController {
 
     @PostMapping
     public SimpleResult<MockRequest> save(@RequestBody MockRequest request) {
-        Integer groupId = request.getGroupId();
         if (request.getId() != null) {
             MockRequest existRequest = mockRequestService.getById(request.getId());
-            if (existRequest != null) {
-                groupId = existRequest.getGroupId();
+            if (existRequest != null
+                    && !mockProjectService.hasRequestAuthority(existRequest, MockConstants.AUTHORITY_WRITABLE)) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
             }
-        }
-        if (!checkGroupAuthority(groupId, MockConstants.AUTHORITY_WRITABLE)) {
+        } else if (!mockProjectService.hasGroupAuthority(request.getGroupId(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return mockRequestService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(request));
