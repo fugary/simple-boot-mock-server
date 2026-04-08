@@ -33,7 +33,7 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
   searchMethod: search
 })
 const sharedProjectOptions = ref([])
-const showOnlyMineFilter = computed(() => !props.publicFlag && sharedProjectOptions.value.length > 0)
+const showOnlyMineFilter = computed(() => !isAdminUser() && !props.publicFlag && sharedProjectOptions.value.length > 0)
 const loadSharedProjectOptions = () => {
   if (props.publicFlag) {
     sharedProjectOptions.value = []
@@ -96,7 +96,16 @@ const gotoMockGroups = (project) => {
 
 //* ************搜索框**************//
 const searchFormOptions = computed(() => {
-  return [{
+  return [...(showOnlyMineFilter.value
+    ? [{
+        labelKey: 'mock.label.myData',
+        prop: 'onlyMine',
+        type: 'switch',
+        enabled: true,
+        change: handleOnlyMineChange
+      }]
+    : []),
+  {
     labelKey: 'common.label.user',
     prop: 'userName',
     type: 'select',
@@ -108,15 +117,6 @@ const searchFormOptions = computed(() => {
     },
     change: handleUserChange
   },
-  ...(showOnlyMineFilter.value
-    ? [{
-        labelKey: 'mock.label.myData',
-        prop: 'onlyMine',
-        type: 'switch',
-        enabled: true,
-        change: handleOnlyMineChange
-      }]
-    : []),
   {
     ...useSearchStatus({ change () { loadMockProjects(1) } }),
     enabled: !props.publicFlag
