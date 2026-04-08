@@ -109,6 +109,8 @@ public interface MockGroupService extends IService<MockGroup> {
      */
     SimpleResult<MockGroup> copyMockGroup(Integer groupId, MockProject newProject);
 
+    SimpleResult<MockGroup> moveMockGroup(Integer groupId, MockProject newProject);
+
     /**
      * 自定义保存
      *

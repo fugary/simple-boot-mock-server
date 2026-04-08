@@ -79,6 +79,14 @@ export const copyMockGroup = (data, config) => {
   }, config)).then(response => response.data)
 }
 
+export const transferMockGroup = (data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_GROUP_URL}/transfer`,
+    method: 'POST',
+    data: normalizeGroupProjectRelation(data)
+  }, config)).then(response => response.data)
+}
+
 export const histories = (id, data, config) => {
   return $http(Object.assign({
     url: `${MOCK_GROUP_URL}/histories/${id}`,

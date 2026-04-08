@@ -39,8 +39,10 @@ import { getMockUrl } from '@/api/mock/MockRequestApi'
 import MockGroupImport from '@/views/components/mock/MockGroupImport.vue'
 import { ElLink, ElText, ElTag } from 'element-plus'
 import MockProjectApi, {
+  checkProjectReadable,
   checkProjectDeletable,
   checkProjectWritable,
+  selectProjects,
   useProjectEditHook,
   useSelectProjects
 } from '@/api/mock/MockProjectApi'
@@ -192,18 +194,30 @@ const projectWritable = computed(() => checkProjectWritable(mockProject.value))
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projects, projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
-const showOnlyMineFilter = computed(() => {
-  return !props.publicFlag && projects.value.some(project => {
-    return !isDefaultProject(project?.projectCode) && project?.userName && project.userName !== useCurrentUserName()
+const sharedProjectOptions = ref([])
+const showOnlyMineFilter = computed(() => !props.publicFlag && sharedProjectOptions.value.length > 0)
+const loadSharedProjectOptions = () => {
+  if (props.publicFlag) {
+    sharedProjectOptions.value = []
+    return Promise.resolve([])
+  }
+  return selectProjects({
+    userName: searchParam.value?.userName || useCurrentUserName(),
+    publicFlag: false
+  }).then(result => {
+    sharedProjectOptions.value = (result || []).filter(project => {
+      return !isDefaultProject(project?.projectCode) && project?.userName && project.userName !== useCurrentUserName()
+    })
+    if (!sharedProjectOptions.value.length) {
+      searchParam.value.onlyMine = false
+    }
+    return sharedProjectOptions.value
   })
-})
+}
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
   syncRouteSearchParam()
-  await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
-  if (!showOnlyMineFilter.value) {
-    searchParam.value.onlyMine = false
-  }
+  await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions(), loadSharedProjectOptions()])
   syncRouteSearchParam()
   return loadMockGroups()
 })
@@ -214,10 +228,7 @@ onActivated(initLoadOnce)
 
 watch(() => route.fullPath, async () => {
   syncRouteSearchParam()
-  await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions()])
-  if (!showOnlyMineFilter.value) {
-    searchParam.value.onlyMine = false
-  }
+  await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions(), loadSharedProjectOptions()])
   syncRouteSearchParam()
   loadMockGroups(1)
 })
@@ -401,18 +412,33 @@ const resolveGroupProject = (group) => {
   }
   return null
 }
+const groupReadable = (group) => checkProjectReadable(resolveGroupProject(group))
 const groupWritable = (group) => checkProjectWritable(resolveGroupProject(group))
 const groupDeletable = (group) => checkProjectDeletable(resolveGroupProject(group))
+const currentGroupProjectChangeable = ref(true)
 const canChangeCurrentGroupProject = computed(() => {
   if (!currentGroup.value?.id) {
     return true
   }
-  return !!currentGroupEditable.value
+  return !!currentGroupProjectChangeable.value
 })
-const toCopyGroups = (group) => {
+const canMoveGroups = (group) => {
+  const groups = Array.isArray(group) ? group : [group]
+  return groups.length > 0 && groups.every(item => groupDeletable(item))
+}
+const toTransferGroups = (group, action = 'copy', allowMove = false) => {
   return toCopyGroupTo(group, {
+    action,
+    allowMove,
+    onTransferSuccess: () => loadMockGroups(),
     onCopySuccess: () => loadMockGroups()
   })
+}
+const copyGroups = (group) => {
+  return toTransferGroups(group, 'copy', Array.isArray(group) && canMoveGroups(group))
+}
+const moveGroups = (groups) => {
+  return toTransferGroups(groups, 'move', canMoveGroups(groups))
 }
 const buttons = computed(() => defineTableButtons([{
   tooltip: $i18nBundle('common.label.edit'),
@@ -446,7 +472,8 @@ const buttons = computed(() => defineTableButtons([{
   icon: 'FileCopyFilled',
   round: true,
   type: 'warning',
-  click: toCopyGroups
+  buttonIf: item => groupReadable(item),
+  click: item => toTransferGroups(item, 'copy', false)
 }, {
   tooltip: $i18nBundle('common.label.delete'),
   icon: 'DeleteFilled',
@@ -459,10 +486,7 @@ const changedUser = async (userName) => {
   userName && (searchParam.value.userName = userName)
   searchParam.value.projectId = null
   searchParam.value.projectCode = null
-  await loadProjectsAndRefreshOptions()
-  if (!showOnlyMineFilter.value) {
-    searchParam.value.onlyMine = false
-  }
+  await Promise.allSettled([loadProjectsAndRefreshOptions(), loadSharedProjectOptions()])
   loadMockGroups(1)
 }
 const handleOnlyMineChange = async (value) => {
@@ -471,7 +495,7 @@ const handleOnlyMineChange = async (value) => {
   }
   searchParam.value.projectId = null
   searchParam.value.projectCode = null
-  await loadProjectsAndRefreshOptions()
+  await Promise.allSettled([loadProjectsAndRefreshOptions(), loadSharedProjectOptions()])
   loadMockGroups(1)
 }
 //* ************搜索框**************//
@@ -557,6 +581,7 @@ const newOrEdit = async id => {
         currentGroup.value.proxyUrlParams = toProxyUrlParams(currentGroup.value.proxyUrl)
         currentGroupProject.value = data.infos?.mockProject || resolveGroupProject(currentGroup.value)
         currentGroupEditable.value = checkProjectWritable(currentGroupProject.value)
+        currentGroupProjectChangeable.value = checkProjectDeletable(currentGroupProject.value)
       }
     })
   } else {
@@ -569,6 +594,7 @@ const newOrEdit = async id => {
     }
     currentGroupProject.value = resolveGroupProject(currentGroup.value) || mockProject.value
     currentGroupEditable.value = !!projectWritable.value
+    currentGroupProjectChangeable.value = !!projectWritable.value
   }
   showEditWindow.value = true
   // Auto-expand if any hidden field has a value
@@ -697,7 +723,7 @@ const saveGroupItem = (item) => {
   })
 }
 const selectedRows = ref([])
-const selectedRowsWritable = computed(() => selectedRows.value?.length > 0 && selectedRows.value.every(item => groupWritable(item)))
+const selectedRowsReadable = computed(() => selectedRows.value?.length > 0 && selectedRows.value.every(item => groupReadable(item)))
 const selectedRowsDeletable = computed(() => selectedRows.value?.length > 0 && selectedRows.value.every(item => groupDeletable(item)))
 const exportGroups = (groupIds) => {
   $coreConfirm($i18nBundle('mock.msg.exportConfirm')).then(() => {
@@ -903,11 +929,18 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
           </template>
         </el-dropdown>
         <el-button
-          v-if="selectedRows?.length>1&&selectedRowsWritable"
+          v-if="selectedRows?.length > 1 && selectedRowsReadable"
           type="warning"
-          @click="toCopyGroups(selectedRows)"
+          @click="copyGroups(selectedRows)"
         >
           {{ $t('common.label.copy') }}
+        </el-button>
+        <el-button
+          v-if="selectedRows?.length > 1 && selectedRowsDeletable"
+          type="success"
+          @click="moveGroups(selectedRows)"
+        >
+          {{ $t('common.label.move') }}
         </el-button>
         <el-button
           v-if="selectedRows?.length&&selectedRowsDeletable"

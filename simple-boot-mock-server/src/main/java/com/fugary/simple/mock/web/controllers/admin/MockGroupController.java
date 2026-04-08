@@ -22,6 +22,7 @@ import com.fugary.simple.mock.web.vo.export.ExportMockVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupExportParamVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupQueryVo;
+import com.fugary.simple.mock.web.vo.query.MockGroupTransferVo;
 import com.fugary.simple.mock.web.vo.query.MockHistoryVo;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -101,6 +102,8 @@ public class MockGroupController {
         QueryWrapper<MockGroup> queryWrapper = buildGroupQuery(queryVo.getStatus(), keyword);
         String loginUserName = SecurityUtils.getLoginUserName();
         MockProject mockProject = resolveTargetProject(queryUserName, projectId, projectCode);
+        mockProject = decorateDefaultProjectOwner(mockProject,
+                StringUtils.defaultIfBlank(queryUserName, loginUserName));
         if (Boolean.TRUE.equals(queryVo.getOnlyMine())
                 && mockProject != null
                 && !isDefaultProjectCode(mockProject.getProjectCode())
@@ -120,6 +123,8 @@ public class MockGroupController {
                 && (SecurityUtils.isCurrentUser(queryUserName) || SecurityUtils.isAdminUser())
                 && projectId == null && StringUtils.isBlank(projectCode)) {
             mockProject = mockProjectService.loadMockProject(queryUserName, MockConstants.MOCK_DEFAULT_PROJECT);
+            mockProject = decorateDefaultProjectOwner(mockProject,
+                    StringUtils.defaultIfBlank(queryUserName, loginUserName));
         }
         String userName = SecurityUtils.getUserName(queryUserName);
         boolean noProjectSelected = projectId == null && StringUtils.isBlank(projectCode);
@@ -233,6 +238,7 @@ public class MockGroupController {
         if (mockGroup != null) {
             mockProject = mockProjectService.loadMockProject(mockGroup.getUserName(), mockGroup.getProjectId(),
                     mockGroup.getProjectCode());
+            mockProject = decorateDefaultProjectOwner(mockProject, mockGroup.getUserName());
         }
         if (mockGroup == null || mockProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
@@ -279,26 +285,10 @@ public class MockGroupController {
             if (StringUtils.isBlank(group.getUserName())) {
                 group.setUserName(existGroup.getUserName());
             }
-            if (!SecurityUtils.validateUserUpdate(existGroup.getUserName())) {
-                boolean sourceWritable = mockProjectService.hasProjectAuthority(existGroup.getUserName(),
-                        existGroup.getProjectId(), existGroup.getProjectCode(), MockConstants.AUTHORITY_WRITABLE);
-                if (!sourceWritable) {
-                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
-                }
-                boolean projectChanged = (group.getProjectId() != null && !Objects.equals(group.getProjectId(), existGroup.getProjectId()))
-                        || (StringUtils.isNotBlank(group.getProjectCode())
-                        && !StringUtils.equals(StringUtils.trimToEmpty(group.getProjectCode()), StringUtils.trimToEmpty(existGroup.getProjectCode())))
-                        || (StringUtils.isNotBlank(group.getUserName())
-                        && !StringUtils.equals(group.getUserName(), existGroup.getUserName()));
-                if (!projectChanged) {
-                    group.setUserName(existGroup.getUserName());
-                    group.setProjectId(existGroup.getProjectId());
-                    group.setProjectCode(existGroup.getProjectCode());
-                }
+            if (group.getProjectId() == null && StringUtils.isBlank(group.getProjectCode())) {
+                group.setProjectId(existGroup.getProjectId());
+                group.setProjectCode(existGroup.getProjectCode());
             }
-        }
-        if (mockGroupService.existsMockGroup(group)) {
-            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
         }
         MockUser loginUser = getLoginUser();
         if (StringUtils.isBlank(group.getUserName()) && loginUser != null) {
@@ -306,9 +296,22 @@ public class MockGroupController {
         }
         MockProject project = resolveTargetProject(group.getUserName(), group.getProjectId(), group.getProjectCode());
         applyProjectRelation(group, project);
+        if (existGroup != null) {
+            boolean projectChanged = !isSameProjectRelation(existGroup, group);
+            String sourceAuthority = projectChanged
+                    ? MockConstants.AUTHORITY_DELETABLE
+                    : MockConstants.AUTHORITY_WRITABLE;
+            if (!mockProjectService.hasProjectAuthority(existGroup.getUserName(), existGroup.getProjectId(),
+                    existGroup.getProjectCode(), sourceAuthority)) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+            }
+        }
         if (!mockProjectService.hasProjectAuthority(group.getUserName(), group.getProjectId(),
                 group.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+        }
+        if (mockGroupService.existsMockGroup(group)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
         }
         return mockGroupService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(group));
     }
@@ -316,19 +319,71 @@ public class MockGroupController {
     @PostMapping("/copyMockGroup/{groupId}")
     public SimpleResult<MockGroup> copyMockGroup(@PathVariable("groupId") String groupIdsStr,
             @RequestBody MockGroupQueryVo copyVo) {
-        MockProject existsProject = resolveTargetProject(copyVo.getUserName(), copyVo.getProjectId(), copyVo.getProjectCode());
+        MockProject existsProject = prepareTargetProject(copyVo.getUserName(), copyVo.getProjectId(), copyVo.getProjectCode());
         if (existsProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (MockConstants.MOCK_DEFAULT_PROJECT.equals(existsProject.getProjectCode())) {
-            existsProject.setUserName(copyVo.getUserName());
+        if (!mockProjectService.hasProjectAuthority(existsProject.getUserName(), existsProject.getId(),
+                existsProject.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         String[] groupIds = groupIdsStr.split("\\s*,\\s*");
         SimpleResult<MockGroup> result = null;
         for (String groupId : groupIds) {
-            result = mockGroupService.copyMockGroup(NumberUtils.toInt(groupId), existsProject);
+            Integer id = NumberUtils.toInt(groupId);
+            if (mockGroupService.getById(id) == null) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+            }
+            if (!checkGroupAuthority(id, MockConstants.AUTHORITY_READABLE)) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+            }
+            result = mockGroupService.copyMockGroup(id, existsProject);
+            if (result != null && !result.isSuccess()) {
+                return result;
+            }
         }
         return result;
+    }
+
+    @PostMapping("/transfer")
+    public SimpleResult<List<MockGroup>> transfer(@RequestBody MockGroupTransferVo transferVo) {
+        if (CollectionUtils.isEmpty(transferVo.getGroupIds()) || StringUtils.isBlank(transferVo.getAction())) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400);
+        }
+        MockProject targetProject = prepareTargetProject(transferVo.getUserName(), transferVo.getProjectId(),
+                transferVo.getProjectCode());
+        if (targetProject == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        if (!mockProjectService.hasProjectAuthority(targetProject.getUserName(), targetProject.getId(),
+                targetProject.getProjectCode(), MockConstants.AUTHORITY_WRITABLE)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+        }
+        boolean moveAction = StringUtils.equalsIgnoreCase("move", transferVo.getAction());
+        List<MockGroup> resultData = new ArrayList<>();
+        for (Integer groupId : transferVo.getGroupIds()) {
+            MockGroup sourceGroup = mockGroupService.getById(groupId);
+            if (sourceGroup == null) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+            }
+            String sourceAuthority = moveAction
+                    ? MockConstants.AUTHORITY_DELETABLE
+                    : MockConstants.AUTHORITY_READABLE;
+            if (!checkGroupAuthority(groupId, sourceAuthority)) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+            }
+            SimpleResult<MockGroup> result = moveAction
+                    ? mockGroupService.moveMockGroup(groupId, targetProject)
+                    : mockGroupService.copyMockGroup(groupId, targetProject);
+            if (result == null || !result.isSuccess()) {
+                return result != null ? SimpleResultUtils.createSimpleResult(result.getCode(), resultData)
+                        : SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1, resultData);
+            }
+            if (result.getResultData() != null) {
+                resultData.add(result.getResultData());
+            }
+        }
+        return SimpleResultUtils.createSimpleResult(resultData);
     }
 
     @PostMapping("/import")
@@ -587,5 +642,28 @@ public class MockGroupController {
         group.setProjectId(project.getId());
         group.setProjectCode(project.getProjectCode());
         group.setUserName(project.getUserName());
+    }
+
+    private MockProject prepareTargetProject(String userName, Integer projectId, String projectCode) {
+        MockProject targetProject = resolveTargetProject(userName, projectId, projectCode);
+        if (targetProject != null && isDefaultProjectCode(targetProject.getProjectCode())) {
+            targetProject.setUserName(userName);
+        }
+        return targetProject;
+    }
+
+    private MockProject decorateDefaultProjectOwner(MockProject project, String ownerUserName) {
+        if (project != null && isDefaultProjectCode(project.getProjectCode()) && StringUtils.isBlank(project.getUserName())) {
+            project.setUserName(ownerUserName);
+        }
+        return project;
+    }
+
+    private boolean isSameProjectRelation(MockGroup left, MockGroup right) {
+        return Objects.equals(left != null ? left.getProjectId() : null, right != null ? right.getProjectId() : null)
+                && StringUtils.equals(StringUtils.trimToEmpty(left != null ? left.getProjectCode() : null),
+                StringUtils.trimToEmpty(right != null ? right.getProjectCode() : null))
+                && StringUtils.equals(StringUtils.trimToEmpty(left != null ? left.getUserName() : null),
+                StringUtils.trimToEmpty(right != null ? right.getUserName() : null));
     }
 }

@@ -57,6 +57,7 @@ public class MockProjectController {
         }
         applyProjectSort(queryWrapper);
         SimpleResult<List<MockProject>> result = SimpleResultUtils.createSimpleResult(mockProjectService.page(page, queryWrapper));
+        decorateDefaultProjects(result.getResultData(), resolveDefaultProjectOwner(queryVo));
         populateProjectUsers(result.getResultData());
         return result;
     }
@@ -115,6 +116,7 @@ public class MockProjectController {
         applyProjectSort(queryWrapper);
         List<MockProject> projects = mockProjectService.list(queryWrapper);
         appendSelectedProject(projects, queryVo);
+        decorateDefaultProjects(projects, resolveDefaultProjectOwner(queryVo));
         populateProjectUsers(projects);
         return SimpleResultUtils.createSimpleResult(projects);
     }
@@ -180,6 +182,26 @@ public class MockProjectController {
                 project.setProjectUsers(mockProjectUserService.loadProjectUsers(project.getId(),
                         project.getProjectCode()));
             }
+        }
+    }
+
+    private String resolveDefaultProjectOwner(MockProjectQueryVo queryVo) {
+        return StringUtils.defaultIfBlank(resolveQueryUserName(queryVo), SecurityUtils.getLoginUserName());
+    }
+
+    private void decorateDefaultProjects(List<MockProject> projects, String ownerUserName) {
+        if (projects != null) {
+            for (MockProject project : projects) {
+                decorateDefaultProject(project, ownerUserName);
+            }
+        }
+    }
+
+    private void decorateDefaultProject(MockProject project, String ownerUserName) {
+        if (project != null
+                && StringUtils.equalsIgnoreCase(MockConstants.MOCK_DEFAULT_PROJECT, project.getProjectCode())
+                && StringUtils.isBlank(project.getUserName())) {
+            project.setUserName(ownerUserName);
         }
     }
 

@@ -32,11 +32,28 @@ const normalizeAuthorities = (authorities) => {
   return []
 }
 
+const isOwnedDefaultProject = (project) => {
+  return isDefaultProject(project?.projectCode) && isCurrentUser(project?.userName)
+}
+
+const isProjectOwner = (project) => {
+  if (!project) {
+    return false
+  }
+  if (isAdminUser()) {
+    return true
+  }
+  if (isOwnedDefaultProject(project)) {
+    return true
+  }
+  return isCurrentUser(project.userName)
+}
+
 export const getProjectAuthorities = (project) => {
   if (!project) {
     return []
   }
-  if (isAdminUser() || isCurrentUser(project.userName) || isDefaultProject(project.projectCode)) {
+  if (isProjectOwner(project)) {
     return [...FULL_PROJECT_AUTHORITIES]
   }
   const sharedUser = project.projectUsers?.find(item => isCurrentUser(item.userName))
@@ -50,6 +67,8 @@ export const hasProjectAuthority = (project, authority) => {
   }
   return authorities.includes(authority)
 }
+
+export const checkProjectReadable = (project) => hasProjectAuthority(project, 'readable')
 
 export const checkProjectWritable = (project) => hasProjectAuthority(project, 'writable')
 
@@ -219,7 +238,7 @@ export const useProjectEditHook = (searchParam, userOptions) => {
 }
 
 export const checkProjectEdit = (project) => {
-  return project && (isAdminUser() || isCurrentUser(project.userName) || isDefaultProject(project.projectCode))
+  return !!project && isProjectOwner(project)
 }
 
 export const copyMockProject = (data, config) => {

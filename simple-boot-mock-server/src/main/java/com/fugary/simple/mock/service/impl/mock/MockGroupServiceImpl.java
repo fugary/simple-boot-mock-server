@@ -36,6 +36,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 import org.springframework.util.StreamUtils;
@@ -518,6 +519,30 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             mockSchemaService.saveOrUpdate(SimpleMockUtils.addAuditInfo(mockSchema));
         }
         return SimpleResultUtils.createSimpleResult(mockGroup);
+    }
+
+    @Override
+    @Transactional
+    public SimpleResult<MockGroup> moveMockGroup(Integer groupId, MockProject newProject) {
+        MockGroup mockGroup = getById(groupId);
+        if (mockGroup == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        if (newProject == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400);
+        }
+        boolean defaultProject = MockConstants.MOCK_DEFAULT_PROJECT.equals(newProject.getProjectCode());
+        Integer targetProjectId = defaultProject ? null : newProject.getId();
+        boolean sameProject = StringUtils.equals(newProject.getUserName(), mockGroup.getUserName())
+                && Objects.equals(targetProjectId, mockGroup.getProjectId())
+                && StringUtils.equals(newProject.getProjectCode(), mockGroup.getProjectCode());
+        if (sameProject) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2000, mockGroup);
+        }
+        mockGroup.setProjectId(targetProjectId);
+        mockGroup.setProjectCode(newProject.getProjectCode());
+        mockGroup.setUserName(newProject.getUserName());
+        return newSaveOrUpdate(SimpleMockUtils.addAuditInfo(mockGroup));
     }
 
     @Override
