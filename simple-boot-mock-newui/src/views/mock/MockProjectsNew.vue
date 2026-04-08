@@ -518,6 +518,7 @@ const pageAttrs = {
     <mock-project-user-manage-window
       v-model:show-window="showProjectUserWindow"
       :project="projectUserManageTarget"
+      :user-options="userOptions"
     />
   </el-container>
 </template>

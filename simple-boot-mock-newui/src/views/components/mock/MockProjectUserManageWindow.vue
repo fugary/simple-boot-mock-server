@@ -1,11 +1,10 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { defineFormOptions, defineTableButtons, defineTableColumns } from '@/components/utils'
 import { $coreConfirm, isAdminUser, useCurrentUserName } from '@/utils'
 import { $i18nBundle } from '@/messages'
 import MockProjectUserApi from '@/api/mock/MockProjectUserApi'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
-import { useAllUsers } from '@/api/mock/MockUserApi'
 import { ElMessage } from 'element-plus'
 
 const props = defineProps({
@@ -13,6 +12,10 @@ const props = defineProps({
   project: {
     type: Object,
     default: () => ({})
+  },
+  userOptions: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -27,9 +30,9 @@ const loading = ref(false)
 const projectUsers = ref([])
 const showEditWindow = ref(false)
 const currentUser = ref({})
-const searchParam = ref({})
-
-const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam, { current: false })
+const effectiveUserOptions = computed(() => {
+  return props.userOptions || []
+})
 
 const currentUserName = useCurrentUserName()
 
@@ -48,7 +51,7 @@ const selectableUserOptions = computed(() => {
   if (currentUser.value?.userName) {
     excludedUsers.delete(currentUser.value.userName)
   }
-  return userOptions.value.filter(item => !excludedUsers.has(item?.value || item?.userName))
+  return effectiveUserOptions.value.filter(item => !excludedUsers.has(item?.value || item?.userName))
 })
 
 const loadProjectUsers = () => {
@@ -69,10 +72,6 @@ watch(() => props.showWindow, (val) => {
   if (val) {
     loadProjectUsers()
   }
-})
-
-onMounted(() => {
-  loadUsersAndRefreshOptions()
 })
 
 const removeUser = (id) => {
