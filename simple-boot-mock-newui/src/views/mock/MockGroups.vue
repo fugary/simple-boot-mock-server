@@ -196,28 +196,47 @@ const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projects, projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
 const sharedProjectOptions = ref([])
 const showOnlyMineFilter = computed(() => !isAdminUser() && !props.publicFlag && sharedProjectOptions.value.length > 0)
-const loadSharedProjectOptions = () => {
+const refreshSharedProjectOptions = (result = []) => {
+  sharedProjectOptions.value = (result || []).filter(project => {
+    return !isDefaultProject(project?.projectCode) && project?.userName && project.userName !== useCurrentUserName()
+  })
+  if (!sharedProjectOptions.value.length) {
+    searchParam.value.onlyMine = false
+  }
+  return sharedProjectOptions.value
+}
+const shouldReuseProjectOptionsForShared = () => {
+  return !props.publicFlag && !searchParam.value?.projectId && !searchParam.value?.onlyMine
+}
+const loadSharedProjectOptions = (result) => {
   if (props.publicFlag) {
     sharedProjectOptions.value = []
     return Promise.resolve([])
   }
+  if (Array.isArray(result)) {
+    return Promise.resolve(refreshSharedProjectOptions(result))
+  }
   return selectProjects({
     userName: searchParam.value?.userName || useCurrentUserName(),
     publicFlag: false
-  }).then(result => {
-    sharedProjectOptions.value = (result || []).filter(project => {
-      return !isDefaultProject(project?.projectCode) && project?.userName && project.userName !== useCurrentUserName()
-    })
-    if (!sharedProjectOptions.value.length) {
-      searchParam.value.onlyMine = false
-    }
-    return sharedProjectOptions.value
-  })
+  }).then(refreshSharedProjectOptions)
+}
+const loadProjectRelatedOptions = async ({ reloadUsers = false } = {}) => {
+  const tasks = []
+  reloadUsers && tasks.push(loadUsersAndRefreshOptions())
+  const projectsTask = loadProjectsAndRefreshOptions()
+  tasks.push(projectsTask)
+  if (shouldReuseProjectOptionsForShared()) {
+    tasks.push(projectsTask.then(() => loadSharedProjectOptions(projects.value)))
+  } else {
+    tasks.push(loadSharedProjectOptions())
+  }
+  await Promise.allSettled(tasks)
 }
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
   syncRouteSearchParam()
-  await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions(), loadSharedProjectOptions()])
+  await loadProjectRelatedOptions({ reloadUsers: true })
   syncRouteSearchParam()
   return loadMockGroups()
 })
@@ -228,7 +247,7 @@ onActivated(initLoadOnce)
 
 watch(() => route.fullPath, async () => {
   syncRouteSearchParam()
-  await Promise.allSettled([loadUsersAndRefreshOptions(), loadProjectsAndRefreshOptions(), loadSharedProjectOptions()])
+  await loadProjectRelatedOptions({ reloadUsers: true })
   syncRouteSearchParam()
   loadMockGroups(1)
 })
@@ -486,7 +505,7 @@ const changedUser = async (userName) => {
   userName && (searchParam.value.userName = userName)
   searchParam.value.projectId = null
   searchParam.value.projectCode = null
-  await Promise.allSettled([loadProjectsAndRefreshOptions(), loadSharedProjectOptions()])
+  await loadProjectRelatedOptions()
   loadMockGroups(1)
 }
 const handleOnlyMineChange = async (value) => {
@@ -495,7 +514,7 @@ const handleOnlyMineChange = async (value) => {
   }
   searchParam.value.projectId = null
   searchParam.value.projectCode = null
-  await Promise.allSettled([loadProjectsAndRefreshOptions(), loadSharedProjectOptions()])
+  await loadProjectRelatedOptions()
   loadMockGroups(1)
 }
 //* ************搜索框**************//

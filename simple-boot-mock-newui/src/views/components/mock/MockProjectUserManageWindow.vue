@@ -42,6 +42,7 @@ const canManage = computed(() => {
 
 const selectableUserOptions = computed(() => {
   const excludedUsers = new Set(projectUsers.value.map(item => item.userName))
+  excludedUsers.add('admin')
   if (currentUserName) {
     excludedUsers.add(currentUserName)
   }
