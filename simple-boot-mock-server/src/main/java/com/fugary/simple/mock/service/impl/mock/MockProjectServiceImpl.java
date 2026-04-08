@@ -135,7 +135,7 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
         saveOrUpdate(SimpleMockUtils.addAuditInfo(mockProject));
         List<MockGroup> mockGroups = mockGroupService.list(buildProjectGroupQuery(oldProject));
         for (MockGroup mockGroup : mockGroups) {
-            mockGroupService.copyMockGroup(mockGroup.getId(), mockProject);
+            mockGroupService.copyMockGroup(mockGroup, mockProject);
         }
         return SimpleResultUtils.createSimpleResult(mockProject);
     }

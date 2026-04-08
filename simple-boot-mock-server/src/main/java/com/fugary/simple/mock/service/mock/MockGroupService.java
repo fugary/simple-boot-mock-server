@@ -103,13 +103,20 @@ public interface MockGroupService extends IService<MockGroup> {
     /**
      * 复制一份数据
      *
-     * @param groupId
+     * @param mockGroup
      * @param newProject
      * @return
      */
-    SimpleResult<MockGroup> copyMockGroup(Integer groupId, MockProject newProject);
+    SimpleResult<MockGroup> copyMockGroup(MockGroup mockGroup, MockProject newProject);
 
-    SimpleResult<MockGroup> moveMockGroup(Integer groupId, MockProject newProject);
+    /**
+     * 移动分组
+     *
+     * @param mockGroup
+     * @param newProject
+     * @return
+     */
+    SimpleResult<MockGroup> moveMockGroup(MockGroup mockGroup, MockProject newProject);
 
     /**
      * 自定义保存

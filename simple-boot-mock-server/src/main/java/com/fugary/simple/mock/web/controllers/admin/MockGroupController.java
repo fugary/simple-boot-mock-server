@@ -331,13 +331,14 @@ public class MockGroupController {
         SimpleResult<MockGroup> result = null;
         for (String groupId : groupIds) {
             Integer id = NumberUtils.toInt(groupId);
-            if (mockGroupService.getById(id) == null) {
+            MockGroup mockGroup = mockGroupService.getById(id);
+            if (mockGroup == null) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
             }
             if (!checkGroupAuthority(id, MockConstants.AUTHORITY_READABLE)) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
             }
-            result = mockGroupService.copyMockGroup(id, existsProject);
+            result = mockGroupService.copyMockGroup(SimpleMockUtils.copy(mockGroup, MockGroup.class), existsProject);
             if (result != null && !result.isSuccess()) {
                 return result;
             }
@@ -361,6 +362,7 @@ public class MockGroupController {
         }
         boolean moveAction = StringUtils.equalsIgnoreCase("move", transferVo.getAction());
         List<MockGroup> resultData = new ArrayList<>();
+        List<Integer> skippedGroupIds = new ArrayList<>();
         for (Integer groupId : transferVo.getGroupIds()) {
             MockGroup sourceGroup = mockGroupService.getById(groupId);
             if (sourceGroup == null) {
@@ -372,10 +374,19 @@ public class MockGroupController {
             if (!checkGroupAuthority(groupId, sourceAuthority)) {
                 return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
             }
+            if (moveAction && isSameProjectRelation(sourceGroup, targetProject)) {
+                skippedGroupIds.add(groupId);
+                continue;
+            }
+            MockGroup toSave = SimpleMockUtils.copy(sourceGroup, MockGroup.class);
             SimpleResult<MockGroup> result = moveAction
-                    ? mockGroupService.moveMockGroup(groupId, targetProject)
-                    : mockGroupService.copyMockGroup(groupId, targetProject);
+                    ? mockGroupService.moveMockGroup(toSave, targetProject)
+                    : mockGroupService.copyMockGroup(toSave, targetProject);
             if (result == null || !result.isSuccess()) {
+                if (moveAction && result != null && result.getCode() == MockErrorConstants.CODE_2000) {
+                    skippedGroupIds.add(groupId);
+                    continue;
+                }
                 return result != null ? SimpleResultUtils.createSimpleResult(result.getCode(), resultData)
                         : SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1, resultData);
             }
@@ -383,7 +394,12 @@ public class MockGroupController {
                 resultData.add(result.getResultData());
             }
         }
-        return SimpleResultUtils.createSimpleResult(resultData);
+        if (resultData.isEmpty() && !skippedGroupIds.isEmpty()) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2000, resultData)
+                    .addInfo("skippedGroupIds", skippedGroupIds);
+        }
+        return SimpleResultUtils.createSimpleResult(resultData)
+                .addInfo("skippedGroupIds", skippedGroupIds);
     }
 
     @PostMapping("/import")
@@ -665,5 +681,16 @@ public class MockGroupController {
                 StringUtils.trimToEmpty(right != null ? right.getProjectCode() : null))
                 && StringUtils.equals(StringUtils.trimToEmpty(left != null ? left.getUserName() : null),
                 StringUtils.trimToEmpty(right != null ? right.getUserName() : null));
+    }
+
+    private boolean isSameProjectRelation(MockGroup group, MockProject project) {
+        if (group == null || project == null) {
+            return false;
+        }
+        MockGroup target = new MockGroup();
+        target.setProjectId(isDefaultProjectCode(project.getProjectCode()) ? null : project.getId());
+        target.setProjectCode(project.getProjectCode());
+        target.setUserName(project.getUserName());
+        return isSameProjectRelation(group, target);
     }
 }

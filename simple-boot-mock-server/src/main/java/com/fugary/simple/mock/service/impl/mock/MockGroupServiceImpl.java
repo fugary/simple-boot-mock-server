@@ -477,11 +477,11 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     }
 
     @Override
-    public SimpleResult<MockGroup> copyMockGroup(Integer groupId, MockProject newProject) {
-        MockGroup mockGroup = getById(groupId);
+    public SimpleResult<MockGroup> copyMockGroup(MockGroup mockGroup, MockProject newProject) {
         if (mockGroup == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
+        Integer groupId = mockGroup.getId();
         mockGroup.setId(null);
         mockGroup.setGroupPath(SimpleMockUtils.uuid()); // 新路径
         boolean sameProject = true;
@@ -523,8 +523,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
 
     @Override
     @Transactional
-    public SimpleResult<MockGroup> moveMockGroup(Integer groupId, MockProject newProject) {
-        MockGroup mockGroup = getById(groupId);
+    public SimpleResult<MockGroup> moveMockGroup(MockGroup mockGroup, MockProject newProject) {
         if (mockGroup == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
