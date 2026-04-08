@@ -103,6 +103,7 @@ public class MockGroupController {
         MockProject mockProject = resolveTargetProject(queryUserName, projectId, projectCode);
         if (Boolean.TRUE.equals(queryVo.getOnlyMine())
                 && mockProject != null
+                && !isDefaultProjectCode(mockProject.getProjectCode())
                 && !SecurityUtils.isCurrentUser(mockProject.getUserName())) {
             return createEmptyGroupResult(page);
         }
