@@ -45,15 +45,17 @@ public class MockProjectController {
         queryWrapper.and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("project_name", keyword)
                 .or().like("project_code", keyword)
                 .or().like("description", keyword));
-        String queryUserName = queryVo.getUserName();
+        String queryUserName = resolveQueryUserName(queryVo);
         if (queryVo.isPublicFlag()) {
             queryWrapper.eq("public_flag", true)
                     .eq(StringUtils.isNotBlank(queryUserName), "user_name", queryUserName)
                     .eq("status", 1);
+        } else if (Boolean.TRUE.equals(queryVo.getOnlyMine())) {
+            appendCurrentUserProjectCondition(queryWrapper);
         } else {
             appendProjectAuthorityCondition(queryWrapper, queryUserName);
         }
-        queryWrapper.orderByDesc("id");
+        applyProjectSort(queryWrapper);
         SimpleResult<List<MockProject>> result = SimpleResultUtils.createSimpleResult(mockProjectService.page(page, queryWrapper));
         populateProjectUsers(result.getResultData());
         return result;
@@ -100,16 +102,48 @@ public class MockProjectController {
     public SimpleResult<List<MockProject>> selectProjects(@ModelAttribute MockProjectQueryVo queryVo) {
         QueryWrapper<MockProject> queryWrapper = Wrappers.<MockProject>query();
         queryWrapper.eq("status", 1);
+        String queryUserName = resolveQueryUserName(queryVo);
         if (queryVo.isPublicFlag()) {
-            queryWrapper.eq("public_flag", true).eq("status", 1);
+            queryWrapper.eq("public_flag", true)
+                    .eq("status", 1)
+                    .eq(StringUtils.isNotBlank(queryUserName), "user_name", queryUserName);
+        } else if (Boolean.TRUE.equals(queryVo.getOnlyMine())) {
+            appendCurrentUserProjectCondition(queryWrapper);
         } else {
-            appendProjectAuthorityCondition(queryWrapper, queryVo.getUserName());
+            appendProjectAuthorityCondition(queryWrapper, queryUserName);
         }
-        queryWrapper.orderByDesc("id");
+        applyProjectSort(queryWrapper);
         List<MockProject> projects = mockProjectService.list(queryWrapper);
         appendSelectedProject(projects, queryVo);
         populateProjectUsers(projects);
         return SimpleResultUtils.createSimpleResult(projects);
+    }
+
+    private String resolveQueryUserName(MockProjectQueryVo queryVo) {
+        if (Boolean.TRUE.equals(queryVo.getOnlyMine())) {
+            return SecurityUtils.getLoginUserName();
+        }
+        return StringUtils.trimToNull(queryVo.getUserName());
+    }
+
+    private void applyProjectSort(QueryWrapper<MockProject> queryWrapper) {
+        String loginUserName = StringUtils.lowerCase(StringUtils.trimToEmpty(SecurityUtils.getLoginUserName()));
+        StringBuilder sortBuilder = new StringBuilder("case when project_code = '")
+                .append(MockConstants.MOCK_DEFAULT_PROJECT)
+                .append("' then 0");
+        if (StringUtils.isNotBlank(loginUserName)) {
+            sortBuilder.append(" when lower(user_name) = '")
+                    .append(StringUtils.replace(loginUserName, "'", "''"))
+                    .append("' then 1");
+        }
+        sortBuilder.append(" else 2 end");
+        queryWrapper.orderByAsc(sortBuilder.toString()).orderByDesc("id");
+    }
+
+    private void appendCurrentUserProjectCondition(QueryWrapper<MockProject> queryWrapper) {
+        String loginUserName = SecurityUtils.getLoginUserName();
+        queryWrapper.and(wrapper -> wrapper.eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)
+                .or(StringUtils.isNotBlank(loginUserName), userWrapper -> userWrapper.eq("user_name", loginUserName)));
     }
 
     private void appendProjectAuthorityCondition(QueryWrapper<MockProject> queryWrapper, String queryUserName) {
@@ -158,8 +192,13 @@ public class MockProjectController {
         if (existsProject) {
             return;
         }
-        MockProject project = mockProjectService.loadMockProject(queryVo.getUserName(), projectId, null);
+        MockProject project = mockProjectService.loadMockProject(resolveQueryUserName(queryVo), projectId, null);
         if (project == null || !project.isEnabled()) {
+            return;
+        }
+        if (Boolean.TRUE.equals(queryVo.getOnlyMine())
+                && !MockConstants.MOCK_DEFAULT_PROJECT.equalsIgnoreCase(StringUtils.trimToEmpty(project.getProjectCode()))
+                && !SecurityUtils.isCurrentUser(project.getUserName())) {
             return;
         }
         boolean allowed = queryVo.isPublicFlag()

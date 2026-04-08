@@ -95,21 +95,20 @@ public class MockGroupController {
     public SimpleResult<List<MockGroup>> search(@ModelAttribute MockGroupQueryVo queryVo) {
         Page<MockGroup> page = SimpleResultUtils.toPage(queryVo);
         String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
-        String queryUserName = queryVo.getUserName();
+        String queryUserName = resolveQueryUserName(queryVo);
         Integer projectId = queryVo.getProjectId();
         String projectCode = StringUtils.trimToNull(queryVo.getProjectCode());
         QueryWrapper<MockGroup> queryWrapper = buildGroupQuery(queryVo.getStatus(), keyword);
         String loginUserName = SecurityUtils.getLoginUserName();
         MockProject mockProject = resolveTargetProject(queryUserName, projectId, projectCode);
+        if (Boolean.TRUE.equals(queryVo.getOnlyMine())
+                && mockProject != null
+                && !SecurityUtils.isCurrentUser(mockProject.getUserName())) {
+            return createEmptyGroupResult(page);
+        }
         if (mockProject != null && !isDefaultProjectCode(mockProject.getProjectCode())) {
             if (!hasProjectReadAccess(mockProject, queryVo.isPublicFlag())) {
-                Page<MockGroup> emptyPage = new Page<>(page.getCurrent(), page.getSize());
-                return SimpleResultUtils.createSimpleResult(emptyPage)
-                        .addInfo("mockProject", null)
-                        .addInfo("scenarioMap", new HashMap<>())
-                        .addInfo("historyCountMap", new HashMap<>())
-                        .addInfo("countMap", new HashMap<>())
-                        .addInfo("accessDateMap", new HashMap<>());
+                return createEmptyGroupResult(page);
             }
             queryWrapper.eq("user_name", mockProject.getUserName());
             appendProjectFilter(queryWrapper, mockProject, mockProject.getId(), mockProject.getProjectCode());
@@ -124,6 +123,7 @@ public class MockGroupController {
         String userName = SecurityUtils.getUserName(queryUserName);
         boolean noProjectSelected = projectId == null && StringUtils.isBlank(projectCode);
         if (!queryVo.isPublicFlag() && noProjectSelected
+                && !Boolean.TRUE.equals(queryVo.getOnlyMine())
                 && StringUtils.isNotBlank(userName)
                 && StringUtils.equals(userName, loginUserName)
                 && !SecurityUtils.isAdminUser()) {
@@ -151,6 +151,23 @@ public class MockGroupController {
         }
         applyHasRequestFilter(queryWrapper, queryVo.getHasRequest());
         return queryGroupPage(page, queryWrapper, mockProject, queryVo);
+    }
+
+    private String resolveQueryUserName(MockGroupQueryVo queryVo) {
+        if (Boolean.TRUE.equals(queryVo.getOnlyMine())) {
+            return SecurityUtils.getLoginUserName();
+        }
+        return StringUtils.trimToNull(queryVo.getUserName());
+    }
+
+    private SimpleResult<List<MockGroup>> createEmptyGroupResult(Page<MockGroup> page) {
+        Page<MockGroup> emptyPage = new Page<>(page.getCurrent(), page.getSize());
+        return SimpleResultUtils.createSimpleResult(emptyPage)
+                .addInfo("mockProject", null)
+                .addInfo("scenarioMap", new HashMap<>())
+                .addInfo("historyCountMap", new HashMap<>())
+                .addInfo("countMap", new HashMap<>())
+                .addInfo("accessDateMap", new HashMap<>());
     }
 
     private SimpleResult<List<MockGroup>> queryGroupPage(Page<MockGroup> page, QueryWrapper<MockGroup> queryWrapper,

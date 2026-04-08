@@ -16,4 +16,5 @@ public class MockGroupQueryVo extends SimpleQueryVo {
     private String projectCode;
     private boolean publicFlag;
     private Boolean hasRequest;
+    private Boolean onlyMine;
 }

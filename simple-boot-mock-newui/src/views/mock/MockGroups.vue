@@ -139,7 +139,7 @@ const props = defineProps({
 })
 const route = useRoute()
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
-const defaultSearchParam = { page: useDefaultPage(), userName: useCurrentUserName(), projectId: null }
+const defaultSearchParam = { page: useDefaultPage(), userName: useCurrentUserName(), projectId: null, onlyMine: false }
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: defaultSearchParam,
@@ -451,19 +451,34 @@ const changedUser = async (userName) => {
   await loadProjectsAndRefreshOptions()
   loadMockGroups(1)
 }
+const handleOnlyMineChange = async (value) => {
+  if (value) {
+    searchParam.value.userName = useCurrentUserName()
+  }
+  searchParam.value.projectId = null
+  searchParam.value.projectCode = null
+  await loadProjectsAndRefreshOptions()
+  loadMockGroups(1)
+}
 //* ************搜索框**************//
 const searchFormOptions = computed(() => {
   return [{
     labelKey: 'common.label.user',
     prop: 'userName',
     type: 'select',
-    enabled: isAdminUser(),
+    enabled: isAdminUser() && !searchParam.value.onlyMine,
     children: userOptions.value,
     attrs: {
       filterable: true,
       clearable: false
     },
     change: changedUser
+  }, {
+    labelKey: 'mock.label.myData',
+    prop: 'onlyMine',
+    type: 'switch',
+    enabled: !props.publicFlag,
+    change: handleOnlyMineChange
   }, {
     labelKey: 'mock.label.project',
     prop: 'projectCode',

@@ -13,9 +13,12 @@ const FULL_PROJECT_AUTHORITIES = ['readable', 'writable', 'deletable']
 
 export const sortProjects = (projects = []) => {
   return [...projects].sort((left, right) => {
-    const leftDefault = isDefaultProject(left?.projectCode) ? 0 : 1
-    const rightDefault = isDefaultProject(right?.projectCode) ? 0 : 1
-    return leftDefault - rightDefault
+    const leftPriority = isDefaultProject(left?.projectCode) ? 0 : (isCurrentUser(left?.userName) ? 1 : 2)
+    const rightPriority = isDefaultProject(right?.projectCode) ? 0 : (isCurrentUser(right?.userName) ? 1 : 2)
+    if (leftPriority !== rightPriority) {
+      return leftPriority - rightPriority
+    }
+    return Number(right?.id || 0) - Number(left?.id || 0)
   })
 }
 
@@ -121,7 +124,8 @@ export const useSelectProjects = (searchParam, autoSelect) => {
     await loadSelectProjects({
       userName: searchParam.value?.userName || useCurrentUserName(),
       publicFlag: searchParam.value?.publicFlag,
-      projectId: searchParam.value?.projectId || undefined
+      projectId: searchParam.value?.projectId || undefined,
+      onlyMine: searchParam.value?.onlyMine || undefined
     })
     const currentProj = findProjectByValue(projects.value, searchParam.value)
     if (autoSelect) {
@@ -131,7 +135,7 @@ export const useSelectProjects = (searchParam, autoSelect) => {
       }
     } else if (currentProj?.projectCode) {
       assignProjectValue(searchParam.value, currentProj)
-    } else if (searchParam.value?.projectId == null && !searchParam.value?.projectCode) {
+    } else {
       searchParam.value.projectId = null
       searchParam.value.projectCode = null
     }

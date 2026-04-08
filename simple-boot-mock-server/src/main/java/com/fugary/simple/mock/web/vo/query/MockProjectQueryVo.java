@@ -13,4 +13,5 @@ public class MockProjectQueryVo extends SimpleQueryVo{
     private String userName;
     private Integer projectId;
     private boolean publicFlag;
+    private Boolean onlyMine;
 }

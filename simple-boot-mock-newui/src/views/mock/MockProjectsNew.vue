@@ -29,7 +29,7 @@ const route = useRoute()
 const { search, deleteById, saveOrUpdate } = MockProjectApi
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
-  defaultParam: { page: useDefaultPage(50), publicFlag: props.publicFlag },
+  defaultParam: { page: useDefaultPage(50), publicFlag: props.publicFlag, onlyMine: false },
   searchMethod: search
 })
 const loadMockProjects = (pageNumber) => {
@@ -50,6 +50,13 @@ onMounted(initLoadOnce)
 
 onActivated(initLoadOnce)
 
+const handleOnlyMineChange = (value) => {
+  if (value) {
+    searchParam.value.userName = useCurrentUserName()
+  }
+  loadMockProjects(1)
+}
+
 const gotoMockGroups = (project) => {
   if (project.status === 1) {
     const query = new URLSearchParams({ backUrl: route.fullPath })
@@ -67,7 +74,7 @@ const searchFormOptions = computed(() => {
     labelKey: 'common.label.user',
     prop: 'userName',
     type: 'select',
-    enabled: isAdminUser() || props.publicFlag,
+    enabled: (isAdminUser() && !searchParam.value.onlyMine) || props.publicFlag,
     children: userOptions.value,
     attrs: {
       filterable: true,
@@ -76,6 +83,12 @@ const searchFormOptions = computed(() => {
     change () {
       loadMockProjects(1)
     }
+  }, {
+    labelKey: 'mock.label.myData',
+    prop: 'onlyMine',
+    type: 'switch',
+    enabled: !props.publicFlag,
+    change: handleOnlyMineChange
   },
   {
     ...useSearchStatus({ change () { loadMockProjects(1) } }),
