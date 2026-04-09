@@ -42,9 +42,7 @@ import MockProjectApi, {
   checkProjectReadable,
   checkProjectDeletable,
   checkProjectWritable,
-  selectProjects,
-  useProjectEditHook,
-  useSelectProjects
+  selectProjects
 } from '@/api/mock/MockProjectApi'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useRoute } from 'vue-router'
@@ -58,6 +56,7 @@ import {
   useContentTypeOption
 } from '@/services/mock/MockCommonService'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
+import { useProjectEditHook, useSelectProjects } from '@/hooks/mock/MockProjectHooks'
 
 // Add getGroupHistoryViewOptions
 const getGroupHistoryViewOptions = (group, history) => {
@@ -285,13 +284,17 @@ const columns = computed(() => {
       if (data.projectCode && !isDefaultProject(data.projectCode)) {
         const projectOption = projectOptions.value.find(proj => `${proj.projectId || ''}` === `${data.projectId || ''}`) ||
           projectOptions.value.find(proj => proj.projectCode === data.projectCode)
-        projectInfo = projectOption?.label || $i18nBundle(projectOption?.labelKey) || mockProject.value?.projectName
+        projectInfo = projectOption?.labelComp?.() || $i18nBundle(projectOption?.labelKey) || mockProject.value?.projectName
         if (!projectInfo) {
           projectInfo = data.projectCode
         }
         const projectUserName = projectOption?.userName || mockProject.value?.userName || data.userName
         if (!projectOption && projectUserName && projectUserName !== useCurrentUserName()) {
-          projectInfo = `${projectInfo} - ${projectUserName}`
+          projectInfo = <>
+            <span>{projectInfo}</span>
+            <ElText class="margin-left1" type="success" tag="b"
+                    v-common-tooltip={$i18nBundle('mock.label.owner')}>({projectUserName})</ElText>
+          </>
         }
       }
       const hasScenarios = (scenarioMap.value[data.id] || []).length > 0
@@ -305,7 +308,7 @@ const columns = computed(() => {
       }
       return <>
           <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
-        {projectInfo ? <><br/><span class="el-text el-text--info">({projectInfo})</span></> : ''}
+        {projectInfo ? <><br/><span class="el-text el-text--info">{projectInfo}</span></> : ''}
         {activeScenarioName
           ? <><br/><ElTag size="small" type="warning">{activeScenarioName}</ElTag></>
           : ''}

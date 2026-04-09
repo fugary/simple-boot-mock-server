@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { computed, ref } from 'vue'
 import { isAdminUser, isCurrentUser, useCurrentUserName } from '@/utils'
-import { assignProjectValue, useSelectProjects } from '@/api/mock/MockProjectApi'
+import { assignProjectValue, useSelectProjects } from '@/hooks/mock/MockProjectHooks'
 import { defineFormOptions } from '@/components/utils'
 import { $i18nBundle, $i18nConcat } from '@/messages'
 import { ElMessage, ElText } from 'element-plus'
@@ -95,7 +95,7 @@ const options = computed(() => {
       return <>
         {currentGroups.value.map(currentGroup => {
           return <>{currentGroup.groupName}
-            <ElText class="margin-left1" type="primary" tag="b"
+            <ElText class="margin-left1" type="success" tag="b"
                     v-common-tooltip={$i18nBundle('mock.label.owner')}>({currentGroup.userName})</ElText>
             <br/></>
         })}
@@ -120,7 +120,7 @@ const options = computed(() => {
     enabled: !isAdminUser(),
     type: 'common-form-label',
     formatter () {
-      return <ElText class="margin-left1" type="primary" tag="span">
+      return <ElText class="margin-left1" type="primary" tag="b">
         {searchParam.value.userName || useCurrentUserName()}
       </ElText>
     }

@@ -7,8 +7,9 @@ import { ElButton } from 'element-plus'
 import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, uploadFiles } from '@/api/mock/MockGroupApi'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { $i18nBundle, $i18nKey } from '@/messages'
-import MockProjectApi, { useProjectEditHook } from '@/api/mock/MockProjectApi'
+import MockProjectApi from '@/api/mock/MockProjectApi'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
+import { useProjectEditHook } from '@/hooks/mock/MockProjectHooks'
 
 const props = defineProps({
   defaultUser: {

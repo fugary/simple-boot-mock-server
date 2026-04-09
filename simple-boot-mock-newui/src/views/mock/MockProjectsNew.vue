@@ -3,7 +3,7 @@ import { computed, onMounted, onActivated, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
-import MockProjectApi, { checkProjectEdit, copyMockProject, selectProjects, sortProjects, useProjectEditHook } from '@/api/mock/MockProjectApi'
+import MockProjectApi, { checkProjectEdit, copyMockProject, selectProjects, sortProjects } from '@/api/mock/MockProjectApi'
 import { $coreConfirm, $goto, formatDate, isAdminUser, useCurrentUserName } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
@@ -16,6 +16,7 @@ import { useRoute } from 'vue-router'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useWindowSize } from '@vueuse/core'
 import { ElText, ElTag, ElLink } from 'element-plus'
+import { useProjectEditHook } from '@/hooks/mock/MockProjectHooks'
 
 const props = defineProps({
   publicFlag: {
@@ -394,7 +395,7 @@ const pageAttrs = {
                     <el-text
                       v-if="project.userName && project.userName !== useCurrentUserName()"
                       class="margin-left1"
-                      type="primary"
+                      type="success"
                       tag="b"
                     >
                       ({{ project.userName }})

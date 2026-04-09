@@ -112,9 +112,10 @@ const columns = computed(() => [
           v-if="item.group"
           class="group-path"
         >
-          <el-icon class="path-icon">
-            <Folder />
-          </el-icon>
+          <common-icon
+            class="path-icon"
+            icon="Folder"
+          />
           <span class="group-name">{{ item.group.groupName || $t('mock.label.unnamedGroup') }}</span>
           <el-text
             v-if="item.group.userName"
