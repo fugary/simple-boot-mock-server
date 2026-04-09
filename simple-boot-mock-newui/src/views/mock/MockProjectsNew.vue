@@ -190,6 +190,14 @@ const getProjectAuthorityCode = (authorities) => {
   return getProjectAuthorityItems(authorities).map(item => item.shortLabel).join('') || '-'
 }
 
+const getProjectAuthorityTooltip = (authorities) => {
+  const authorityItems = getProjectAuthorityItems(authorities)
+  if (!authorityItems.length) {
+    return $i18nBundle('common.label.authorityForbidden')
+  }
+  return authorityItems.map(item => `${item.shortLabel}: ${item.label}`).join('<br/>')
+}
+
 const tableProjectItems = computed(() => {
   return sortProjects(tableData.value).map(project => {
     const defaultProject = isDefaultProject(project.projectCode)
@@ -472,6 +480,7 @@ const pageAttrs = {
                       {{ projectUser.userName }}
                     </span>
                     <el-tag
+                      v-common-tooltip="getProjectAuthorityTooltip(projectUser.authorities)"
                       size="small"
                       type="primary"
                       effect="plain"
