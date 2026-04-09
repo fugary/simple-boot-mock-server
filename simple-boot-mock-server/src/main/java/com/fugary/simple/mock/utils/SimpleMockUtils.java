@@ -112,6 +112,26 @@ public class SimpleMockUtils {
      * @param target
      * @param <T>
      */
+    public static <T extends MockBase> T prepareForCreate(T target) {
+        if (target != null) {
+            target.setId(null);
+            target.setCreator(null);
+            target.setCreateDate(null);
+            target.setModifier(null);
+            target.setModifyDate(null);
+            if (target instanceof HistoryBase) {
+                HistoryBase historyBase = (HistoryBase) target;
+                historyBase.setVersion(null);
+                historyBase.setModifyFrom(null);
+            }
+        }
+        return target;
+    }
+
+    /**
+     * @param target
+     * @param <T>
+     */
     public static <T extends MockBase> T addAuditInfo(T target) {
         Date currentDate = new Date();
         if (target != null) {

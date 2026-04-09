@@ -11,6 +11,7 @@ import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockScenarioService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -52,9 +53,9 @@ public class MockScenarioServiceImpl extends ServiceImpl<MockScenarioMapper, Moc
 
         for (MockRequest mockRequest : requests) {
             Integer oldRequestId = mockRequest.getId();
-            mockRequest.setId(null);
+            SimpleMockUtils.prepareForCreate(mockRequest);
             mockRequest.setScenarioCode(StringUtils.trimToNull(toScenarioCode));
-            mockRequestService.saveOrUpdate(mockRequest);
+            mockRequestService.saveOrUpdate(SimpleMockUtils.addAuditInfo(mockRequest));
 
             List<MockData> dataList = mockDataService.list(Wrappers.<MockData>query()
                     .eq("request_id", oldRequestId).isNull(DB_MODIFY_FROM_KEY));

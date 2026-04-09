@@ -482,7 +482,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
         Integer groupId = mockGroup.getId();
-        mockGroup.setId(null);
+        SimpleMockUtils.prepareForCreate(mockGroup);
         mockGroup.setGroupPath(SimpleMockUtils.uuid()); // 新路径
         boolean sameProject = true;
         if (newProject != null) {
@@ -497,14 +497,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         if (sameProject) {
             mockGroup.setGroupName(StringUtils.join(mockGroup.getGroupName(), "-copy"));
         }
-        mockGroup.setVersion(1);
-        saveOrUpdate(mockGroup);
+        saveOrUpdate(SimpleMockUtils.addAuditInfo(mockGroup));
         List<MockRequest> mockRequests = mockRequestService
                 .list(Wrappers.<MockRequest>query().eq("group_id", groupId).isNull(DB_MODIFY_FROM_KEY));
         List<MockScenario> scenarios = mockScenarioService
                 .list(Wrappers.<MockScenario>query().eq("group_id", groupId));
         for (MockScenario scenario : scenarios) {
-            scenario.setId(null);
+            SimpleMockUtils.prepareForCreate(scenario);
             scenario.setGroupId(mockGroup.getId());
             mockScenarioService.saveOrUpdate(SimpleMockUtils.addAuditInfo(scenario));
         }
@@ -514,7 +513,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         List<MockSchema> mockSchemas = mockSchemaService.list(Wrappers.<MockSchema>query().eq("group_id", groupId)
                 .isNull("request_id"));
         for (MockSchema mockSchema : mockSchemas) {
-            mockSchema.setId(null);
+            SimpleMockUtils.prepareForCreate(mockSchema);
             mockSchema.setGroupId(mockGroup.getId());
             mockSchemaService.saveOrUpdate(SimpleMockUtils.addAuditInfo(mockSchema));
         }
@@ -548,9 +547,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     public SimpleResult<Integer> importGroups(List<ExportGroupVo> importGroups, MockGroupImportParamVo importVo) {
         // 保存数据
         importGroups.forEach(group -> {
-            group.setId(null);
-            group.setModifyFrom(null);
-            group.setVersion(1);
+            SimpleMockUtils.prepareForCreate(group);
             group.setUserName(SecurityUtils.getUserName(importVo.getUserName()));
             group.setGroupPath(
                     StringUtils.defaultIfBlank(StringUtils.trimToEmpty(group.getGroupPath()), SimpleMockUtils.uuid()));
@@ -562,7 +559,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 Set<String> scenarioCodes = new HashSet<>();
                 Set<String> enabledScenarioCodes = new HashSet<>();
                 for (MockScenario scenario : group.getScenarios()) {
-                    scenario.setId(null);
+                    SimpleMockUtils.prepareForCreate(scenario);
                     scenario.setGroupId(group.getId());
                     scenario.setScenarioCode(StringUtils.defaultIfBlank(scenario.getScenarioCode(), SimpleMockUtils.uuid()));
                     if (scenario.getStatus() == null) {
@@ -592,7 +589,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         ? group.getScenarios().stream().map(MockScenario::getScenarioCode).collect(Collectors.toSet())
                         : new HashSet<>();
                 group.getRequests().forEach(request -> {
-                    request.setId(null);
+                    SimpleMockUtils.prepareForCreate(request);
                     request.setGroupId(group.getId());
                     request.setScenarioCode(StringUtils.trimToNull(request.getScenarioCode()));
                     if (StringUtils.isNotBlank(request.getScenarioCode()) && !scenarioCodes.contains(request.getScenarioCode())) {
@@ -602,7 +599,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     importSchemas(request.getSchemas(), request, null);
                     if (reqSaved && request.getDataList() != null) {
                         request.getDataList().forEach(data -> {
-                            data.setId(null);
+                            SimpleMockUtils.prepareForCreate(data);
                             data.setGroupId(group.getId());
                             data.setRequestId(request.getId());
                             mockDataService.saveOrUpdate(SimpleMockUtils.addAuditInfo(data));
@@ -618,7 +615,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     protected void importSchemas(List<ExportSchemaVo> schemas, ExportRequestVo request, ExportDataVo data) {
         if (schemas != null) {
             schemas.forEach(schema -> {
-                schema.setId(null);
+                SimpleMockUtils.prepareForCreate(schema);
                 schema.setGroupId(request.getGroupId());
                 schema.setRequestId(request.getId());
                 schema.setDataId(data != null ? data.getId() : null);

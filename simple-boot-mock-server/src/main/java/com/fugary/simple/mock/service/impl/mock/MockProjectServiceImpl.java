@@ -135,7 +135,7 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
         MockProject oldProject = SimpleMockUtils.copy(mockProject, MockProject.class);
-        mockProject.setId(null);
+        SimpleMockUtils.prepareForCreate(mockProject);
         mockProject.setProjectCode(nextProjectCode());
         if (StringUtils.isNotBlank(userName) && !userName.equals(oldProject.getUserName())) {
             mockProject.setUserName(userName);

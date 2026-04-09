@@ -64,7 +64,7 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
         if (data != null) {
             Integer oldRequestId = data.getId();
             Integer oldDataId = data.getId();
-            data.setId(null);
+            SimpleMockUtils.prepareForCreate(data);
             if (newRequest != null) {
                 data.setRequestId(newRequest.getId());
                 data.setGroupId(newRequest.getGroupId());
@@ -74,7 +74,7 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
                     data.setDataName(StringUtils.join(data.getDataName(), "-copy"));
                 }
             }
-            saved = saveOrUpdate(data);
+            saved = saveOrUpdate(SimpleMockUtils.addAuditInfo(data));
             if (saved) {
                 List<MockSchema> schemas = mockSchemaService.list(Wrappers.<MockSchema>query()
                         .eq("request_id", oldRequestId)
