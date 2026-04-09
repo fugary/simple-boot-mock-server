@@ -548,7 +548,7 @@ const searchFormOptions = computed(() => {
     labelKey: 'mock.label.project',
     prop: 'projectCode',
     type: 'select',
-    enabled: projectOptions.value.length > 0 || searchParam.value?.projectId != null || !!searchParam.value?.projectCode,
+    enabled: projectOptions.value.length > 1 || searchParam.value?.projectId != null || !!searchParam.value?.projectCode,
     children: projectOptions.value,
     attrs: {
       filterable: true,

@@ -1,15 +1,16 @@
 <script setup lang="jsx">
 import { computed, ref } from 'vue'
 import { isAdminUser, isCurrentUser, useCurrentUserName } from '@/utils'
-import { assignProjectValue, filterProjectOptionsByAuthority, useSelectProjects } from '@/hooks/mock/MockProjectHooks'
+import { assignProjectValue, filterProjectOptionsByAuthority, useProjectEditHook, useSelectProjects } from '@/hooks/mock/MockProjectHooks'
 import { defineFormOptions } from '@/components/utils'
-import { $i18nBundle, $i18nConcat } from '@/messages'
+import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
 import { ElMessage, ElText } from 'element-plus'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { transferMockGroup } from '@/api/mock/MockGroupApi'
-import { checkProjectWritable } from '@/api/mock/MockProjectApi'
+import MockProjectApi, { checkProjectWritable } from '@/api/mock/MockProjectApi'
 import { isArray } from 'lodash-es'
+import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 
 const props = defineProps({
   action: {
@@ -35,6 +36,7 @@ const currentGroups = ref([])
 const writableProjectOptions = computed(() => {
   return filterProjectOptionsByAuthority(projects.value, projectOptions.value, checkProjectWritable)
 })
+const { showEditWindow: showEditProjectWindow, currentProject, newOrEditProject, editFormOptions: editProjectFormOptions } = useProjectEditHook(searchParam, userOptions)
 
 const getActionLabel = (action) => {
   return action === 'move'
@@ -65,6 +67,22 @@ const currentActionTargetLabel = computed(() => {
 const currentWindowTitle = computed(() => {
   return $i18nConcat(currentActionTargetLabel.value, $i18nBundle('mock.label.project'))
 })
+
+const reloadProjectsAndRefreshOptions = async (project) => {
+  await loadProjectsAndRefreshOptions()
+  const savedProject = project?.id != null
+    ? projects.value.find(item => `${item.id || ''}` === `${project.id}`)
+    : projects.value.find(item => item.projectCode === project?.projectCode)
+  if (savedProject) {
+    assignProjectValue(searchParam.value, savedProject)
+  }
+}
+
+const saveProjectItem = (item) => {
+  return MockProjectApi.saveOrUpdate(item).then(data => {
+    return reloadProjectsAndRefreshOptions(data?.resultData || item)
+  })
+}
 
 const toCopyGroupTo = async (group) => {
   currentGroups.value = isArray(group) ? group : [group]
@@ -142,6 +160,15 @@ const options = computed(() => {
       const option = writableProjectOptions.value.find(item => item.value === value)
       searchParam.value.projectId = option?.projectId || null
       searchParam.value.projectCode = option?.projectCode || value || null
+    },
+    tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
+    tooltipIcon: 'CirclePlusFilled',
+    tooltipLinkAttrs: {
+      type: 'primary'
+    },
+    tooltipFunc (event) {
+      newOrEditProject()
+      event.preventDefault()
     }
   }])
 })
@@ -185,13 +212,24 @@ defineExpose({
     :ok-click="saveCopyGroupTo"
     :title="currentWindowTitle"
   >
-    <common-form
-      class="form-edit-width-90"
-      :options="options"
-      :model="searchParam"
-      label-width="140px"
-      :show-buttons="false"
-    />
+    <el-container class="flex-column">
+      <common-form
+        class="form-edit-width-90"
+        :options="options"
+        :model="searchParam"
+        label-width="140px"
+        :show-buttons="false"
+      />
+      <simple-edit-window
+        v-model="currentProject"
+        v-model:show-edit-window="showEditProjectWindow"
+        inline-auto-mode
+        :form-options="editProjectFormOptions"
+        :name="$t('mock.label.mockProjects')"
+        :save-current-item="saveProjectItem"
+        label-width="130px"
+      />
+    </el-container>
   </common-window>
 </template>
 
