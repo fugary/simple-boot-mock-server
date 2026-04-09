@@ -1,13 +1,14 @@
 <script setup lang="jsx">
 import { computed, ref } from 'vue'
 import { isAdminUser, isCurrentUser, useCurrentUserName } from '@/utils'
-import { assignProjectValue, useSelectProjects } from '@/hooks/mock/MockProjectHooks'
+import { assignProjectValue, filterProjectOptionsByAuthority, useSelectProjects } from '@/hooks/mock/MockProjectHooks'
 import { defineFormOptions } from '@/components/utils'
 import { $i18nBundle, $i18nConcat } from '@/messages'
 import { ElMessage, ElText } from 'element-plus'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { transferMockGroup } from '@/api/mock/MockGroupApi'
+import { checkProjectWritable } from '@/api/mock/MockProjectApi'
 import { isArray } from 'lodash-es'
 
 const props = defineProps({
@@ -29,8 +30,11 @@ const searchParam = ref({
   publicFlag: false
 })
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
-const { projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, true)
+const { projects, projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, true)
 const currentGroups = ref([])
+const writableProjectOptions = computed(() => {
+  return filterProjectOptionsByAuthority(projects.value, projectOptions.value, checkProjectWritable)
+})
 
 const getActionLabel = (action) => {
   return action === 'move'
@@ -129,13 +133,13 @@ const options = computed(() => {
     prop: 'projectCode',
     type: 'select',
     required: true,
-    children: projectOptions.value,
+    children: writableProjectOptions.value,
     attrs: {
       filterable: true,
       clearable: false
     },
     change (value) {
-      const option = projectOptions.value.find(item => item.value === value)
+      const option = writableProjectOptions.value.find(item => item.value === value)
       searchParam.value.projectId = option?.projectId || null
       searchParam.value.projectCode = option?.projectCode || value || null
     }

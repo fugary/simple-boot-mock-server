@@ -56,7 +56,7 @@ import {
   useContentTypeOption
 } from '@/services/mock/MockCommonService'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
-import { useProjectEditHook, useSelectProjects } from '@/hooks/mock/MockProjectHooks'
+import { filterProjectOptionsByAuthority, useProjectEditHook, useSelectProjects } from '@/hooks/mock/MockProjectHooks'
 
 // Add getGroupHistoryViewOptions
 const getGroupHistoryViewOptions = (group, history) => {
@@ -193,6 +193,9 @@ const projectWritable = computed(() => checkProjectWritable(mockProject.value))
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projects, projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
+const writableProjectOptions = computed(() => {
+  return filterProjectOptionsByAuthority(projects.value, projectOptions.value, checkProjectWritable)
+})
 const sharedProjectOptions = ref([])
 const showOnlyMineFilter = computed(() => !isAdminUser() && !props.publicFlag && sharedProjectOptions.value.length > 0)
 const refreshSharedProjectOptions = (result = []) => {
@@ -661,12 +664,12 @@ const editFormOptions = computed(() => {
     prop: 'projectCode',
     type: 'select',
     enabled: canChangeCurrentGroupProject.value,
-    children: projectOptions.value,
+    children: writableProjectOptions.value,
     attrs: {
       clearable: false
     },
     change (value) {
-      const option = projectOptions.value.find(item => item.value === value)
+      const option = writableProjectOptions.value.find(item => item.value === value)
       const switchToDefaultProject = option?.projectCode === MOCK_DEFAULT_PROJECT
       currentGroup.value.projectId = option?.projectId || null
       currentGroup.value.projectCode = option?.projectCode || value || null

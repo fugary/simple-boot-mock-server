@@ -31,6 +31,26 @@ export const findProjectByValue = (projects = [], searchParam = {}) => {
   return null
 }
 
+export const findProjectByOption = (projects = [], option = {}) => {
+  if (option?.projectId != null) {
+    return projects.find(project => `${project.id}` === `${option.projectId}`)
+  }
+  if (option?.projectCode) {
+    return projects.find(project => project.projectCode === option.projectCode)
+  }
+  return null
+}
+
+export const filterProjectOptionsByAuthority = (projects = [], options = [], authorityChecker) => {
+  if (typeof authorityChecker !== 'function') {
+    return [...options]
+  }
+  return options.filter(option => {
+    const project = findProjectByOption(projects, option)
+    return project && authorityChecker(project)
+  })
+}
+
 export const useSelectProjects = (searchParam, autoSelect) => {
   const projects = ref([])
   const projectOptions = ref([])
