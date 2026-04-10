@@ -382,12 +382,14 @@ const pageAttrs = {
         v-for="(dataRow, index) in dataRows"
         :key="index"
         :gutter="20"
+        class="project-list-row"
         :class="{'margin-top2': index>0}"
       >
         <el-col
           v-for="{project, projectItems, defaultProject, projectUsers} in dataRow"
           :key="project.id"
           :span="Math.floor(24/colSize)"
+          class="project-list-col"
           @mouseenter="project.showOperations=true"
           @mouseleave="project.showOperations=false"
         >
@@ -403,34 +405,43 @@ const pageAttrs = {
           >
             <template #header>
               <div class="card-header project-card__header">
-                <el-checkbox
-                  v-model="project.selected"
-                  class="project-card__title"
-                  style="margin-right: auto;"
-                  :disabled="defaultProject||!checkProjectEdit(project)"
-                  @click="$event.stopPropagation()"
-                >
-                  <el-text
-                    tag="b"
-                    :type="project.status===1?'':'danger'"
+                <div class="project-card__title-wrap">
+                  <el-checkbox
+                    v-model="project.selected"
+                    class="project-card__title"
+                    :disabled="defaultProject||!checkProjectEdit(project)"
+                    @click="$event.stopPropagation()"
                   >
-                    <common-icon
-                      v-if="defaultProject"
-                      icon="LockFilled"
-                      :size="16"
-                    />
-                    {{ project.projectCode===MOCK_DEFAULT_PROJECT?$t('mock.label.defaultProject'):project.projectName }}
                     <el-text
-                      v-if="project.userName && project.userName !== useCurrentUserName()"
-                      class="margin-left1"
-                      type="success"
                       tag="b"
+                      class="project-card__name"
+                      :type="project.status===1?'':'danger'"
                     >
-                      ({{ project.userName }})
+                      <span class="project-card__name-main">
+                        <common-icon
+                          v-if="defaultProject"
+                          icon="LockFilled"
+                          :size="16"
+                          class="project-card__name-icon"
+                        />
+                        <span class="project-card__name-text">
+                          {{ project.projectCode===MOCK_DEFAULT_PROJECT?$t('mock.label.defaultProject'):project.projectName }}
+                        </span>
+                      </span>
+                      <span
+                        v-if="project.userName && project.userName !== useCurrentUserName()"
+                        class="project-card__owner"
+                      >
+                        {{ project.userName }}
+                      </span>
                     </el-text>
-                  </el-text>
-                </el-checkbox>
-                <div class="project-operations">
+                  </el-checkbox>
+                </div>
+                <div
+                  class="project-operations"
+                  :class="{'project-operations--visible': project.showOperations}"
+                  @click.stop
+                >
                   <el-button
                     v-if="checkProjectEdit(project)&&!defaultProject"
                     v-common-tooltip="$t('common.label.edit')"
@@ -544,6 +555,7 @@ const pageAttrs = {
       :form-options="copyToOptions"
       :title="$i18nConcat($i18nBundle('common.label.copyTo'), $i18nBundle('common.label.user'))"
       :save-current-item="saveCopyProject"
+      :show-fullscreen="false"
     />
     <mock-project-user-manage-window
       v-model:show-window="showProjectUserWindow"
@@ -554,57 +566,78 @@ const pageAttrs = {
 </template>
 
 <style scoped>
-/* Project card base styling */
+.project-list-row {
+  align-items: stretch;
+}
+
+.project-list-col {
+  display: flex;
+}
+
 .project-card {
-  border-radius: 12px;
-  transition: all 0.25s ease;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--el-border-color);
+  border-top: 3px solid rgba(64, 158, 255, 0.22);
+  background:
+    linear-gradient(180deg, rgba(64, 158, 255, 0.06) 0%, rgba(64, 158, 255, 0.01) 96px, transparent 100%),
+    var(--el-bg-color-overlay);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   overflow: hidden;
-  /* Sync top border width with hover state to prevent layout shift
-     Use default border color initially so it looks connected */
-  border-top: 3px solid var(--el-border-color-lighter);
 }
 
 .dark .project-card {
-  border-top-color: var(--el-border-color-darker);
+  border-color: rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(64, 158, 255, 0.5);
+  background:
+    linear-gradient(180deg, rgba(64, 158, 255, 0.12) 0%, rgba(64, 158, 255, 0.03) 108px, transparent 100%),
+    rgba(255, 255, 255, 0.02);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
 }
 
-/* Hover effect */
 .project-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
+  border-color: rgba(64, 158, 255, 0.38);
   border-top-color: var(--el-color-primary);
 }
 
 .dark .project-card:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.36);
 }
 
-/* Selected state */
 .project-selected {
   border-color: var(--el-color-primary);
   border-top-color: var(--el-color-primary);
+  box-shadow: 0 0 0 1px rgba(64, 158, 255, 0.3), 0 18px 36px rgba(15, 23, 42, 0.18);
 }
 
-/* Card header styling */
 .project-card :deep(.el-card__header) {
-  padding: 12px 16px;
+  padding: 14px 18px 12px;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
-/* Card body styling */
 .project-card :deep(.el-card__body) {
-  padding: 14px 16px;
+  padding: 14px 18px 16px;
 }
 
 .project-card__header {
-  display: block;
-  position: relative;
-  min-height: 32px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.project-card__title-wrap {
+  flex: 1;
+  min-width: 0;
 }
 
 .project-card__title {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
   max-width: 100%;
 }
@@ -620,40 +653,78 @@ const pageAttrs = {
   min-width: 0;
   white-space: normal;
   line-height: 1.5;
+  padding-left: 10px;
 }
 
-/* Project title styling */
-.project-title {
+.project-card__name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  line-height: 1.5;
+}
+
+.project-card__name-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.project-card__name-icon {
+  flex-shrink: 0;
+  color: var(--el-color-warning);
+}
+
+.project-card__name-text {
   font-size: 15px;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.project-card__owner {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(103, 194, 58, 0.14);
+  color: var(--el-color-success);
+  font-size: 12px;
   font-weight: 600;
 }
 
-/* Operation buttons */
 .project-operations {
   display: flex;
   align-items: center;
-  gap: 6px;
-  position: absolute;
-  top: 0;
-  right: 0;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.project-card:hover .project-operations {
+.project-card:hover .project-operations,
+.project-card:focus-within .project-operations,
+.project-operations--visible {
   opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
-@media (max-width: 768px) {
-  .project-card__header {
-    padding-right: 0;
-    padding-top: 40px;
-  }
+.project-operations :deep(.el-button) {
+  margin-left: 0;
+  min-height: 32px;
+  padding: 0 10px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
-/* Disabled project styling */
 .project-disabled {
-  opacity: 0.6;
+  opacity: 0.72;
 }
 
 .project-disabled:hover {
@@ -661,17 +732,34 @@ const pageAttrs = {
   cursor: not-allowed;
 }
 
-/* Description items styling */
 .project-card :deep(.el-descriptions__label) {
   font-weight: 500;
   color: var(--el-text-color-secondary);
+}
+
+.project-card :deep(.el-descriptions__body) {
+  background: transparent;
+}
+
+.project-card :deep(.el-descriptions__table) {
+  table-layout: fixed;
+}
+
+.project-card :deep(.el-descriptions__cell) {
+  padding-bottom: 6px;
+}
+
+.project-card :deep(.el-descriptions__content) {
+  line-height: 24px;
 }
 
 .project-authority-row {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--el-border-color);
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
@@ -724,5 +812,43 @@ const pageAttrs = {
 .project-authority-inline__separator {
   margin-right: 4px;
   color: var(--el-text-color-secondary);
+}
+
+@media (max-width: 768px) {
+  .project-card {
+    border-radius: 14px;
+  }
+
+  .project-card :deep(.el-card__header) {
+    padding: 14px 14px 10px;
+  }
+
+  .project-card :deep(.el-card__body) {
+    padding: 12px 14px 14px;
+  }
+
+  .project-card__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .project-operations {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    justify-content: flex-start;
+    padding-left: 26px;
+  }
+
+  .project-authority-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .project-authority-row__label {
+    min-width: 0;
+    line-height: 20px;
+  }
 }
 </style>

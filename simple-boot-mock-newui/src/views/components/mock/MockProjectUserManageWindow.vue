@@ -247,6 +247,8 @@ const buttons = computed(() => defineTableButtons([
       :name="$t('common.label.authorities')"
       :save-current-item="saveUser"
       label-width="100px"
+      width="600px"
+      :show-fullscreen="false"
     />
   </common-window>
 </template>
