@@ -19,7 +19,7 @@
     "@vicons/material": "^0.13.0",
     "@vueuse/core": "^14.1.0",
     "async-validator": "^4.2.5",
-    "axios": "^1.13.2",
+    "axios": "^1.15.0",
     "better-mock": "^0.3.7",
     "dayjs": "^1.11.19",
     "echarts": "^6.0.0",
