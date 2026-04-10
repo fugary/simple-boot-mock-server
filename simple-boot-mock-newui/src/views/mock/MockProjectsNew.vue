@@ -20,7 +20,7 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import MockProjectUserManageWindow from '@/views/components/mock/MockProjectUserManageWindow.vue'
 import { useRoute } from 'vue-router'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
-import { useWindowSize } from '@vueuse/core'
+import { useElementSize } from '@vueuse/core'
 import { ElLink, ElMessage, ElTag, ElText } from 'element-plus'
 import { useProjectEditHook } from '@/hooks/mock/MockProjectHooks'
 
@@ -219,6 +219,12 @@ const tableProjectItems = computed(() => {
       defaultProject,
       project,
       projectItems: [{
+        labelKey: 'mock.label.owner',
+        enabled: !!project.userName && project.userName !== useCurrentUserName(),
+        formatter () {
+          return <ElText class="margin-left1" type="success" tag="b">{project.userName}</ElText>
+        }
+      }, {
         labelKey: 'common.label.status',
         formatter () {
           const groupCount = Number(project.groupCount) || 0
@@ -288,6 +294,7 @@ const selectedRows = computed(() => tableProjectItems.value.map(item => item.pro
 
 const showProjectUserWindow = ref(false)
 const projectUserManageTarget = ref(null)
+const projectListRef = ref()
 
 const toManageUsers = (project) => {
   projectUserManageTarget.value = project
@@ -376,9 +383,12 @@ const saveTransferProject = () => {
       loadMockProjects()
     })
 }
-const { width } = useWindowSize()
+const PROJECT_CARD_MIN_WIDTH = 360
+const PROJECT_CARD_GUTTER = 20
+const { width: projectListWidth } = useElementSize(projectListRef)
 const colSize = computed(() => {
-  return Math.floor(width.value / 420) || 1
+  const availableWidth = projectListWidth.value || 0
+  return Math.max(Math.floor((availableWidth + PROJECT_CARD_GUTTER) / (PROJECT_CARD_MIN_WIDTH + PROJECT_CARD_GUTTER)), 1)
 })
 const pageAttrs = {
   layout: 'total, prev, pager, next',
@@ -439,6 +449,7 @@ const pageAttrs = {
     />
     <el-container
       v-else
+      ref="projectListRef"
       class="flex-column"
     >
       <el-row
@@ -490,12 +501,6 @@ const pageAttrs = {
                         <span class="project-card__name-text">
                           {{ project.projectCode===MOCK_DEFAULT_PROJECT?$t('mock.label.defaultProject'):project.projectName }}
                         </span>
-                      </span>
-                      <span
-                        v-if="project.userName && project.userName !== useCurrentUserName()"
-                        class="project-card__owner"
-                      >
-                        {{ project.userName }}
                       </span>
                     </el-text>
                   </el-checkbox>
@@ -594,7 +599,7 @@ const pageAttrs = {
         </el-col>
       </el-row>
       <el-pagination
-        style="justify-content: center;"
+        class="project-list-pagination"
         :total="searchParam.page.totalCount"
         :page-size="searchParam.page.pageSize"
         :current-page="searchParam.page.pageNumber"
@@ -636,6 +641,12 @@ const pageAttrs = {
 
 .project-list-col {
   display: flex;
+}
+
+.project-list-pagination {
+  justify-content: center;
+  margin-top: 28px;
+  padding-bottom: 8px;
 }
 
 .project-card {
@@ -689,6 +700,7 @@ const pageAttrs = {
 
 .project-card__header {
   display: flex;
+  position: relative;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
@@ -715,26 +727,25 @@ const pageAttrs = {
   display: block;
   flex: 1;
   min-width: 0;
-  white-space: normal;
+  overflow: hidden;
   line-height: 1.5;
   padding-left: 10px;
 }
 
 .project-card__name {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: block;
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
   line-height: 1.5;
 }
 
 .project-card__name-main {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
   min-width: 0;
-  max-width: 100%;
 }
 
 .project-card__name-icon {
@@ -743,29 +754,30 @@ const pageAttrs = {
 }
 
 .project-card__name-text {
+  display: block;
+  flex: 1;
   font-size: 15px;
   font-weight: 700;
-  word-break: break-word;
-}
-
-.project-card__owner {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(103, 194, 58, 0.14);
-  color: var(--el-color-success);
-  font-size: 12px;
-  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .project-operations {
   display: flex;
+  position: absolute;
+  top: 0;
+  right: 0;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
+  max-width: calc(100% - 48px);
   flex-shrink: 0;
+  z-index: 1;
+  padding: 2px 0 2px 16px;
+  background: linear-gradient(270deg, var(--el-bg-color-overlay) 70%, transparent 100%);
   opacity: 0;
   transform: translateY(-4px);
   pointer-events: none;
@@ -898,11 +910,14 @@ const pageAttrs = {
   }
 
   .project-operations {
+    position: static;
     opacity: 1;
     transform: none;
     pointer-events: auto;
+    max-width: none;
     justify-content: flex-start;
     padding-left: 26px;
+    background: transparent;
   }
 
   .project-authority-row {
