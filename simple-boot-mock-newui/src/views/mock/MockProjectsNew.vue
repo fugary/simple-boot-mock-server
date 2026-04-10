@@ -90,6 +90,11 @@ const handleUserChange = async () => {
   loadMockProjects(1)
 }
 
+const reloadProjectsAfterAuthorityChange = async () => {
+  await loadSharedProjectOptions()
+  await loadMockProjects(searchParam.value?.page?.pageNumber || 1)
+}
+
 const gotoMockGroups = (project) => {
   if (project.status === 1) {
     const query = new URLSearchParams({ backUrl: route.fullPath })
@@ -619,6 +624,7 @@ const pageAttrs = {
       v-model:show-window="showProjectUserWindow"
       :project="projectUserManageTarget"
       :user-options="userOptions"
+      @updated="reloadProjectsAfterAuthorityChange"
     />
   </el-container>
 </template>

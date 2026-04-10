@@ -19,7 +19,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:showWindow'])
+const emit = defineEmits(['update:showWindow', 'updated'])
 
 const visible = computed({
   get: () => props.showWindow,
@@ -78,7 +78,10 @@ watch(() => props.showWindow, (val) => {
 const removeUser = (id) => {
   return $coreConfirm($i18nBundle('common.msg.deleteConfirm')).then(() => {
     return MockProjectUserApi.deleteById(id, { loading: true }).then(() => {
-      loadProjectUsers()
+      return loadProjectUsers().then(() => {
+        emit('updated')
+      })
+    }).then(() => {
       ElMessage.success($i18nBundle('common.msg.deleteSuccess'))
     })
   })
@@ -105,8 +108,11 @@ const saveUser = (user) => {
     ...user,
     authorities: Array.isArray(user.authorities) ? user.authorities.join(',') : user.authorities
   }
-  return MockProjectUserApi.saveOrUpdate(data, { loading: true }).then(() => {
-    loadProjectUsers()
+  return MockProjectUserApi.saveOrUpdate(data, { loading: true }).then((result) => {
+    return loadProjectUsers().then(() => {
+      emit('updated', result?.resultData || data)
+      return result
+    })
   })
 }
 
