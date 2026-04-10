@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.fugary.simple.mock.utils.security.SecurityUtils.getLoginUser;
 
@@ -59,6 +60,7 @@ public class MockProjectController {
         SimpleResult<List<MockProject>> result = SimpleResultUtils.createSimpleResult(mockProjectService.page(page, queryWrapper));
         decorateDefaultProjects(result.getResultData(), resolveDefaultProjectOwner(queryVo));
         populateProjectUsers(result.getResultData());
+        populateProjectGroupCounts(result.getResultData());
         return result;
     }
 
@@ -182,6 +184,25 @@ public class MockProjectController {
                         project.getProjectCode()));
             }
         }
+    }
+
+    private void populateProjectGroupCounts(List<MockProject> projects) {
+        if (projects != null) {
+            Map<String, Long> countMap = mockProjectService.countProjectGroups(projects);
+            for (MockProject project : projects) {
+                project.setGroupCount(countMap.getOrDefault(buildProjectCountKey(project), 0L));
+            }
+        }
+    }
+
+    private String buildProjectCountKey(MockProject project) {
+        if (project == null) {
+            return "";
+        }
+        return StringUtils.joinWith("||",
+                project.getId(),
+                StringUtils.trimToEmpty(project.getProjectCode()),
+                StringUtils.trimToEmpty(project.getUserName()));
     }
 
     private String resolveDefaultProjectOwner(MockProjectQueryVo queryVo) {

@@ -210,12 +210,32 @@ const tableProjectItems = computed(() => {
       projectItems: [{
         labelKey: 'common.label.status',
         formatter () {
+          const groupCount = Number(project.groupCount) || 0
+          const gotoProjectGroups = (event) => {
+            event?.stopPropagation()
+            if (project.status === 1) {
+              gotoMockGroups(project)
+            }
+          }
           return <>
             <DelFlagTag v-model={project.status} clickToToggle={editable}
                                onToggleValue={(status) => saveProjectItem({ ...project, status })} />
             {publicProject
               ? <ElTag type="primary" class="margin-left1">
                   {$i18nBundle('mock.label.public')}
+                </ElTag>
+              : ''}
+            {groupCount > 0
+              ? <ElTag
+                  v-common-tooltip={$i18nBundle('mock.label.mockGroupCount')}
+                  type="primary"
+                  size="small"
+                  effect="plain"
+                  class={project.status === 1 ? 'margin-left1 pointer' : 'margin-left1'}
+                  round={true}
+                  onClick={gotoProjectGroups}
+                >
+                  {groupCount}
                 </ElTag>
               : ''}
           </>

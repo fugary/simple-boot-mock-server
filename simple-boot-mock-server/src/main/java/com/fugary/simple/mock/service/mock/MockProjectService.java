@@ -8,6 +8,7 @@ import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Create date 2024/7/15<br>
@@ -77,6 +78,14 @@ public interface MockProjectService extends IService<MockProject> {
      * @return
      */
     SimpleResult<MockProject> saveMockProject(MockProject project);
+
+    /**
+     * 统计分组数量
+     *
+     * @param projects
+     * @return
+     */
+    Map<String, Long> countProjectGroups(List<MockProject> projects);
 
     /**
      * 检查当前用户是否有目标项目的对应权限。

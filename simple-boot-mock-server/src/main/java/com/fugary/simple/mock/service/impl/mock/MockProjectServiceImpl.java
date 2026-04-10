@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
+import com.fugary.simple.mock.entity.mock.CountData;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockProject;
@@ -20,11 +21,14 @@ import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -187,6 +191,63 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
     }
 
     @Override
+    public Map<String, Long> countProjectGroups(List<MockProject> projects) {
+        Map<String, Long> result = new HashMap<>();
+        if (CollectionUtils.isEmpty(projects)) {
+            return result;
+        }
+        List<Integer> projectIds = projects.stream()
+                .filter(project -> project != null
+                        && !isDefaultProjectCode(project.getProjectCode())
+                        && project.getId() != null)
+                .map(MockProject::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<String> defaultUsers = projects.stream()
+                .filter(project -> project != null
+                        && isDefaultProjectCode(project.getProjectCode())
+                        && StringUtils.isNotBlank(project.getUserName()))
+                .map(MockProject::getUserName)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Integer, Long> projectIdCountMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(projectIds)) {
+            projectIdCountMap = mockGroupService.listMaps(Wrappers.<MockGroup>query()
+                            .select("project_id as group_key", "count(0) as data_count")
+                            .in("project_id", projectIds)
+                            .isNull(MockConstants.DB_MODIFY_FROM_KEY)
+                            .groupBy("project_id"))
+                    .stream()
+                    .map(CountData::new)
+                    .collect(Collectors.toMap(data -> Integer.valueOf(data.getGroupKey()), CountData::getDataCount));
+        }
+        Map<String, Long> defaultCountMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(defaultUsers)) {
+            defaultCountMap = mockGroupService.listMaps(Wrappers.<MockGroup>query()
+                            .select("user_name as group_key", "count(0) as data_count")
+                            .eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)
+                            .in("user_name", defaultUsers)
+                            .isNull(MockConstants.DB_MODIFY_FROM_KEY)
+                            .groupBy("user_name"))
+                    .stream()
+                    .map(CountData::new)
+                    .collect(Collectors.toMap(CountData::getGroupKey, CountData::getDataCount));
+        }
+        for (MockProject project : projects) {
+            if (project == null || StringUtils.isBlank(project.getProjectCode())) {
+                continue;
+            }
+            String projectKey = buildProjectGroupCountKey(project);
+            if (isDefaultProjectCode(project.getProjectCode())) {
+                result.put(projectKey, defaultCountMap.getOrDefault(StringUtils.trimToEmpty(project.getUserName()), 0L));
+                continue;
+            }
+            result.put(projectKey, projectIdCountMap.getOrDefault(project.getId(), 0L));
+        }
+        return result;
+    }
+
+    @Override
     public boolean hasProjectAuthority(MockProject project, String authority) {
         if (project != null && !isDefaultProjectCode(project.getProjectCode())) {
             if (SecurityUtils.isAdminUser() || SecurityUtils.isCurrentUser(project.getUserName())) {
@@ -269,6 +330,16 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
                             .eq("project_code", project.getProjectCode())));
         }
         return queryWrapper;
+    }
+
+    private String buildProjectGroupCountKey(MockProject project) {
+        if (project == null) {
+            return "";
+        }
+        return StringUtils.joinWith("||",
+                project.getId(),
+                StringUtils.trimToEmpty(project.getProjectCode()),
+                StringUtils.trimToEmpty(project.getUserName()));
     }
 
     private QueryWrapper<MockProjectUser> buildProjectUserQuery(MockProject project) {

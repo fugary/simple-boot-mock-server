@@ -22,4 +22,7 @@ public class MockProject extends MockBase {
 
     @TableField(exist = false)
     private java.util.List<MockProjectUser> projectUsers;
+
+    @TableField(exist = false)
+    private Long groupCount;
 }
