@@ -295,6 +295,7 @@ const copyToModel = ref({
   userName: useCurrentUserName()
 })
 const showCopyToWindow = ref(false)
+const sourceProjectUserName = ref('')
 const allowMoveProjectTransfer = ref(false)
 const transferActionOptions = computed(() => {
   const options = [{
@@ -342,6 +343,7 @@ const copyToOptions = computed(() => {
   }]
 })
 const toCopyProject = (project) => {
+  sourceProjectUserName.value = project?.userName || ''
   copyToModel.value.projectId = project.id
   copyToModel.value.userName = useCurrentUserName()
   copyToModel.value.action = 'copy'
@@ -354,6 +356,10 @@ const toCopyProject = (project) => {
   }
 }
 const saveTransferProject = () => {
+  if (copyToModel.value.action === 'move' && copyToModel.value.userName === sourceProjectUserName.value) {
+    ElMessage.error($i18nBundle('common.msg.moveSameUser'))
+    return Promise.reject($i18nBundle('common.msg.moveSameUser'))
+  }
   return transferMockProject(copyToModel.value, { loading: true })
     .then((data) => {
       if (data?.success) {
