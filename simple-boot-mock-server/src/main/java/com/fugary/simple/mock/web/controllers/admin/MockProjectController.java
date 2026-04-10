@@ -13,6 +13,7 @@ import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.MockProjectQueryVo;
+import com.fugary.simple.mock.web.vo.query.MockProjectTransferVo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -83,6 +84,28 @@ public class MockProjectController {
     public SimpleResult<MockProject> copyMockProject(@PathVariable("projectId") Integer id,
             @RequestBody MockProjectQueryVo copyVo) {
         return mockProjectService.copyMockProject(id, copyVo.getUserName());
+    }
+
+    @PostMapping("/transfer")
+    public SimpleResult<MockProject> transferMockProject(@RequestBody MockProjectTransferVo transferVo) {
+        if (transferVo.getProjectId() == null || StringUtils.isBlank(transferVo.getAction())) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400);
+        }
+        MockProject sourceProject = mockProjectService.getById(transferVo.getProjectId());
+        if (sourceProject == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        boolean moveAction = StringUtils.equalsIgnoreCase("move", transferVo.getAction());
+        String sourceAuthority = moveAction ? MockConstants.AUTHORITY_DELETABLE : MockConstants.AUTHORITY_READABLE;
+        if (!mockProjectService.hasProjectAuthority(sourceProject, sourceAuthority)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+        }
+        String targetUserName = StringUtils.defaultIfBlank(StringUtils.trimToNull(transferVo.getUserName()),
+                SecurityUtils.getLoginUserName());
+        if (StringUtils.isBlank(targetUserName) || !SecurityUtils.validateUserUpdate(targetUserName)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+        }
+        return mockProjectService.transferMockProject(transferVo.getProjectId(), targetUserName, transferVo.getAction());
     }
 
     @PostMapping

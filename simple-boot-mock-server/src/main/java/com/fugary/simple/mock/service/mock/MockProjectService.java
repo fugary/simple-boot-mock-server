@@ -72,6 +72,16 @@ public interface MockProjectService extends IService<MockProject> {
     SimpleResult<MockProject> copyMockProject(Integer projectId, String userName);
 
     /**
+     * 复制或移动项目
+     *
+     * @param projectId 项目ID
+     * @param userName 目标用户
+     * @param action copy 或 move
+     * @return 项目信息
+     */
+    SimpleResult<MockProject> transferMockProject(Integer projectId, String userName, String action);
+
+    /**
      * 保存项目信息
      *
      * @param project

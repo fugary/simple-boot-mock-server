@@ -3,7 +3,13 @@ import { computed, onMounted, onActivated, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
-import MockProjectApi, { checkProjectEdit, copyMockProject, selectProjects, sortProjects } from '@/api/mock/MockProjectApi'
+import MockProjectApi, {
+  checkProjectDeletable,
+  checkProjectEdit,
+  selectProjects,
+  sortProjects,
+  transferMockProject
+} from '@/api/mock/MockProjectApi'
 import { $coreConfirm, $goto, formatDate, isAdminUser, useCurrentUserName } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
@@ -15,7 +21,7 @@ import MockProjectUserManageWindow from '@/views/components/mock/MockProjectUser
 import { useRoute } from 'vue-router'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { useWindowSize } from '@vueuse/core'
-import { ElText, ElTag, ElLink } from 'element-plus'
+import { ElLink, ElMessage, ElTag, ElText } from 'element-plus'
 import { useProjectEditHook } from '@/hooks/mock/MockProjectHooks'
 
 const props = defineProps({
@@ -283,11 +289,47 @@ const toManageUsers = (project) => {
   showProjectUserWindow.value = true
 }
 
-const copyToModel = ref({})
+const copyToModel = ref({
+  action: 'copy',
+  projectId: null,
+  userName: useCurrentUserName()
+})
 const showCopyToWindow = ref(false)
+const allowMoveProjectTransfer = ref(false)
+const transferActionOptions = computed(() => {
+  const options = [{
+    label: $i18nBundle('common.label.copy'),
+    value: 'copy'
+  }]
+  if (allowMoveProjectTransfer.value) {
+    options.push({
+      label: $i18nBundle('common.label.move'),
+      value: 'move'
+    })
+  }
+  return options
+})
+const currentTransferTargetLabel = computed(() => {
+  return copyToModel.value.action === 'move'
+    ? $i18nBundle('common.label.moveTo')
+    : $i18nBundle('common.label.copyTo')
+})
+const projectTransferWindowTitle = computed(() => {
+  return $i18nConcat(currentTransferTargetLabel.value, $i18nBundle('common.label.user'))
+})
 const copyToOptions = computed(() => {
   return [{
-    label: $i18nConcat($i18nBundle('common.label.copyTo'), $i18nBundle('common.label.user')),
+    labelKey: 'common.label.operation',
+    prop: 'action',
+    type: 'segmented',
+    required: true,
+    enabled: allowMoveProjectTransfer.value,
+    attrs: {
+      clearable: false,
+      options: transferActionOptions.value
+    }
+  }, {
+    label: $i18nConcat(currentTransferTargetLabel.value, $i18nBundle('common.label.user')),
     prop: 'userName',
     type: 'select',
     required: true,
@@ -302,16 +344,26 @@ const copyToOptions = computed(() => {
 const toCopyProject = (project) => {
   copyToModel.value.projectId = project.id
   copyToModel.value.userName = useCurrentUserName()
+  copyToModel.value.action = 'copy'
+  allowMoveProjectTransfer.value = checkProjectDeletable(project)
   if (isAdminUser()) {
     showCopyToWindow.value = true
   } else {
     $coreConfirm($i18nBundle('common.msg.confirmCopy'))
-      .then(() => saveCopyProject())
+      .then(() => saveTransferProject())
   }
 }
-const saveCopyProject = () => {
-  return copyMockProject(copyToModel.value, { loading: true })
-    .then(() => { loadMockProjects() })
+const saveTransferProject = () => {
+  return transferMockProject(copyToModel.value, { loading: true })
+    .then((data) => {
+      if (data?.success) {
+        const successKey = copyToModel.value.action === 'move'
+          ? 'common.msg.moveSuccess'
+          : 'common.msg.copySuccess'
+        ElMessage.success($i18nBundle(successKey))
+      }
+      loadMockProjects()
+    })
 }
 const { width } = useWindowSize()
 const colSize = computed(() => {
@@ -553,8 +605,8 @@ const pageAttrs = {
       v-model:show-edit-window="showCopyToWindow"
       width="500px"
       :form-options="copyToOptions"
-      :title="$i18nConcat($i18nBundle('common.label.copyTo'), $i18nBundle('common.label.user'))"
-      :save-current-item="saveCopyProject"
+      :title="projectTransferWindowTitle"
+      :save-current-item="saveTransferProject"
       :show-fullscreen="false"
     />
     <mock-project-user-manage-window

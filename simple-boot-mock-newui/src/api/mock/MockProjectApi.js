@@ -87,8 +87,15 @@ export const checkProjectEdit = (project) => {
 }
 
 export const copyMockProject = (data, config) => {
+  return transferMockProject({
+    ...data,
+    action: 'copy'
+  }, config)
+}
+
+export const transferMockProject = (data, config) => {
   return $http(Object.assign({
-    url: `${MOCK_PROJECT_URL}/copyMockProject/${data.projectId}`,
+    url: `${MOCK_PROJECT_URL}/transfer`,
     method: 'POST',
     data
   }, config)).then(response => response.data)

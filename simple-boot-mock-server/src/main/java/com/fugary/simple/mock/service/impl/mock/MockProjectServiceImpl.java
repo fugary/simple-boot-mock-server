@@ -155,6 +155,30 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
     }
 
     @Override
+    public SimpleResult<MockProject> transferMockProject(Integer projectId, String userName, String action) {
+        if (StringUtils.isBlank(action) || StringUtils.isBlank(userName)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400);
+        }
+        if (StringUtils.equalsIgnoreCase("copy", action)) {
+            return copyMockProject(projectId, userName);
+        }
+        if (!StringUtils.equalsIgnoreCase("move", action)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400);
+        }
+        MockProject sourceProject = getById(projectId);
+        if (sourceProject == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        if (StringUtils.equals(StringUtils.trimToEmpty(sourceProject.getUserName()), StringUtils.trimToEmpty(userName))) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2000, sourceProject);
+        }
+        MockProject moveProject = SimpleMockUtils.copy(sourceProject, MockProject.class);
+        moveProject.setUserName(userName);
+        moveProject.setPublicFlag(false);
+        return saveMockProject(moveProject);
+    }
+
+    @Override
     public SimpleResult<MockProject> saveMockProject(MockProject project) {
         if (project.getId() != null) {
             MockProject oldProject = getById(project.getId());
