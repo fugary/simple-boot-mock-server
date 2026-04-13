@@ -99,6 +99,12 @@ const toCopyGroupTo = async (group) => {
   showWindow.value = true
 }
 
+const handleTargetUserChange = async () => {
+  searchParam.value.projectId = null
+  searchParam.value.projectCode = MOCK_DEFAULT_PROJECT
+  await loadProjectsAndRefreshOptions()
+}
+
 const options = computed(() => {
   return defineFormOptions([{
     labelKey: 'common.label.operation',
@@ -134,9 +140,7 @@ const options = computed(() => {
       filterable: true,
       clearable: false
     },
-    change: async () => {
-      await loadProjectsAndRefreshOptions()
-    }
+    change: handleTargetUserChange
   }, {
     label: $i18nConcat(currentActionTargetLabel.value, $i18nBundle('common.label.user')),
     enabled: !isAdminUser(),
