@@ -715,6 +715,13 @@ const editFormOptions = computed(() => {
   }, {
     labelKey: 'mock.label.pathId',
     prop: 'groupPath',
+    disabled: !currentGroup.value?.pathIdEditable,
+    tooltip: $i18nBundle('mock.msg.pathIdMsg'),
+    tooltipFunc: () => {
+      if (currentGroup.value) {
+        currentGroup.value.pathIdEditable = !currentGroup.value.pathIdEditable
+      }
+    },
     placeholder: $i18nBundle('mock.msg.pathIdMsg')
   }, {
     labelKey: 'mock.label.proxyUrl',
@@ -1041,6 +1048,7 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
     <simple-edit-window
       v-model="currentProject"
       v-model:show-edit-window="showEditProjectWindow"
+      inline-auto-mode
       :form-options="editProjectFormOptions"
       :name="$t('mock.label.mockProjects')"
       :save-current-item="saveProjectItem"
