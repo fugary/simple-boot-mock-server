@@ -161,6 +161,12 @@ export const useProjectEditHook = (searchParam, userOptions) => {
     labelKey: 'mock.label.projectCode',
     prop: 'projectCode',
     tooltip: $i18nBundle('mock.msg.projectCodeTooltip'),
+    tooltipFunc: () => {
+      if (currentProject.value) {
+        currentProject.value.projectCodeEditable = !currentProject.value.projectCodeEditable
+      }
+    },
+    disabled: !currentProject.value?.projectCodeEditable,
     enabled: !!currentProject.value?.id,
     rules: [{
       validator (_, value) {
