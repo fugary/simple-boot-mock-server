@@ -60,8 +60,7 @@ export const ALL_MENUS = [
     iconCls: 'Document',
     nameCn: '日志管理',
     nameEn: 'Log Management',
-    menuUrl: '/admin/logs',
-    checkEnabled: isAdminUser
+    menuUrl: '/admin/logs'
   },
   {
     id: 53,
