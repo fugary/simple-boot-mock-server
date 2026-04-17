@@ -1,5 +1,6 @@
 <script setup>
-import { ref, provide } from 'vue'
+import { computed, provide } from 'vue'
+import { useGlobalSaveSearchParam } from '@/hooks/CommonHooks'
 import DashboardMetrics from './components/mock/dashboard/DashboardMetrics.vue'
 import DashboardTrendChart from './components/mock/dashboard/DashboardTrendChart.vue'
 import DashboardProjectActivity from './components/mock/dashboard/DashboardProjectActivity.vue'
@@ -9,7 +10,15 @@ import DashboardMockVsProxy from './components/mock/dashboard/DashboardMockVsPro
 import DashboardUserCalls from './components/mock/dashboard/DashboardUserCalls.vue'
 import DashboardUserGroups from './components/mock/dashboard/DashboardUserGroups.vue'
 
-const all = ref(false)
+const { searchParam, saveSearchParam } = useGlobalSaveSearchParam({ all: false })
+const all = computed({
+  get: () => !!searchParam.value.all,
+  set: (value) => {
+    searchParam.value.all = !!value
+    saveSearchParam()
+  }
+})
+
 provide('dashboard-all', all)
 </script>
 
