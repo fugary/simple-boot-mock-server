@@ -2,6 +2,10 @@
 import { ref, onMounted, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import DashboardApi from '@/api/mock/DashboardApi'
+import {
+  buildDashboardLogRoute,
+  DashboardLogPreset
+} from '@/services/mock/DashboardLogPreset'
 
 const metrics = ref({
   todayTotal: 0,
@@ -17,6 +21,14 @@ const router = useRouter()
 const all = inject('dashboard-all', ref(false))
 
 const loading = ref(false)
+
+const openMockGroups = () => {
+  router.push({ name: 'MockGroups' })
+}
+
+const openMockLogs = (preset) => {
+  router.push(buildDashboardLogRoute(preset, all.value))
+}
 
 const loadMetrics = async () => {
   loading.value = true
@@ -48,9 +60,8 @@ watch(all, () => {
     <el-col :span="6">
       <el-card
         shadow="hover"
-        class="metric-card bg-primary"
-        style="cursor: pointer;"
-        @click="router.push({ name: 'MockGroups' })"
+        class="metric-card metric-card--interactive bg-primary"
+        @click="openMockGroups()"
       >
         <div class="metric-content">
           <div class="metric-info">
@@ -81,7 +92,8 @@ watch(all, () => {
     <el-col :span="6">
       <el-card
         shadow="hover"
-        class="metric-card bg-purple"
+        class="metric-card metric-card--interactive bg-purple"
+        @click="openMockGroups()"
       >
         <div class="metric-content">
           <div class="metric-info">
@@ -114,7 +126,8 @@ watch(all, () => {
     <el-col :span="6">
       <el-card
         shadow="hover"
-        class="metric-card bg-success"
+        class="metric-card metric-card--interactive bg-success"
+        @click="openMockLogs(DashboardLogPreset.TODAY_CALLS)"
       >
         <div class="metric-content">
           <div class="metric-info">
@@ -147,7 +160,8 @@ watch(all, () => {
     <el-col :span="6">
       <el-card
         shadow="hover"
-        class="metric-card bg-warning"
+        class="metric-card metric-card--interactive bg-warning"
+        @click="openMockLogs(DashboardLogPreset.TOTAL_CALLS)"
       >
         <div class="metric-content">
           <div class="metric-info">
@@ -198,6 +212,11 @@ watch(all, () => {
   flex: 1;
   height: 100%;
 }
+
+.metric-card--interactive {
+  cursor: pointer;
+}
+
 .metric-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 24px rgba(0,0,0,0.15);

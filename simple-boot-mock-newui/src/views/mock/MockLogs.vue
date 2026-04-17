@@ -1,6 +1,6 @@
 <script setup lang="jsx">
-import { computed, onActivated, onMounted, ref } from 'vue'
-import { checkShowColumn, formatDate, getSingleSelectOptions, isAdminUser } from '@/utils'
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
+import { checkShowColumn, formatDate, getSingleSelectOptions, isAdminUser, useCurrentUserName } from '@/utils'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import MockLogApi from '@/api/mock/MockLogApi'
@@ -10,23 +10,71 @@ import { useDefaultPage } from '@/config'
 import MethodTag from '@/views/components/utils/MethodTag.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { $i18nKey } from '@/messages'
+import { useRoute, useRouter } from 'vue-router'
+import { resolveDashboardLogPreset } from '@/services/mock/DashboardLogPreset'
+
+const route = useRoute()
+const router = useRouter()
+
+const createDefaultSearchParam = () => ({
+  keyword: '',
+  page: useDefaultPage()
+})
+
+const createDefaultDateParam = () => ({
+  createDates: []
+})
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
-  defaultParam: { keyword: '', page: useDefaultPage() },
+  defaultParam: createDefaultSearchParam(),
   searchMethod: MockLogApi.search
 })
+
+const dateParam = ref(createDefaultDateParam())
+
+const resetLogSearchState = () => {
+  searchParam.value = createDefaultSearchParam()
+  dateParam.value = createDefaultDateParam()
+}
+
+const applyDashboardPreset = () => {
+  const preset = resolveDashboardLogPreset(route.query, useCurrentUserName())
+  if (!preset.matched) {
+    return false
+  }
+  searchParam.value = {
+    ...createDefaultSearchParam(),
+    ...preset.searchParam
+  }
+  dateParam.value = { createDates: preset.dateRange }
+  return true
+}
 
 const loadApiLogs = (...args) => {
   searchParam.value.startDate = formatDate(dateParam.value?.createDates?.[0])
   searchParam.value.endDate = formatDate(dateParam.value?.createDates?.[1])
   return searchMethod(...args)
 }
-const dateParam = ref({
-  createDates: []
-})
+
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam, { current: false })
 
+const clearLogSearchForm = async () => {
+  resetLogSearchState()
+  if (route.query.preset != null || route.query.scope != null) {
+    const query = { ...route.query }
+    delete query.preset
+    delete query.scope
+    await router.replace({
+      name: route.name,
+      query
+    })
+  }
+  await loadUsersAndRefreshOptions(false)
+  await loadApiLogs(1)
+}
+
 const { initLoadOnce } = useInitLoadOnce(async () => {
+  applyDashboardPreset()
   await loadUsersAndRefreshOptions(false)
   await loadApiLogs()
 })
@@ -34,6 +82,14 @@ const { initLoadOnce } = useInitLoadOnce(async () => {
 onMounted(initLoadOnce)
 
 onActivated(initLoadOnce)
+
+watch(() => `${route.query.preset || ''}|${route.query.scope || ''}`, async (value, oldValue) => {
+  if (value === oldValue || !applyDashboardPreset()) {
+    return
+  }
+  await loadUsersAndRefreshOptions(false)
+  await loadApiLogs(1)
+})
 
 const columns = computed(() => {
   return [{
@@ -213,7 +269,13 @@ const searchFormOptions = computed(() => {
       :options="searchFormOptions"
       :submit-label="$t('common.label.search')"
       @submit-form="loadApiLogs()"
-    />
+    >
+      <template #buttons>
+        <el-button @click="clearLogSearchForm">
+          {{ $t('common.label.reset') }}
+        </el-button>
+      </template>
+    </common-form>
     <common-table
       v-model:page="searchParam.page"
       :data="tableData"
