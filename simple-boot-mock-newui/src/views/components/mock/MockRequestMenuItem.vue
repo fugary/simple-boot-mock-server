@@ -138,22 +138,26 @@ const requestProxyUrl = computed(() => {
   <el-container class="flex-column">
     <el-row class="margin-bottom1">
       <el-col>
-        <mock-url-copy-link
-          class="margin-left1"
-          :url-path="fullPath"
-        >
-          {{ requestItem.requestPath }}
-        </mock-url-copy-link>
-        <mock-url-copy-link
-          v-if="requestProxyUrl"
-          :tooltip="`${$t('mock.label.proxyUrl')}: ${requestProxyUrl}`"
-          :url-path="requestProxyUrl"
-        >
-          <common-icon
-            :size="18"
-            icon="Link"
-          />
-        </mock-url-copy-link>
+        <span class="request-path-link-group">
+          <mock-url-copy-link
+            class="margin-left1 request-path-link"
+            :url-path="fullPath"
+            :tooltip="`${$t('common.msg.clickToCopy')}: ${fullPath}`"
+          >
+            <span class="request-path-text">{{ requestItem.requestPath }}</span>
+          </mock-url-copy-link>
+          <mock-url-copy-link
+            v-if="requestProxyUrl"
+            class="request-proxy-link"
+            :tooltip="`${$t('common.msg.clickToCopy')}: ${requestProxyUrl}`"
+            :url-path="requestProxyUrl"
+          >
+            <common-icon
+              :size="18"
+              icon="Link"
+            />
+          </mock-url-copy-link>
+        </span>
       </el-col>
     </el-row>
     <el-row class="margin-bottom1">
@@ -259,8 +263,8 @@ const requestProxyUrl = computed(() => {
     <el-row v-if="requestItem.requestName">
       <el-col>
         <el-text
-          type="info"
           size="small"
+          tag="b"
         >
           {{ requestItem.requestName }}
         </el-text>
@@ -270,5 +274,27 @@ const requestProxyUrl = computed(() => {
 </template>
 
 <style scoped>
+.request-path-link-group {
+  display: inline;
+}
 
+.request-path-link {
+  display: inline;
+  vertical-align: baseline;
+}
+
+.request-path-link :deep(.el-link__inner) {
+  display: inline;
+}
+
+.request-path-text {
+  display: inline;
+  white-space: break-spaces;
+  word-break: break-all;
+}
+
+.request-proxy-link {
+  margin-left: 2px;
+  vertical-align: baseline;
+}
 </style>
