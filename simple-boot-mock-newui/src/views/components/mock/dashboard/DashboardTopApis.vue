@@ -1,14 +1,20 @@
 <script setup>
 import { ref, onMounted, inject, watch, computed } from 'vue'
 import DashboardApi from '@/api/mock/DashboardApi'
+import { selectProjects } from '@/api/mock/MockProjectApi'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import { $goto, isAdminUser, useCurrentUserName } from '@/utils'
+import { isDefaultProject } from '@/consts/MockConstants'
 
 const topLoading = ref(false)
 const topApis = ref([])
+const readableProjects = ref([])
+const publicProjects = ref([])
 
 const all = inject('dashboard-all', ref(false))
 
 onMounted(() => {
+  loadAccessibleProjects()
   loadTopApis()
 })
 
@@ -26,6 +32,55 @@ const loadTopApis = async () => {
   } finally {
     topLoading.value = false
   }
+}
+
+const loadAccessibleProjects = async () => {
+  if (isAdminUser()) {
+    readableProjects.value = []
+    publicProjects.value = []
+    return
+  }
+  const [readableResult, publicResult] = await Promise.allSettled([
+    selectProjects({
+      userName: useCurrentUserName(),
+      publicFlag: false
+    }),
+    selectProjects({
+      publicFlag: true
+    })
+  ])
+  readableProjects.value = readableResult.status === 'fulfilled' ? (readableResult.value || []) : []
+  publicProjects.value = publicResult.status === 'fulfilled' ? (publicResult.value || []) : []
+}
+
+const matchesProject = (project, group) => {
+  if (!project || !group) {
+    return false
+  }
+  if (isDefaultProject(project.projectCode) || isDefaultProject(group.projectCode)) {
+    return isDefaultProject(project.projectCode) &&
+      isDefaultProject(group.projectCode) &&
+      `${project.userName || ''}` === `${group.userName || ''}`
+  }
+  if (group.projectId != null && `${project.id || project.projectId || ''}` === `${group.projectId}`) {
+    return true
+  }
+  return !!group.projectCode && project.projectCode === group.projectCode
+}
+
+const canOpenGroup = (group) => {
+  if (!group?.id) {
+    return false
+  }
+  if (isAdminUser()) {
+    return true
+  }
+  return readableProjects.value.some(project => matchesProject(project, group)) ||
+    publicProjects.value.some(project => matchesProject(project, group))
+}
+
+const getGroupDetailUrl = (group) => {
+  return `/mock/groups/${group.id}?backUrl=/mock/groups`
 }
 
 const getRankTheme = (index) => {
@@ -116,10 +171,24 @@ const columns = computed(() => [
             class="path-icon"
             icon="Folder"
           />
-          <span class="group-name">{{ item.group.groupName || $t('mock.label.unnamedGroup') }}</span>
+          <el-link
+            v-if="canOpenGroup(item.group)"
+            type="primary"
+            class="group-name"
+            @click="$goto(getGroupDetailUrl(item.group))"
+          >
+            {{ item.group.groupName || $t('mock.label.unnamedGroup') }}
+          </el-link>
+          <span
+            v-else
+            class="group-name"
+          >
+            {{ item.group.groupName || $t('mock.label.unnamedGroup') }}
+          </span>
           <el-text
             v-if="item.group.userName"
-            type="info"
+            type="success"
+            tag="b"
             class="group-user"
           >
             ({{ item.group.userName }})
@@ -182,17 +251,16 @@ const columns = computed(() => [
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  gap: 4px;
 }
 .group-name {
   font-weight: bold;
 }
 .group-user {
-  margin-left: 6px;
-  font-style: italic;
   font-size: 12px;
+  font-style: normal;
 }
 .path-icon {
-  margin-right: 4px;
   color: var(--el-text-color-placeholder);
   vertical-align: middle;
 }
