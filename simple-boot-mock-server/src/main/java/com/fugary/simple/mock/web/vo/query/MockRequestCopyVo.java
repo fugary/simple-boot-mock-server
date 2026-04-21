@@ -18,4 +18,6 @@ public class MockRequestCopyVo implements Serializable {
      * 目标场景编码，null 表示沿用原场景，空字符串表示默认场景
      */
     private String scenarioCode;
+
+    private String action;
 }

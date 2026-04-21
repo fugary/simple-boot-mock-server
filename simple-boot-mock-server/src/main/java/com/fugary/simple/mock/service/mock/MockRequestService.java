@@ -56,6 +56,8 @@ public interface MockRequestService extends IService<MockRequest> {
      */
     boolean copyMockRequest(Integer requestId, Integer newGroupId, String newScenarioCode);
 
+    SimpleResult<MockRequest> moveMockRequest(Integer requestId, String newScenarioCode);
+
     /**
      * 加载请求下面的可用数据
      * @param requestId

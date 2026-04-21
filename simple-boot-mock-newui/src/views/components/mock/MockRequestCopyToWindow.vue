@@ -9,10 +9,14 @@ const props = defineProps({
   scenarioList: {
     type: Array,
     default: () => []
+  },
+  allowMove: {
+    type: Boolean,
+    default: true
   }
 })
 
-const emit = defineEmits(['copySuccess'])
+const emit = defineEmits(['copySuccess', 'transferSuccess'])
 
 const DEFAULT_SCENARIO_VALUE = '__DEFAULT_SCENARIO__'
 
@@ -20,11 +24,38 @@ const showWindow = ref(false)
 const currentRequest = ref({})
 const copyModel = ref({
   requestId: null,
+  action: 'copy',
   scenarioCode: DEFAULT_SCENARIO_VALUE
 })
 
+const getActionLabel = (action) => {
+  return action === 'move'
+    ? $i18nBundle('common.label.move')
+    : $i18nBundle('common.label.copy')
+}
+
+const actionOptions = computed(() => {
+  const options = [{
+    label: getActionLabel('copy'),
+    value: 'copy'
+  }]
+  if (props.allowMove) {
+    options.push({
+      label: getActionLabel('move'),
+      value: 'move'
+    })
+  }
+  return options
+})
+
+const currentActionTargetLabel = computed(() => {
+  return copyModel.value.action === 'move'
+    ? $i18nBundle('common.label.moveTo')
+    : $i18nBundle('common.label.copyTo')
+})
+
 const windowTitle = computed(() => {
-  return $i18nConcat($i18nBundle('common.label.copyTo'), $i18nBundle('mock.label.scenario'))
+  return $i18nConcat(currentActionTargetLabel.value, $i18nBundle('mock.label.scenario'))
 })
 
 const scenarioOptions = computed(() => {
@@ -45,6 +76,10 @@ const normalizeScenarioCode = (scenarioCode) => {
   return scenarioCode === DEFAULT_SCENARIO_VALUE ? '' : scenarioCode
 }
 
+const isSameScenarioCode = (sourceScenarioCode, targetScenarioCode) => {
+  return normalizeScenarioCode(toScenarioSelectValue(sourceScenarioCode)) === normalizeScenarioCode(targetScenarioCode)
+}
+
 const getScenarioLabel = (scenarioCode) => {
   if (!scenarioCode) {
     return $i18nBundle('mock.label.defaultScenario')
@@ -53,6 +88,16 @@ const getScenarioLabel = (scenarioCode) => {
 }
 
 const formOptions = computed(() => defineFormOptions([{
+  labelKey: 'common.label.operation',
+  prop: 'action',
+  type: 'segmented',
+  required: true,
+  enabled: props.allowMove,
+  attrs: {
+    clearable: false,
+    options: actionOptions.value
+  }
+}, {
   labelKey: 'mock.label.mockRequest',
   type: 'common-form-label',
   formatter () {
@@ -70,7 +115,7 @@ const formOptions = computed(() => defineFormOptions([{
     return <ElText>{getScenarioLabel(currentRequest.value?.scenarioCode)}</ElText>
   }
 }, {
-  labelKey: 'mock.label.copyToScenario',
+  label: $i18nConcat(currentActionTargetLabel.value, $i18nBundle('mock.label.scenario')),
   prop: 'scenarioCode',
   type: 'select',
   required: true,
@@ -84,6 +129,7 @@ const toCopyRequest = (request) => {
   currentRequest.value = request || {}
   copyModel.value = {
     requestId: request?.id || null,
+    action: 'copy',
     scenarioCode: toScenarioSelectValue(request?.scenarioCode)
   }
   showWindow.value = true
@@ -94,12 +140,21 @@ const saveCopyRequest = ({ form }) => {
     if (!valid) {
       return
     }
+    if (copyModel.value.action === 'move' && isSameScenarioCode(currentRequest.value?.scenarioCode, copyModel.value.scenarioCode)) {
+      ElMessage.error($i18nBundle('common.msg.moveSameTarget'))
+      return
+    }
     copyMockRequest(copyModel.value.requestId, {
+      action: copyModel.value.action,
       scenarioCode: normalizeScenarioCode(copyModel.value.scenarioCode)
     }, { loading: true }).then(data => {
       if (data?.success) {
-        ElMessage.success($i18nBundle('common.msg.copySuccess'))
+        const successKey = copyModel.value.action === 'move'
+          ? 'common.msg.moveSuccess'
+          : 'common.msg.copySuccess'
+        ElMessage.success($i18nBundle(successKey))
         showWindow.value = false
+        emit('transferSuccess', data.resultData)
         emit('copySuccess', data.resultData)
       }
     }).catch(() => false)

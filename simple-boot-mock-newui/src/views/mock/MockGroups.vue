@@ -460,7 +460,7 @@ const toTransferGroups = (group, action = 'copy', allowMove = false) => {
   })
 }
 const copyGroups = (group) => {
-  return toTransferGroups(group, 'copy', Array.isArray(group) && canMoveGroups(group))
+  return toTransferGroups(group, 'copy', canMoveGroups(group))
 }
 const moveGroups = (groups) => {
   return toTransferGroups(groups, 'move', canMoveGroups(groups))
@@ -498,7 +498,7 @@ const buttons = computed(() => defineTableButtons([{
   round: true,
   type: 'warning',
   buttonIf: item => groupReadable(item),
-  click: item => toTransferGroups(item, 'copy', false)
+  click: item => copyGroups(item)
 }, {
   tooltip: $i18nBundle('common.label.delete'),
   icon: 'DeleteFilled',

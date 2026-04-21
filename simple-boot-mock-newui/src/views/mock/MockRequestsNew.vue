@@ -691,7 +691,8 @@ const toShowHistoryWindow = (current) => {
     <mock-request-copy-to-window
       ref="copyRequestWindowRef"
       :scenario-list="scenarioList"
-      @copy-success="loadMockRequests()"
+      :allow-move="projectWritable"
+      @transfer-success="loadMockRequests()"
     />
   </el-container>
 </template>

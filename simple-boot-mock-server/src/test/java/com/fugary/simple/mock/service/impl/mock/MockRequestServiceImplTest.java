@@ -7,6 +7,7 @@ import com.fugary.simple.mock.entity.mock.MockSchema;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
+import com.fugary.simple.mock.utils.SimpleResultUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,9 +49,11 @@ class MockRequestServiceImplTest {
         ReflectionTestUtils.setField(mockRequestService, "mockDataService", mockDataService);
         ReflectionTestUtils.setField(mockRequestService, "mockSchemaService", mockSchemaService);
         ReflectionTestUtils.setField(mockRequestService, "scriptEngineProvider", scriptEngineProvider);
-        doReturn(true).when(mockRequestService).saveOrUpdate(any(MockRequest.class));
-        when(mockDataService.list(anyQueryWrapper())).thenReturn(Collections.emptyList());
-        when(mockSchemaService.list(anySchemaQueryWrapper())).thenReturn(Collections.emptyList());
+        lenient().doReturn(true).when(mockRequestService).saveOrUpdate(any(MockRequest.class));
+        lenient().doAnswer(invocation -> SimpleResultUtils.createSimpleResult((MockRequest) invocation.getArgument(0)))
+                .when(mockRequestService).newSaveOrUpdate(any(MockRequest.class));
+        lenient().when(mockDataService.list(anyQueryWrapper())).thenReturn(Collections.emptyList());
+        lenient().when(mockSchemaService.list(anySchemaQueryWrapper())).thenReturn(Collections.emptyList());
     }
 
     @Test
@@ -79,6 +84,26 @@ class MockRequestServiceImplTest {
         assertTrue(result);
         assertEquals("offline", saved.getScenarioCode());
         assertEquals("User Detail", saved.getRequestName());
+    }
+
+    @Test
+    void moveMockRequestShouldUpdateScenarioWithoutRenaming() {
+        MockRequest source = createRequest(1, 10, "online", "User Detail");
+        doReturn(source).when(mockRequestService).getById(anyInt());
+
+        MockRequest saved = mockRequestService.moveMockRequest(1, "offline").getResultData();
+
+        verify(mockRequestService).newSaveOrUpdate(source);
+        assertEquals("offline", saved.getScenarioCode());
+        assertEquals("User Detail", saved.getRequestName());
+    }
+
+    @Test
+    void moveMockRequestShouldSkipWhenTargetScenarioIsSame() {
+        MockRequest source = createRequest(1, 10, "online", "User Detail");
+        doReturn(source).when(mockRequestService).getById(anyInt());
+
+        assertEquals(2000, mockRequestService.moveMockRequest(1, "online").getCode());
     }
 
     private MockRequest createRequest(Integer id, Integer groupId, String scenarioCode, String requestName) {

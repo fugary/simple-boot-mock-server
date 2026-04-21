@@ -199,6 +199,9 @@ public class MockRequestController {
         if (!mockProjectService.hasRequestAuthority(id, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
+        if (copyVo != null && StringUtils.equalsIgnoreCase(copyVo.getAction(), "move")) {
+            return mockRequestService.moveMockRequest(id, copyVo.getScenarioCode());
+        }
         return SimpleResultUtils.createSimpleResult(mockRequestService.copyMockRequest(id, null,
                 copyVo == null ? null : copyVo.getScenarioCode()));
     }

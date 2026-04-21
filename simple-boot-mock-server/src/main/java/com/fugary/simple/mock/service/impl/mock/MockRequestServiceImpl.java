@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -133,6 +134,21 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             return true;
         }
         return false;
+    }
+
+    @Override
+    public SimpleResult<MockRequest> moveMockRequest(Integer requestId, String newScenarioCode) {
+        MockRequest mockRequest = getById(requestId);
+        if (mockRequest == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        String sourceScenarioCode = StringUtils.trimToNull(mockRequest.getScenarioCode());
+        String targetScenarioCode = StringUtils.trimToNull(newScenarioCode);
+        if (Objects.equals(StringUtils.defaultString(sourceScenarioCode), StringUtils.defaultString(targetScenarioCode))) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2000, mockRequest);
+        }
+        mockRequest.setScenarioCode(targetScenarioCode);
+        return newSaveOrUpdate(SimpleMockUtils.addAuditInfo(mockRequest));
     }
 
     @Override
