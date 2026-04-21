@@ -4,6 +4,7 @@ import { $coreConfirm, getStyleGrow, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, {
   ALL_METHODS,
+  copyMockRequest,
   loadHistoryDiff,
   recoverFromHistory,
   searchHistories
@@ -40,6 +41,7 @@ import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import { set } from 'lodash-es'
 import { useMockMonacoFieldOption } from '@/services/mock/MockEditService'
 import MockScenarioManageWindow from '@/views/components/mock/MockScenarioManageWindow.vue'
+import MockRequestCopyToWindow from '@/views/components/mock/MockRequestCopyToWindow.vue'
 
 const route = useRoute()
 const groupId = route.params.groupId
@@ -325,6 +327,7 @@ const saveMockRequest = item => {
 }
 
 const batchMode = ref(false)
+const copyRequestWindowRef = ref()
 
 const newColumns = computed(() => {
   return [{
@@ -343,6 +346,7 @@ const newColumns = computed(() => {
                                   onToTestMockRequest={() => previewMockRequest(groupItem.value, data, null, () => loadMockRequests(), projectWritable.value)}
                                   onToTestMatchPattern={() => { toTestMatchPattern(groupItem.value, data, null, projectWritable.value) }}
                                   onToEditMockRequest={() => { newOrEdit(data.id) }}
+                                  onToCopyMockRequest={() => { toCopyMockRequest(data) }}
                                   onToShowRequestHistory={() => toShowHistoryWindow(data)}
                                   onToEditDelay={() => { newOrEdit(data.id) }}
                                   onRequestChanged={() => loadMockRequests()}
@@ -364,6 +368,16 @@ const changeBatchMode = () => {
 const editGroupEnvParams = () => {
   toEditGroupEnvParams(groupItem.value?.id)
     .then(() => Promise.resolve(loadGroup()))
+    .then(() => loadMockRequests())
+}
+
+const toCopyMockRequest = (request) => {
+  if (scenarioList.value.length > 0) {
+    copyRequestWindowRef.value?.toCopyRequest(request)
+    return
+  }
+  $coreConfirm($i18nBundle('common.msg.confirmCopy'))
+    .then(() => copyMockRequest(request.id, null, { loading: true }))
     .then(() => loadMockRequests())
 }
 
@@ -673,6 +687,11 @@ const toShowHistoryWindow = (current) => {
       :writable="projectWritable"
       :deletable="projectDeletable"
       @updated="onScenarioChanged"
+    />
+    <mock-request-copy-to-window
+      ref="copyRequestWindowRef"
+      :scenario-list="scenarioList"
+      @copy-success="loadMockRequests()"
     />
   </el-container>
 </template>

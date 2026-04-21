@@ -88,12 +88,27 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
 
     @Override
     public boolean copyMockRequest(Integer requestId, Integer newGroupId) {
+        return copyMockRequest(requestId, newGroupId, null);
+    }
+
+    @Override
+    public boolean copyMockRequest(Integer requestId, Integer newGroupId, String newScenarioCode) {
         MockRequest mockRequest = getById(requestId);
         if (mockRequest != null) {
+            String sourceScenarioCode = StringUtils.trimToNull(mockRequest.getScenarioCode());
+            boolean scenarioSpecified = newScenarioCode != null;
+            String targetScenarioCode = StringUtils.trimToNull(newScenarioCode);
+            boolean targetScenarioChanged = scenarioSpecified
+                    && !StringUtils.equals(StringUtils.defaultString(sourceScenarioCode),
+                    StringUtils.defaultString(targetScenarioCode));
             SimpleMockUtils.prepareForCreate(mockRequest);
             if (newGroupId != null) {
                 mockRequest.setGroupId(newGroupId);
-            } else {
+            }
+            if (scenarioSpecified) {
+                mockRequest.setScenarioCode(targetScenarioCode);
+            }
+            if (newGroupId == null && !targetScenarioChanged) {
                 if (StringUtils.isNotBlank(mockRequest.getRequestName())) {
                     mockRequest.setRequestName(StringUtils.join(mockRequest.getRequestName(), "-copy"));
                 } else {

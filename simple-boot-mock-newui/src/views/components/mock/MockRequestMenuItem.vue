@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import MockRequestApi, { ALL_METHODS, copyMockRequest } from '@/api/mock/MockRequestApi'
+import MockRequestApi, { ALL_METHODS } from '@/api/mock/MockRequestApi'
 import CommonIcon from '@/components/common-icon/index.vue'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { defineTableButtons } from '@/components/utils'
@@ -32,7 +32,7 @@ const fullPath = computed(() => {
   return `/mock/${groupItem?.groupPath}${requestItem.value?.requestPath}`
 })
 
-const emit = defineEmits(['requestChanged', 'toTestMockRequest', 'toEditMockRequest', 'toShowRequestHistory', 'toTestMatchPattern', 'toEditDelay', 'saveMockRequest'])
+const emit = defineEmits(['requestChanged', 'toTestMockRequest', 'toEditMockRequest', 'toShowRequestHistory', 'toTestMatchPattern', 'toEditDelay', 'toCopyMockRequest', 'saveMockRequest'])
 
 const buttons = computed(() => {
   return defineTableButtons([{
@@ -76,9 +76,7 @@ const moreButtons = computed(() => {
     icon: 'FileCopyFilled',
     enabled: props.writable,
     click: (item) => {
-      $coreConfirm($i18nBundle('common.msg.confirmCopy'))
-        .then(() => copyMockRequest(item.id))
-        .then(() => emit('requestChanged', item, props.groupItem))
+      emit('toCopyMockRequest', item, props.groupItem)
     }
   }, {
     labelKey: 'mock.label.matchPattern',

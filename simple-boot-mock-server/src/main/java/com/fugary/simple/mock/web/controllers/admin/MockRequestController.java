@@ -20,6 +20,7 @@ import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.MockDataQueryVo;
 import com.fugary.simple.mock.web.vo.query.MockHistoryVo;
+import com.fugary.simple.mock.web.vo.query.MockRequestCopyVo;
 import com.fugary.simple.mock.web.vo.query.MockRequestQueryVo;
 import com.fugary.simple.mock.web.vo.query.MockSchemaQueryVo;
 import com.fugary.simple.mock.web.vo.result.MockSchemaResultVo;
@@ -193,11 +194,13 @@ public class MockRequestController {
     }
 
     @PostMapping("/copyMockRequest/{requestId}")
-    public SimpleResult copyMockRequest(@PathVariable("requestId") Integer id) {
+    public SimpleResult copyMockRequest(@PathVariable("requestId") Integer id,
+            @RequestBody(required = false) MockRequestCopyVo copyVo) {
         if (!mockProjectService.hasRequestAuthority(id, MockConstants.AUTHORITY_WRITABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
-        return SimpleResultUtils.createSimpleResult(mockRequestService.copyMockRequest(id, null));
+        return SimpleResultUtils.createSimpleResult(mockRequestService.copyMockRequest(id, null,
+                copyVo == null ? null : copyVo.getScenarioCode()));
     }
 
     @DeleteMapping("/{id}")

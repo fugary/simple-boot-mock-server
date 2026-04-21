@@ -47,6 +47,16 @@ public interface MockRequestService extends IService<MockRequest> {
     boolean copyMockRequest(Integer requestId, Integer newGroupId);
 
     /**
+     * 复制一份请求到指定分组/场景
+     *
+     * @param requestId 请求ID
+     * @param newGroupId 新分组ID，null 表示保留原分组
+     * @param newScenarioCode 传 null 表示沿用原场景；传空字符串表示复制到默认场景
+     * @return
+     */
+    boolean copyMockRequest(Integer requestId, Integer newGroupId, String newScenarioCode);
+
+    /**
      * 加载请求下面的可用数据
      * @param requestId
      */

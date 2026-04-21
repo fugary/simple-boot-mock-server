@@ -27,11 +27,15 @@ export const getMockUrl = (path) => {
 
 const MOCK_REQUEST_URL = '/admin/requests'
 
-export const copyMockRequest = (id, config) => {
-  return $http(Object.assign({
+export const copyMockRequest = (id, data, config) => {
+  const requestConfig = Object.assign({
     url: `${MOCK_REQUEST_URL}/copyMockRequest/${id}`,
     method: 'POST'
-  }, config)).then(response => response.data)
+  }, config)
+  if (data !== undefined && data !== null) {
+    requestConfig.data = data
+  }
+  return $http(requestConfig).then(response => response.data)
 }
 
 export const saveMockParams = (data, config) => {
