@@ -187,6 +187,8 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         String method = request.getMethod();
         String requestGroupPath = calcGroupPath(requestPath);
         boolean testRequest = requestId != 0;
+        boolean testData = defaultId != 0;
+        boolean forceMockTarget = testRequest || testData;
         MockGroup mockGroup = null;
         if (StringUtils.isNotBlank(requestGroupPath)) {
             mockGroup = getOne(Wrappers.<MockGroup>query()
@@ -203,11 +205,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         .eq(!testRequest, "status", 1)
                         .eq(testRequest, "id", requestId)
                         .isNull(DB_MODIFY_FROM_KEY);
-                String activeScenarioCode = StringUtils.trimToNull(mockGroup.getActiveScenarioCode());
-                if (StringUtils.isBlank(activeScenarioCode)) {
-                    requestQuery.isNull("scenario_code");
-                } else {
-                    requestQuery.eq("scenario_code", activeScenarioCode);
+                if (!forceMockTarget) {
+                    String activeScenarioCode = StringUtils.trimToNull(mockGroup.getActiveScenarioCode());
+                    if (StringUtils.isBlank(activeScenarioCode)) {
+                        requestQuery.isNull("scenario_code");
+                    } else {
+                        requestQuery.eq("scenario_code", activeScenarioCode);
+                    }
                 }
                 List<MockRequest> mockRequests = mockRequestService.list(requestQuery);
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
@@ -217,7 +221,6 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant
                                                                                             // path不支持:var格式，只支持{var}格式
                     String configPath = groupPath + configRequestPath;
-                    boolean testData = defaultId != 0;
                     if (pathMatcher.match(configPath, requestPath)) {
                         try {
                             HttpRequestVo requestVo = calcRequestVo(request, configPath, requestPath);
