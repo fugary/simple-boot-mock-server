@@ -11,7 +11,7 @@ import MockRequestApi, {
 } from '@/api/mock/MockRequestApi'
 import { useProvideDataLoading, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableColumns, limitStr } from '@/components/utils'
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useDefaultPage } from '@/config'
@@ -164,6 +164,15 @@ const resetSearchForm = () => {
 const selectedRows = ref([])
 const requestTableRef = ref()
 
+function syncCurrentRequestRow (request = selectRequest.value) {
+  if (!request) {
+    return
+  }
+  nextTick(() => {
+    requestTableRef.value?.table?.setCurrentRow(request, true)
+  })
+}
+
 const deleteRequests = () => {
   $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
     .then(() => MockRequestApi.removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
@@ -203,10 +212,14 @@ const newOrEdit = async id => {
 }
 const { startLoading, dataLoading } = useProvideDataLoading()
 const onSelectRequest = request => {
+  if (!request) {
+    return
+  }
+  const sameRequest = selectRequest.value?.id === request.id
   selectRequest.value = request
-  searchParam.value.selectRequestId = request?.id
-  requestTableRef.value?.table?.setCurrentRow(selectRequest.value, true)
-  if (request && !dataLoading.value) {
+  searchParam.value.selectRequestId = request.id
+  syncCurrentRequestRow(request)
+  if (!sameRequest && !dataLoading.value) {
     startLoading()
   }
 }
@@ -363,6 +376,7 @@ const changeBatchMode = () => {
   if (!batchMode.value) {
     selectedRows.value = []
   }
+  syncCurrentRequestRow()
 }
 
 const editGroupEnvParams = () => {
