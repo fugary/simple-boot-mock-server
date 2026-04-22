@@ -38,6 +38,14 @@ export const copyMockRequest = (id, data, config) => {
   return $http(requestConfig).then(response => response.data)
 }
 
+export const transferMockRequest = (data, config) => {
+  return $http(Object.assign({
+    url: `${MOCK_REQUEST_URL}/transfer`,
+    method: 'POST',
+    data
+  }, config)).then(response => response.data)
+}
+
 export const saveMockParams = (data, config) => {
   return $http(Object.assign({
     url: `${MOCK_REQUEST_URL}/saveMockParams`,

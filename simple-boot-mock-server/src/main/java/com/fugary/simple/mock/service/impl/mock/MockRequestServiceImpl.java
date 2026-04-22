@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -149,6 +150,51 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
         }
         mockRequest.setScenarioCode(targetScenarioCode);
         return newSaveOrUpdate(SimpleMockUtils.addAuditInfo(mockRequest));
+    }
+
+    @Override
+    public SimpleResult<List<MockRequest>> transferMockRequests(List<Integer> requestIds, String action,
+            String newScenarioCode) {
+        if (CollectionUtils.isEmpty(requestIds) || StringUtils.isBlank(action)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, new ArrayList<>());
+        }
+        boolean moveAction = StringUtils.equalsIgnoreCase(action, "move");
+        List<MockRequest> resultData = new ArrayList<>();
+        List<Integer> skippedRequestIds = new ArrayList<>();
+        for (Integer requestId : requestIds) {
+            if (requestId == null) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, resultData)
+                        .addInfo("skippedRequestIds", skippedRequestIds);
+            }
+            if (moveAction) {
+                SimpleResult<MockRequest> result = moveMockRequest(requestId, newScenarioCode);
+                if (result == null || !result.isSuccess()) {
+                    if (result != null && result.getCode() == MockErrorConstants.CODE_2000) {
+                        skippedRequestIds.add(requestId);
+                        continue;
+                    }
+                    return result != null
+                            ? SimpleResultUtils.createSimpleResult(result.getCode(), resultData)
+                            .addInfo("skippedRequestIds", skippedRequestIds)
+                            : SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1, resultData)
+                            .addInfo("skippedRequestIds", skippedRequestIds);
+                }
+                if (result.getResultData() != null) {
+                    resultData.add(result.getResultData());
+                }
+                continue;
+            }
+            if (!copyMockRequest(requestId, null, newScenarioCode)) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1, resultData)
+                        .addInfo("skippedRequestIds", skippedRequestIds);
+            }
+        }
+        if (resultData.isEmpty() && !skippedRequestIds.isEmpty()) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2000, resultData)
+                    .addInfo("skippedRequestIds", skippedRequestIds);
+        }
+        return SimpleResultUtils.createSimpleResult(resultData)
+                .addInfo("skippedRequestIds", skippedRequestIds);
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.web.vo.SimpleResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,6 +28,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -104,6 +107,45 @@ class MockRequestServiceImplTest {
         doReturn(source).when(mockRequestService).getById(anyInt());
 
         assertEquals(2000, mockRequestService.moveMockRequest(1, "online").getCode());
+    }
+
+    @Test
+    void transferMockRequestsShouldCopyMultipleRequestsToTargetScenario() {
+        doAnswer(invocation -> {
+            Integer id = invocation.getArgument(0);
+            if (id == 1) {
+                return createRequest(1, 10, "online", "User Detail");
+            }
+            if (id == 2) {
+                return createRequest(2, 10, "online", "Order Detail");
+            }
+            return null;
+        }).when(mockRequestService).getById(anyInt());
+
+        SimpleResult<List<MockRequest>> result = mockRequestService.transferMockRequests(List.of(1, 2),
+                "copy", "offline");
+
+        ArgumentCaptor<MockRequest> captor = ArgumentCaptor.forClass(MockRequest.class);
+        verify(mockRequestService, times(2)).saveOrUpdate(captor.capture());
+        List<MockRequest> savedRequests = captor.getAllValues();
+        assertTrue(result.isSuccess());
+        assertTrue(result.getResultData().isEmpty());
+        assertEquals("offline", savedRequests.get(0).getScenarioCode());
+        assertEquals("offline", savedRequests.get(1).getScenarioCode());
+        assertEquals("User Detail", savedRequests.get(0).getRequestName());
+        assertEquals("Order Detail", savedRequests.get(1).getRequestName());
+    }
+
+    @Test
+    void transferMockRequestsShouldSkipWhenMovingToSameScenario() {
+        MockRequest source = createRequest(1, 10, "online", "User Detail");
+        doReturn(source).when(mockRequestService).getById(1);
+
+        SimpleResult<List<MockRequest>> result = mockRequestService.transferMockRequests(List.of(1),
+                "move", "online");
+
+        assertEquals(2000, result.getCode());
+        assertEquals(List.of(1), result.getInfos().get("skippedRequestIds"));
     }
 
     private MockRequest createRequest(Integer id, Integer groupId, String scenarioCode, String requestName) {

@@ -2,8 +2,9 @@
 import { computed, ref } from 'vue'
 import { ElMessage, ElText } from 'element-plus'
 import { defineFormOptions } from '@/components/utils'
-import { copyMockRequest } from '@/api/mock/MockRequestApi'
+import { transferMockRequest } from '@/api/mock/MockRequestApi'
 import { $i18nBundle, $i18nConcat } from '@/messages'
+import { isArray } from 'lodash-es'
 
 const props = defineProps({
   scenarioList: {
@@ -21,9 +22,9 @@ const emit = defineEmits(['copySuccess', 'transferSuccess'])
 const DEFAULT_SCENARIO_VALUE = '__DEFAULT_SCENARIO__'
 
 const showWindow = ref(false)
-const currentRequest = ref({})
+const currentRequests = ref([])
 const copyModel = ref({
-  requestId: null,
+  requestIds: [],
   action: 'copy',
   scenarioCode: DEFAULT_SCENARIO_VALUE
 })
@@ -87,6 +88,10 @@ const getScenarioLabel = (scenarioCode) => {
   return props.scenarioList.find(item => item.scenarioCode === scenarioCode)?.scenarioName || scenarioCode
 }
 
+const sourceScenarioLabels = computed(() => {
+  return [...new Set(currentRequests.value.map(request => getScenarioLabel(request?.scenarioCode)))]
+})
+
 const formOptions = computed(() => defineFormOptions([{
   labelKey: 'common.label.operation',
   prop: 'action',
@@ -102,17 +107,27 @@ const formOptions = computed(() => defineFormOptions([{
   type: 'common-form-label',
   formatter () {
     return <>
-      <ElText tag="b">{currentRequest.value?.requestPath} #{currentRequest.value?.method}</ElText>
-      {currentRequest.value?.requestName
-        ? <><br/><ElText type="info">{currentRequest.value.requestName}</ElText></>
-        : ''}
+      {currentRequests.value.map(request => (
+        <div key={request?.id || `${request?.requestPath}-${request?.method}`}>
+          <ElText tag="b">{request?.requestPath} #{request?.method}</ElText>
+          {request?.requestName
+            ? <><br/><ElText type="info">{request.requestName}</ElText></>
+            : ''}
+        </div>
+      ))}
     </>
   }
 }, {
   labelKey: 'mock.label.copyFromScenario',
   type: 'common-form-label',
   formatter () {
-    return <ElText>{getScenarioLabel(currentRequest.value?.scenarioCode)}</ElText>
+    return <>
+      {sourceScenarioLabels.value.map(label => (
+        <div key={label}>
+          <ElText>{label}</ElText>
+        </div>
+      ))}
+    </>
   }
 }, {
   label: $i18nConcat(currentActionTargetLabel.value, $i18nBundle('mock.label.scenario')),
@@ -126,11 +141,14 @@ const formOptions = computed(() => defineFormOptions([{
 }]))
 
 const toCopyRequest = (request) => {
-  currentRequest.value = request || {}
+  currentRequests.value = (isArray(request) ? request : [request]).filter(item => item?.id != null)
+  if (!currentRequests.value.length) {
+    return
+  }
   copyModel.value = {
-    requestId: request?.id || null,
+    requestIds: currentRequests.value.map(item => item.id),
     action: 'copy',
-    scenarioCode: toScenarioSelectValue(request?.scenarioCode)
+    scenarioCode: toScenarioSelectValue(currentRequests.value[0]?.scenarioCode)
   }
   showWindow.value = true
 }
@@ -140,14 +158,20 @@ const saveCopyRequest = ({ form }) => {
     if (!valid) {
       return
     }
-    if (copyModel.value.action === 'move' && isSameScenarioCode(currentRequest.value?.scenarioCode, copyModel.value.scenarioCode)) {
+    if (!copyModel.value.requestIds?.length) {
+      return
+    }
+    if (copyModel.value.action === 'move' && currentRequests.value.every(request => {
+      return isSameScenarioCode(request?.scenarioCode, copyModel.value.scenarioCode)
+    })) {
       ElMessage.error($i18nBundle('common.msg.moveSameTarget'))
       return
     }
-    copyMockRequest(copyModel.value.requestId, {
+    transferMockRequest({
+      requestIds: copyModel.value.requestIds,
       action: copyModel.value.action,
       scenarioCode: normalizeScenarioCode(copyModel.value.scenarioCode)
-    }, { loading: true }).then(data => {
+    }, { loading: true, showErrorMessage: false }).then(data => {
       if (data?.success) {
         const successKey = copyModel.value.action === 'move'
           ? 'common.msg.moveSuccess'
@@ -156,6 +180,10 @@ const saveCopyRequest = ({ form }) => {
         showWindow.value = false
         emit('transferSuccess', data.resultData)
         emit('copySuccess', data.resultData)
+      } else if (data?.code === 2000) {
+        ElMessage.error($i18nBundle('common.msg.moveSameTarget'))
+      } else if (data?.message) {
+        ElMessage.error(data.message)
       }
     }).catch(() => false)
   })

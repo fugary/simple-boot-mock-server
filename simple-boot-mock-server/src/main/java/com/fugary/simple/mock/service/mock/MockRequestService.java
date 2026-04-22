@@ -58,6 +58,9 @@ public interface MockRequestService extends IService<MockRequest> {
 
     SimpleResult<MockRequest> moveMockRequest(Integer requestId, String newScenarioCode);
 
+    SimpleResult<List<MockRequest>> transferMockRequests(List<Integer> requestIds, String action,
+            String newScenarioCode);
+
     /**
      * 加载请求下面的可用数据
      * @param requestId

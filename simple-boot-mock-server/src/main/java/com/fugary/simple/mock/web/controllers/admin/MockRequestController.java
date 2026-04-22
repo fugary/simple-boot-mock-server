@@ -206,6 +206,24 @@ public class MockRequestController {
                 copyVo == null ? null : copyVo.getScenarioCode()));
     }
 
+    @PostMapping("/transfer")
+    public SimpleResult<List<MockRequest>> transfer(@RequestBody MockRequestCopyVo copyVo) {
+        if (copyVo == null || CollectionUtils.isEmpty(copyVo.getRequestIds())
+                || StringUtils.isBlank(copyVo.getAction())) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400);
+        }
+        for (Integer requestId : copyVo.getRequestIds()) {
+            if (requestId == null) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400);
+            }
+            if (!mockProjectService.hasRequestAuthority(requestId, MockConstants.AUTHORITY_WRITABLE)) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+            }
+        }
+        return mockRequestService.transferMockRequests(copyVo.getRequestIds(), copyVo.getAction(),
+                copyVo.getScenarioCode());
+    }
+
     @DeleteMapping("/{id}")
     public SimpleResult remove(@PathVariable("id") Integer id) {
         if (!mockProjectService.hasRequestAuthority(id, MockConstants.AUTHORITY_DELETABLE)) {

@@ -5,6 +5,7 @@ import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, {
   ALL_METHODS,
   copyMockRequest,
+  transferMockRequest,
   loadHistoryDiff,
   recoverFromHistory,
   searchHistories
@@ -163,6 +164,7 @@ const resetSearchForm = () => {
 
 const selectedRows = ref([])
 const requestTableRef = ref()
+const selectedRowsCopyable = computed(() => projectWritable.value && selectedRows.value.length > 1)
 
 function syncCurrentRequestRow (request = selectRequest.value) {
   if (!request) {
@@ -173,10 +175,20 @@ function syncCurrentRequestRow (request = selectRequest.value) {
   })
 }
 
+const clearSelectedRequests = () => {
+  selectedRows.value = []
+  nextTick(() => {
+    requestTableRef.value?.table?.clearSelection?.()
+  })
+}
+
 const deleteRequests = () => {
   $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
     .then(() => MockRequestApi.removeByIds(selectedRows.value.map(item => item.id)), { loading: true })
-    .then(() => loadMockRequests())
+    .then(() => {
+      clearSelectedRequests()
+      return loadMockRequests()
+    })
     .then(() => (batchMode.value = false))
 }
 
@@ -393,6 +405,30 @@ const toCopyMockRequest = (request) => {
   $coreConfirm($i18nBundle('common.msg.confirmCopy'))
     .then(() => copyMockRequest(request.id, null, { loading: true }))
     .then(() => loadMockRequests())
+}
+
+const copySelectedRequests = () => {
+  if (!selectedRowsCopyable.value) {
+    return
+  }
+  if (scenarioList.value.length > 0) {
+    copyRequestWindowRef.value?.toCopyRequest(selectedRows.value)
+    return
+  }
+  $coreConfirm($i18nBundle('common.msg.confirmCopy'))
+    .then(() => transferMockRequest({
+      action: 'copy',
+      requestIds: selectedRows.value.map(item => item.id)
+    }, { loading: true }))
+    .then(() => {
+      clearSelectedRequests()
+      return loadMockRequests()
+    })
+}
+
+const onRequestTransferSuccess = () => {
+  clearSelectedRequests()
+  return loadMockRequests()
 }
 
 const showScenarioManageWindow = ref(false)
@@ -622,7 +658,7 @@ const toShowHistoryWindow = (current) => {
                     class="float-right"
                   >
                     <el-button
-                      v-if="projectDeletable"
+                      v-if="projectWritable || projectDeletable"
                       v-common-tooltip="$t('common.label.batchMode')"
                       round
                       :type="batchMode?'success':'default'"
@@ -640,6 +676,16 @@ const toShowHistoryWindow = (current) => {
                       @click="newOrEdit()"
                     >
                       <common-icon icon="Plus" />
+                    </el-button>
+                    <el-button
+                      v-if="selectedRowsCopyable"
+                      v-common-tooltip="$t('common.label.copy')"
+                      round
+                      type="warning"
+                      size="small"
+                      @click="copySelectedRequests()"
+                    >
+                      <common-icon icon="FileCopyFilled" />
                     </el-button>
                     <el-button
                       v-if="projectDeletable && selectedRows.length"
@@ -706,7 +752,7 @@ const toShowHistoryWindow = (current) => {
       ref="copyRequestWindowRef"
       :scenario-list="scenarioList"
       :allow-move="projectWritable"
-      @transfer-success="loadMockRequests()"
+      @transfer-success="onRequestTransferSuccess"
     />
   </el-container>
 </template>
