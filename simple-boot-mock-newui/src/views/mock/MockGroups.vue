@@ -283,15 +283,23 @@ const columns = computed(() => {
     },
     formatter (data) {
       const url = `/mock/groups/${data.id}?backUrl=${route.fullPath}`
+      const projectOption = projectOptions.value.find(proj => `${proj.projectId || ''}` === `${data.projectId || ''}`) ||
+        projectOptions.value.find(proj => proj.projectCode === data.projectCode)
+      const projectUserName = projectOption?.userName || mockProject.value?.userName || data.userName
       let projectInfo = ''
-      if (data.projectCode && !isDefaultProject(data.projectCode)) {
-        const projectOption = projectOptions.value.find(proj => `${proj.projectId || ''}` === `${data.projectId || ''}`) ||
-          projectOptions.value.find(proj => proj.projectCode === data.projectCode)
+      if (isDefaultProject(data.projectCode)) {
+        if (projectUserName && projectUserName !== useCurrentUserName()) {
+          projectInfo = <>
+            <span>{$i18nBundle('mock.label.defaultProject')}</span>
+            <ElText class="margin-left1" type="success" tag="b"
+                    v-common-tooltip={$i18nBundle('mock.label.owner')}>({projectUserName})</ElText>
+          </>
+        }
+      } else if (data.projectCode) {
         projectInfo = projectOption?.labelComp?.() || $i18nBundle(projectOption?.labelKey) || mockProject.value?.projectName
         if (!projectInfo) {
           projectInfo = data.projectCode
         }
-        const projectUserName = projectOption?.userName || mockProject.value?.userName || data.userName
         if (!projectOption && projectUserName && projectUserName !== useCurrentUserName()) {
           projectInfo = <>
             <span>{projectInfo}</span>
