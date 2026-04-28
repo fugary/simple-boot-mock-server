@@ -126,7 +126,8 @@ public class MockProjectController {
     @GetMapping("/selectProjects")
     public SimpleResult<List<MockProject>> selectProjects(@ModelAttribute MockProjectQueryVo queryVo) {
         QueryWrapper<MockProject> queryWrapper = Wrappers.<MockProject>query();
-        queryWrapper.eq("status", 1);
+        boolean includeDisabled = !queryVo.isPublicFlag() && Boolean.TRUE.equals(queryVo.getIncludeDisabled());
+        queryWrapper.eq(!includeDisabled, "status", 1);
         String queryUserName = resolveQueryUserName(queryVo);
         if (queryVo.isPublicFlag()) {
             queryWrapper.eq("public_flag", true)
@@ -250,6 +251,7 @@ public class MockProjectController {
 
     private void appendSelectedProject(List<MockProject> projects, MockProjectQueryVo queryVo) {
         Integer projectId = queryVo.getProjectId();
+        boolean includeDisabled = !queryVo.isPublicFlag() && Boolean.TRUE.equals(queryVo.getIncludeDisabled());
         if (projectId == null) {
             return;
         }
@@ -258,7 +260,7 @@ public class MockProjectController {
             return;
         }
         MockProject project = mockProjectService.loadMockProject(resolveQueryUserName(queryVo), projectId, null);
-        if (project == null || !project.isEnabled()) {
+        if (project == null) {
             return;
         }
         decorateDefaultProject(project, resolveDefaultProjectOwner(queryVo));
@@ -268,9 +270,9 @@ public class MockProjectController {
             return;
         }
         boolean allowed = queryVo.isPublicFlag()
-                ? Boolean.TRUE.equals(project.getPublicFlag())
+                ? Boolean.TRUE.equals(project.getPublicFlag()) && project.isEnabled()
                 : mockProjectService.hasProjectAuthority(project, null);
-        if (allowed) {
+        if (allowed && (includeDisabled || project.isEnabled())) {
             projects.add(project);
         }
     }

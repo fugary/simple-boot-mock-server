@@ -308,7 +308,7 @@ public class MockGroupController {
         if (existsProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!mockProjectService.hasProjectAuthority(existsProject, MockConstants.AUTHORITY_WRITABLE)) {
+        if (!hasProjectWriteAccess(existsProject)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         String[] groupIds = groupIdsStr.split("\\s*,\\s*");
@@ -340,7 +340,7 @@ public class MockGroupController {
         if (targetProject == null) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
-        if (!mockProjectService.hasProjectAuthority(targetProject, MockConstants.AUTHORITY_WRITABLE)) {
+        if (!hasProjectWriteAccess(targetProject)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         boolean moveAction = StringUtils.equalsIgnoreCase("move", transferVo.getAction());
@@ -396,6 +396,9 @@ public class MockGroupController {
         if (importGroupsResult.isSuccess()) {
             MockProject project = resolveTargetProject(importVo.getUserName(), importVo.getProjectId(), importVo.getProjectCode());
             if (project != null) {
+                if (!isDefaultProjectCode(project.getProjectCode()) && !hasProjectWriteAccess(project)) {
+                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403, 0);
+                }
                 if (StringUtils.equals(project.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT)) {
                     importVo.setProjectId(null);
                     importVo.setProjectCode(MockConstants.MOCK_DEFAULT_PROJECT);
@@ -590,11 +593,19 @@ public class MockGroupController {
     }
 
     private boolean hasProjectReadAccess(MockProject project, boolean publicFlag) {
-        if (project == null || !project.isEnabled()) {
+        if (project == null) {
             return false;
         }
-        return (publicFlag && Boolean.TRUE.equals(project.getPublicFlag()))
-                || mockProjectService.hasProjectAuthority(project, MockConstants.AUTHORITY_READABLE);
+        if (publicFlag && Boolean.TRUE.equals(project.getPublicFlag()) && project.isEnabled()) {
+            return true;
+        }
+        return mockProjectService.hasProjectAuthority(project, MockConstants.AUTHORITY_READABLE);
+    }
+
+    private boolean hasProjectWriteAccess(MockProject project) {
+        return project != null
+                && (isDefaultProjectCode(project.getProjectCode()) || project.isEnabled())
+                && mockProjectService.hasProjectAuthority(project, MockConstants.AUTHORITY_WRITABLE);
     }
 
     private boolean isDefaultProjectCode(String projectCode) {
@@ -620,7 +631,7 @@ public class MockGroupController {
     private String buildReadableProjectExistsSql(String userName) {
         return "select 1 from t_mock_project p join t_mock_project_user pu "
                 + "on (pu.project_id = p.id or (pu.project_id is null and pu.project_code = p.project_code)) "
-                + "where pu.user_name = '" + userName + "' and p.status = 1 and p.project_code <> '"
+                + "where pu.user_name = '" + userName + "' and p.project_code <> '"
                 + MockConstants.MOCK_DEFAULT_PROJECT + "' and (p.id = t_mock_group.project_id "
                 + "or (t_mock_group.project_id is null and p.project_code = t_mock_group.project_code))";
     }

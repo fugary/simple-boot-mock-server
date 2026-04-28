@@ -43,7 +43,8 @@ const loadAccessibleProjects = async () => {
   const [readableResult, publicResult] = await Promise.allSettled([
     selectProjects({
       userName: useCurrentUserName(),
-      publicFlag: false
+      publicFlag: false,
+      includeDisabled: true
     }),
     selectProjects({
       publicFlag: true

@@ -311,8 +311,18 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
 
     @Override
     public boolean hasGroupAuthority(MockGroup group, String authority) {
-        return group != null && hasProjectAuthority(group.getUserName(), group.getProjectId(),
-                group.getProjectCode(), authority);
+        if (group == null) {
+            return false;
+        }
+        MockProject project = loadMockProject(group.getUserName(), group.getProjectId(), group.getProjectCode());
+        if (project == null) {
+            return false;
+        }
+        if (!project.isEnabled() && StringUtils.isNotBlank(authority)
+                && !StringUtils.equalsIgnoreCase(MockConstants.AUTHORITY_READABLE, authority)) {
+            return false;
+        }
+        return hasProjectAuthority(project, authority);
     }
 
     @Override

@@ -1,4 +1,4 @@
-import MockProjectApi, { selectProjects, sortProjects } from '@/api/mock/MockProjectApi'
+import MockProjectApi, { isProjectEnabled, selectProjects, sortProjects } from '@/api/mock/MockProjectApi'
 import { getStyleGrow, isAdminUser, useCurrentUserName } from '@/utils'
 import { useFormStatus } from '@/consts/GlobalConstants'
 import { computed, ref } from 'vue'
@@ -64,24 +64,40 @@ export const useSelectProjects = (searchParam, autoSelect) => {
             value: project.projectCode,
             projectCode: project.projectCode,
             projectId: null,
-            userName: project.userName
+            userName: project.userName,
+            status: project.status
           }
         }
-        const label = project.userName && project.userName !== useCurrentUserName()
+        const labelBase = project.userName && project.userName !== useCurrentUserName()
           ? `${project.projectName} - ${project.userName}`
           : project.projectName
+        const label = !isProjectEnabled(project)
+          ? `${labelBase} (${String($i18nBundle('common.label.statusDisabled'))})`
+          : labelBase
         const labelComp = () => {
           if (project.labelKey) {
             return $i18nBundle(project.labelKey)
           }
           if (project.userName && project.userName !== useCurrentUserName()) {
-            return <>
+            return <span>
               {project.projectName}
               <ElText class="margin-left1" type="success" tag="b"
                       v-common-tooltip={$i18nBundle('mock.label.owner')}>({project.userName})</ElText>
-            </>
+              {!isProjectEnabled(project)
+                ? <ElText class="margin-left1" type="danger" tag="b">
+                  ({$i18nBundle('common.label.statusDisabled')})
+                </ElText>
+                : ''}
+            </span>
           }
-          return project.projectName
+          return <span>
+            {project.projectName}
+            {!isProjectEnabled(project)
+              ? <ElText class="margin-left1" type="danger" tag="b">
+                ({$i18nBundle('common.label.statusDisabled')})
+              </ElText>
+              : ''}
+          </span>
         }
         return {
           label,
@@ -90,6 +106,7 @@ export const useSelectProjects = (searchParam, autoSelect) => {
           userName: project.userName,
           projectId: project.id,
           projectCode: project.projectCode,
+          status: project.status,
           slots: {
             default: labelComp
           }
@@ -102,7 +119,8 @@ export const useSelectProjects = (searchParam, autoSelect) => {
       userName: searchParam.value?.userName || useCurrentUserName(),
       publicFlag: searchParam.value?.publicFlag,
       projectId: searchParam.value?.projectId || undefined,
-      onlyMine: searchParam.value?.onlyMine || undefined
+      onlyMine: searchParam.value?.onlyMine || undefined,
+      includeDisabled: !searchParam.value?.publicFlag
     })
     const currentProj = findProjectByValue(projects.value, searchParam.value)
     if (autoSelect) {

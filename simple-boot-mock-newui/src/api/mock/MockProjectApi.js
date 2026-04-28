@@ -64,11 +64,15 @@ export const hasProjectAuthority = (project, authority) => {
   return authorities.includes(authority)
 }
 
+export const isProjectEnabled = (project) => {
+  return project?.status == null || Number(project.status) === 1
+}
+
 export const checkProjectReadable = (project) => hasProjectAuthority(project, 'readable')
 
-export const checkProjectWritable = (project) => hasProjectAuthority(project, 'writable')
+export const checkProjectWritable = (project) => isProjectEnabled(project) && hasProjectAuthority(project, 'writable')
 
-export const checkProjectDeletable = (project) => hasProjectAuthority(project, 'deletable')
+export const checkProjectDeletable = (project) => isProjectEnabled(project) && hasProjectAuthority(project, 'deletable')
 
 /**
  * 加载当前用户可选项目

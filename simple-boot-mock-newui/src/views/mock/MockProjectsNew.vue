@@ -5,6 +5,7 @@ import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import MockProjectApi, {
   checkProjectDeletable,
+  checkProjectReadable,
   checkProjectEdit,
   selectProjects,
   sortProjects,
@@ -48,7 +49,8 @@ const loadSharedProjectOptions = () => {
   }
   return selectProjects({
     userName: searchParam.value?.userName || useCurrentUserName(),
-    publicFlag: false
+    publicFlag: false,
+    includeDisabled: true
   }).then(result => {
     sharedProjectOptions.value = (result || []).filter(project => {
       return !isDefaultProject(project?.projectCode) && project?.userName && project.userName !== useCurrentUserName()
@@ -96,16 +98,16 @@ const reloadProjectsAfterAuthorityChange = async () => {
 }
 
 const gotoMockGroups = (project) => {
-  if (project.status === 1) {
-    const query = new URLSearchParams({ backUrl: route.fullPath })
-    if (!isDefaultProject(project.projectCode) && project.id != null) {
-      query.set('projectId', `${project.id}`)
-    }
-    const userPath = isDefaultProject(project.projectCode) && project.userName ? `/${project.userName}` : ''
-    $goto(`/mock/groups/${props.publicFlag ? 'pubProject' : 'project'}/${project.projectCode}${userPath}?${query.toString()}`)
+  if (!checkProjectReadable(project)) {
+    return
   }
+  const query = new URLSearchParams({ backUrl: route.fullPath })
+  if (!isDefaultProject(project.projectCode) && project.id != null) {
+    query.set('projectId', `${project.id}`)
+  }
+  const userPath = isDefaultProject(project.projectCode) && project.userName ? `/${project.userName}` : ''
+  $goto(`/mock/groups/${props.publicFlag ? 'pubProject' : 'project'}/${project.projectCode}${userPath}?${query.toString()}`)
 }
-
 //* ************搜索框**************//
 const searchFormOptions = computed(() => {
   return [...(showOnlyMineFilter.value
@@ -222,9 +224,11 @@ const tableProjectItems = computed(() => {
     const defaultProject = isDefaultProject(project.projectCode)
     const publicProject = !!project.publicFlag
     const editable = !defaultProject && checkProjectEdit(project)
+    const readable = checkProjectReadable(project)
     return {
       projectUsers: project.projectUsers || [],
       defaultProject,
+      readable,
       project,
       projectItems: [{
         labelKey: 'mock.label.owner',
@@ -238,9 +242,7 @@ const tableProjectItems = computed(() => {
           const groupCount = Number(project.groupCount) || 0
           const gotoProjectGroups = (event) => {
             event?.stopPropagation()
-            if (project.status === 1) {
-              gotoMockGroups(project)
-            }
+            gotoMockGroups(project)
           }
           return <>
             <DelFlagTag v-model={project.status} clickToToggle={editable}
@@ -257,14 +259,14 @@ const tableProjectItems = computed(() => {
               : ''}
             {groupCount > 0
               ? <ElTag
-                  v-common-tooltip={$i18nBundle('mock.label.mockGroupCount')}
-                  type="primary"
-                  size="small"
-                  effect="plain"
-                  class={project.status === 1 ? 'margin-left1 pointer' : 'margin-left1'}
-                  round={true}
-                  onClick={gotoProjectGroups}
-                >
+                    v-common-tooltip={$i18nBundle('mock.label.mockGroupCount')}
+                    type="primary"
+                    size="small"
+                    effect="plain"
+                    class={readable ? 'margin-left1 pointer' : 'margin-left1'}
+                    round={true}
+                    onClick={gotoProjectGroups}
+                  >
                   {groupCount}
                 </ElTag>
               : ''}
@@ -473,7 +475,7 @@ const pageAttrs = {
         :class="{'margin-top2': index>0}"
       >
         <el-col
-          v-for="{project, projectItems, defaultProject, projectUsers} in dataRow"
+          v-for="{project, projectItems, defaultProject, projectUsers, readable} in dataRow"
           :key="project.id"
           :span="Math.floor(24/colSize)"
           class="project-list-col"
@@ -484,7 +486,7 @@ const pageAttrs = {
             shadow="hover"
             class="small-card operation-card project-card"
             :class="{
-              pointer: project.status===1,
+              pointer: readable,
               'project-selected': project.selected,
               'project-disabled': project.status!==1
             }"
@@ -544,7 +546,7 @@ const pageAttrs = {
                     <common-icon icon="UserFilled" />
                   </el-button>
                   <el-button
-                    v-if="!defaultProject"
+                    v-if="!defaultProject&&project.status===1"
                     v-common-tooltip="$t('common.label.copy')"
                     type="warning"
                     size="small"
@@ -814,11 +816,6 @@ const pageAttrs = {
 
 .project-disabled {
   opacity: 0.72;
-}
-
-.project-disabled:hover {
-  transform: none;
-  cursor: not-allowed;
 }
 
 .project-card :deep(.el-descriptions__label) {

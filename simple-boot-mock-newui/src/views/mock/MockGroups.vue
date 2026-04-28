@@ -41,6 +41,7 @@ import { ElLink, ElText, ElTag } from 'element-plus'
 import MockProjectApi, {
   checkProjectReadable,
   checkProjectDeletable,
+  isProjectEnabled,
   checkProjectWritable,
   selectProjects
 } from '@/api/mock/MockProjectApi'
@@ -258,7 +259,8 @@ const loadSharedProjectOptions = (result) => {
   }
   return selectProjects({
     userName: searchParam.value?.userName || useCurrentUserName(),
-    publicFlag: false
+    publicFlag: false,
+    includeDisabled: true
   }).then(refreshSharedProjectOptions)
 }
 const loadProjectRelatedOptions = async ({ reloadUsers = false } = {}) => {
@@ -326,9 +328,8 @@ const columns = computed(() => {
     },
     formatter (data) {
       const url = `/mock/groups/${data.id}?backUrl=${route.fullPath}`
-      const projectOption = projectOptions.value.find(proj => `${proj.projectId || ''}` === `${data.projectId || ''}`) ||
-        projectOptions.value.find(proj => proj.projectCode === data.projectCode)
-      const projectUserName = projectOption?.userName || mockProject.value?.userName || data.userName
+      const groupProject = resolveGroupProject(data)
+      const projectUserName = groupProject?.userName || data.userName
       let projectInfo = ''
       if (isDefaultProject(data.projectCode)) {
         if (projectUserName && projectUserName !== useCurrentUserName()) {
@@ -339,18 +340,23 @@ const columns = computed(() => {
           </>
         }
       } else if (data.projectCode) {
-        projectInfo = projectOption?.labelComp?.() || $i18nBundle(projectOption?.labelKey) || mockProject.value?.projectName
+        projectInfo = groupProject?.projectName || data.projectCode
         if (!projectInfo) {
           projectInfo = data.projectCode
         }
-        if (!projectOption && projectUserName && projectUserName !== useCurrentUserName()) {
+        if (projectUserName && projectUserName !== useCurrentUserName()) {
           projectInfo = <>
             <span>{projectInfo}</span>
             <ElText class="margin-left1" type="success" tag="b"
-                    v-common-tooltip={$i18nBundle('mock.label.owner')}>({projectUserName})</ElText>
+                      v-common-tooltip={$i18nBundle('mock.label.owner')}>({projectUserName})</ElText>
           </>
         }
       }
+      const disabledProjectTag = groupProject && !isProjectEnabled(groupProject)
+        ? <ElTag size="small" type="danger" effect="plain" class={projectInfo ? 'margin-left1' : ''}>
+          {$i18nBundle('common.label.statusDisabled')}
+        </ElTag>
+        : ''
       const hasScenarios = (scenarioMap.value[data.id] || []).length > 0
       let activeScenarioName = ''
       if (data.activeScenarioCode) {
@@ -362,7 +368,7 @@ const columns = computed(() => {
       }
       return <>
           <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
-        {projectInfo ? <><br/><span class="el-text el-text--info">{projectInfo}</span></> : ''}
+        {(projectInfo || disabledProjectTag) ? <><br/><div class="el-text el-text--info">{projectInfo}{disabledProjectTag}</div></> : ''}
         {activeScenarioName
           ? <><br/><ElTag size="small" type="warning">{activeScenarioName}</ElTag></>
           : ''}
@@ -1137,7 +1143,7 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
       :default-project-id="searchParam.projectId"
       :user-options="userOptions"
       :default-project="searchParam.projectCode"
-      :project-options="projectOptions"
+      :project-options="writableProjectOptions"
       @import-success="loadMockGroups()"
       @update-projects="reloadProjectsAndRefreshOptions"
       @changed-user="changedUser"
