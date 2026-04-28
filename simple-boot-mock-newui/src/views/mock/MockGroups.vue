@@ -335,22 +335,24 @@ const columns = computed(() => {
       if (isDefaultProject(data.projectCode)) {
         if (projectUserName && projectUserName !== useCurrentUserName()) {
           projectInfo = <>
-            <span>{$i18nBundle('mock.label.defaultProject')}</span>
-            <ElText class="margin-left1" type="success" tag="b"
+            <ElText size="small" type="info" tag="span">{$i18nBundle('mock.label.defaultProject')}</ElText>
+            <ElText class="margin-left1" size="small" type="success" tag="b"
                     v-common-tooltip={$i18nBundle('mock.label.owner')}>({projectUserName})</ElText>
           </>
         }
       } else if (data.projectCode) {
         const projectName = groupProject?.projectName || data.projectCode
-        const projectNameNode = disabledProject
-          ? <ElText type="danger" tag="span">{projectName}</ElText>
-          : <span>{projectName}</span>
+        const projectNameNode = <ElText type={disabledProject ? 'danger' : 'info'}
+                                        size="small"
+                                        tag="span">{projectName}</ElText>
         if (!projectName) {
-          projectInfo = data.projectCode
+          projectInfo = <ElText type={disabledProject ? 'danger' : 'info'} size="small" tag="span">
+            {data.projectCode}
+          </ElText>
         } else if (projectUserName && projectUserName !== useCurrentUserName()) {
           projectInfo = <>
             {projectNameNode}
-            <ElText class="margin-left1" type="success" tag="b"
+            <ElText class="margin-left1" size="small" type="success" tag="b"
                       v-common-tooltip={$i18nBundle('mock.label.owner')}>({projectUserName})</ElText>
           </>
         } else {
@@ -368,9 +370,9 @@ const columns = computed(() => {
       }
       return <>
           <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
-        {projectInfo ? <><br/><div class="el-text el-text--info">{projectInfo}</div></> : ''}
+        {projectInfo ? <div class="mock-group-project-info">{projectInfo}</div> : ''}
         {activeScenarioName
-          ? <><br/><ElTag size="small" type="warning">{activeScenarioName}</ElTag></>
+          ? <div class="mock-group-scenario-info"><ElTag size="small" type="warning">{activeScenarioName}</ElTag></div>
           : ''}
       </>
     }
@@ -863,7 +865,7 @@ const historyColumns = computed(() => {
       return <>
         {data.groupName}
         {activeScenarioName
-          ? <><br/><ElTag size="small" type="warning">{activeScenarioName}</ElTag></>
+          ? <div class="mock-group-scenario-info"><ElTag size="small" type="warning">{activeScenarioName}</ElTag></div>
           : ''}
       </>
     }
@@ -1170,6 +1172,15 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
 
 .group-page-header__back {
   flex-shrink: 0;
+}
+
+.mock-group-project-info {
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.mock-group-scenario-info {
+  margin-top: 4px;
 }
 
 @media (max-width: 768px) {
