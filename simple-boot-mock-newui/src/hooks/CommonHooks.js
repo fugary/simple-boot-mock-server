@@ -27,12 +27,12 @@ export const useTableAndSearchForm = ({
   const tableData = ref([])
   const loading = ref(false)
   const searchParam = ref(saveParam ? globalSearchParamStore.getCurrentParam(defaultParam) : defaultParam)
-  const searchTableItems = async (pageNumber, newParams = {}) => {
+  const searchTableItems = async (pageNumber, newParams = {}, saveConfig) => {
     if (isNumber(pageNumber) && searchParam.value) {
       searchParam.value?.page && (searchParam.value.page.pageNumber = pageNumber)
     }
     loading.value = true
-    saveParam && globalSearchParamStore.saveCurrentParam(searchParam.value)
+    saveParam && globalSearchParamStore.saveCurrentParam(searchParam.value, saveConfig)
     const searchResult = await searchMethod({ ...searchParam.value, ...newParams })
       .finally(() => { loading.value = false })
     loading.value = false

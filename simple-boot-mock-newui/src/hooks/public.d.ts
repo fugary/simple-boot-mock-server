@@ -12,5 +12,5 @@ export interface CommonTableAndSearchResult {
     tableData: Ref<Array<any>>;
     loading: Ref<boolean>;
     searchParam: Ref<any>;
-    searchMethod: (pageNumber?: number) => Promise<any>;
+    searchMethod: (pageNumber?: number, newParams?: any, saveConfig?: string | { path?: string; timeout?: number }) => Promise<any>;
 }

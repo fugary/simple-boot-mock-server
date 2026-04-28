@@ -1,5 +1,5 @@
 <script setup lang="jsx">
-import { computed, onActivated, onMounted, ref, watch } from 'vue'
+import { computed, onActivated, onMounted, ref } from 'vue'
 import { useDefaultPage } from '@/config'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableButtons } from '@/components/utils'
@@ -45,7 +45,7 @@ import MockProjectApi, {
   selectProjects
 } from '@/api/mock/MockProjectApi'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
-import { useRoute } from 'vue-router'
+import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { toCopyGroupTo, showHistoryListWindow } from '@/utils/DynamicUtils'
 import {
@@ -148,7 +148,7 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
 })
 const mockProject = ref()
 const scenarioMap = ref({})
-const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
+const loadMockGroups = (pageNumber, saveConfig) => searchMethod(pageNumber, {}, saveConfig)
   .then(data => {
     mockProject.value = data.infos?.mockProject
     scenarioMap.value = data.infos?.scenarioMap || {}
@@ -164,10 +164,10 @@ const loadMockGroups = (pageNumber) => searchMethod(pageNumber)
   })
 
 const { backUrl, goBack } = useBackUrl()
-const syncRouteSearchParam = () => {
-  const routeProjectCode = route.params.projectCode ? String(route.params.projectCode) : null
-  const routeProjectId = route.query.projectId ? Number(route.query.projectId) : null
-  const routeUserName = route.params.userName ? String(route.params.userName) : null
+const syncRouteSearchParam = (targetRoute = route) => {
+  const routeProjectCode = targetRoute.params.projectCode ? String(targetRoute.params.projectCode) : null
+  const routeProjectId = targetRoute.query.projectId ? Number(targetRoute.query.projectId) : null
+  const routeUserName = targetRoute.params.userName ? String(targetRoute.params.userName) : null
   const hasRouteProjectId = Number.isFinite(routeProjectId) && routeProjectId > 0
   if (routeProjectCode) {
     searchParam.value.projectId = hasRouteProjectId ? routeProjectId : null
@@ -243,15 +243,20 @@ const { initLoadOnce } = useInitLoadOnce(async () => {
   return loadMockGroups()
 })
 
+const reloadMockGroupsForRoute = (targetRoute) => {
+  syncRouteSearchParam(targetRoute)
+  loadProjectRelatedOptions({ reloadUsers: true }).then(() => {
+    syncRouteSearchParam(targetRoute)
+    return loadMockGroups(1, targetRoute.path)
+  })
+}
+
 onMounted(initLoadOnce)
 
 onActivated(initLoadOnce)
 
-watch(() => route.fullPath, async () => {
-  syncRouteSearchParam()
-  await loadProjectRelatedOptions({ reloadUsers: true })
-  syncRouteSearchParam()
-  loadMockGroups(1)
+onBeforeRouteUpdate((to) => {
+  reloadMockGroupsForRoute(to)
 })
 
 /**
