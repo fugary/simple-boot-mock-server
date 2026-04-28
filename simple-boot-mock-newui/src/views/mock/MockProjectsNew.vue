@@ -158,6 +158,14 @@ const saveProjectItem = (item) => {
     loadMockProjects()
   })
 }
+const cancelProjectPublicFlag = (project, $event) => {
+  $event?.stopPropagation()
+  if (!project?.publicFlag || !checkProjectEdit(project)) {
+    return Promise.resolve()
+  }
+  return $coreConfirm($i18nKey('common.msg.commonConfirm', 'mock.label.cancelPublic'))
+    .then(() => saveProjectItem({ ...project, publicFlag: false }))
+}
 
 const minWidth = '100px'
 
@@ -238,7 +246,12 @@ const tableProjectItems = computed(() => {
             <DelFlagTag v-model={project.status} clickToToggle={editable}
                                onToggleValue={(status) => saveProjectItem({ ...project, status })} />
             {publicProject
-              ? <ElTag type="primary" class="margin-left1">
+              ? <ElTag
+                  v-common-tooltip={$i18nBundle(editable ? 'mock.label.cancelPublic' : 'mock.label.public')}
+                  type="primary"
+                  class={editable ? 'margin-left1 pointer' : 'margin-left1'}
+                  onClick={editable ? ($event) => cancelProjectPublicFlag(project, $event) : undefined}
+                >
                   {$i18nBundle('mock.label.public')}
                 </ElTag>
               : ''}
