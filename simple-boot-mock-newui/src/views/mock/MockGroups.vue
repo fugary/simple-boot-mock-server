@@ -330,6 +330,7 @@ const columns = computed(() => {
       const url = `/mock/groups/${data.id}?backUrl=${route.fullPath}`
       const groupProject = resolveGroupProject(data)
       const projectUserName = groupProject?.userName || data.userName
+      const disabledProject = groupProject && !isProjectEnabled(groupProject)
       let projectInfo = ''
       if (isDefaultProject(data.projectCode)) {
         if (projectUserName && projectUserName !== useCurrentUserName()) {
@@ -340,23 +341,22 @@ const columns = computed(() => {
           </>
         }
       } else if (data.projectCode) {
-        projectInfo = groupProject?.projectName || data.projectCode
-        if (!projectInfo) {
+        const projectName = groupProject?.projectName || data.projectCode
+        const projectNameNode = disabledProject
+          ? <ElText type="danger" tag="span">{projectName}</ElText>
+          : <span>{projectName}</span>
+        if (!projectName) {
           projectInfo = data.projectCode
-        }
-        if (projectUserName && projectUserName !== useCurrentUserName()) {
+        } else if (projectUserName && projectUserName !== useCurrentUserName()) {
           projectInfo = <>
-            <span>{projectInfo}</span>
+            {projectNameNode}
             <ElText class="margin-left1" type="success" tag="b"
                       v-common-tooltip={$i18nBundle('mock.label.owner')}>({projectUserName})</ElText>
           </>
+        } else {
+          projectInfo = projectNameNode
         }
       }
-      const disabledProjectTag = groupProject && !isProjectEnabled(groupProject)
-        ? <ElTag size="small" type="danger" effect="plain" class={projectInfo ? 'margin-left1' : ''}>
-          {$i18nBundle('common.label.statusDisabled')}
-        </ElTag>
-        : ''
       const hasScenarios = (scenarioMap.value[data.id] || []).length > 0
       let activeScenarioName = ''
       if (data.activeScenarioCode) {
@@ -368,7 +368,7 @@ const columns = computed(() => {
       }
       return <>
           <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
-        {(projectInfo || disabledProjectTag) ? <><br/><div class="el-text el-text--info">{projectInfo}{disabledProjectTag}</div></> : ''}
+        {projectInfo ? <><br/><div class="el-text el-text--info">{projectInfo}</div></> : ''}
         {activeScenarioName
           ? <><br/><ElTag size="small" type="warning">{activeScenarioName}</ElTag></>
           : ''}

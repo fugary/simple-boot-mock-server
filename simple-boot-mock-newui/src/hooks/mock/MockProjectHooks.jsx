@@ -71,33 +71,22 @@ export const useSelectProjects = (searchParam, autoSelect) => {
         const labelBase = project.userName && project.userName !== useCurrentUserName()
           ? `${project.projectName} - ${project.userName}`
           : project.projectName
-        const label = !isProjectEnabled(project)
-          ? `${labelBase} (${String($i18nBundle('common.label.statusDisabled'))})`
-          : labelBase
+        const label = labelBase
         const labelComp = () => {
           if (project.labelKey) {
             return $i18nBundle(project.labelKey)
           }
+          const projectNameNode = isProjectEnabled(project)
+            ? <span>{project.projectName}</span>
+            : <ElText type="danger" tag="span">{project.projectName}</ElText>
           if (project.userName && project.userName !== useCurrentUserName()) {
             return <span>
-              {project.projectName}
+              {projectNameNode}
               <ElText class="margin-left1" type="success" tag="b"
                       v-common-tooltip={$i18nBundle('mock.label.owner')}>({project.userName})</ElText>
-              {!isProjectEnabled(project)
-                ? <ElText class="margin-left1" type="danger" tag="b">
-                  ({$i18nBundle('common.label.statusDisabled')})
-                </ElText>
-                : ''}
             </span>
           }
-          return <span>
-            {project.projectName}
-            {!isProjectEnabled(project)
-              ? <ElText class="margin-left1" type="danger" tag="b">
-                ({$i18nBundle('common.label.statusDisabled')})
-              </ElText>
-              : ''}
-          </span>
+          return projectNameNode
         }
         return {
           label,
