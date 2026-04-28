@@ -546,7 +546,7 @@ const pageAttrs = {
                     <common-icon icon="UserFilled" />
                   </el-button>
                   <el-button
-                    v-if="!defaultProject&&project.status===1"
+                    v-if="!defaultProject"
                     v-common-tooltip="$t('common.label.copy')"
                     type="warning"
                     size="small"

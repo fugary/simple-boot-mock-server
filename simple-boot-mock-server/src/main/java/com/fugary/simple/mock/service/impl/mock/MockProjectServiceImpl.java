@@ -277,6 +277,9 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
             if (SecurityUtils.isAdminUser() || SecurityUtils.isCurrentUser(project.getUserName())) {
                 return true;
             }
+            if (!project.isEnabled()) {
+                return false;
+            }
             String currentUserName = SecurityUtils.getLoginUserName();
             if (StringUtils.isBlank(currentUserName)) {
                 return false;
@@ -311,18 +314,8 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
 
     @Override
     public boolean hasGroupAuthority(MockGroup group, String authority) {
-        if (group == null) {
-            return false;
-        }
-        MockProject project = loadMockProject(group.getUserName(), group.getProjectId(), group.getProjectCode());
-        if (project == null) {
-            return false;
-        }
-        if (!project.isEnabled() && StringUtils.isNotBlank(authority)
-                && !StringUtils.equalsIgnoreCase(MockConstants.AUTHORITY_READABLE, authority)) {
-            return false;
-        }
-        return hasProjectAuthority(project, authority);
+        return group != null && hasProjectAuthority(group.getUserName(), group.getProjectId(),
+                group.getProjectCode(), authority);
     }
 
     @Override

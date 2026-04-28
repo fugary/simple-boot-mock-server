@@ -197,7 +197,7 @@ public class MockProjectController {
 
     private String buildProjectUserExistsSql(String userName) {
         return "select 1 from t_mock_project_user pu where (pu.project_id = t_mock_project.id "
-                + "or (pu.project_id is null and pu.project_code = t_mock_project.project_code)) and pu.user_name = '"
+                + "or (pu.project_id is null and pu.project_code = t_mock_project.project_code)) and t_mock_project.status = 1 and pu.user_name = '"
                 + userName + "'";
     }
 

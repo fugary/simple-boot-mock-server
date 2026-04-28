@@ -604,7 +604,6 @@ public class MockGroupController {
 
     private boolean hasProjectWriteAccess(MockProject project) {
         return project != null
-                && (isDefaultProjectCode(project.getProjectCode()) || project.isEnabled())
                 && mockProjectService.hasProjectAuthority(project, MockConstants.AUTHORITY_WRITABLE);
     }
 
@@ -631,7 +630,7 @@ public class MockGroupController {
     private String buildReadableProjectExistsSql(String userName) {
         return "select 1 from t_mock_project p join t_mock_project_user pu "
                 + "on (pu.project_id = p.id or (pu.project_id is null and pu.project_code = p.project_code)) "
-                + "where pu.user_name = '" + userName + "' and p.project_code <> '"
+                + "where pu.user_name = '" + userName + "' and p.status = 1 and p.project_code <> '"
                 + MockConstants.MOCK_DEFAULT_PROJECT + "' and (p.id = t_mock_group.project_id "
                 + "or (t_mock_group.project_id is null and p.project_code = t_mock_group.project_code))";
     }
