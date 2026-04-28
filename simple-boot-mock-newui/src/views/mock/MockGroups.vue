@@ -164,6 +164,7 @@ const loadMockGroups = (pageNumber, saveConfig) => searchMethod(pageNumber, {}, 
   })
 
 const { backUrl, goBack } = useBackUrl()
+const routeProjectLocked = computed(() => !!route.params.projectCode)
 const syncRouteSearchParam = (targetRoute = route) => {
   const routeProjectCode = targetRoute.params.projectCode ? String(targetRoute.params.projectCode) : null
   const routeProjectId = targetRoute.query.projectId ? Number(targetRoute.query.projectId) : null
@@ -187,6 +188,14 @@ const syncRouteSearchParam = (targetRoute = route) => {
     searchParam.value.userName = routeUserName
   }
   searchParam.value.publicFlag = props.publicFlag
+}
+const resetProjectSearchParam = () => {
+  if (routeProjectLocked.value) {
+    syncRouteSearchParam()
+    return
+  }
+  searchParam.value.projectId = null
+  searchParam.value.projectCode = null
 }
 syncRouteSearchParam()
 const projectReadable = computed(() => checkProjectReadable(mockProject.value))
@@ -551,18 +560,18 @@ const buttons = computed(() => defineTableButtons([{
 }]))
 const changedUser = async (userName) => {
   userName && (searchParam.value.userName = userName)
-  searchParam.value.projectId = null
-  searchParam.value.projectCode = null
+  resetProjectSearchParam()
   await loadProjectRelatedOptions()
+  routeProjectLocked.value && syncRouteSearchParam()
   loadMockGroups(1)
 }
 const handleOnlyMineChange = async (value) => {
   if (value) {
     searchParam.value.userName = useCurrentUserName()
   }
-  searchParam.value.projectId = null
-  searchParam.value.projectCode = null
+  resetProjectSearchParam()
   await loadProjectRelatedOptions()
+  routeProjectLocked.value && syncRouteSearchParam()
   loadMockGroups(1)
 }
 //* ************搜索框**************//
@@ -594,9 +603,14 @@ const searchFormOptions = computed(() => {
     children: projectOptions.value,
     attrs: {
       filterable: true,
-      clearable: !props.publicFlag
+      clearable: !props.publicFlag && !routeProjectLocked.value
     },
     change (value) {
+      if (!value && routeProjectLocked.value) {
+        syncRouteSearchParam()
+        loadMockGroups(1)
+        return
+      }
       const option = projectOptions.value.find(item => item.value === value)
       searchParam.value.projectId = option?.projectId || null
       searchParam.value.projectCode = option?.projectCode || value || null
