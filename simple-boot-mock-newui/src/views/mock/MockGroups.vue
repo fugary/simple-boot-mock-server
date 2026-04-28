@@ -189,7 +189,36 @@ const syncRouteSearchParam = (targetRoute = route) => {
   searchParam.value.publicFlag = props.publicFlag
 }
 syncRouteSearchParam()
+const projectReadable = computed(() => checkProjectReadable(mockProject.value))
 const projectWritable = computed(() => checkProjectWritable(mockProject.value))
+const projectHeaderTags = computed(() => {
+  if (!mockProject.value) {
+    return []
+  }
+  const tags = []
+  if (props.publicFlag || mockProject.value?.publicFlag) {
+    tags.push({
+      key: 'public',
+      type: 'primary',
+      label: $i18nBundle('mock.label.public')
+    })
+  }
+  if (projectWritable.value || projectReadable.value) {
+    tags.push({
+      key: 'authority',
+      type: projectWritable.value ? 'success' : 'warning',
+      label: $i18nBundle(projectWritable.value ? 'common.label.authorityWritable' : 'common.label.authorityReadable')
+    })
+  }
+  if (mockProject.value?.status !== undefined && mockProject.value?.status !== null) {
+    tags.push({
+      key: 'status',
+      type: Number(mockProject.value.status) === 1 ? 'success' : 'danger',
+      label: $i18nBundle(Number(mockProject.value.status) === 1 ? 'common.label.statusEnabled' : 'common.label.statusDisabled')
+    })
+  }
+  return tags
+})
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
 const { projects, projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
@@ -911,22 +940,43 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
       @back="goBack"
     >
       <template #content>
-        <span class="text-large font-600 mr-3">
-          {{ mockProject.projectName }}
-          <el-text
-            v-if="mockProject.userName"
-            type="info"
-          >
-            ({{ $t('mock.label.owner') }}: {{ mockProject.userName }})
-          </el-text>
+        <div class="group-page-header">
+          <div class="group-page-header__main">
+            <span class="text-large font-600">
+              {{ mockProject.projectName }}
+            </span>
+            <el-text
+              v-if="mockProject.userName"
+              type="info"
+              tag="b"
+            >
+              ({{ $t('mock.label.owner') }}:
+              <el-text
+                v-if="mockProject.userName"
+                type="success"
+                tag="b"
+              >
+                {{ mockProject.userName }}
+              </el-text>
+              )
+            </el-text>
+            <el-tag
+              v-for="tag in projectHeaderTags"
+              :key="tag.key"
+              size="small"
+              :type="tag.type"
+            >
+              {{ tag.label }}
+            </el-tag>
+          </div>
           <el-link
             type="primary"
-            class="margin-left2"
+            class="group-page-header__back"
             @click="$goto('/mock/groups')"
           >
             {{ $i18nKey('common.label.commonBack','mock.label.mockGroups') }}
           </el-link>
-        </span>
+        </div>
       </template>
     </el-page-header>
     <common-form
@@ -1082,5 +1132,31 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
 </template>
 
 <style scoped>
+.group-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.group-page-header__main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.group-page-header__back {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .group-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 
 </style>
