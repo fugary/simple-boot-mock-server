@@ -1,7 +1,11 @@
 package com.fugary.simple.mock.script;
 
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.util.HexUtil;
 import cn.hutool.crypto.asymmetric.AsymmetricCrypto;
 import cn.hutool.crypto.asymmetric.KeyType;
+import cn.hutool.crypto.asymmetric.Sign;
+import cn.hutool.crypto.asymmetric.SignAlgorithm;
 import cn.hutool.crypto.symmetric.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -132,5 +136,62 @@ public class HuToolCryptoUtils {
         AsymmetricCrypto crypto = new AsymmetricCrypto(algorithm, privateKey, publicKey);
         return encrypt ? (base64 ? crypto.encryptBase64(input, keyTypeEnum) : crypto.encryptHex(input, keyTypeEnum))
                 : crypto.decryptStr(input, keyTypeEnum);
+    }
+
+    /**
+     * RSA 签名
+     *
+     * @param input
+     * @param key
+     * @param config
+     * @return
+     */
+    public static String signRSA(String input, String key, Map<String, String> config) {
+        if (StringUtils.isBlank(input) || StringUtils.isBlank(key)) {
+            return input;
+        }
+        config = config == null ? new HashMap<>() : config;
+        String algorithm = StringUtils.defaultIfBlank(config.get("algorithm"), "SHA1withRSA");
+        String keyType = StringUtils.defaultIfBlank(config.get("keyType"), "PublicKey");
+        String output = StringUtils.defaultIfBlank(config.get("output"), "base64");
+        boolean base64 = StringUtils.equalsIgnoreCase(output, "base64");
+
+        Pair<KeyType, String> keyPair = autoCalcPemKey(key);
+        String privateKey = null;
+        String publicKey = null;
+
+        KeyType keyTypeEnum = Objects.requireNonNullElseGet(keyPair.getKey(), () -> keyType.equals("PublicKey") ? PublicKey : PrivateKey);
+        if (keyTypeEnum == KeyType.PrivateKey) {
+            privateKey = keyPair.getValue();
+        } else {
+            publicKey = keyPair.getValue();
+        }
+        Sign sign = new Sign(SignAlgorithm.valueOf(algorithm), privateKey, publicKey);
+        byte[] signed = sign.sign(input.getBytes(StandardCharsets.UTF_8));
+
+        return base64 ? Base64.encode(signed) : HexUtil.encodeHexStr(signed);
+    }
+
+    /**
+     * 验证
+     * @param input
+     * @param signature
+     * @param key
+     * @param config
+     * @return
+     */
+    public static boolean verifyRSA(String input, String signature, String key, Map<String, String> config) {
+        config = config == null ? new HashMap<>() : config;
+        String algorithm = StringUtils.defaultIfBlank(config.get("algorithm"), "SHA1withRSA");
+        String sigFormat = StringUtils.defaultIfBlank(config.get("output"), "base64");
+
+        Pair<KeyType, String> keyPair = autoCalcPemKey(key);
+        Sign sign = new Sign(SignAlgorithm.valueOf(algorithm), null, keyPair.getValue());
+
+        byte[] signBytes = StringUtils.equalsIgnoreCase(sigFormat, "hex")
+                ? HexUtil.decodeHex(signature)
+                : Base64.decode(signature);
+
+        return sign.verify(input.getBytes(StandardCharsets.UTF_8), signBytes);
     }
 }

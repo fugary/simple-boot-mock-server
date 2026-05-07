@@ -55,6 +55,17 @@ interface RSAOptionsType {
     output: 'base64' | 'hex',
 }
 
+interface RSASignOptionsType {
+    /**
+     * 默认是SHA1withRSA
+     */
+    algorithm: 'NONEwithRSA' | 'MD2withRSA' | 'MD5withRSA' | 'SHA1withRSA' | 'SHA256withRSA' | 'SHA384withRSA' | 'SHA512withRSA' | 'SHA256withRSA_PSS' | 'SHA384withRSA_PSS' | 'SHA512withRSA_PSS'
+    /**
+     * 默认都是base64
+     */
+    output: 'base64' | 'hex',
+}
+
 interface AESOptionsType {
     /**
      * 默认是ECB
@@ -212,6 +223,27 @@ const encryptSM4: (data: string, key: string, options?: AESOptionsType) => strin
  * @returns result 加密后数据
  */
 const encryptRSA: (data: string, key: string, options?: RSAOptionsType) => string
+/**
+ * 数据RSA签名，并输出Base64数据格式
+ * @param data 数据
+ * @param key 私钥
+ * @param options 配置，支持algorithm, output配置
+ * @property {'NONEwithRSA' | 'MD2withRSA' | 'MD5withRSA' | 'SHA1withRSA' | 'SHA256withRSA' | 'SHA384withRSA' | 'SHA512withRSA' | 'SHA256withRSA_PSS' | 'SHA384withRSA_PSS' | 'SHA512withRSA_PSS'} algorithm 签名算法
+ * @property {'base64' | 'hex'} output 输出格式
+ * @returns result 签名后数据
+ */
+const signRSA: (data: string, key: string, options?: RSASignOptionsType) => string
+/**
+ * 数据RSA验签
+ * @param data 数据
+ * @param signature 签名
+ * @param key 公钥
+ * @param options 配置，支持algorithm, output配置
+ * @property {'NONEwithRSA' | 'MD2withRSA' | 'MD5withRSA' | 'SHA1withRSA' | 'SHA256withRSA' | 'SHA384withRSA' | 'SHA512withRSA' | 'SHA256withRSA_PSS' | 'SHA384withRSA_PSS' | 'SHA512withRSA_PSS'} algorithm 签名算法
+ * @property {'base64' | 'hex'} output 签名格式
+ * @returns result 验签结果
+ */
+const verifyRSA: (data: string, signature: string, key: string, options?: RSASignOptionsType) => boolean
 /**
  * 数据AES解密
  * @param data 数据

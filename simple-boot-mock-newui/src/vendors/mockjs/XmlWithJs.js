@@ -104,6 +104,12 @@ export const initXmlWithJs = (monaco) => {
     label: 'encryptRSA()',
     detail: '数据RSA加密，并输出Base64数据格式'
   }, {
+    label: 'signRSA()',
+    detail: '数据RSA签名，并输出Base64数据格式'
+  }, {
+    label: 'verifyRSA()',
+    detail: '数据RSA验签'
+  }, {
     label: 'decryptAES()',
     detail: '数据AES解密'
   }, {

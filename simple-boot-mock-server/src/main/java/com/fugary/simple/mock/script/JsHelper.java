@@ -269,6 +269,31 @@ public class JsHelper {
     }
 
     /**
+     * RSA Sign
+     *
+     * @param input
+     * @param key
+     * @param config
+     * @return
+     */
+    public String signRSA(String input, String key, Map<String, String> config) {
+        return HuToolCryptoUtils.signRSA(input, key, config);
+    }
+
+    /**
+     * RSA Verify
+     *
+     * @param input
+     * @param signature
+     * @param key
+     * @param config
+     * @return
+     */
+    public boolean verifyRSA(String input, String signature, String key, Map<String, String> config) {
+        return HuToolCryptoUtils.verifyRSA(input, signature, key, config);
+    }
+
+    /**
      * RSA解密
      *
      * @param input
@@ -332,12 +357,24 @@ public class JsHelper {
                 sb.append("if(!globalThis.").append(method.getName()).append("){\n")
                         .append("\tglobalThis.").append(method.getName())
                         .append(" = ");
-                if (StringUtils.startsWithAny(method.getName(), "encrypt", "decrypt")) {
-                    sb.append("(input, password, config) => {\n")
-                            .append("\t\tinput = (typeof input === 'string') ? input : JSON.stringify(input);\n")
-                            .append("\t\tpassword = (typeof password === 'string') ? password : JSON.stringify(password);\n")
-                            .append("\t\treturn JsHelper.").append(method.getName())
-                            .append("(input, password, config || {});\n")
+                if (StringUtils.startsWithAny(method.getName(), "encrypt", "decrypt", "sign", "verify")) {
+                    String paramsStr = Arrays.stream(method.getParameters()).map(Parameter::getName)
+                            .collect(Collectors.joining(","));
+                    String argsStr = Arrays.stream(method.getParameters()).map(parameter ->
+                            Map.class.isAssignableFrom(parameter.getType())
+                                    ? parameter.getName() + " || {}" : parameter.getName())
+                            .collect(Collectors.joining(","));
+                    sb.append("(").append(paramsStr).append(") => {\n");
+                    for (Parameter parameter : method.getParameters()) {
+                        if (parameter.getType() == String.class) {
+                            sb.append("\t\t").append(parameter.getName()).append(" = (typeof ")
+                                    .append(parameter.getName()).append(" === 'string') ? ")
+                                    .append(parameter.getName()).append(" : JSON.stringify(")
+                                    .append(parameter.getName()).append(");\n");
+                        }
+                    }
+                    sb.append("\t\treturn JsHelper.").append(method.getName())
+                            .append("(").append(argsStr).append(");\n")
                             .append("\t}\n");
                 } else if(hasOptionalMethods.contains(method.getName())) {
                     String paramsStr = Arrays.stream(method.getParameters()).map(Parameter::getName)

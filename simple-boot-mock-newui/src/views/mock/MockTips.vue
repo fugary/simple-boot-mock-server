@@ -57,6 +57,8 @@ const internalFunctions = [
   { method: 'encrypt3DES(data, key, options)', desc: '使用 3DES 加密数据，输出 Base64 格式', descEn: 'Encrypt data using 3DES, output Base64 format' },
   { method: 'encryptSM4(data, key, options)', desc: '使用 SM4 加密数据，输出 Base64 格式', descEn: 'Encrypt data using SM4, output Base64 format' },
   { method: 'encryptRSA(data, key, options)', desc: '使用 RSA 加密数据，输出 Base64 格式', descEn: 'Encrypt data using RSA, output Base64 format' },
+  { method: 'signRSA(data, key, options)', desc: '使用 RSA 私钥签名数据，输出 Base64 格式', descEn: 'Sign data using RSA private key, output Base64 format' },
+  { method: 'verifyRSA(data, signature, key, options)', desc: '使用 RSA 公钥验证签名', descEn: 'Verify RSA signature using public key' },
   { method: 'decryptAES(data, key, options)', desc: '使用 AES 解密数据', descEn: 'Decrypt data using AES' },
   { method: 'decryptDES(data, key, options)', desc: '使用 DES 解密数据', descEn: 'Decrypt data using DES' },
   { method: 'decrypt3DES(data, key, options)', desc: '使用 3DES 解密数据', descEn: 'Decrypt data using 3DES' },
