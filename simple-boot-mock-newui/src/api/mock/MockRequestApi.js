@@ -95,8 +95,10 @@ export const calcSchemas = (schemasData) => {
   }
 }
 
+const hasParamValue = value => value !== undefined && value !== null && value !== ''
+
 export const checkParamsFilled = (params) => {
-  return !params?.length || params.filter(param => param.enabled).every(param => param.name && param.value)
+  return !params?.length || params.filter(param => param.enabled).every(param => param.name && hasParamValue(param.value))
 }
 
 export default useResourceApi(MOCK_REQUEST_URL)

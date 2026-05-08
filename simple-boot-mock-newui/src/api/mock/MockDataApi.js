@@ -57,6 +57,11 @@ export const ALL_STATUS_CODES = [
 
 export const DEFAULT_CONTENT_TYPE = 'application/json'
 
+const VALUE_TYPE_INPUT = 'input'
+const VALUE_TYPE_NUMBER = 'number'
+const VALUE_TYPE_DATE = 'date'
+const VALUE_TYPE_DATETIME = 'datetime'
+
 export const generateJWT = function (data, config) {
   return $http(Object.assign({
     url: `${MOCK_DATA_URL}/generateJwt`,
@@ -328,8 +333,10 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
     const paramSchemas = JSON.parse(schemaContent)
     if (isArray(paramSchemas)) {
       return paramSchemas.filter(filter).map(param => {
-        const array = param.schema?.type === 'array'
-        const valueSuggestions = param.schema?.enum || []
+        const schema = param.schema || {}
+        const array = schema.type === 'array'
+        const itemSchema = array ? schema.items : schema
+        const valueSuggestions = schema.enum || itemSchema?.enum || []
         let slots = null
         if (!valueSuggestions.length && isObject(param.examples)) {
           Object.values(param.examples).forEach(item => valueSuggestions.push(item))
@@ -342,10 +349,13 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
         }
         return {
           name: param.name,
-          value: param.schema?.default || '',
+          value: schema.default ?? '',
           enabled: true,
           array,
           valueRequired: param.required,
+          meta: {
+            type: calcSchemaValueType(itemSchema)
+          },
           valueSuggestions,
           dynamicOption: () => ({
             placeholder: param?.description || param.name,
@@ -359,12 +369,28 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
   return []
 }
 
+const calcSchemaValueType = (schema) => {
+  if (['number', 'integer'].includes(schema?.type)) {
+    return VALUE_TYPE_NUMBER
+  }
+  if (schema?.type === 'string') {
+    if (schema.format === 'date') {
+      return VALUE_TYPE_DATE
+    }
+    if (['date-time', 'datetime'].includes(schema.format)) {
+      return VALUE_TYPE_DATETIME
+    }
+  }
+  return VALUE_TYPE_INPUT
+}
+
 export const copyParamsDynamicOption = (params, savedParams) => {
   if (isArray(params) && isArray(savedParams)) {
     savedParams.forEach(savedParam => {
       const foundParam = params.find(param => param.name === savedParam.name)
       if (foundParam) {
         savedParam.dynamicOption = foundParam.dynamicOption
+        savedParam.meta = { ...foundParam.meta, ...savedParam.meta }
       }
     })
   }

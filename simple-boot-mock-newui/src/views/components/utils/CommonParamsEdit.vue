@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { defineFormOptions } from '@/components/utils'
 import { computed, ref } from 'vue'
-import { $copyText, getSingleSelectOptions, toFlatKeyValue } from '@/utils'
+import { $copyText, toFlatKeyValue } from '@/utils'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import { ElMessage, ElButton } from 'element-plus'
 import { calcSuggestionsFunc, concatValueSuggestions } from '@/services/mock/MockCommonService'
@@ -89,16 +89,72 @@ const params = defineModel('modelValue', {
   default: () => []
 })
 
-params.value.forEach(param => (param.enabled = param.enabled ?? true))
+const VALUE_TYPE_INPUT = 'input'
+const VALUE_TYPE_NUMBER = 'number'
+const VALUE_TYPE_DATE = 'date'
+const VALUE_TYPE_DATETIME = 'datetime'
+const VALUE_TYPE_FILE = 'file'
+const LEGACY_VALUE_TYPE_INPUT = 'text'
+const VALUE_TYPE_OPTIONS = [{
+  value: VALUE_TYPE_INPUT,
+  labelKey: 'common.label.input'
+}, {
+  value: VALUE_TYPE_NUMBER,
+  labelKey: 'common.label.number'
+}, {
+  value: VALUE_TYPE_DATE,
+  labelKey: 'common.label.date'
+}, {
+  value: VALUE_TYPE_DATETIME,
+  labelKey: 'common.label.dateTime'
+}, {
+  value: VALUE_TYPE_FILE,
+  labelKey: 'common.label.file'
+}]
+
+const getParamMeta = (param) => {
+  param.meta = param.meta || {}
+  return param.meta
+}
+
+const normalizeParamValueType = (param) => {
+  const meta = param.meta || {}
+  const valueType = meta.type ?? param.type
+  let result = valueType
+  if (!valueType || valueType === LEGACY_VALUE_TYPE_INPUT) {
+    result = VALUE_TYPE_INPUT
+  }
+  if (param.type && meta.type !== result) {
+    getParamMeta(param).type = result
+  }
+  return result
+}
+
+const isFileParam = param => normalizeParamValueType(param) === VALUE_TYPE_FILE
+
+const isInputParam = param => normalizeParamValueType(param) === VALUE_TYPE_INPUT
+
+const isNumberParam = param => normalizeParamValueType(param) === VALUE_TYPE_NUMBER
+
+const isDateParam = param => [VALUE_TYPE_DATE, VALUE_TYPE_DATETIME].includes(normalizeParamValueType(param))
+
+const getDateValueFormat = type => type === VALUE_TYPE_DATETIME ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD'
+
+params.value.forEach(param => {
+  param.enabled = param.enabled ?? true
+})
 
 const addRequestParam = () => {
   params.value.push({
-    enabled: !props.singleEnable || !params.value.filter(param => param.enabled).length
+    enabled: !props.singleEnable || !params.value.filter(param => param.enabled).length,
+    meta: {
+      type: VALUE_TYPE_INPUT
+    }
   })
 }
 
 const validParams = computed(() => {
-  return params.value.filter(param => !!param.name && param.type !== 'file')
+  return params.value.filter(param => !!param.name && !isFileParam(param))
 })
 
 const copyParams = () => $copyText(JSON.stringify(validParams.value))
@@ -159,6 +215,131 @@ const inputTextOption = {
   }
 }
 
+const showValueSuggestionsDialog = ref(false)
+const valueSuggestionsModel = ref({
+  items: []
+})
+const currentValueSuggestionsParam = ref()
+
+const valueTypeOptions = computed(() => {
+  return VALUE_TYPE_OPTIONS.filter(option => props.fileFlag || option.value !== VALUE_TYPE_FILE)
+})
+
+const normalizeValueSuggestion = (item) => {
+  if (item && typeof item === 'object') {
+    return {
+      value: item.value,
+      description: item.description
+    }
+  }
+  return {
+    value: item
+  }
+}
+
+const formatValueSuggestion = (item = {}) => {
+  if (item.description && hasValueSuggestionText(item.value)) {
+    return `${item.value} - ${item.description}`
+  }
+  return item.description || item.value || ''
+}
+
+const openValueSuggestions = (item) => {
+  currentValueSuggestionsParam.value = item
+  valueSuggestionsModel.value.items = (Array.isArray(item.meta?.valueSuggestions) ? item.meta.valueSuggestions : [])
+    .map(normalizeValueSuggestion)
+  showValueSuggestionsDialog.value = true
+}
+
+const addValueSuggestion = () => {
+  valueSuggestionsModel.value.items.push({})
+}
+
+const hasValueSuggestionText = value => value !== undefined && value !== ''
+
+const saveValueSuggestions = () => {
+  const valueSuggestions = valueSuggestionsModel.value.items
+    .map(normalizeValueSuggestion)
+    .filter(item => hasValueSuggestionText(item.value) || item.description)
+    .map(item => {
+      const suggestion = {}
+      if (item.description) {
+        suggestion.description = item.description
+      }
+      if (hasValueSuggestionText(item.value)) {
+        suggestion.value = item.value
+      }
+      return suggestion
+    })
+  if (currentValueSuggestionsParam.value) {
+    const meta = getParamMeta(currentValueSuggestionsParam.value)
+    meta.valueSuggestions = valueSuggestions
+  }
+}
+
+const hasMetaConfig = item => {
+  return !!item.meta?.valueSuggestions?.length
+}
+
+const getValueOption = (param, paramValueSuggestions, nvSpan) => {
+  const valueType = normalizeParamValueType(param)
+  const option = {
+    labelKey: 'common.label.value',
+    prop: props.valueKey,
+    required: props.nameReadOnly || props.valueRequired || param.valueRequired,
+    colSpan: props.valueSpan || nvSpan,
+    enabled: !isFileParam(param)
+  }
+  if (isDateParam(param)) {
+    const valueFormat = getDateValueFormat(valueType)
+    return {
+      ...option,
+      type: 'date-picker',
+      attrs: {
+        type: valueType,
+        format: valueFormat,
+        valueFormat,
+        style: {
+          width: '100%'
+        }
+      }
+    }
+  }
+  if (isNumberParam(param)) {
+    return {
+      ...option,
+      type: 'input-number',
+      attrs: {
+        controlsPosition: 'right',
+        style: {
+          width: '100%'
+        }
+      }
+    }
+  }
+  return {
+    ...option,
+    type: paramValueSuggestions ? 'autocomplete' : 'input',
+    attrs: {
+      fetchSuggestions: paramValueSuggestions,
+      triggerOnFocus: true
+    },
+    slots: paramValueSuggestions
+      ? {
+          default: ({ item }) => formatValueSuggestion(item)
+        }
+      : undefined,
+    dynamicOption: (item, ...args) => {
+      if (isFunction(item.dynamicOption)) {
+        return item.dynamicOption(item, ...args)
+      }
+      if (isFunction(props.valueDynamicOption)) {
+        return props.valueDynamicOption(item, ...args)
+      }
+    }
+  }
+}
+
 const calcSuggestions = (key = 'name') => {
   const keySuggestions = props[`${key}Suggestions`]
   return calcSuggestionsFunc(keySuggestions)
@@ -169,7 +350,11 @@ const paramsOptions = computed(() => {
   const valueSuggestions = calcSuggestions('value')
   return params.value.map((param) => {
     const nvSpan = 8
-    const paramValueSuggestions = concatValueSuggestions(param.valueSuggestions, valueSuggestions)
+    const paramValueSuggestions = concatValueSuggestions(
+      param.meta?.valueSuggestions,
+      param.valueSuggestions,
+      valueSuggestions
+    )
     return defineFormOptions([{
       labelWidth: '30px',
       prop: 'enabled',
@@ -209,44 +394,25 @@ const paramsOptions = computed(() => {
       }
     }, {
       labelWidth: '1px',
-      prop: 'type',
+      prop: 'meta.type',
       type: 'select',
-      value: 'text',
-      children: getSingleSelectOptions('text', 'file'),
+      value: VALUE_TYPE_INPUT,
+      children: valueTypeOptions.value,
       attrs: {
         clearable: false,
         style: {
           paddingTop: '2px'
         }
       },
-      enabled: props.fileFlag,
+      enabled: valueTypeOptions.value.length > 1,
       colSpan: 3,
-      change () {
-        param[props.valueKey] = param.type === 'file' ? [] : ''
+      change (value) {
+        param[props.valueKey] = value === VALUE_TYPE_FILE ? [] : (value === VALUE_TYPE_NUMBER ? undefined : '')
       }
-    }, {
-      labelKey: 'common.label.value',
-      prop: props.valueKey,
-      required: props.nameReadOnly || props.valueRequired || param.valueRequired,
-      colSpan: props.valueSpan || nvSpan,
-      enabled: param.type !== 'file',
-      type: paramValueSuggestions ? 'autocomplete' : 'input',
-      attrs: {
-        fetchSuggestions: paramValueSuggestions,
-        triggerOnFocus: true
-      },
-      dynamicOption: (item, ...args) => {
-        if (isFunction(item.dynamicOption)) {
-          return item.dynamicOption(item, ...args)
-        }
-        if (isFunction(props.valueDynamicOption)) {
-          return props.valueDynamicOption(item, ...args)
-        }
-      }
-    }, {
+    }, getValueOption(param, isInputParam(param) ? paramValueSuggestions : undefined, nvSpan), {
       labelKey: 'common.label.files',
       type: 'upload',
-      enabled: props.fileFlag && param.type === 'file',
+      enabled: props.fileFlag && isFileParam(param),
       attrs: {
         fileList: param[props.valueKey],
         'onUpdate:fileList': (files) => {
@@ -314,7 +480,7 @@ useTabFocus(sortableRef)
       </template>
       <el-col
         :span="3"
-        class="padding-left2 padding-top1"
+        class="padding-left2 padding-top1 common-params-actions"
       >
         <el-button
           v-if="item.array"
@@ -334,6 +500,20 @@ useTabFocus(sortableRef)
         >
           <common-icon icon="Delete" />
         </el-button>
+        <el-tooltip
+          v-if="isInputParam(item)"
+          :content="$i18nKey('common.label.commonConfig', 'common.label.value')"
+          placement="top"
+        >
+          <el-button
+            :type="hasMetaConfig(item)?'warning':'info'"
+            size="small"
+            circle
+            @click="openValueSuggestions(item)"
+          >
+            <common-icon icon="Setting" />
+          </el-button>
+        </el-tooltip>
       </el-col>
     </el-row>
     <el-row>
@@ -382,9 +562,94 @@ useTabFocus(sortableRef)
         />
       </el-col>
     </el-row>
+    <common-window
+      v-model="showValueSuggestionsDialog"
+      :title="$i18nKey('common.label.commonConfig', 'common.label.value')"
+      width="650px"
+      :ok-click="saveValueSuggestions"
+    >
+      <el-container class="flex-column value-suggestions-window">
+        <el-row class="padding-bottom2 value-suggestions-header">
+          <el-col :span="10">
+            {{ $t('common.label.value') }}
+          </el-col>
+          <el-col
+            :span="11"
+            class="padding-left2"
+          >
+            {{ $t('common.label.description') }}
+          </el-col>
+          <el-col :span="3" />
+        </el-row>
+        <el-row
+          v-for="(suggestion, index) in valueSuggestionsModel.items"
+          :key="index"
+          class="padding-bottom2"
+        >
+          <el-col :span="10">
+            <el-input
+              v-model="suggestion.value"
+              clearable
+            />
+          </el-col>
+          <el-col
+            :span="11"
+            class="padding-left2"
+          >
+            <el-input
+              v-model="suggestion.description"
+              clearable
+            />
+          </el-col>
+          <el-col
+            :span="3"
+            class="padding-left2"
+          >
+            <el-button
+              type="danger"
+              size="small"
+              circle
+              @click="valueSuggestionsModel.items.splice(index, 1)"
+            >
+              <common-icon icon="Delete" />
+            </el-button>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col>
+            <el-button
+              type="primary"
+              size="small"
+              @click="addValueSuggestion()"
+            >
+              <common-icon
+                class="margin-right1"
+                icon="Plus"
+              />
+              {{ $t('common.label.add') }}
+            </el-button>
+          </el-col>
+        </el-row>
+      </el-container>
+    </common-window>
   </el-container>
 </template>
 
 <style scoped>
+.common-params-edit :deep(.common-params-actions) {
+  white-space: nowrap;
+}
 
+.common-params-edit :deep(.common-params-actions .el-tooltip) {
+  margin-left: 12px;
+}
+
+.value-suggestions-window {
+  padding-top: 4px;
+}
+
+.value-suggestions-header {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
 </style>
