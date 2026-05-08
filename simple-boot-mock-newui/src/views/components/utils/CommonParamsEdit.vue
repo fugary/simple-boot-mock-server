@@ -217,6 +217,7 @@ const inputTextOption = {
 
 const showValueSuggestionsDialog = ref(false)
 const valueSuggestionsModel = ref({
+  readonlyItems: [],
   items: []
 })
 const currentValueSuggestionsParam = ref()
@@ -246,6 +247,8 @@ const formatValueSuggestion = (item = {}) => {
 
 const openValueSuggestions = (item) => {
   currentValueSuggestionsParam.value = item
+  valueSuggestionsModel.value.readonlyItems = (Array.isArray(item.valueSuggestions) ? item.valueSuggestions : [])
+    .map(normalizeValueSuggestion)
   valueSuggestionsModel.value.items = (Array.isArray(item.meta?.valueSuggestions) ? item.meta.valueSuggestions : [])
     .map(normalizeValueSuggestion)
   showValueSuggestionsDialog.value = true
@@ -256,6 +259,18 @@ const addValueSuggestion = () => {
 }
 
 const hasValueSuggestionText = value => value !== undefined && value !== ''
+
+const valueSuggestionItems = computed(() => [
+  ...valueSuggestionsModel.value.readonlyItems.map(item => ({
+    ...item,
+    readonly: true
+  })),
+  ...valueSuggestionsModel.value.items.map((item, index) => ({
+    ...item,
+    index,
+    readonly: false
+  }))
+])
 
 const saveValueSuggestions = () => {
   const valueSuggestions = valueSuggestionsModel.value.items
@@ -582,13 +597,19 @@ useTabFocus(sortableRef)
           <el-col :span="3" />
         </el-row>
         <el-row
-          v-for="(suggestion, index) in valueSuggestionsModel.items"
-          :key="index"
+          v-for="(suggestion, index) in valueSuggestionItems"
+          :key="`${suggestion.readonly?'readonly':'custom'}_${index}`"
           class="padding-bottom2"
         >
           <el-col :span="10">
             <el-input
-              v-model="suggestion.value"
+              v-if="suggestion.readonly"
+              :model-value="suggestion.value"
+              disabled
+            />
+            <el-input
+              v-else
+              v-model="valueSuggestionsModel.items[suggestion.index].value"
               clearable
             />
           </el-col>
@@ -597,7 +618,13 @@ useTabFocus(sortableRef)
             class="padding-left2"
           >
             <el-input
-              v-model="suggestion.description"
+              v-if="suggestion.readonly"
+              :model-value="suggestion.description"
+              disabled
+            />
+            <el-input
+              v-else
+              v-model="valueSuggestionsModel.items[suggestion.index].description"
               clearable
             />
           </el-col>
@@ -606,10 +633,11 @@ useTabFocus(sortableRef)
             class="padding-left2"
           >
             <el-button
+              v-if="!suggestion.readonly"
               type="danger"
               size="small"
               circle
-              @click="valueSuggestionsModel.items.splice(index, 1)"
+              @click="valueSuggestionsModel.items.splice(suggestion.index, 1)"
             >
               <common-icon icon="Delete" />
             </el-button>
