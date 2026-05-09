@@ -51,14 +51,14 @@ const paramTarget = defineModel('modelValue', {
   default: () => ({})
 })
 
-const buildFullUrl = (basePath) => {
+const buildFullUrl = (basePath, includeQuery = true) => {
   if (!basePath) return ''
   let fullPath = basePath
   paramTarget.value?.pathParams?.forEach(pathParam => {
     fullPath = fullPath.replace(new RegExp(`:${pathParam.name}`, 'g'), pathParam.value)
       .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), processEvnParams(paramTarget.value.groupConfig, pathParam.value, true))
   })
-  if (paramTarget.value?.method?.toLowerCase() === 'get') {
+  if (includeQuery && paramTarget.value?.method?.toLowerCase() === 'get') {
     const calcReqParams = paramTarget.value?.requestParams?.filter(requestParam => !!requestParam.name && requestParam.enabled).reduce((results, item) => {
       return addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value, true))
     }, {})
@@ -68,6 +68,7 @@ const buildFullUrl = (basePath) => {
 }
 
 const requestUrl = computed(() => buildFullUrl(props.requestPath))
+const requestBaseUrl = computed(() => buildFullUrl(props.requestPath, false))
 const proxyRequestUrl = computed(() => buildFullUrl(props.proxyRequestPath))
 
 const emit = defineEmits(['sendRequest', 'saveMockResponseBody', 'saveMatchPattern', 'resetRequestForm'])
@@ -201,6 +202,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
         </template>
         <mock-request-form-req
           v-model="paramTarget"
+          :request-path="requestBaseUrl"
           :show-authorization="!matchPatternMode"
           :response-target="responseTarget"
           :schema-type="schema?.requestMediaType"

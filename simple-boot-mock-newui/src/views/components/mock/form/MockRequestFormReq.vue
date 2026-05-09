@@ -15,7 +15,7 @@ import {
 } from '@/consts/MockConstants'
 import MockRequestFormAuthorization from '@/views/components/mock/form/MockRequestFormAuthorization.vue'
 import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
-import { getSingleSelectOptions } from '@/utils'
+import { $copyText, getSingleSelectOptions } from '@/utils'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { isString } from 'lodash-es'
 import {
@@ -27,10 +27,14 @@ import {
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
-import { extendCurlParams, isGetMethod } from '@/services/mock/CurlProcessService'
+import { buildCurlCommand, CURL_SHELL, extendCurlParams, isGetMethod } from '@/services/mock/CurlProcessService'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const props = defineProps({
+  requestPath: {
+    type: String,
+    default: ''
+  },
   showAuthorization: {
     type: Boolean,
     default: false
@@ -172,6 +176,11 @@ const resetRequestForm = () => {
   setTimeout(initParamTarget)
 }
 const curlContent = ref('')
+const CURL_COMMAND = {
+  PASTE: 'paste',
+  COPY_BASH: 'copyBash',
+  COPY_CMD: 'copyCmd'
+}
 const processCurlWindow = () => {
   showCodeWindow(curlContent, {
     title: $i18nConcat($i18nBundle('common.label.paste'), 'CURL'),
@@ -186,6 +195,21 @@ const processCurlWindow = () => {
   })
 }
 
+const copyAsCurl = async (shell = CURL_SHELL.BASH) => {
+  const curlCommand = await buildCurlCommand(paramTarget.value, props.requestPath, shell)
+  $copyText(curlCommand)
+}
+
+const handleCurlCommand = (command) => {
+  if (command === CURL_COMMAND.PASTE) {
+    processCurlWindow()
+  } else if (command === CURL_COMMAND.COPY_CMD) {
+    copyAsCurl(CURL_SHELL.CMD)
+  } else {
+    copyAsCurl(CURL_SHELL.BASH)
+  }
+}
+
 </script>
 
 <template>
@@ -198,14 +222,30 @@ const processCurlWindow = () => {
     <template
       #add-icon
     >
-      <el-link
-        type="primary"
-        style="margin-top: -11px"
+      <el-dropdown
         class="margin-right2"
-        @click="processCurlWindow"
+        @command="handleCurlCommand"
       >
-        CURL
-      </el-link>
+        <el-link
+          type="primary"
+          style="margin-top: -11px"
+        >
+          CURL
+        </el-link>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item :command="CURL_COMMAND.PASTE">
+              {{ $i18nConcat($i18nBundle('common.label.paste'), 'CURL') }}
+            </el-dropdown-item>
+            <el-dropdown-item :command="CURL_COMMAND.COPY_BASH">
+              {{ $i18nConcat($i18nBundle('common.label.copy'), 'cURL (bash)') }}
+            </el-dropdown-item>
+            <el-dropdown-item :command="CURL_COMMAND.COPY_CMD">
+              {{ $i18nConcat($i18nBundle('common.label.copy'), 'cURL (cmd)') }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       <el-link
         type="primary"
         style="margin-top: -11px"
