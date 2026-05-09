@@ -90,6 +90,7 @@ const removeUser = (id) => {
 const newUser = () => {
   currentUser.value = {
     projectId: props.project?.id,
+    userNames: [],
     authorities: ['readable']
   }
   showEditWindow.value = true
@@ -104,13 +105,23 @@ const editUser = (user) => {
 }
 
 const saveUser = (user) => {
-  const data = {
-    ...user,
-    authorities: Array.isArray(user.authorities) ? user.authorities.join(',') : user.authorities
+  const authorities = Array.isArray(user.authorities) ? user.authorities.join(',') : user.authorities
+  let savePromise
+  if (!user.id && Array.isArray(user.userNames)) {
+    savePromise = MockProjectUserApi.saveBatch({
+      projectId: user.projectId,
+      userNames: user.userNames,
+      authorities
+    }, { loading: true })
+  } else {
+    savePromise = MockProjectUserApi.saveOrUpdate({
+      ...user,
+      authorities
+    }, { loading: true })
   }
-  return MockProjectUserApi.saveOrUpdate(data, { loading: true }).then((result) => {
+  return savePromise.then((result) => {
     return loadProjectUsers().then(() => {
-      emit('updated', result?.resultData || data)
+      emit('updated', result?.resultData || user)
       return result
     })
   })
@@ -127,13 +138,18 @@ const authOptions = computed(() => {
 const editFormOptions = computed(() => defineFormOptions([
   {
     labelKey: 'common.label.user',
-    prop: 'userName',
+    prop: currentUser.value?.id ? 'userName' : 'userNames',
     type: 'select',
     required: true,
     children: selectableUserOptions.value,
     attrs: {
-      filterable: true
-    }
+      filterable: true,
+      multiple: !currentUser.value?.id,
+      collapseTags: true,
+      collapseTagsTooltip: true,
+      maxCollapseTags: 5
+    },
+    disabled: !!currentUser.value?.id
   },
   {
     labelKey: 'common.label.authorities',
