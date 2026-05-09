@@ -342,8 +342,7 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
           Object.values(param.examples).forEach(item => valueSuggestions.push(item))
           slots = {
             default: (data) => {
-              const item = data.item
-              return isObject(item) ? `${item.value ?? ''} - ${item.description}` : item
+              return formatSchemaValueSuggestion(data.item)
             }
           }
         }
@@ -367,6 +366,18 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
     }
   }
   return []
+}
+
+const formatSchemaValueSuggestion = (item) => {
+  if (isObject(item)) {
+    const value = item.value ?? ''
+    const description = item.description || item.summary
+    if (description) {
+      return `${value} - ${description}`
+    }
+    return value
+  }
+  return item
 }
 
 const calcSchemaValueType = (schema, valueSuggestions) => {
