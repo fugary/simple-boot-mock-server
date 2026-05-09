@@ -42,6 +42,10 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  showValueConfig: {
+    type: Boolean,
+    default: true
+  },
   nameKey: {
     type: String,
     default: 'name'
@@ -419,7 +423,7 @@ const paramsOptions = computed(() => {
           paddingTop: '2px'
         }
       },
-      enabled: valueTypeOptions.value.length > 1,
+      enabled: props.showValueConfig && valueTypeOptions.value.length > 1,
       colSpan: 3,
       change (value) {
         param[props.valueKey] = value === VALUE_TYPE_FILE ? [] : (value === VALUE_TYPE_NUMBER ? undefined : '')
@@ -516,7 +520,7 @@ useTabFocus(sortableRef)
           <common-icon icon="Delete" />
         </el-button>
         <el-tooltip
-          v-if="isInputParam(item)"
+          v-if="props.showValueConfig && isInputParam(item)"
           :content="$i18nKey('common.label.commonConfig', 'common.label.value')"
           placement="top"
         >

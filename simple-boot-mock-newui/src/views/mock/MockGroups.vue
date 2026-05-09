@@ -1110,6 +1110,7 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
             :value-dynamic-option="valueDynamicOption"
             :show-copy-button="false"
             :show-paste-button="false"
+            :show-value-config="false"
             single-enable
             :name-span="7"
             :value-span="12"
