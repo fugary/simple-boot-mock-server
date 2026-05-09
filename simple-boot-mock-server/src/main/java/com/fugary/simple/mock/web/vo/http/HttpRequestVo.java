@@ -23,6 +23,7 @@ public class HttpRequestVo {
     private Map<String, String> headers = new HashMap<>();
     private Map<String, String> parameters = new HashMap<>();
     private Map<String, String> pathParameters = new HashMap<>();
+    private Map<String, String> cookies = new HashMap<>();
     private Object body;
     private String headersStr;
     private String parametersStr;
@@ -30,6 +31,8 @@ public class HttpRequestVo {
     private String path;
     private String host;
     private String protocol;
+    private String ip;
+    private String userAgent;
 
     public void setUrl(String url) {
         this.url = url;

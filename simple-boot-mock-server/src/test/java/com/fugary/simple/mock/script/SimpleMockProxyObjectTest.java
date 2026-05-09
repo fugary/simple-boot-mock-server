@@ -79,6 +79,21 @@ class SimpleMockProxyObjectTest {
         assertEquals("{\"test\":1,\"test2\":{\"a\":\"test\"}}", result);
     }
 
+    @Test
+    void requestMetadataShouldBeAccessibleFromJavascript() throws ScriptException {
+        HttpRequestVo requestVo = createRequestVo();
+        requestVo.setIp("203.0.113.9");
+        requestVo.setUserAgent("JUnit-Agent");
+        requestVo.getCookies().put("sid", "abc123");
+        bindings.put("request", new JavaScriptEngineProviderImpl().processValue(requestVo));
+
+        Object result = scriptEngine.eval(
+                "request.ip + '|' + request.userAgent + '|' + request.cookies.sid + '|' + (request.ua === undefined)",
+                bindings);
+
+        assertEquals("203.0.113.9|JUnit-Agent|abc123|true", result);
+    }
+
     private HttpRequestVo createRequestVo() {
         HttpRequestVo requestVo = new HttpRequestVo();
         requestVo.setBody(createRequestBody());

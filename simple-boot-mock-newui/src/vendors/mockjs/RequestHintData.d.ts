@@ -21,7 +21,15 @@ interface RequestVoType {
         [key: string]: any
     },
     /** request请求体字符串 */
-    bodyStr: string
+    bodyStr: string,
+    /** request客户端IP */
+    ip: string,
+    /** request User-Agent */
+    userAgent: string,
+    /** request Cookie对象 */
+    cookies: {
+        [key: string]: string
+    }
 }
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -93,6 +101,9 @@ interface AESOptionsType {
  * request.parameters——请求参数对象
  * request.pathParameters——路径参数对象
  * request.params——请求参数和路径参数合并
+ * request.ip——客户端IP
+ * request.userAgent——User-Agent
+ * request.cookies——Cookie对象
  */
 const request: RequestVoType
 

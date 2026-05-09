@@ -39,12 +39,24 @@ export const initXmlWithJs = (monaco) => {
     label: 'params',
     detail: 'request.params',
     desc: '请求参数和路径参数合并'
+  }, {
+    label: 'ip',
+    detail: 'request.ip',
+    desc: '客户端IP'
+  }, {
+    label: 'userAgent',
+    detail: 'request.userAgent',
+    desc: 'User-Agent'
+  }, {
+    label: 'cookies',
+    detail: 'request.cookies',
+    desc: 'Cookie对象'
   }]
 
   const GLOBAL_HINTS = [{
     label: 'request',
     detail: 'request请求对象',
-    desc: '包含params，body，bodyStr，headers，parameters，pathParameters'
+    desc: '包含params，body，bodyStr，headers，parameters，pathParameters，ip，userAgent，cookies'
   }, {
     label: 'Mock',
     detail: 'MockJS对象',

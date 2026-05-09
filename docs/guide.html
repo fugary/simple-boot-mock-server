@@ -887,6 +887,18 @@
                                 <td><code>request.params</code></td>
                                 <td>请求参数和路径参数合并 (快捷访问)</td>
                             </tr>
+                            <tr>
+                                <td><code>request.ip</code></td>
+                                <td>客户端 IP</td>
+                            </tr>
+                            <tr>
+                                <td><code>request.userAgent</code></td>
+                                <td>User-Agent</td>
+                            </tr>
+                            <tr>
+                                <td><code>request.cookies</code></td>
+                                <td>Cookie 对象</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -966,6 +978,9 @@ request.params.type === 'vip' && request.headers.token</code></pre>
                     <li><code>request.body</code>: 请求体对象</li>
                     <li><code>request.params</code>: 所有参数集合 (Path + Query)</li>
                     <li><code>request.headers</code>: 请求头</li>
+                    <li><code>request.ip</code>: 客户端 IP</li>
+                    <li><code>request.userAgent</code>: User-Agent</li>
+                    <li><code>request.cookies</code>: Cookie 对象</li>
                 </ul>
                 <pre><code class="language-javascript">Mock.mock({
     "input_id": request.params.id,

@@ -18,12 +18,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -126,6 +128,7 @@ public class HttpRequestUtils {
 	public static HttpRequestVo parseRequestVo(HttpServletRequest request) {
 		Map<String, String> parameters = new HashMap<>();
 		Map<String, String> headers = new HashMap<>();
+		Map<String, String> cookies = new HashMap<>();
 		Enumeration<String> headerNames = request.getHeaderNames();
 		while (headerNames.hasMoreElements()) {
 			String name = headerNames.nextElement();
@@ -136,14 +139,23 @@ public class HttpRequestUtils {
 			String name = parameterNames.nextElement();
 			parameters.put(name, request.getParameter(name));
 		}
+		Cookie[] requestCookies = request.getCookies();
+		if (requestCookies != null) {
+			for (Cookie cookie : requestCookies) {
+				cookies.put(cookie.getName(), cookie.getValue());
+			}
+		}
 		HttpRequestVo requestVo = new HttpRequestVo();
 		requestVo.setHeaders(headers);
 		requestVo.setHeadersStr(JsonUtils.toJson(headers));
 		requestVo.setParameters(parameters);
+		requestVo.setCookies(cookies);
 		requestVo.setParametersStr(request.getQueryString());
 		requestVo.setUrl(HttpRequestUtils.getRequestUrl(request));
 		requestVo.setMethod(request.getMethod());
 		requestVo.setContentType(request.getContentType());
+		requestVo.setIp(getIp(request));
+		requestVo.setUserAgent(request.getHeader(HttpHeaders.USER_AGENT));
 		List<MediaType> mediaTypes = MediaType.parseMediaTypes(request.getContentType());
 		if(mediaTypes.isEmpty() || isCompatibleWith(mediaTypes, MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML,
 				MediaType.TEXT_HTML, MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.TEXT_XML)){

@@ -60,6 +60,9 @@
     4. `request.parameters`——请求参数对象
     5. `request.pathParameters`——路径参数对象
     6. `request.params`——路径参数和请求合并对象
+    7. `request.ip`——客户端IP
+    8. `request.userAgent`——User-Agent
+    9. `request.cookies`——Cookie对象
 11. 支持匹配表达式测试功能，方便测试表达式是否正确
 12. 增加响应延迟，可以模拟延迟一段时间才响应数据
 13. 支持简单用户管理，默认账号：`admin/12345678`和`mock/mock`两个用户，支持修改密码，使用`SHA256`加密算法

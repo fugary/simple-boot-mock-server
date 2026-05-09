@@ -902,6 +902,18 @@
                                 <td><code>request.params</code></td>
                                 <td>Merged Query and Path parameters (shortcut access)</td>
                             </tr>
+                            <tr>
+                                <td><code>request.ip</code></td>
+                                <td>Client IP address</td>
+                            </tr>
+                            <tr>
+                                <td><code>request.userAgent</code></td>
+                                <td>User-Agent</td>
+                            </tr>
+                            <tr>
+                                <td><code>request.cookies</code></td>
+                                <td>Cookies object</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -985,6 +997,9 @@ request.params.type === 'vip' && request.headers.token</code></pre>
                     <li><code>request.body</code>: Request body object</li>
                     <li><code>request.params</code>: All parameters collection (Path + Query)</li>
                     <li><code>request.headers</code>: Request headers</li>
+                    <li><code>request.ip</code>: Client IP address</li>
+                    <li><code>request.userAgent</code>: User-Agent</li>
+                    <li><code>request.cookies</code>: Cookies object</li>
                 </ul>
                 <pre><code class="language-javascript">Mock.mock({
     "input_id": request.params.id,

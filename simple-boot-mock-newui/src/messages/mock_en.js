@@ -170,7 +170,10 @@ mock.msg.requestIntro = `request.body — The body content object (only JSON)<br
                         request.headers — The headers object<br>
                         request.parameters — The request parameters object<br>
                         request.pathParameters — The path parameters object<br>
-                        request.params — The merged request parameters and path parameters`
+                        request.params — The merged request parameters and path parameters<br>
+                        request.ip — The client IP address<br>
+                        request.userAgent — The User-Agent<br>
+                        request.cookies — The cookies object`
 mock.msg.matchPatternTooltip = `Matching rules support JavaScript expressions. You can use the following to request data:<br>${mock.msg.requestIntro}`
 mock.msg.projectCodeTooltip = 'Editable when updating. Leave it empty to auto-generate a 32-character UUID, and keep it globally unique.'
 mock.msg.responseBodyTooltip = `Response content supports replacing by request parameters. Use {0} format to replace with request data:<br>${mock.msg.requestIntro}`

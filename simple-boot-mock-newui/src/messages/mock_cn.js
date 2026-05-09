@@ -170,7 +170,10 @@ mock.msg.requestIntro = `request.body——body内容对象<br>
                         request.headers——头信息对象<br>
                         request.parameters——请求参数对象<br>
                         request.pathParameters——路径参数对象<br>
-                        request.params——请求参数和路径参数合并`
+                        request.params——请求参数和路径参数合并<br>
+                        request.ip——客户端IP<br>
+                        request.userAgent——User-Agent<br>
+                        request.cookies——Cookie对象`
 mock.msg.matchPatternTooltip = `匹配规则支持javascript表达式，支持的request请求数据: <br>${mock.msg.requestIntro}`
 mock.msg.projectCodeTooltip = '编辑时可修改；留空会自动生成32位UUID；项目编码需要全局唯一'
 mock.msg.responseBodyTooltip = `响应内容支持请求参数替换，使用{0}格式替换数据，支持的request请求数据: <br>${mock.msg.requestIntro}`

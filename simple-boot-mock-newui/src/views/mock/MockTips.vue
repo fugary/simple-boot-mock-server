@@ -16,7 +16,10 @@ const requestFields = [
   { field: 'request.headers', desc: '头信息对象', descEn: 'Header information object' },
   { field: 'request.parameters', desc: '请求参数对象', descEn: 'Request parameters object' },
   { field: 'request.pathParameters', desc: '路径参数对象', descEn: 'Path parameters object' },
-  { field: 'request.params', desc: '请求参数和路径参数合并', descEn: 'Merged object of request parameters and path parameters' }
+  { field: 'request.params', desc: '请求参数和路径参数合并', descEn: 'Merged object of request parameters and path parameters' },
+  { field: 'request.ip', desc: '客户端IP', descEn: 'Client IP address' },
+  { field: 'request.userAgent', desc: 'User-Agent', descEn: 'User-Agent' },
+  { field: 'request.cookies', desc: 'Cookie对象', descEn: 'Cookie object' }
 ]
 
 const responseFields = [
@@ -139,6 +142,8 @@ Mock.mock({
     label: $i18nBundle('mock.label.requestObject'),
     content: `
 Mock.mock({
+  ip: request.ip,
+  userAgent: request.userAgent,
   headers: request.headers,
   body: request.body,
   params: request.params
