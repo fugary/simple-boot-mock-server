@@ -133,12 +133,9 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         ScriptContext scriptContext = new SimpleScriptContext();
         scriptContext.setBindings(scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         if (requestVo != null) {
-            scriptContext.setAttribute("request", processPlainValue(requestVo), ScriptContext.ENGINE_SCOPE);
-        }
-        scriptEngine.eval(FAST_MOCK_JS_CONTENT, scriptContext);
-        if (requestVo != null) {
             scriptContext.setAttribute("request", processValue(requestVo), ScriptContext.ENGINE_SCOPE);
         }
+        scriptEngine.eval(FAST_MOCK_JS_CONTENT, scriptContext);
         HttpResponseVo responseVo = MockJsUtils.getCurrentResponseVo();
         if (responseVo != null) {
             scriptContext.setAttribute("response", processValue(responseVo), ScriptContext.ENGINE_SCOPE);
