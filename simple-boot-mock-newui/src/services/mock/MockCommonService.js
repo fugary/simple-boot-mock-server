@@ -80,7 +80,7 @@ export const calcSuggestionsFunc = (keySuggestions) => {
     return (queryString, cb) => {
       const dataList = keySuggestions.map(value => isObject(value) ? value : ({ value }))
         .filter(item => {
-          const query = queryString?.toLowerCase()
+          const query = (queryString ?? '').toString().toLowerCase()
           const searchText = [item?.value, item?.description]
             .filter(value => value !== undefined && value !== null)
             .map(value => isString(value) ? value : value.toString())

@@ -103,13 +103,29 @@ watch(contentRef, val => {
   paramTarget.value.requestBody = val
 })
 
-watch(() => [paramTarget.value.headerParams, paramTarget.value.requestParams], (allParams) => {
-  allParams.forEach(eachParams => eachParams.forEach(param => {
-    const newSuggestions = calcHeaderSuggestions(param.name)
-    if (JSON.stringify(param.valueSuggestions) !== JSON.stringify(newSuggestions)) {
-      param.valueSuggestions = newSuggestions
+const toSuggestionArray = suggestions => Array.isArray(suggestions) ? suggestions : []
+const suggestionValue = suggestion => suggestion && typeof suggestion === 'object'
+  ? suggestion.value ?? suggestion.description
+  : suggestion
+const syncAutoValueSuggestions = params => {
+  toSuggestionArray(params).forEach(param => {
+    const newAutoSuggestions = calcHeaderSuggestions(param.name)
+    if (newAutoSuggestions.length) {
+      const oldSuggestions = toSuggestionArray(param.valueSuggestions)
+      const oldValues = new Set(oldSuggestions.map(suggestionValue))
+      const newSuggestions = [
+        ...oldSuggestions,
+        ...newAutoSuggestions.filter(suggestion => !oldValues.has(suggestionValue(suggestion)))
+      ]
+      if (newSuggestions.length !== oldSuggestions.length) {
+        param.valueSuggestions = newSuggestions
+      }
     }
-  }))
+  })
+}
+
+watch(() => [paramTarget.value.headerParams, paramTarget.value.requestParams], (allParams = []) => {
+  allParams.forEach(syncAutoValueSuggestions)
 }, { deep: true })
 
 const currentTabName = ref('requestParamsTab')

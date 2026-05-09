@@ -469,7 +469,7 @@ useTabFocus(sortableRef)
     >
       <template
         v-for="(option, idx) in paramsOptions[index]"
-        :key="`${index}_${option.prop}`"
+        :key="`${index}_${option.prop}_${option.type}`"
       >
         <el-col
           v-if="option.enabled!==false"

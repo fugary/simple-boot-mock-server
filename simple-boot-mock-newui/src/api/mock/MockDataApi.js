@@ -354,7 +354,7 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
           array,
           valueRequired: param.required,
           meta: {
-            type: calcSchemaValueType(itemSchema)
+            type: calcSchemaValueType(itemSchema, valueSuggestions)
           },
           valueSuggestions,
           dynamicOption: () => ({
@@ -369,7 +369,10 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
   return []
 }
 
-const calcSchemaValueType = (schema) => {
+const calcSchemaValueType = (schema, valueSuggestions) => {
+  if (valueSuggestions?.length) {
+    return VALUE_TYPE_INPUT
+  }
   if (['number', 'integer'].includes(schema?.type)) {
     return VALUE_TYPE_NUMBER
   }
