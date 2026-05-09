@@ -500,7 +500,10 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         if (sameProject) {
             mockGroup.setGroupName(StringUtils.join(mockGroup.getGroupName(), "-copy"));
         }
-        saveOrUpdate(SimpleMockUtils.addAuditInfo(mockGroup));
+        SimpleResult<MockGroup> saveResult = newSaveOrUpdate(SimpleMockUtils.addAuditInfo(mockGroup));
+        if (!saveResult.isSuccess()) {
+            return saveResult;
+        }
         List<MockRequest> mockRequests = mockRequestService
                 .list(Wrappers.<MockRequest>query().eq("group_id", groupId).isNull(DB_MODIFY_FROM_KEY));
         List<MockScenario> scenarios = mockScenarioService
@@ -557,7 +560,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             group.setProjectId(importVo.getProjectId());
             group.setProjectCode(
                     StringUtils.defaultIfBlank(importVo.getProjectCode(), MockConstants.MOCK_DEFAULT_PROJECT));
-            boolean saved = saveOrUpdate(SimpleMockUtils.addAuditInfo(group));
+            boolean saved = newSaveOrUpdate(SimpleMockUtils.addAuditInfo(group)).isSuccess();
             if (CollectionUtils.isNotEmpty(group.getScenarios())) {
                 Set<String> scenarioCodes = new HashSet<>();
                 Set<String> enabledScenarioCodes = new HashSet<>();
