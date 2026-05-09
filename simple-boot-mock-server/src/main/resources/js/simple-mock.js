@@ -61,8 +61,13 @@
         if (input instanceof Function) { // 如果是函数，自动调用，防止直接输出函数体
             return mockStringify(input());
         }
-        if (typeof globalThis.java2Json === 'function' && typeof input === 'object') {
-            return globalThis.java2Json(input);
+        if (typeof input === 'object') {
+            if (typeof globalThis.isProxyValue === 'function' && globalThis.isProxyValue(input)) {
+                return JSON.stringify(input, ...args);
+            }
+            if (typeof globalThis.java2Json === 'function') {
+                return globalThis.java2Json(input);
+            }
         }
         return JSON.stringify(input, ...args);
     };

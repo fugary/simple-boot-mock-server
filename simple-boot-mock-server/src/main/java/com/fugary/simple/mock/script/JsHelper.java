@@ -10,6 +10,8 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.graalvm.polyglot.proxy.ProxyArray;
+import org.graalvm.polyglot.proxy.ProxyObject;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -341,6 +343,16 @@ public class JsHelper {
      */
     public String java2Json(Object java) {
         return JsonUtils.toJson(java);
+    }
+
+    /**
+     * 判断是否ProxyObject或者ProxyArray
+     *
+     * @param value
+     * @return
+     */
+    public boolean isProxyValue(Object value) {
+        return value instanceof ProxyObject || value instanceof ProxyArray;
     }
 
     /**

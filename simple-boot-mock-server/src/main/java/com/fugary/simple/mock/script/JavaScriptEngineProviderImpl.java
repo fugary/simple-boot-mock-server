@@ -15,6 +15,8 @@ import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.graalvm.polyglot.proxy.ProxyArray;
+import org.graalvm.polyglot.proxy.ProxyObject;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
@@ -26,6 +28,8 @@ import javax.script.SimpleScriptContext;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -129,6 +133,10 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         ScriptContext scriptContext = new SimpleScriptContext();
         scriptContext.setBindings(scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         if (requestVo != null) {
+            scriptContext.setAttribute("request", processPlainValue(requestVo), ScriptContext.ENGINE_SCOPE);
+        }
+        scriptEngine.eval(FAST_MOCK_JS_CONTENT, scriptContext);
+        if (requestVo != null) {
             scriptContext.setAttribute("request", processValue(requestVo), ScriptContext.ENGINE_SCOPE);
         }
         HttpResponseVo responseVo = MockJsUtils.getCurrentResponseVo();
@@ -137,19 +145,35 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         } else {
             scriptContext.removeAttribute("response", ScriptContext.ENGINE_SCOPE);
         }
-        scriptEngine.eval(FAST_MOCK_JS_CONTENT, scriptContext);
         return scriptContext;
     }
 
     protected Object processValue(Object value) {
+        return toProxyValue(processPlainValue(value));
+    }
+
+    protected Object processPlainValue(Object value) {
         if (value != null && !ClassUtils.isPrimitiveOrWrapper(value.getClass())
                 && (!(value instanceof String))) { // 转json
             String jsonValue = JsonUtils.toJson(value);
             if (isJson(jsonValue)) {
                 return JsonUtils.fromJson(jsonValue, Map.class);
-            } else if(isJsonArray(jsonValue)) {
+            } else if (isJsonArray(jsonValue)) {
                 return JsonUtils.fromJson(jsonValue, List.class);
             }
+        }
+        return value;
+    }
+
+    protected Object toProxyValue(Object value) {
+        if (value instanceof Map) {
+            Map<String, Object> proxyMap = new LinkedHashMap<>();
+            ((Map<?, ?>) value).forEach((key, val) -> proxyMap.put(String.valueOf(key), toProxyValue(val)));
+            return ProxyObject.fromMap(proxyMap);
+        } else if (value instanceof List) {
+            List<Object> proxyList = new ArrayList<>();
+            ((List<?>) value).forEach(item -> proxyList.add(toProxyValue(item)));
+            return ProxyArray.fromList(proxyList);
         }
         return value;
     }
