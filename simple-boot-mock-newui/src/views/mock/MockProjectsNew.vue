@@ -132,6 +132,22 @@ const searchFormOptions = computed(() => {
     change: handleUserChange
   },
   {
+    labelKey: 'mock.label.publicMockProject',
+    prop: 'publicProject',
+    type: 'select',
+    enabled: !props.publicFlag,
+    children: [{
+      label: $i18nBundle('mock.label.publicMockProjects'),
+      value: true
+    }, {
+      label: $i18nBundle('mock.label.privateMockProjects'),
+      value: false
+    }],
+    change () {
+      loadMockProjects(1)
+    }
+  },
+  {
     ...useSearchStatus({ change () { loadMockProjects(1) } }),
     enabled: !props.publicFlag
   },

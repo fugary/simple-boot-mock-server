@@ -54,8 +54,10 @@ public class MockProjectController {
                     .eq("status", 1);
         } else if (Boolean.TRUE.equals(queryVo.getOnlyMine())) {
             appendCurrentUserProjectCondition(queryWrapper);
+            appendPublicProjectCondition(queryWrapper, queryVo.getPublicProject());
         } else {
             appendProjectAuthorityCondition(queryWrapper, queryUserName);
+            appendPublicProjectCondition(queryWrapper, queryVo.getPublicProject());
         }
         applyProjectSort(queryWrapper);
         SimpleResult<List<MockProject>> result = SimpleResultUtils.createSimpleResult(mockProjectService.page(page, queryWrapper));
@@ -135,8 +137,10 @@ public class MockProjectController {
                     .eq(StringUtils.isNotBlank(queryUserName), "user_name", queryUserName);
         } else if (Boolean.TRUE.equals(queryVo.getOnlyMine())) {
             appendCurrentUserProjectCondition(queryWrapper);
+            appendPublicProjectCondition(queryWrapper, queryVo.getPublicProject());
         } else {
             appendProjectAuthorityCondition(queryWrapper, queryUserName);
+            appendPublicProjectCondition(queryWrapper, queryVo.getPublicProject());
         }
         applyProjectSort(queryWrapper);
         List<MockProject> projects = mockProjectService.list(queryWrapper);
@@ -171,6 +175,14 @@ public class MockProjectController {
         String loginUserName = SecurityUtils.getLoginUserName();
         queryWrapper.and(wrapper -> wrapper.eq("project_code", MockConstants.MOCK_DEFAULT_PROJECT)
                 .or(StringUtils.isNotBlank(loginUserName), userWrapper -> userWrapper.eq("user_name", loginUserName)));
+    }
+
+    private void appendPublicProjectCondition(QueryWrapper<MockProject> queryWrapper, Boolean publicProject) {
+        if (Boolean.TRUE.equals(publicProject)) {
+            queryWrapper.eq("public_flag", true);
+        } else if (Boolean.FALSE.equals(publicProject)) {
+            queryWrapper.and(wrapper -> wrapper.eq("public_flag", false).or().isNull("public_flag"));
+        }
     }
 
     private void appendProjectAuthorityCondition(QueryWrapper<MockProject> queryWrapper, String queryUserName) {
