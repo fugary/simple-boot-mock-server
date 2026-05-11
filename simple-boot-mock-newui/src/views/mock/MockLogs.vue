@@ -15,6 +15,9 @@ import { resolveDashboardLogPreset } from '@/services/mock/DashboardLogPreset'
 
 const route = useRoute()
 const router = useRouter()
+const LOG_ROUTE_QUERY_KEYS = ['preset', 'scope', 'mockGroupPath']
+
+const normalizeQueryValue = value => Array.isArray(value) ? value[0] : value
 
 const createDefaultSearchParam = () => ({
   keyword: '',
@@ -50,6 +53,21 @@ const applyDashboardPreset = () => {
   return true
 }
 
+const applyMockGroupPathQuery = () => {
+  const mockGroupPath = normalizeQueryValue(route.query.mockGroupPath)
+  if (!mockGroupPath) {
+    return false
+  }
+  searchParam.value = {
+    ...createDefaultSearchParam(),
+    mockGroupPath
+  }
+  dateParam.value = createDefaultDateParam()
+  return true
+}
+
+const applyLogRouteQuery = () => applyDashboardPreset() || applyMockGroupPathQuery()
+
 const loadApiLogs = (...args) => {
   searchParam.value.startDate = formatDate(dateParam.value?.createDates?.[0])
   searchParam.value.endDate = formatDate(dateParam.value?.createDates?.[1])
@@ -60,10 +78,9 @@ const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam, { c
 
 const clearLogSearchForm = async () => {
   resetLogSearchState()
-  if (route.query.preset != null || route.query.scope != null) {
+  if (LOG_ROUTE_QUERY_KEYS.some(key => route.query[key] != null)) {
     const query = { ...route.query }
-    delete query.preset
-    delete query.scope
+    LOG_ROUTE_QUERY_KEYS.forEach(key => delete query[key])
     await router.replace({
       name: route.name,
       query
@@ -74,7 +91,7 @@ const clearLogSearchForm = async () => {
 }
 
 const { initLoadOnce } = useInitLoadOnce(async () => {
-  applyDashboardPreset()
+  applyLogRouteQuery()
   await loadUsersAndRefreshOptions(false)
   await loadApiLogs()
 })
@@ -83,8 +100,8 @@ onMounted(initLoadOnce)
 
 onActivated(initLoadOnce)
 
-watch(() => `${route.query.preset || ''}|${route.query.scope || ''}`, async (value, oldValue) => {
-  if (value === oldValue || !applyDashboardPreset()) {
+watch(() => LOG_ROUTE_QUERY_KEYS.map(key => normalizeQueryValue(route.query[key]) || '').join('|'), async (value, oldValue) => {
+  if (value === oldValue || !applyLogRouteQuery()) {
     return
   }
   await loadUsersAndRefreshOptions(false)

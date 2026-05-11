@@ -164,6 +164,13 @@ const loadMockGroups = (pageNumber, saveConfig) => searchMethod(pageNumber, {}, 
     return data
   })
 
+const toGroupLogs = (mockGroupPath) => $goto({
+  name: 'MockLogs',
+  query: {
+    mockGroupPath
+  }
+})
+
 const { backUrl, goBack } = useBackUrl()
 const routeProjectLocked = computed(() => !!route.params.projectCode)
 const syncRouteSearchParam = (targetRoute = route) => {
@@ -387,6 +394,15 @@ const columns = computed(() => {
           {data.groupPath}
         </ElLink>&nbsp;
         <MockUrlCopyLink urlPath={path}/>
+        <ElLink
+          v-common-tooltip={$i18nKey('common.label.commonView', 'mock.label.logManagement')}
+          class="margin-left1"
+          type="primary"
+          underline={false}
+          onClick={() => toGroupLogs(data.groupPath)}
+        >
+          <CommonIcon size={18} icon="FindInPageOutlined"/>
+        </ElLink>
       </>
     }
   }, {
