@@ -15,7 +15,8 @@ import { resolveDashboardLogPreset } from '@/services/mock/DashboardLogPreset'
 
 const route = useRoute()
 const router = useRouter()
-const LOG_ROUTE_QUERY_KEYS = ['preset', 'scope', 'mockGroupPath']
+const LOG_SEARCH_QUERY_KEYS = ['mockGroupPath', 'dataId']
+const LOG_ROUTE_QUERY_KEYS = ['preset', 'scope', ...LOG_SEARCH_QUERY_KEYS]
 
 const normalizeQueryValue = value => Array.isArray(value) ? value[0] : value
 
@@ -53,20 +54,26 @@ const applyDashboardPreset = () => {
   return true
 }
 
-const applyMockGroupPathQuery = () => {
-  const mockGroupPath = normalizeQueryValue(route.query.mockGroupPath)
-  if (!mockGroupPath) {
+const applyLogSearchQuery = () => {
+  const routeSearchParam = LOG_SEARCH_QUERY_KEYS.reduce((result, key) => {
+    const value = normalizeQueryValue(route.query[key])
+    if (value) {
+      result[key] = value
+    }
+    return result
+  }, {})
+  if (!Object.keys(routeSearchParam).length) {
     return false
   }
   searchParam.value = {
     ...createDefaultSearchParam(),
-    mockGroupPath
+    ...routeSearchParam
   }
   dateParam.value = createDefaultDateParam()
   return true
 }
 
-const applyLogRouteQuery = () => applyDashboardPreset() || applyMockGroupPathQuery()
+const applyLogRouteQuery = () => applyDashboardPreset() || applyLogSearchQuery()
 
 const loadApiLogs = (...args) => {
   searchParam.value.startDate = formatDate(dateParam.value?.createDates?.[0])
@@ -244,6 +251,9 @@ const searchFormOptions = computed(() => {
   }, {
     labelKey: 'mock.label.logName',
     prop: 'logName'
+  }, {
+    labelKey: 'mock.label.dataId',
+    prop: 'dataId'
   }, {
     labelKey: 'mock.label.logResult',
     prop: 'logResult',

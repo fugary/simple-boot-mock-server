@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { onMounted, ref, computed, watch } from 'vue'
 import { defineTableColumns, defineFormOptions, defineTableButtons, limitStr } from '@/components/utils'
-import { $coreConfirm, checkShowColumn, getSingleSelectOptions, getStyleGrow } from '@/utils'
+import { $coreConfirm, $goto, checkShowColumn, getSingleSelectOptions, getStyleGrow } from '@/utils'
 import MockDataApi, {
   ALL_STATUS_CODES,
   DEFAULT_CONTENT_TYPE,
@@ -23,7 +23,7 @@ import {
   showCodeWindow
 } from '@/utils/DynamicUtils'
 import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
-import { ElMessage, ElTag } from 'element-plus'
+import { ElLink, ElMessage, ElTag } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
@@ -60,6 +60,12 @@ const selectDataId = defineModel('selectDataId', {
 })
 const selectedRows = ref([])
 const batchMode = ref(false)
+const toDataLogs = (dataId) => $goto({
+  name: 'MockLogs',
+  query: {
+    dataId
+  }
+})
 const columns = computed(() => {
   const hasMatchPattern = checkShowColumn(tableData.value, 'matchPattern')
   return defineTableColumns([{
@@ -70,7 +76,19 @@ const columns = computed(() => {
     enabled: batchMode.value
   }, {
     label: 'ID',
-    property: 'id'
+    minWidth: '80px',
+    formatter (data) {
+      return <ElLink
+        v-common-tooltip={$i18nKey('common.label.commonView', 'mock.label.logManagement')}
+        type="primary"
+        onClick={(event) => {
+          event?.stopPropagation()
+          toDataLogs(data.id)
+        }}
+      >
+        {data.id}
+      </ElLink>
+    }
   }, {
     labelKey: 'mock.label.statusCode',
     property: 'statusCode',

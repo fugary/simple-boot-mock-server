@@ -16,6 +16,7 @@ public class MockLogQueryVo extends SimpleQueryVo {
     private static final long serialVersionUID = -2076599168736875601L;
     private String userName;
     private String logName;
+    private String dataId;
     private String logType;
     private String logResult;
     private String ipAddress;
