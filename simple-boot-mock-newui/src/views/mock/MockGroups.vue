@@ -283,6 +283,23 @@ const loadProjectRelatedOptions = async ({ reloadUsers = false } = {}) => {
   await Promise.allSettled(tasks)
 }
 
+const fillProjectSearch = (group, $event) => {
+  $event?.stopPropagation()
+  if (isDefaultProject(group?.projectCode)) {
+    searchParam.value.userName = group.userName || searchParam.value.userName
+    searchParam.value.projectId = null
+    searchParam.value.projectCode = MOCK_DEFAULT_PROJECT
+    loadMockGroups(1)
+    return
+  }
+  if (!group?.projectId) {
+    return
+  }
+  searchParam.value.projectId = group.projectId
+  searchParam.value.projectCode = group.projectCode
+  loadMockGroups(1)
+}
+
 const { initLoadOnce } = useInitLoadOnce(async () => {
   syncRouteSearchParam()
   await loadProjectRelatedOptions({ reloadUsers: true })
@@ -342,21 +359,23 @@ const columns = computed(() => {
       if (isDefaultProject(data.projectCode)) {
         if (projectUserName && projectUserName !== useCurrentUserName()) {
           projectInfo = <>
-            <ElText size="small" type="info" tag="span">{$i18nBundle('mock.label.defaultProject')}</ElText>
+            <ElLink type="info"
+                    underline={true}
+                    class="mock-group-project-link"
+                    onClick={($event) => fillProjectSearch(data, $event)}
+                    onDblclick={($event) => $event?.stopPropagation()}>{$i18nBundle('mock.label.defaultProject')}</ElLink>
             <ElText class="margin-left1" size="small" type="success" tag="b"
                     v-common-tooltip={$i18nBundle('mock.label.owner')}>({projectUserName})</ElText>
           </>
         }
       } else if (data.projectCode) {
         const projectName = groupProject?.projectName || data.projectCode
-        const projectNameNode = <ElText type={disabledProject ? 'danger' : 'info'}
-                                        size="small"
-                                        tag="span">{projectName}</ElText>
-        if (!projectName) {
-          projectInfo = <ElText type={disabledProject ? 'danger' : 'info'} size="small" tag="span">
-            {data.projectCode}
-          </ElText>
-        } else if (projectUserName && projectUserName !== useCurrentUserName()) {
+        const projectNameNode = <ElLink type={disabledProject ? 'danger' : 'info'}
+                                        underline={true}
+                                        class="mock-group-project-link"
+                                        onClick={($event) => fillProjectSearch(data, $event)}
+                                        onDblclick={($event) => $event?.stopPropagation()}>{projectName}</ElLink>
+        if (projectUserName && projectUserName !== useCurrentUserName()) {
           projectInfo = <>
             {projectNameNode}
             <ElText class="margin-left1" size="small" type="success" tag="b"
@@ -1194,6 +1213,13 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
 .mock-group-project-info {
   margin-top: 2px;
   line-height: 1.4;
+}
+
+.mock-group-project-link {
+  --el-link-font-size: var(--el-font-size-extra-small);
+  --el-link-font-weight: normal;
+  line-height: 1.4;
+  vertical-align: baseline;
 }
 
 .mock-group-scenario-info {
