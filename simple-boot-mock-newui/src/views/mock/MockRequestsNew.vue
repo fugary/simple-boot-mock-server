@@ -458,6 +458,10 @@ const activeScenarioLabel = computed(() => {
   const found = scenarioList.value.find(item => item.scenarioCode === code)
   return found ? found.scenarioName : '' // Only show if found in loaded scenarios
 })
+const searchActiveScenario = () => {
+  searchParam.value.scenarioCode = groupItem.value?.activeScenarioCode || ''
+  loadMockRequests(1)
+}
 const onScenarioChanged = (scenario) => {
   if (scenario != null && scenario.scenarioCode !== undefined) {
     searchParam.value.scenarioCode = scenario.scenarioCode || '' // '' handles defaults or explicit empty codes
@@ -583,7 +587,14 @@ const toShowHistoryWindow = (current) => {
           type="warning"
           class="margin-left2"
         >
-          {{ $t('mock.label.activeScenario') }}: {{ activeScenarioLabel }}
+          {{ $t('mock.label.activeScenario') }}:
+          <el-link
+            class="active-scenario-link"
+            type="success"
+            @click="searchActiveScenario"
+          >
+            {{ activeScenarioLabel }}
+          </el-link>
         </el-tag>
       </template>
     </el-page-header>
@@ -773,5 +784,8 @@ const toShowHistoryWindow = (current) => {
 </template>
 
 <style scoped>
-
+.active-scenario-link {
+  font-size: inherit;
+  vertical-align: baseline;
+}
 </style>
