@@ -115,10 +115,16 @@ const syncDataIdSearchState = () => {
 const loadMockRequests = (...args) => {
   const dataId = syncDataIdSearchState()
   const scenarioCode = searchParam.value?.scenarioCode
-  searchParam.value.scenarioCode = dataId ? undefined : (scenarioCode == null ? '' : scenarioCode)
+  searchParam.value.scenarioCode = dataId || scenarioList.value.length === 0
+    ? undefined
+    : (scenarioCode == null ? '' : scenarioCode)
   return searchMockRequests(...args).then((result) => {
     if (tableData.value?.length) {
-      onSelectRequest(tableData.value.find(req => req.id === searchParam.value.selectRequestId) || tableData.value[0])
+      const firstRequest = tableData.value[0]
+      if (dataId && scenarioList.value.length > 0) {
+        searchParam.value.scenarioCode = firstRequest.scenarioCode || ''
+      }
+      onSelectRequest(tableData.value.find(req => req.id === searchParam.value.selectRequestId) || firstRequest)
       const countMap = result.infos?.countMap || {}
       const historyMap = result.infos?.historyMap || {}
       tableData.value.forEach(request => {
