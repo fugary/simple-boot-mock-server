@@ -54,7 +54,8 @@ const scenarioList = ref([])
 const loadScenarios = async () => {
   return MockScenarioApi.search({ groupId }).then(data => {
     scenarioList.value = data?.resultData || []
-    if (scenarioList.value.length > 0 && (searchParam.value?.scenarioCode == null || searchParam.value.scenarioCode === '')) {
+    if (!normalizeDataId(searchParam.value?.dataId) && scenarioList.value.length > 0 &&
+      (searchParam.value?.scenarioCode == null || searchParam.value.scenarioCode === '')) {
       const activeScenario = groupItem.value?.activeScenarioCode || ''
       if (searchParam.value.scenarioCode !== activeScenario) {
         searchParam.value.scenarioCode = activeScenario
@@ -85,13 +86,36 @@ const normalizeDataId = value => {
   return Number.isInteger(dataId) && dataId > 0 ? dataId : undefined
 }
 
-const loadMockRequests = (...args) => {
-  const scenarioCode = searchParam.value?.scenarioCode
+const clearSearchFormProps = (keepProp) => {
+  searchFormOptions.value.map(option => option.prop || option.property)
+    .filter(prop => !!prop && prop !== keepProp)
+    .forEach(prop => set(searchParam.value, prop, undefined))
+}
+
+const resetSearchToDefault = () => {
+  clearSearchFormProps()
+  searchParam.value.scenarioCode = scenarioList.value.length > 0
+    ? (groupItem.value?.activeScenarioCode || '')
+    : undefined
+  clearCurrentRequest()
+  searchParam.value.page && (searchParam.value.page.pageNumber = 1)
+}
+
+const syncDataIdSearchState = () => {
   const dataId = normalizeDataId(searchParam.value?.dataId)
   if (dataId) {
+    clearSearchFormProps('dataId')
+    clearCurrentRequest()
+    searchParam.value.page && (searchParam.value.page.pageNumber = 1)
     searchParam.value.selectDataId = dataId
   }
-  searchParam.value.scenarioCode = scenarioCode == null ? '' : scenarioCode
+  return dataId
+}
+
+const loadMockRequests = (...args) => {
+  const dataId = syncDataIdSearchState()
+  const scenarioCode = searchParam.value?.scenarioCode
+  searchParam.value.scenarioCode = dataId ? undefined : (scenarioCode == null ? '' : scenarioCode)
   return searchMockRequests(...args).then((result) => {
     if (tableData.value?.length) {
       onSelectRequest(tableData.value.find(req => req.id === searchParam.value.selectRequestId) || tableData.value[0])
@@ -101,6 +125,8 @@ const loadMockRequests = (...args) => {
         request.dataCount = countMap[request.id] || 0
         request.historyCount = historyMap[request.id] || 0
       })
+    } else {
+      clearCurrentRequest()
     }
     return result
   })
@@ -166,14 +192,18 @@ const searchFormOptions = computed(() => {
     labelKey: 'mock.label.dataId',
     prop: 'dataId',
     trim: true,
-    pattern: /^\d+$/
+    pattern: /^\d+$/,
+    change () {
+      if (!normalizeDataId(searchParam.value?.dataId)) {
+        resetSearchToDefault()
+      }
+      loadMockRequests(1)
+    }
   })
   return options
 })
 const resetSearchForm = () => {
-  searchFormOptions.value.map(option => option.prop || option.property)
-    .forEach((prop) => set(searchParam.value, prop, undefined))
-  searchParam.value.selectDataId = undefined
+  resetSearchToDefault()
   loadMockRequests()
 }
 
@@ -195,6 +225,13 @@ const clearSelectedRequests = () => {
   nextTick(() => {
     requestTableRef.value?.table?.clearSelection?.()
   })
+}
+
+function clearCurrentRequest () {
+  selectRequest.value = undefined
+  searchParam.value.selectRequestId = undefined
+  searchParam.value.selectDataId = undefined
+  clearSelectedRequests()
 }
 
 const deleteRequests = () => {
@@ -460,6 +497,8 @@ const activeScenarioLabel = computed(() => {
 })
 const searchActiveScenario = () => {
   searchParam.value.scenarioCode = groupItem.value?.activeScenarioCode || ''
+  searchParam.value.dataId = undefined
+  searchParam.value.selectDataId = undefined
   loadMockRequests(1)
 }
 const onScenarioChanged = (scenario) => {
