@@ -15,5 +15,6 @@ public class MockRequestQueryVo extends SimpleQueryVo {
     private String method;
     private String scenarioCode;
     private Boolean hasData;
+    private String dataId;
 
 }

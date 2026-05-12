@@ -91,6 +91,13 @@ public class MockRequestController {
         if (StringUtils.isNotBlank(queryVo.getMethod())) {
             queryWrapper.and(wrapper -> wrapper.eq("method", queryVo.getMethod()));
         }
+        String dataId = StringUtils.trimToEmpty(queryVo.getDataId());
+        if (StringUtils.isNotBlank(dataId)) {
+            int mockDataId = NumberUtils.toInt(dataId, -1);
+            queryWrapper.exists("select 1 from t_mock_data where t_mock_data.request_id=t_mock_request.id"
+                    + " and t_mock_data.id=" + mockDataId
+                    + " and t_mock_data." + DB_MODIFY_FROM_KEY + " is null");
+        }
         if (queryVo.getHasData() != null) {
             queryWrapper.exists(queryVo.getHasData(),
                     "select 1 from t_mock_data where t_mock_data.request_id=t_mock_request.id");

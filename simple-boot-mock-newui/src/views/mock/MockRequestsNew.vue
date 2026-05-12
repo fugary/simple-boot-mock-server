@@ -80,8 +80,17 @@ const pageAttrs = {
   pagerCount: 5
 }
 
+const normalizeDataId = value => {
+  const dataId = Number(value)
+  return Number.isInteger(dataId) && dataId > 0 ? dataId : undefined
+}
+
 const loadMockRequests = (...args) => {
   const scenarioCode = searchParam.value?.scenarioCode
+  const dataId = normalizeDataId(searchParam.value?.dataId)
+  if (dataId) {
+    searchParam.value.selectDataId = dataId
+  }
   searchParam.value.scenarioCode = scenarioCode == null ? '' : scenarioCode
   return searchMockRequests(...args).then((result) => {
     if (tableData.value?.length) {
@@ -153,12 +162,18 @@ const searchFormOptions = computed(() => {
     change () {
       loadMockRequests()
     }
+  }, {
+    labelKey: 'mock.label.dataId',
+    prop: 'dataId',
+    trim: true,
+    pattern: /^\d+$/
   })
   return options
 })
 const resetSearchForm = () => {
   searchFormOptions.value.map(option => option.prop || option.property)
     .forEach((prop) => set(searchParam.value, prop, undefined))
+  searchParam.value.selectDataId = undefined
   loadMockRequests()
 }
 
