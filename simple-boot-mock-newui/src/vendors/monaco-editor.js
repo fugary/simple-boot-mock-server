@@ -88,10 +88,14 @@ const langCheckConfig = [{
   checkReg: /(SELECT\s.*?\bFROM\b)|(INSERT\s.*?\bINTO\b)|(UPDATE\s.*?\bSET\b)|(DELETE\s.*?\bFROM\b)/i
 }]
 
-export const $checkLang = value => {
+export const $checkLang = (value, options = {}) => {
   const val = value?.trim?.() || ''
   if (val) {
+    const excludeTypes = new Set(options.excludeTypes || [])
     for (const langConfig of langCheckConfig) {
+      if (excludeTypes.has(langConfig.type)) {
+        continue
+      }
       const checkReg = langConfig.checkReg
       if ((checkReg instanceof RegExp && checkReg.test(val)) || (isFunction(checkReg) && checkReg(val))) {
         return langConfig.type
@@ -165,7 +169,9 @@ export const useMonacoEditorOptions = (config) => {
     }
   }
   const checkEditorLang = (lang) => {
-    languageRef.value = lang || (monacoEditorOptions.autoCheckLang && $checkLang(contentRef.value)) || monacoEditorOptions.language
+    languageRef.value = lang || (monacoEditorOptions.autoCheckLang && $checkLang(contentRef.value, {
+      excludeTypes: monacoEditorOptions.excludeCheckLangs
+    })) || monacoEditorOptions.language
     if (contentRef.value && editorRef.value) {
       formatDocument()
     }
