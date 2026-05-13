@@ -43,6 +43,7 @@ import MockProjectApi, {
   checkProjectDeletable,
   isProjectEnabled,
   checkProjectWritable,
+  checkProjectEdit,
   selectProjects
 } from '@/api/mock/MockProjectApi'
 import { isDefaultProject, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
@@ -724,6 +725,19 @@ const newOrEdit = async id => {
   showMore.value = hiddenKeys.some(key => !!currentGroup.value?.[key])
 }
 const { showEditWindow: showEditProjectWindow, currentProject, newOrEditProject, editFormOptions: editProjectFormOptions } = useProjectEditHook(searchParam, userOptions)
+const currentGroupSelectedProject = computed(() => {
+  return currentGroup.value ? resolveGroupProject(currentGroup.value) : null
+})
+const canEditCurrentGroupProject = computed(() => {
+  const project = currentGroupSelectedProject.value
+  return !!project?.id && !isDefaultProject(project.projectCode) && checkProjectEdit(project)
+})
+const toEditCurrentGroupProject = (event) => {
+  event?.preventDefault()
+  if (canEditCurrentGroupProject.value) {
+    newOrEditProject(currentGroupSelectedProject.value.id, event)
+  }
+}
 const reloadProjectsAndRefreshOptions = async (item, importModel) => {
   await loadProjectsAndRefreshOptions()
   const formModel = importModel?.value ? importModel : currentGroup
@@ -733,12 +747,17 @@ const reloadProjectsAndRefreshOptions = async (item, importModel) => {
     if (option) {
       formModel.value.projectId = option.projectId || null
       formModel.value.projectCode = option.projectCode
+      if (!importModel?.value) {
+        currentGroupProject.value = projects.value.find(project => `${project.id || ''}` === `${option.projectId || ''}`) ||
+          projects.value.find(project => project.projectCode === option.projectCode) ||
+          currentGroupProject.value
+      }
     }
   }
 }
 const saveProjectItem = (item) => {
-  return MockProjectApi.saveOrUpdate(item).then(() => {
-    reloadProjectsAndRefreshOptions(item)
+  return MockProjectApi.saveOrUpdate(item).then(data => {
+    return reloadProjectsAndRefreshOptions(data?.resultData || item)
   })
 }
 const editFormOptions = computed(() => {
@@ -780,15 +799,25 @@ const editFormOptions = computed(() => {
           ? { projectCode: MOCK_DEFAULT_PROJECT, userName: currentGroup.value?.userName }
           : null)
     },
-    tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
-    tooltipIcon: 'CirclePlusFilled',
-    tooltipLinkAttrs: {
-      type: 'primary'
-    },
-    tooltipFunc (event) {
-      newOrEditProject()
-      event.preventDefault()
-    }
+    tooltips: [{
+      enabled: canEditCurrentGroupProject.value,
+      tooltip: $i18nKey('common.label.commonEdit', 'mock.label.project'),
+      tooltipIcon: 'EditPen',
+      tooltipLinkAttrs: {
+        type: 'primary'
+      },
+      tooltipFunc: toEditCurrentGroupProject
+    }, {
+      tooltip: $i18nKey('common.label.commonAdd', 'mock.label.project'),
+      tooltipIcon: 'CirclePlusFilled',
+      tooltipLinkAttrs: {
+        type: 'primary'
+      },
+      tooltipFunc (event) {
+        newOrEditProject(null, event)
+        event?.preventDefault()
+      }
+    }]
   }, {
     labelKey: 'mock.label.groupName',
     prop: 'groupName',
