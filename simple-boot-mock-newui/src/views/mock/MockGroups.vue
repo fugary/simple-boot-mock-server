@@ -847,7 +847,9 @@ const editFormOptions = computed(() => {
   return filteredOptions
 })
 const saveGroupItem = (item) => {
-  item.proxyUrl = item.proxyUrlParams?.length ? JSON.stringify(item.proxyUrlParams.filter(param => param.value)) : null
+  if (Object.prototype.hasOwnProperty.call(item, 'proxyUrlParams')) {
+    item.proxyUrl = item.proxyUrlParams?.length ? JSON.stringify(item.proxyUrlParams.filter(param => param.value)) : null
+  }
   return saveOrUpdate(item).then(() => {
     loadMockGroups()
   })
