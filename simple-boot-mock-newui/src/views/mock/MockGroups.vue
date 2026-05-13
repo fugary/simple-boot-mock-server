@@ -914,9 +914,21 @@ const historyColumns = computed(() => {
     }
   }, {
     labelKey: 'common.label.status',
-    minWidth: '80px',
+    minWidth: '100px',
     formatter (data) {
-      return <DelFlagTag modelValue={data.status} />
+      let disableMockStr = ''
+      if (data.disableMock) {
+        disableMockStr = <ElText type="danger"
+                                 style="vertical-align: middle;"
+                                 class="margin-left1 pointer"
+                                 v-common-tooltip={$i18nBundle('mock.label.disabledMock')}>
+          <CommonIcon size={18} icon="DoDisturbFilled"/>
+        </ElText>
+      }
+      return <>
+        <DelFlagTag modelValue={data.status} />
+        {disableMockStr}
+      </>
     }
   }, {
     labelKey: 'common.label.modifyDate',
