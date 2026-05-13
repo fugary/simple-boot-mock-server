@@ -160,7 +160,7 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
         if (!saveResult.isSuccess()) {
             return saveResult;
         }
-        List<MockGroup> mockGroups = mockGroupService.list(buildProjectGroupQuery(oldProject));
+        List<MockGroup> mockGroups = mockGroupService.list(buildCurrentProjectGroupQuery(oldProject));
         for (MockGroup mockGroup : mockGroups) {
             mockGroupService.copyMockGroup(mockGroup, mockProject);
         }
@@ -376,6 +376,10 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
                             .eq("project_code", project.getProjectCode())));
         }
         return queryWrapper;
+    }
+
+    private QueryWrapper<MockGroup> buildCurrentProjectGroupQuery(MockProject project) {
+        return buildProjectGroupQuery(project).isNull(MockConstants.DB_MODIFY_FROM_KEY);
     }
 
     private String buildProjectGroupCountKey(MockProject project) {
