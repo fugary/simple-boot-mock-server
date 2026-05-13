@@ -72,13 +72,23 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
 
     @Override
     public boolean existsMockProject(MockProject project) {
-        String projectCode = StringUtils.trimToNull(project.getProjectCode());
-        if (projectCode == null) {
+        if (project == null) {
             return false;
         }
-        return exists(Wrappers.<MockProject>query()
+        String projectCode = StringUtils.trimToNull(project.getProjectCode());
+        if (projectCode != null && exists(Wrappers.<MockProject>query()
                 .eq("project_code", projectCode)
-                .ne(project.getId() != null, "id", project.getId()));
+                .ne(project.getId() != null, "id", project.getId()))) {
+            return true;
+        }
+        String userName = StringUtils.trimToNull(project.getUserName());
+        String projectName = StringUtils.trimToNull(project.getProjectName());
+        return StringUtils.isNoneBlank(userName, projectName)
+                && !isDefaultProjectCode(projectCode)
+                && exists(Wrappers.<MockProject>query()
+                        .eq("user_name", userName)
+                        .eq("project_name", projectName)
+                        .ne(project.getId() != null, "id", project.getId()));
     }
 
     @Override
@@ -146,7 +156,10 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
             mockProject.setPublicFlag(false);
         }
         mockProject.setProjectName(StringUtils.join(mockProject.getProjectName(), "-copy"));
-        saveOrUpdate(SimpleMockUtils.addAuditInfo(mockProject));
+        SimpleResult<MockProject> saveResult = saveMockProject(mockProject);
+        if (!saveResult.isSuccess()) {
+            return saveResult;
+        }
         List<MockGroup> mockGroups = mockGroupService.list(buildProjectGroupQuery(oldProject));
         for (MockGroup mockGroup : mockGroups) {
             mockGroupService.copyMockGroup(mockGroup, mockProject);
@@ -190,6 +203,9 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
             }
             String projectCode = StringUtils.trimToNull(project.getProjectCode());
             project.setProjectCode(projectCode != null ? projectCode : nextProjectCode());
+            if (existsMockProject(project)) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
+            }
             if (!StringUtils.equals(project.getProjectCode(), oldProject.getProjectCode())
                     || !StringUtils.equals(project.getUserName(), oldProject.getUserName())) {
                 mockGroupService.update(Wrappers.<MockGroup>update()
@@ -209,6 +225,9 @@ public class MockProjectServiceImpl extends ServiceImpl<MockProjectMapper, MockP
             }
         } else {
             project.setProjectCode(nextProjectCode());
+            if (existsMockProject(project)) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1001);
+            }
         }
         saveOrUpdate(SimpleMockUtils.addAuditInfo(project));
         return SimpleResultUtils.createSimpleResult(project);
