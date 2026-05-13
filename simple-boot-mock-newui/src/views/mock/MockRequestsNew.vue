@@ -260,7 +260,7 @@ const newRequestItem = () => ({
 })
 const showEditWindow = ref(false)
 const showMore = ref(false)
-const hiddenKeys = ['disableMock', 'delay', 'contentType', 'matchPattern', 'loadBalancer', 'postProcessor', 'description']
+const hiddenKeys = ['delay', 'contentType', 'matchPattern', 'loadBalancer', 'postProcessor', 'description']
 const currentRequest = ref(newRequestItem())
 const selectRequest = ref()
 const newOrEdit = async id => {

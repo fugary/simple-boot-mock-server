@@ -695,7 +695,7 @@ const deleteGroups = () => {
 
 const showEditWindow = ref(false)
 const showMore = ref(false)
-const hiddenKeys = ['disableMock', 'delay', 'contentType', 'description']
+const hiddenKeys = ['delay', 'contentType', 'description']
 const newOrEdit = async id => {
   if (id) {
     await getById(id).then(data => {
