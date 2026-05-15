@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
@@ -35,9 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -97,7 +96,8 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                         .logType(request.getMethod())
                         .headers(JsonUtils.toJson(HttpRequestUtils.getRequestHeadersMap(request)))
                         .mockGroupPath(groupPath)
-                        .requestUrl(HttpRequestUtils.getRequestUrl(request));
+                        .requestUrl(HttpRequestUtils.getRequestUrl(request))
+                        .extend1(request.getHeader("mock_uuid"));
             }
         }
         return logBuilder;
@@ -147,8 +147,9 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
             HttpServletRequest request = HttpRequestUtils.getCurrentRequest();
             HttpServletResponse response = HttpRequestUtils.getCurrentResponse();
             if (request != null && response != null) {
-                String header = response.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
-                String userName = StringUtils.defaultIfBlank(response.getHeader(MockConstants.MOCK_DATA_USER_HEADER),
+                Map<String, String> responseHeaders = getResponseHeaders(response, result);
+                String header = getHeader(responseHeaders, MockConstants.MOCK_DATA_ID_HEADER);
+                String userName = StringUtils.defaultIfBlank(getHeader(responseHeaders, MockConstants.MOCK_DATA_USER_HEADER),
                         request.getHeader(MockConstants.MOCK_DATA_USER_HEADER));
                 if (StringUtils.isNotBlank(header)) {
                     logBuilder.dataId(header);
@@ -156,11 +157,11 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                 if (StringUtils.isNotBlank(userName)) {
                     logBuilder.userName(userName).creator(userName);
                 }
-                String proxyUrl = response.getHeader(MockConstants.MOCK_PROXY_URL_HEADER);
+                String proxyUrl = getHeader(responseHeaders, MockConstants.MOCK_PROXY_URL_HEADER);
                 if (StringUtils.isNotBlank(proxyUrl)) {
                     logBuilder.proxyUrl(proxyUrl);
                 }
-                logBuilder.responseHeaders(JsonUtils.toJson(HttpRequestUtils.getResponseHeadersMap(response)));
+                logBuilder.responseHeaders(JsonUtils.toJson(responseHeaders));
             }
             MockLog mockLog = logBuilder.build();
             publishEvent(mockLog);
@@ -196,6 +197,41 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
         Method method = signature.getMethod();
         String methodName = method.getName();
         return declaringType.getSimpleName() + "#" + methodName;
+    }
+
+    private Map<String, String> getResponseHeaders(HttpServletResponse response, Object result) {
+        Map<String, String> responseHeaders = new LinkedHashMap<>();
+        HttpRequestUtils.getResponseHeadersMap(response).forEach((headerName, headerValue) ->
+                putHeader(responseHeaders, headerName, headerValue));
+        if (result instanceof ResponseEntity) {
+            ResponseEntity<?> responseEntity = (ResponseEntity<?>) result;
+            responseEntity.getHeaders().forEach((headerName, values) ->
+                    putHeader(responseHeaders, headerName, StringUtils.join(values, ",")));
+        }
+        responseHeaders.remove(MockConstants.MOCK_META_DATA_REQ);
+        return responseHeaders;
+    }
+
+    private String getHeader(Map<String, String> responseHeaders, String headerName) {
+        return responseHeaders.entrySet().stream()
+                .filter(entry -> headerName.equalsIgnoreCase(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void putHeader(Map<String, String> responseHeaders, String headerName, String headerValue) {
+        if (StringUtils.isBlank(headerName)) {
+            return;
+        }
+        String existsHeader = responseHeaders.keySet().stream()
+                .filter(headerName::equalsIgnoreCase)
+                .findFirst()
+                .orElse(null);
+        if (existsHeader != null) {
+            responseHeaders.remove(existsHeader);
+        }
+        responseHeaders.put(headerName, headerValue);
     }
 
     private void publishEvent(MockLog mockLog) {
