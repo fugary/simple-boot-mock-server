@@ -12,6 +12,12 @@ export const MOCK_DATA_ID_HEADER = 'mock-data-id'
 
 export const MOCK_DATA_USER_HEADER = 'mock-data-user'
 
+export const MOCK_PROXY_URL_HEADER = 'mock-proxy-url'
+
+export const MOCK_DATA_PAUSED_HEADER = 'mock-data-paused'
+
+export const MOCK_DELAY_TIME_HEADER = 'mock-delay-time'
+
 export const MOCK_DATA_PREVIEW_HEADER = 'mock-data-preview'
 
 export const MOCK_DATA_MATCH_PATTERN_HEADER = 'mock-data-match-pattern'

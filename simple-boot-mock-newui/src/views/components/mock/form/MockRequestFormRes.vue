@@ -150,6 +150,42 @@ const requestInfo = computed(() => {
   return props.responseTarget?.requestInfo
 })
 
+const mockHitInfo = computed(() => props.responseTarget?.mockHitInfo)
+const mockHitTypeLabel = computed(() => {
+  const labelKeyMap = {
+    mock: 'mock.label.mockReturn',
+    proxy: 'mock.label.proxyReturn',
+    none: 'mock.label.noReturn'
+  }
+  return $i18nBundle(labelKeyMap[mockHitInfo.value?.returnType] || labelKeyMap.none)
+})
+const mockHitTagType = computed(() => {
+  const tagTypeMap = {
+    mock: 'success',
+    proxy: 'warning',
+    none: 'danger'
+  }
+  return tagTypeMap[mockHitInfo.value?.returnType] || tagTypeMap.none
+})
+const mockHitTooltip = computed(() => {
+  const info = mockHitInfo.value
+  if (!info?.realDebug) return ''
+  const parts = []
+  if (info.dataId) {
+    parts.push(`${$i18nBundle('mock.label.dataId')}: ${info.dataId}`)
+  }
+  if (info.proxyUrl) {
+    parts.push(`${$i18nBundle('mock.label.proxyUrl')}: ${info.proxyUrl}`)
+  }
+  if (info.userName) {
+    parts.push(`${$i18nBundle('common.label.user')}: ${info.userName}`)
+  }
+  if (info.paused) {
+    parts.push($i18nBundle('mock.label.disabledMock'))
+  }
+  return parts.join(' | ')
+})
+
 const {
   contentRef: contentRef2, languageRef: languageRef2, editorRef: editorRef2, monacoEditorOptions: monacoEditorOptions2,
   languageModel: languageModel2, languageSelectOption: languageSelectOption2, formatDocument: formatDocument2, checkEditorLang
@@ -282,6 +318,14 @@ const toShowJsonDataWindow = () => {
           v-else-if="responseTarget"
           style="display: flex; margin-top: -7px;"
         >
+          <el-tag
+            v-if="mockHitInfo?.realDebug"
+            v-common-tooltip="mockHitTooltip"
+            :type="mockHitTagType"
+            class="margin-right3"
+          >
+            {{ $t('mock.label.realDebug') }}: {{ mockHitTypeLabel }}
+          </el-tag>
           <el-link
             v-if="mediaConfig.responseHtml"
             v-common-tooltip="previewHtml?$i18nKey('common.label.commonView', 'common.label.code'):$t('common.label.preview')"

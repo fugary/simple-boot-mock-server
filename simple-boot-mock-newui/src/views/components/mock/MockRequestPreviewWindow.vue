@@ -7,11 +7,27 @@ const loading = ref(true)
 const mockPreviewRef = ref()
 const toPreviewRequest = async (...args) => {
   showWindow.value = true
+  loading.value = true
   nextTick(() => {
     mockPreviewRef.value?.toPreviewRequest(...args)
       .finally(() => { loading.value = false })
   })
 }
+
+const doRealDebug = ({ form } = {}) => {
+  const realDebug = () => mockPreviewRef.value?.doRealDebug?.()
+  if (form?.validate) {
+    form.validate(valid => valid && realDebug())
+  } else {
+    realDebug()
+  }
+}
+
+const footerButtons = [{
+  labelKey: 'mock.label.realDebug',
+  type: 'success',
+  click: doRealDebug
+}]
 
 defineExpose({
   toPreviewRequest
@@ -26,6 +42,7 @@ defineExpose({
     :show-cancel="false"
     :close-on-click-modal="false"
     :ok-label="$t('common.label.close')"
+    :buttons="footerButtons"
     show-fullscreen
     destroy-on-close
   >

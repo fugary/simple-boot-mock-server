@@ -75,7 +75,7 @@ const proxyRequestPath = computed(() => {
   return `${normalizedProxy}${normalizedPath}`
 })
 
-const doDataPreview = async () => {
+const doPreviewRequest = async ({ realDebug = false } = {}) => {
   console.log('========================paramTarget1', paramTarget.value)
   let requestUrl = requestPath.value
   paramTarget.value?.pathParams?.forEach(pathParam => {
@@ -101,15 +101,18 @@ const doDataPreview = async () => {
     paramsSerializer: toGetParams,
     data,
     headers,
+    realDebug,
     onChunk: calcResponse
   }
   if (hasBody && isString(data)) { // 字符串不让axios处理，防止调试请求和postman有差异
     config.transformRequest = req => req
   }
   calcPreviewHeaders(paramTarget.value, requestUrl, config)
-  requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)
-  previewData.value?.id && (headers[MOCK_DATA_ID_HEADER] = previewData.value?.id)
-  await doSaveMockResponseBody()// mock请求数据保存
+  if (!realDebug) {
+    requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)
+    previewData.value?.id && (headers[MOCK_DATA_ID_HEADER] = previewData.value?.id)
+    await doSaveMockResponseBody()// mock请求数据保存
+  }
   const authContent = paramTarget.value.authContent
   if (authContent) {
     await AUTH_OPTION_CONFIG[authContent.authType]?.parseAuthInfo(authContent, headers, params, paramTarget)
@@ -119,6 +122,10 @@ const doDataPreview = async () => {
     method: requestItem.value.method
   }, config).then(calcResponse, calcResponse)
 }
+
+const doDataPreview = () => doPreviewRequest()
+
+const doRealDebug = () => doPreviewRequest({ realDebug: true })
 
 const calcResponse = (response) => {
   responseTarget.value = processResponse(response)
@@ -200,6 +207,7 @@ const clearParamsAndResponse = () => {
 
 defineExpose({
   toPreviewRequest,
+  doRealDebug,
   clearParamsAndResponse
 })
 

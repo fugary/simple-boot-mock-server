@@ -7,8 +7,10 @@ import {
   FORM_URL_ENCODED,
   isStreamContentType,
   LANG_TO_CONTENT_TYPES,
+  MOCK_DATA_ID_HEADER,
   MOCK_DATA_PREVIEW_HEADER,
   MOCK_META_DATA_REQ,
+  MOCK_PROXY_URL_HEADER,
   NONE
 } from '@/consts/MockConstants'
 import { isMediaContentType, processEvnParams } from '@/services/mock/MockCommonService'
@@ -236,6 +238,17 @@ export const previewRequest = function (reqData, config = {}) {
   })
 }
 
+const calcMockHitInfo = (headers, realDebug) => {
+  if (!realDebug) return null
+  const dataId = getHeader(headers, MOCK_DATA_ID_HEADER)
+  const proxyUrl = getHeader(headers, MOCK_PROXY_URL_HEADER)
+  return {
+    dataId,
+    proxyUrl,
+    returnType: proxyUrl ? 'proxy' : dataId ? 'mock' : 'none'
+  }
+}
+
 export const processResponse = function (response) {
   console.log('=========================response', response)
   const { config } = response
@@ -264,13 +277,15 @@ export const processResponse = function (response) {
       })
     }
   }
+  const mockHitInfo = calcMockHitInfo(headers, config.realDebug)
   const data = response.data
   return {
     error,
     data,
     requestInfo,
     requestHeaders,
-    responseHeaders
+    responseHeaders,
+    mockHitInfo
   }
 }
 
