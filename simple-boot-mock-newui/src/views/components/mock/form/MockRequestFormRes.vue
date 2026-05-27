@@ -167,24 +167,6 @@ const mockHitTagType = computed(() => {
   }
   return tagTypeMap[mockHitInfo.value?.returnType] || tagTypeMap.none
 })
-const mockHitTooltip = computed(() => {
-  const info = mockHitInfo.value
-  if (!info?.realDebug) return ''
-  const parts = []
-  if (info.dataId) {
-    parts.push(`${$i18nBundle('mock.label.dataId')}: ${info.dataId}`)
-  }
-  if (info.proxyUrl) {
-    parts.push(`${$i18nBundle('mock.label.proxyUrl')}: ${info.proxyUrl}`)
-  }
-  if (info.userName) {
-    parts.push(`${$i18nBundle('common.label.user')}: ${info.userName}`)
-  }
-  if (info.paused) {
-    parts.push($i18nBundle('mock.label.disabledMock'))
-  }
-  return parts.join(' | ')
-})
 
 const {
   contentRef: contentRef2, languageRef: languageRef2, editorRef: editorRef2, monacoEditorOptions: monacoEditorOptions2,
@@ -319,8 +301,7 @@ const toShowJsonDataWindow = () => {
           style="display: flex; margin-top: -7px;"
         >
           <el-tag
-            v-if="mockHitInfo?.realDebug"
-            v-common-tooltip="mockHitTooltip"
+            v-if="mockHitInfo"
             :type="mockHitTagType"
             class="margin-right3"
           >
