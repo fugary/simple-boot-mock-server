@@ -31,13 +31,13 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Create date 2025/6/17<br>
@@ -128,28 +128,25 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                     ResponseEntity<byte[]> response = mockPushProcessor.doPush(mockParams);
                     log.info("fetch请求url完成:{}/{}", url, response);
                     HttpStatus httpStatus = response.getStatusCode();
-                    byte[] responseBytes = response.getBody();
+                    byte[] responseBytes = Objects.requireNonNullElse(response.getBody(), new byte[0]);
                     Charset charset = StandardCharsets.UTF_8;
                     MediaType contentType = response.getHeaders().getContentType();
                     if (contentType != null && contentType.getCharset() != null) {
                         charset = contentType.getCharset();
                     }
                     boolean isSuccess = httpStatus.is2xxSuccessful();
-                    String responseText = new String(Objects.requireNonNullElse(responseBytes, new byte[0]), charset);
+                    String responseText = new String(responseBytes, charset);
                     Map<String, String> headerMap = response.getHeaders().toSingleValueMap();
+                    Map<String, Object> headerObj = new LinkedHashMap<>(headerMap);
+                    headerObj.put("get", (ProxyExecutable) headerArgs -> getHeaderIgnoreCase(headerMap, headerArgs));
+                    headerObj.put("has", (ProxyExecutable) headerArgs -> getHeaderIgnoreCase(headerMap, headerArgs) != null);
                     ProxyObject responseObj = ProxyObject.fromMap(Map.of(
-                            "status", response.getStatusCode(),
+                            "status", httpStatus.value(),
                             "ok", isSuccess,
                             "statusText", httpStatus.getReasonPhrase(),
-                            "headers", ProxyObject.fromMap(headerMap.entrySet()
-                                    .stream()
-                                    .collect(Collectors.toMap(
-                                            Map.Entry::getKey,
-                                            Map.Entry::getValue
-                                    ))),
-                            // text() 返回字符串
+                            "headers", ProxyObject.fromMap(headerObj),
+                            "url", url,
                             "text", (ProxyExecutable) ignored -> Value.asValue(responseText),
-                            // json() 返回 JSON 解析结果
                             "json", (ProxyExecutable) ignored -> {
                                 try {
                                     return context.eval("js", "JSON.parse").execute(responseText);
@@ -157,12 +154,8 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                                     throw new RuntimeException("Invalid JSON in response");
                                 }
                             },
-                            // blob() 返回 Uint8Array
-                            "blob", (ProxyExecutable) ignored -> {
-                                // 先把字节数组转JS Uint8Array
-                                Value uint8ArrayConstructor = context.eval("js", "Uint8Array");
-                                return uint8ArrayConstructor.newInstance(responseBytes);
-                            }
+                            "arrayBuffer", (ProxyExecutable) ignored -> context.eval("js", "Uint8Array").newInstance(responseBytes).getMember("buffer"),
+                            "blob", (ProxyExecutable) ignored -> context.eval("js", "Uint8Array").newInstance(responseBytes)
                     ));
                     future.complete(Value.asValue(responseObj));
                 } catch (Throwable e) {
@@ -184,6 +177,19 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                 return null;
             });
         };
+    }
+
+    private static String getHeaderIgnoreCase(Map<String, String> headerMap, Value[] args) {
+        if (args.length == 0 || args[0] == null || args[0].isNull()) {
+            return null;
+        }
+        String headerName = args[0].isString() ? args[0].asString() : args[0].toString();
+        for (Map.Entry<String, String> entry : headerMap.entrySet()) {
+            if (StringUtils.equalsIgnoreCase(entry.getKey(), headerName)) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     private static <T> Method getMethod(Class<T> clazz, String methodName, Class<?>... classes) {
