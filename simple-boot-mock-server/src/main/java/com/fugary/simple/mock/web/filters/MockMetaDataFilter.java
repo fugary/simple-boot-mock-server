@@ -1,7 +1,7 @@
 package com.fugary.simple.mock.web.filters;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fugary.simple.mock.contants.MockConstants;
+import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -22,8 +22,6 @@ import java.util.Enumeration;
  */
 public class MockMetaDataFilter extends OncePerRequestFilter {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         if (SimpleMockUtils.isMockPreview(request)) {
@@ -33,7 +31,7 @@ public class MockMetaDataFilter extends OncePerRequestFilter {
                 String key = reqHeaders.nextElement();
                 requestHeaders.add(new NameValue(key, request.getHeader(key)));
             }
-            response.setHeader(MockConstants.MOCK_META_DATA_REQ, objectMapper.writeValueAsString(requestHeaders));
+            response.setHeader(MockConstants.MOCK_META_DATA_REQ, JsonUtils.toHeaderJson(requestHeaders));
         }
         filterChain.doFilter(new ContentCachingRequestWrapper(request), response);
     }

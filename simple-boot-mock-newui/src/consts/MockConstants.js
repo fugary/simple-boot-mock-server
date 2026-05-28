@@ -16,6 +16,8 @@ export const MOCK_PROXY_URL_HEADER = 'mock-proxy-url'
 
 export const MOCK_DATA_PREVIEW_HEADER = 'mock-data-preview'
 
+export const MOCK_DIAGNOSE_META_HEADER = 'mock-diagnose-meta'
+
 export const MOCK_DATA_MATCH_PATTERN_HEADER = 'mock-data-match-pattern'
 
 export const MOCK_DATA_PATH_PARAMS_HEADER = 'mock-data-path-params'

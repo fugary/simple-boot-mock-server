@@ -12,6 +12,7 @@ import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { $i18nKey } from '@/messages'
 import { useRoute, useRouter } from 'vue-router'
 import { resolveDashboardLogPreset } from '@/services/mock/DashboardLogPreset'
+import MockDiagnoseInfo from '@/views/components/mock/MockDiagnoseInfo.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,6 +36,8 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
 })
 
 const dateParam = ref(createDefaultDateParam())
+const showDiagnoseWindow = ref(false)
+const currentDiagnoseInfo = ref()
 
 const resetLogSearchState = () => {
   searchParam.value = createDefaultSearchParam()
@@ -230,11 +233,25 @@ const showLogDetail = item => showCodeWindow(JSON.stringify(item), {
   }]
 })
 
+const showDiagnoseDetail = item => {
+  try {
+    currentDiagnoseInfo.value = JSON.parse(item.extend2)
+    showDiagnoseWindow.value = true
+  } catch {
+    showCodeWindow(item.extend2)
+  }
+}
+
 const buttons = computed(() => {
   return [{
     labelKey: 'common.label.view',
     type: 'primary',
     click: showLogDetail
+  }, {
+    labelKey: 'mock.label.diagnose',
+    type: 'warning',
+    buttonIf: item => !!item.extend2,
+    click: showDiagnoseDetail
   }]
 })
 //* ************搜索框**************//
@@ -306,7 +323,7 @@ const searchFormOptions = computed(() => {
     <common-table
       v-model:page="searchParam.page"
       :data="tableData"
-      :buttons-column-attrs="{minWidth:'100px',fixed:'right'}"
+      :buttons-column-attrs="{minWidth:'150px',fixed:'right'}"
       :columns="columns"
       :buttons="buttons"
       :loading="loading"
@@ -314,6 +331,23 @@ const searchFormOptions = computed(() => {
       @current-page-change="loadApiLogs()"
       @row-dblclick="showLogDetail($event)"
     />
+    <common-window
+      v-model="showDiagnoseWindow"
+      width="920px"
+      :show-cancel="false"
+      :ok-label="$t('common.label.close')"
+      destroy-on-close
+    >
+      <template #header>
+        <span class="el-dialog__title">
+          {{ $t('mock.label.diagnose') }}
+        </span>
+      </template>
+      <mock-diagnose-info
+        v-if="currentDiagnoseInfo"
+        :diagnose-info="currentDiagnoseInfo"
+      />
+    </common-window>
   </el-container>
 </template>
 

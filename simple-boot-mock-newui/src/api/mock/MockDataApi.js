@@ -9,6 +9,7 @@ import {
   LANG_TO_CONTENT_TYPES,
   MOCK_DATA_ID_HEADER,
   MOCK_DATA_PREVIEW_HEADER,
+  MOCK_DIAGNOSE_META_HEADER,
   MOCK_META_DATA_REQ,
   MOCK_PROXY_URL_HEADER,
   NONE
@@ -119,10 +120,12 @@ export const recoverFromHistory = (data, config) => {
   }, config)).then(response => response.data)
 }
 
+const isSameHeader = (headerName, key) => headerName?.toLowerCase() === key?.toLowerCase()
+
 export const getHeader = (headers, key) => {
   if (isObject(headers) && key) {
     return headers[Object.keys(headers)
-      .find(headerName => headerName?.toLowerCase() === key?.toLowerCase())] || ''
+      .find(headerName => isSameHeader(headerName, key))] || ''
   }
   return ''
 }
@@ -130,7 +133,7 @@ export const getHeader = (headers, key) => {
 export const deleteHeader = (headers, key) => {
   if (isObject(headers) && key) {
     Object.keys(headers).forEach(headerName => {
-      if (headerName?.toLowerCase() === key?.toLowerCase()) {
+      if (isSameHeader(headerName, key)) {
         delete headers[headerName]
       }
     })
@@ -249,6 +252,33 @@ const calcMockHitInfo = (headers, realDebug) => {
   }
 }
 
+const HEADER_JSON_BASE64_PREFIX = 'base64:'
+const decodeHeaderJson = (headerValue) => {
+  if (headerValue?.startsWith(HEADER_JSON_BASE64_PREFIX)) {
+    const base64Value = headerValue.substring(HEADER_JSON_BASE64_PREFIX.length)
+    const binary = atob(base64Value)
+    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0))
+    return new TextDecoder().decode(bytes)
+  }
+  return headerValue
+}
+
+const parseHeaderJson = (headers, key) => {
+  const headerValue = getHeader(headers, key)
+  if (headerValue) {
+    try {
+      return JSON.parse(decodeHeaderJson(headerValue))
+    } catch {
+      return {
+        parseError: true,
+        rawData: headerValue
+      }
+    }
+  }
+}
+const isInternalPreviewHeader = name => [MOCK_META_DATA_REQ, MOCK_DIAGNOSE_META_HEADER]
+  .some(key => isSameHeader(name, key))
+
 export const processResponse = function (response) {
   console.log('=========================response', response)
   const { config } = response
@@ -267,10 +297,12 @@ export const processResponse = function (response) {
     status,
     duration: config.__startTime ? new Date().getTime() - config.__startTime : 0
   }
-  const requestHeaders = JSON.parse(headers[MOCK_META_DATA_REQ] || '[]').sort((a, b) => a.name.localeCompare(b.name))
+  const requestHeaderList = parseHeaderJson(headers, MOCK_META_DATA_REQ)
+  const requestHeaders = (isArray(requestHeaderList) ? requestHeaderList : [])
+    .sort((a, b) => a.name.localeCompare(b.name))
   const responseHeaders = []
   for (const name in headers) {
-    if (name !== MOCK_META_DATA_REQ) {
+    if (!isInternalPreviewHeader(name)) {
       responseHeaders.push({
         name,
         value: headers[name]
@@ -278,6 +310,7 @@ export const processResponse = function (response) {
     }
   }
   const mockHitInfo = calcMockHitInfo(headers, config.realDebug)
+  const diagnoseInfo = parseHeaderJson(headers, MOCK_DIAGNOSE_META_HEADER)
   const data = response.data
   return {
     error,
@@ -285,7 +318,8 @@ export const processResponse = function (response) {
     requestInfo,
     requestHeaders,
     responseHeaders,
-    mockHitInfo
+    mockHitInfo,
+    diagnoseInfo
   }
 }
 

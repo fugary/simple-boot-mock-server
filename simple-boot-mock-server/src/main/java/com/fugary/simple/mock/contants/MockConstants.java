@@ -57,6 +57,8 @@ public class MockConstants {
 
     public static final String MOCK_DATA_PREVIEW_HEADER = "mock-data-preview";
 
+    public static final String MOCK_DIAGNOSE_META_HEADER = "mock-diagnose-meta";
+
     public static final String MOCK_DATA_REDIRECT_HEADER = "mock-data-redirect";
 
     public static final String MOCK_DATA_MATCH_PATTERN_HEADER = "mock-data-match-pattern";

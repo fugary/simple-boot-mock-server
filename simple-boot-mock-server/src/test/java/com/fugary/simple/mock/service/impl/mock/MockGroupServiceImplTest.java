@@ -10,6 +10,7 @@ import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockScenarioService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
+import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -144,6 +147,32 @@ class MockGroupServiceImplTest {
         assertNotNull(result.getRight());
         assertEquals(inactiveRequest.getId(), result.getMiddle().getId());
         assertEquals(inactiveData.getId(), result.getRight().getId());
+    }
+
+    @Test
+    void matchMockDataShouldRecordForcedRequestDiagnoseWithoutBlankScenario() {
+        MockGroup mockGroup = createGroup("demo", null);
+        MockRequest request = createRequest(31, mockGroup.getId(), "/users/{id}", null);
+        MockData data = createData(301, mockGroup.getId(), request.getId(), "{\"ok\":true}");
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+
+        doReturn(mockGroup).when(mockGroupService).getOne(any());
+        when(mockRequestService.list(any(QueryWrapper.class))).thenReturn(new ArrayList<>(List.of(request)));
+        when(mockRequestService.loadAllDataByRequest(request.getId())).thenReturn(List.of(data));
+
+        Triple<MockGroup, MockRequest, MockData> result = mockGroupService.matchMockData(
+                buildRequest("/mock/demo/users/1"),
+                request.getId(),
+                0,
+                group -> true,
+                diagnose
+        );
+
+        assertNotNull(result.getMiddle());
+        assertEquals(request.getId(), diagnose.getRequest().getId());
+        assertNull(diagnose.getScenario());
+        assertTrue(diagnose.getSteps().stream().anyMatch(step -> "force_request_selected".equals(step.getCode())));
+        assertTrue(diagnose.getSteps().stream().noneMatch(step -> "scenario".equals(step.getStage())));
     }
 
     private MockHttpServletRequest buildRequest(String servletPath) {

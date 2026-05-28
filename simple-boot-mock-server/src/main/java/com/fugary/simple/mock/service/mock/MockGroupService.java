@@ -8,6 +8,7 @@ import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
+import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -53,6 +54,9 @@ public interface MockGroupService extends IService<MockGroup> {
      * @return
      */
     Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId, Integer defaultId, Predicate<MockGroup> checker);
+
+    Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId,
+            Integer defaultId, Predicate<MockGroup> checker, MockDiagnoseVo diagnose);
 
     /**
      * 计算delay时间

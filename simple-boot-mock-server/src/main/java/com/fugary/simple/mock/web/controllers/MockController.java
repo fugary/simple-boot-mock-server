@@ -20,6 +20,7 @@ import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
+import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -87,6 +88,7 @@ public class MockController {
     public Object doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String requestId = request.getHeader(MockConstants.MOCK_REQUEST_ID_HEADER);
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
         Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request,
                 NumberUtils.toInt(requestId), NumberUtils.toInt(dataId), mockGroup -> {
                     if (StringUtils.isBlank(requestId) && StringUtils.isBlank(dataId)) {
@@ -95,7 +97,7 @@ public class MockController {
                                 mockGroup.getProjectId(), mockGroup.getProjectCode());
                     }
                     return true;
-                });
+                }, diagnose);
         MockData data = dataPair.getRight();
         MockRequest mockRequest = dataPair.getMiddle();
         MockGroup mockGroup = dataPair.getLeft();
@@ -107,12 +109,13 @@ public class MockController {
             response.setHeader(MockConstants.MOCK_DELAY_TIME_HEADER, String.valueOf(delayTime));
         }
         String contentType = SimpleMockUtils.calcContentType(mockGroup, mockRequest, data);
-        String proxyUrl;
+        String proxyUrl = null;
         if (data != null) {
             HttpHeaders httpHeaders = SimpleMockUtils.calcHeaders(data.getHeaders());
             HttpStatus httpStatus = HttpStatus.resolve(data.getStatusCode());
             if (httpStatus != null && httpStatus.is3xxRedirection()) { // 重定向
                 mockGroupService.delayTime(start, delayTime);
+                finishDiagnose(request, response, diagnose, "mock", "mock_redirect", "dataId", data.getId());
                 if (SimpleMockUtils.isMockPreview(request)) {
                     return ResponseEntity.status(HttpStatus.OK).header(MockConstants.MOCK_DATA_REDIRECT_HEADER, "1")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -128,6 +131,7 @@ public class MockController {
                 response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
                 response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
                 MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
+                finishDiagnose(request, response, diagnose, "mock", "mock_sse_return", "dataId", data.getId());
                 return MockEventStreamUtils.processSseRequest(request, response, data, eventStreamThreadPool,
                         mockPostScriptProcessor, mockRequest);
             }
@@ -143,6 +147,7 @@ public class MockController {
             // 所有request没有匹配上,但是有proxy地址
             String loopCountStr = request.getHeader(MockConstants.SIMPLE_BOOT_MOCK_HEADER);
             if (NumberUtils.toInt(loopCountStr, 0) > 2) {
+                finishProxyDiagnose(request, response, diagnose, "error", "proxy_loop_detected", proxyUrl);
                 return ResponseEntity.status(HttpStatus.LOOP_DETECTED).contentType(MediaType.APPLICATION_JSON)
                         .body(JsonUtils.toJson(SimpleResultUtils.createError("Proxy Loop Detected")));
             }
@@ -155,6 +160,7 @@ public class MockController {
                 response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyUrl);
                 response.setCharacterEncoding(StandardCharsets.UTF_8.name());
                 MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
+                finishProxyDiagnose(request, response, diagnose, "proxy", "proxy_sse_return", proxyUrl);
                 return mockSsePushProcessor.processSseProxy(
                         SimpleMockUtils.toMockParams(mockGroup, mockRequest, request), mockRequest, null);
             }
@@ -171,8 +177,33 @@ public class MockController {
                 response.setHeader(MockConstants.MOCK_DATA_PAUSED_HEADER, "true");
             }
         }
+        if (data != null) {
+            finishDiagnose(request, response, diagnose, "mock", "mock_return", "dataId", data.getId());
+        } else if (StringUtils.isNotBlank(proxyUrl)) {
+            finishProxyDiagnose(request, response, diagnose, "proxy", "proxy_return", proxyUrl);
+        } else {
+            finishDiagnose(request, response, diagnose, "none", "no_mock_or_proxy");
+        }
         mockGroupService.delayTime(start, delayTime);
         return responseEntity;
+    }
+
+    private void finishProxyDiagnose(HttpServletRequest request, HttpServletResponse response, MockDiagnoseVo diagnose,
+            String resultType, String code, String proxyUrl) {
+        diagnose.setProxyUrl(proxyUrl);
+        finishDiagnose(request, response, diagnose, resultType, code, "proxyUrl", proxyUrl);
+    }
+
+    private void finishDiagnose(HttpServletRequest request, HttpServletResponse response, MockDiagnoseVo diagnose,
+            String resultType, String code, Object... details) {
+        diagnose.finish(resultType, code, details);
+        if (SimpleLogUtils.getLogBuilder() != null) {
+            String diagnoseJson = JsonUtils.toJson(diagnose);
+            SimpleLogUtils.addLogData(logBuilder -> logBuilder.extend2(diagnoseJson));
+        }
+        if (SimpleMockUtils.isMockPreview(request)) {
+            response.setHeader(MockConstants.MOCK_DIAGNOSE_META_HEADER, JsonUtils.toHeaderJson(diagnose));
+        }
     }
 
     /**

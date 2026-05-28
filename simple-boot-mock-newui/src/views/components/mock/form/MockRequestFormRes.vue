@@ -23,6 +23,7 @@ import MockDictionaryPopover from '@/views/components/mock/form/MockDictionaryPo
 import { generateMockTemplateFromData } from '@/vendors/mockjs/MockDataTransformer'
 import { downloadByLink } from '@/api/mock/MockGroupApi'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
+import MockDiagnoseInfo from '@/views/components/mock/MockDiagnoseInfo.vue'
 
 const props = defineProps({
   responseTarget: {
@@ -167,6 +168,7 @@ const mockHitTagType = computed(() => {
   }
   return tagTypeMap[mockHitInfo.value?.returnType] || tagTypeMap.none
 })
+const diagnoseInfo = computed(() => props.responseTarget?.diagnoseInfo)
 
 const {
   contentRef: contentRef2, languageRef: languageRef2, editorRef: editorRef2, monacoEditorOptions: monacoEditorOptions2,
@@ -665,6 +667,21 @@ const toShowJsonDataWindow = () => {
             @mount="editorRef2=$event"
           />
         </el-container>
+      </el-tab-pane>
+      <el-tab-pane
+        v-if="diagnoseInfo"
+        name="diagnoseInfo"
+      >
+        <template #label>
+          <el-badge
+            type="primary"
+            :value="diagnoseInfo.steps?.length"
+            :show-zero="false"
+          >
+            {{ $t('mock.label.diagnose') }}
+          </el-badge>
+        </template>
+        <mock-diagnose-info :diagnose-info="diagnoseInfo" />
       </el-tab-pane>
     </el-tabs>
   </el-container>

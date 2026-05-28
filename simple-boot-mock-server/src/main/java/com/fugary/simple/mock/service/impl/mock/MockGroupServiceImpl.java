@@ -24,6 +24,7 @@ import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.*;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
+import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -183,9 +184,17 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     @Override
     public Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId,
             Integer defaultId, Predicate<MockGroup> checker) {
+        return matchMockData(request, requestId, defaultId, checker, null);
+    }
+
+    @Override
+    public Triple<MockGroup, MockRequest, MockData> matchMockData(HttpServletRequest request, Integer requestId,
+            Integer defaultId, Predicate<MockGroup> checker, MockDiagnoseVo diagnose) {
         String requestPath = request.getServletPath();
         String method = request.getMethod();
         String requestGroupPath = calcGroupPath(requestPath);
+        MockDiagnoseRecorder diagnoseRecorder = MockDiagnoseRecorder.of(diagnose);
+        diagnoseRecorder.requestReceived(requestPath, method, requestGroupPath);
         boolean testRequest = requestId != 0;
         boolean testData = defaultId != 0;
         boolean forceMockTarget = testRequest || testData;
@@ -195,8 +204,10 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     .eq("group_path", requestGroupPath)
                     .eq(!testRequest, "status", 1)
                     .isNull(DB_MODIFY_FROM_KEY));
+            diagnoseRecorder.groupMatched(mockGroup, requestGroupPath);
             if (mockGroup != null && (testRequest || !Boolean.TRUE.equals(mockGroup.getDisableMock()))) {
                 if (checker != null && !checker.test(mockGroup)) {
+                    diagnoseRecorder.groupCheckFailed(mockGroup);
                     return Triple.of(null, null, null);
                 }
                 // 查询Request
@@ -207,14 +218,24 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         .isNull(DB_MODIFY_FROM_KEY);
                 if (!forceMockTarget) {
                     String activeScenarioCode = StringUtils.trimToNull(mockGroup.getActiveScenarioCode());
+                    Integer groupId = mockGroup.getId();
+                    diagnoseRecorder.scenarioSelected(activeScenarioCode, () -> mockScenarioService
+                            .getOne(Wrappers.<MockScenario>query()
+                                    .eq("group_id", groupId)
+                                    .eq("scenario_code", activeScenarioCode), false));
                     if (StringUtils.isBlank(activeScenarioCode)) {
                         requestQuery.isNull("scenario_code");
                     } else {
                         requestQuery.eq("scenario_code", activeScenarioCode);
                     }
+                } else {
+                    diagnoseRecorder.scenarioSkippedByTarget(StringUtils.trimToNull(mockGroup.getActiveScenarioCode()));
                 }
                 List<MockRequest> mockRequests = mockRequestService.list(requestQuery);
+                diagnoseRecorder.requestCandidates(mockRequests.size());
+                diagnoseRecorder.forceRequestSelected(requestId, mockRequests);
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
+                int requestPathMatchedCount = 0;
                 // 请求是否匹配上Request，如果匹配上就查询Data
                 for (MockRequest mockRequest : sortMockRequests(mockRequests)) {
                     String configRequestPath = StringUtils.prependIfMissing(mockRequest.getRequestPath(), "/");
@@ -222,23 +243,36 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                                                                                             // path不支持:var格式，只支持{var}格式
                     String configPath = groupPath + configRequestPath;
                     if (pathMatcher.match(configPath, requestPath)) {
+                        requestPathMatchedCount++;
+                        diagnoseRecorder.requestPathMatched(mockRequest);
                         try {
                             HttpRequestVo requestVo = calcRequestVo(request, configPath, requestPath);
                             MockJsUtils.setCurrentRequestVo(requestVo);
-                            if (mockRequestService.matchRequestPattern(mockRequest.getMatchPattern()) || testRequest) {
+                            boolean requestPatternMatched = matchRequestPattern(mockRequest, testRequest, diagnoseRecorder);
+                            if (requestPatternMatched || testRequest) {
                                 if (Boolean.TRUE.equals(mockRequest.getDisableMock()) && !testData && !testRequest) {
+                                    diagnoseRecorder.requestDisabled(mockRequest);
                                     return Triple.of(mockGroup, mockRequest, null);
                                 }
                                 List<MockData> mockDataList = mockRequestService
                                         .loadAllDataByRequest(mockRequest.getId());
+                                int totalDataCount = mockDataList.size();
                                 MockData mockData = mockRequestService.findForceMockData(mockDataList, defaultId);
+                                diagnoseRecorder.forceDataSelected(mockData);
+                                if (mockData == null && testData) {
+                                    diagnoseRecorder.forceDataNotFound(defaultId, mockRequest);
+                                    continue;
+                                }
                                 mockDataList = mockDataList.stream().filter(MockBase::isEnabled)
                                         .collect(Collectors.toList());
+                                diagnoseRecorder.dataCandidates(totalDataCount, mockDataList.size());
                                 if (mockData == null) { // request匹配的数据查找
                                     mockData = mockRequestService.findMockDataByRequest(mockDataList, requestVo);
+                                    diagnoseRecorder.dataPatternMatched(mockData, mockDataList);
                                 }
-                                if (mockData == null) { // 没有配置参数匹，或者没有匹配，过滤掉配置有参数匹配的数据
+                                if (mockData == null) { // 没有配置参数匹配，或者没有匹配，过滤掉配置有参数匹配的数据
                                     mockData = mockRequestService.findMockData(mockRequest, mockDataList);
+                                    diagnoseRecorder.defaultDataSelected(mockData);
                                 }
                                 processMockData(mockRequest, mockData, requestVo);
                                 return Triple.of(mockGroup, mockRequest, mockData);
@@ -248,9 +282,26 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         }
                     }
                 }
+                diagnoseRecorder.requestNotMatched(requestPathMatchedCount, mockRequests.size());
+            } else if (mockGroup != null) {
+                diagnoseRecorder.groupDisabled(mockGroup);
             }
+        } else {
+            diagnoseRecorder.groupPathEmpty(requestPath);
         }
         return Triple.of(mockGroup, null, null);
+    }
+
+    protected boolean matchRequestPattern(MockRequest mockRequest, boolean testRequest,
+            MockDiagnoseRecorder diagnoseRecorder) {
+        try {
+            boolean matched = mockRequestService.matchRequestPattern(mockRequest.getMatchPattern());
+            diagnoseRecorder.requestPatternMatched(mockRequest, matched, testRequest);
+            return matched;
+        } catch (RuntimeException e) {
+            diagnoseRecorder.requestPatternError(mockRequest, e);
+            throw e;
+        }
     }
 
     @Override

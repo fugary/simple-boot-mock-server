@@ -208,7 +208,8 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
             responseEntity.getHeaders().forEach((headerName, values) ->
                     putHeader(responseHeaders, headerName, StringUtils.join(values, ",")));
         }
-        responseHeaders.remove(MockConstants.MOCK_META_DATA_REQ);
+        removeHeader(responseHeaders, MockConstants.MOCK_META_DATA_REQ);
+        removeHeader(responseHeaders, MockConstants.MOCK_DIAGNOSE_META_HEADER);
         return responseHeaders;
     }
 
@@ -218,6 +219,13 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .orElse(null);
+    }
+
+    private void removeHeader(Map<String, String> responseHeaders, String headerName) {
+        responseHeaders.keySet().stream()
+                .filter(headerName::equalsIgnoreCase)
+                .findFirst()
+                .ifPresent(responseHeaders::remove);
     }
 
     private void putHeader(Map<String, String> responseHeaders, String headerName, String headerValue) {
