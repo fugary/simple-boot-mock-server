@@ -69,11 +69,11 @@ class MockGroupServiceImplTest {
         ReflectionTestUtils.setField(mockGroupService, "mockScenarioService", mockScenarioService);
         mockGroupService.afterPropertiesSet();
 
-        when(scriptEngineProvider.mock(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(mockPostScriptProcessor.process(any(MockRequest.class), any(MockData.class), anyString()))
+        lenient().when(scriptEngineProvider.mock(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(mockPostScriptProcessor.process(any(MockRequest.class), any(MockData.class), anyString()))
                 .thenAnswer(invocation -> invocation.getArgument(2));
-        when(mockRequestService.matchRequestPattern(anyString())).thenReturn(true);
-        when(mockRequestService.findForceMockData(anyList(), any())).thenAnswer(invocation -> {
+        lenient().when(mockRequestService.matchRequestPattern(anyString())).thenReturn(true);
+        lenient().when(mockRequestService.findForceMockData(anyList(), any())).thenAnswer(invocation -> {
             List<MockData> dataList = invocation.getArgument(0);
             Integer dataId = invocation.getArgument(1);
             if (dataId == null || dataId == 0) {
@@ -173,6 +173,53 @@ class MockGroupServiceImplTest {
         assertNull(diagnose.getScenario());
         assertTrue(diagnose.getSteps().stream().anyMatch(step -> "force_request_selected".equals(step.getCode())));
         assertTrue(diagnose.getSteps().stream().noneMatch(step -> "scenario".equals(step.getStage())));
+    }
+
+    @Test
+    void matchMockDataShouldDiagnoseDisabledGroup() {
+        MockGroup disabledGroup = createGroup("demo", null);
+        disabledGroup.setStatus(0);
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+
+        doReturn(disabledGroup).when(mockGroupService).getOne(any());
+
+        Triple<MockGroup, MockRequest, MockData> result = mockGroupService.matchMockData(
+                buildRequest("/mock/demo/users/1"),
+                0,
+                0,
+                group -> true,
+                diagnose
+        );
+
+        assertNull(result.getLeft());
+        assertEquals(disabledGroup.getId(), diagnose.getGroup().getId());
+        assertTrue(diagnose.getSteps().stream().anyMatch(step -> "group_disabled".equals(step.getCode())));
+        assertTrue(diagnose.getSteps().stream().noneMatch(step -> "group_not_found".equals(step.getCode())));
+    }
+
+    @Test
+    void matchMockDataShouldDiagnoseDisabledRequest() {
+        MockGroup mockGroup = createGroup("demo", null);
+        MockRequest disabledRequest = createRequest(41, mockGroup.getId(), "/users/{id}", null);
+        disabledRequest.setStatus(0);
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+
+        doReturn(mockGroup).when(mockGroupService).getOne(any());
+        when(mockRequestService.list(any(QueryWrapper.class)))
+                .thenReturn(new ArrayList<>(List.of(disabledRequest)));
+
+        Triple<MockGroup, MockRequest, MockData> result = mockGroupService.matchMockData(
+                buildRequest("/mock/demo/users/1"),
+                0,
+                0,
+                group -> true,
+                diagnose
+        );
+
+        assertNull(result.getMiddle());
+        assertEquals(disabledRequest.getId(), diagnose.getRequest().getId());
+        assertTrue(diagnose.getSteps().stream().anyMatch(step -> "request_disabled".equals(step.getCode())));
+        assertTrue(diagnose.getSteps().stream().noneMatch(step -> "request_path_not_matched".equals(step.getCode())));
     }
 
     private MockHttpServletRequest buildRequest(String servletPath) {

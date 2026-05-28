@@ -202,8 +202,11 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         if (StringUtils.isNotBlank(requestGroupPath)) {
             mockGroup = getOne(Wrappers.<MockGroup>query()
                     .eq("group_path", requestGroupPath)
-                    .eq(!testRequest, "status", 1)
                     .isNull(DB_MODIFY_FROM_KEY));
+            if (mockGroup != null && !testRequest && !mockGroup.isEnabled()) {
+                diagnoseRecorder.groupDisabled(mockGroup);
+                return Triple.of(null, null, null);
+            }
             diagnoseRecorder.groupMatched(mockGroup, requestGroupPath);
             if (mockGroup != null && (testRequest || !Boolean.TRUE.equals(mockGroup.getDisableMock()))) {
                 if (checker != null && !checker.test(mockGroup)) {
@@ -213,7 +216,6 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 // 查询Request
                 QueryWrapper<MockRequest> requestQuery = Wrappers.<MockRequest>query().eq("group_id", mockGroup.getId())
                         .eq("method", method)
-                        .eq(!testRequest, "status", 1)
                         .eq(testRequest, "id", requestId)
                         .isNull(DB_MODIFY_FROM_KEY);
                 String activeScenarioCode = StringUtils.trimToNull(mockGroup.getActiveScenarioCode());
@@ -229,17 +231,16 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         requestQuery.eq("scenario_code", activeScenarioCode);
                     }
                 }
-                List<MockRequest> mockRequests = mockRequestService.list(requestQuery);
-                diagnoseRecorder.requestCandidates(mockRequests);
-                diagnoseRecorder.forceRequestSelected(requestId, mockRequests);
+                List<MockRequest> allMockRequests = mockRequestService.list(requestQuery);
+                diagnoseRecorder.requestCandidates(allMockRequests);
+                diagnoseRecorder.forceRequestSelected(requestId, allMockRequests);
+                List<MockRequest> mockRequests = testRequest ? allMockRequests : allMockRequests.stream()
+                        .filter(MockBase::isEnabled).collect(Collectors.toList());
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
                 int requestPathMatchedCount = 0;
                 // 请求是否匹配上Request，如果匹配上就查询Data
                 for (MockRequest mockRequest : sortMockRequests(mockRequests)) {
-                    String configRequestPath = StringUtils.prependIfMissing(mockRequest.getRequestPath(), "/");
-                    configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}"); // spring 支持的ant
-                                                                                            // path不支持:var格式，只支持{var}格式
-                    String configPath = groupPath + configRequestPath;
+                    String configPath = calcConfigPath(groupPath, mockRequest.getRequestPath());
                     if (pathMatcher.match(configPath, requestPath)) {
                         requestPathMatchedCount++;
                         diagnoseRecorder.requestPathMatched(mockRequest);
@@ -287,7 +288,14 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         }
                     }
                 }
-                diagnoseRecorder.requestNotMatched(requestPathMatchedCount, mockRequests.size());
+                MockRequest disabledRequest = !testRequest && requestPathMatchedCount == 0
+                        ? findDisabledRequest(allMockRequests, groupPath, requestPath)
+                        : null;
+                if (disabledRequest == null) {
+                    diagnoseRecorder.requestNotMatched(requestPathMatchedCount, mockRequests.size());
+                } else {
+                    diagnoseRecorder.requestDisabled(disabledRequest);
+                }
             } else if (mockGroup != null) {
                 diagnoseRecorder.groupPaused(mockGroup);
             }
@@ -295,6 +303,19 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             diagnoseRecorder.groupPathEmpty(requestPath);
         }
         return Triple.of(mockGroup, null, null);
+    }
+
+    private MockRequest findDisabledRequest(List<MockRequest> requests, String groupPath, String requestPath) {
+        return sortMockRequests(requests).stream()
+                .filter(request -> !request.isEnabled())
+                .filter(request -> pathMatcher.match(calcConfigPath(groupPath, request.getRequestPath()), requestPath))
+                .findFirst().orElse(null);
+    }
+
+    private String calcConfigPath(String groupPath, String requestPath) {
+        String configRequestPath = StringUtils.prependIfMissing(requestPath, "/");
+        configRequestPath = configRequestPath.replaceAll(":([\\w-]+)", "{$1}");
+        return groupPath + configRequestPath;
     }
 
     protected boolean matchRequestPattern(MockRequest mockRequest, boolean testRequest,

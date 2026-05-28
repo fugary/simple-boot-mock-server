@@ -37,6 +37,7 @@ class MockDiagnoseRecorder {
     private static final String CODE_GROUP_NOT_FOUND = "group_not_found";
     private static final String CODE_GROUP_MATCHED = "group_matched";
     private static final String CODE_GROUP_CHECK_FAILED = "group_check_failed";
+    private static final String CODE_GROUP_DISABLED = "group_disabled";
     private static final String CODE_GROUP_PAUSED = "group_paused";
     private static final String CODE_GROUP_PATH_EMPTY = "group_path_empty";
     private static final String CODE_SCENARIO_NOT_FOUND = "scenario_not_found";
@@ -49,6 +50,7 @@ class MockDiagnoseRecorder {
     private static final String CODE_REQUEST_PATTERN_MATCHED = "request_pattern_matched";
     private static final String CODE_REQUEST_PATTERN_NOT_MATCHED = "request_pattern_not_matched";
     private static final String CODE_REQUEST_PATTERN_ERROR = "request_pattern_error";
+    private static final String CODE_REQUEST_DISABLED = "request_disabled";
     private static final String CODE_REQUEST_PAUSED = "request_paused";
     private static final String CODE_REQUEST_PATH_NOT_MATCHED = "request_path_not_matched";
     private static final String CODE_REQUEST_PATTERN_NOT_MATCHED_ALL = "request_pattern_not_matched_all";
@@ -131,10 +133,19 @@ class MockDiagnoseRecorder {
         step(STAGE_GROUP, STATUS_DANGER, CODE_GROUP_CHECK_FAILED, KEY_GROUP, groupInfo(group));
     }
 
+    void groupDisabled(MockGroup group) {
+        if (!isEnabled()) {
+            return;
+        }
+        diagnose.setGroupInfo(group);
+        step(STAGE_GROUP, STATUS_WARNING, CODE_GROUP_DISABLED, KEY_GROUP, groupInfo(group));
+    }
+
     void groupPaused(MockGroup group) {
         if (!isEnabled()) {
             return;
         }
+        diagnose.setGroupInfo(group);
         step(STAGE_GROUP, STATUS_WARNING, CODE_GROUP_PAUSED, KEY_GROUP, groupInfo(group));
     }
 
@@ -216,10 +227,19 @@ class MockDiagnoseRecorder {
                 KEY_REQUEST, requestInfo(request), KEY_MESSAGE, e.getMessage());
     }
 
+    void requestDisabled(MockRequest request) {
+        if (!isEnabled()) {
+            return;
+        }
+        diagnose.setRequestInfo(request);
+        step(STAGE_REQUEST, STATUS_WARNING, CODE_REQUEST_DISABLED, KEY_REQUEST, requestInfo(request));
+    }
+
     void requestPaused(MockRequest request) {
         if (!isEnabled()) {
             return;
         }
+        diagnose.setRequestInfo(request);
         step(STAGE_REQUEST, STATUS_WARNING, CODE_REQUEST_PAUSED, KEY_REQUEST, requestInfo(request));
     }
 
