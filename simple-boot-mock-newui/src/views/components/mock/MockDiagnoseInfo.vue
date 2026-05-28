@@ -92,8 +92,8 @@ const diagnoseSummaryItems = computed(() => [
   { labelKey: 'mock.label.scenario', value: formatItem(props.diagnoseInfo?.scenario) },
   { labelKey: 'mock.label.mockRequest', value: formatItem(props.diagnoseInfo?.request) },
   { labelKey: 'mock.label.mockData', value: formatItem(props.diagnoseInfo?.data) },
-  { label: 'HTTP', value: formatHttpInfo(props.diagnoseInfo) },
-  { labelKey: 'mock.label.proxyUrl', value: formatProxyUrl(props.diagnoseInfo?.proxyUrl) }
+  { labelKey: 'mock.label.proxyUrl', value: formatProxyUrl(props.diagnoseInfo?.proxyUrl) },
+  { label: 'HTTP', value: formatHttpInfo(props.diagnoseInfo) }
 ].filter(item => item.value))
 const toJson = data => typeof data === 'string' ? data : JSON.stringify(data, null, 2)
 const toShowRawData = data => {

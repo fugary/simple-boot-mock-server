@@ -363,7 +363,7 @@ const searchFormOptions = computed(() => {
     <common-table
       v-model:page="searchParam.page"
       :data="tableData"
-      :buttons-column-attrs="{minWidth:'150px',fixed:'right'}"
+      :buttons-column-attrs="{minWidth:'170px',fixed:'right'}"
       :columns="columns"
       :buttons="buttons"
       :loading="loading"
