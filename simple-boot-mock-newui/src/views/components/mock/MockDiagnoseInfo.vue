@@ -1,7 +1,8 @@
-<script setup>
+<script setup lang="jsx">
 import { computed } from 'vue'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nBundle } from '@/messages'
+import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 
 const props = defineProps({
   diagnoseInfo: {
@@ -20,32 +21,43 @@ const diagnoseTagTypes = {
   danger: 'danger',
   info: 'info'
 }
+const diagnoseResultLabelKeys = {
+  mock: 'mock.label.mockReturn',
+  proxy: 'mock.label.proxyReturn',
+  none: 'mock.label.noReturn',
+  error: 'mock.label.diagnoseError'
+}
 
 const diagnoseResultTypeLabel = computed(() => {
-  const labelKeyMap = {
-    mock: 'mock.label.mockReturn',
-    proxy: 'mock.label.proxyReturn',
-    none: 'mock.label.noReturn',
-    error: 'mock.label.diagnoseError'
-  }
-  return $i18nBundle(labelKeyMap[props.diagnoseInfo?.resultType] || labelKeyMap.none)
+  return $i18nBundle(diagnoseResultLabelKeys[props.diagnoseInfo?.resultType] || diagnoseResultLabelKeys.none)
 })
 const diagnoseResultTagType = computed(() => diagnoseTagTypes[props.diagnoseInfo?.resultType] || diagnoseTagTypes.none)
 const stepTagType = status => diagnoseTagTypes[status] || diagnoseTagTypes.info
+const formatText = text => text ? <span>{text}</span> : ''
 const formatItem = item => {
   if (!item) return ''
-  return [
-    item.id == null ? '' : `#${item.id}`,
-    item.name,
-    item.key
-  ].filter(Boolean).join(' / ')
+  const id = item.id == null ? '' : `#${item.id}`
+  const mainText = item.name || item.key || id
+  const metaTexts = [
+    id && mainText !== id ? id : '',
+    item.name && item.key ? item.key : ''
+  ].filter(Boolean)
+  return formatText(metaTexts.length ? `${mainText} (${metaTexts.join(', ')})` : mainText)
+}
+const formatProxyUrl = proxyUrl => {
+  if (!proxyUrl) return ''
+  return <span class="mock-diagnose-proxy-url">
+    <span class="mock-diagnose-proxy-url__text">{proxyUrl}</span>
+    <MockUrlCopyLink content={proxyUrl} class="margin-left1" />
+  </span>
 }
 const diagnoseSummaryItems = computed(() => [
-  { labelKey: 'mock.label.groupName', value: formatItem(props.diagnoseInfo?.group) },
-  { labelKey: 'mock.label.scenarioName', value: formatItem(props.diagnoseInfo?.scenario) },
-  { labelKey: 'mock.label.requestName', value: formatItem(props.diagnoseInfo?.request) },
-  { labelKey: 'mock.label.dataId', value: formatItem(props.diagnoseInfo?.data) },
-  { labelKey: 'mock.label.proxyUrl', value: props.diagnoseInfo?.proxyUrl }
+  { labelKey: 'mock.label.mockGroup', value: formatItem(props.diagnoseInfo?.group) },
+  { labelKey: 'mock.label.scenario', value: formatItem(props.diagnoseInfo?.scenario) },
+  { labelKey: 'mock.label.mockRequest', value: formatItem(props.diagnoseInfo?.request) },
+  { labelKey: 'mock.label.mockData', value: formatItem(props.diagnoseInfo?.data) },
+  { label: 'Content Type', value: formatText(props.diagnoseInfo?.contentType) },
+  { labelKey: 'mock.label.proxyUrl', value: formatProxyUrl(props.diagnoseInfo?.proxyUrl) }
 ].filter(item => item.value))
 const toJson = data => typeof data === 'string' ? data : JSON.stringify(data, null, 2)
 const toShowRawData = data => {
@@ -54,6 +66,37 @@ const toShowRawData = data => {
     title: $i18nBundle('mock.label.diagnose')
   })
 }
+const formatDetails = row => JSON.stringify(row.details || {})
+const diagnoseStepColumns = [
+  {
+    labelKey: 'mock.label.diagnoseStage',
+    prop: 'stage',
+    minWidth: '130px'
+  },
+  {
+    labelKey: 'common.label.status',
+    prop: 'status',
+    minWidth: '100px',
+    slot: 'status'
+  },
+  {
+    labelKey: 'mock.label.diagnoseCode',
+    prop: 'code',
+    minWidth: '180px',
+    click: toShowRawData
+  },
+  {
+    labelKey: 'mock.label.diagnoseDetails',
+    prop: 'details',
+    minWidth: '260px',
+    formatter: formatDetails,
+    click: toShowRawData,
+    linkAttrs: {
+      underline: 'never',
+      class: 'mock-diagnose-detail-link'
+    }
+  }
+]
 </script>
 
 <template>
@@ -75,65 +118,50 @@ const toShowRawData = data => {
         />
       </el-link>
     </div>
-    <el-descriptions
+    <common-descriptions
       v-if="diagnoseSummaryItems.length"
+      :items="diagnoseSummaryItems"
       :column="1"
       border
       size="small"
       class="margin-bottom3"
-    >
-      <el-descriptions-item
-        v-for="item in diagnoseSummaryItems"
-        :key="item.labelKey"
-        :label="$t(item.labelKey)"
-      >
-        {{ item.value }}
-      </el-descriptions-item>
-    </el-descriptions>
-    <el-table
+    />
+    <common-table
       :data="diagnoseInfo.steps || []"
-      border
-      size="small"
+      :columns="diagnoseStepColumns"
       class="mock-diagnose-table"
+      size="small"
       @row-dblclick="toShowRawData"
     >
-      <el-table-column
-        :label="$t('mock.label.diagnoseStage')"
-        prop="stage"
-        min-width="130px"
-      />
-      <el-table-column
-        :label="$t('common.label.status')"
-        prop="status"
-        min-width="100px"
-      >
-        <template #default="{ row }">
-          <el-tag :type="stepTagType(row.status)">
-            {{ row.status }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="$t('mock.label.diagnoseCode')"
-        prop="code"
-        min-width="180px"
-      />
-      <el-table-column
-        :label="$t('mock.label.diagnoseDetails')"
-        min-width="260px"
-      >
-        <template #default="{ row }">
-          <el-text truncated>
-            {{ JSON.stringify(row.details || {}) }}
-          </el-text>
-        </template>
-      </el-table-column>
-    </el-table>
+      <template #status="{ row }">
+        <el-tag :type="stepTagType(row.status)">
+          {{ row.status }}
+        </el-tag>
+      </template>
+    </common-table>
   </el-container>
 </template>
 
 <style scoped>
 :deep(.mock-diagnose-table .el-table__row) {
   cursor: pointer;
+}
+
+.mock-diagnose-detail-link {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(.mock-diagnose-proxy-url) {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+}
+
+:deep(.mock-diagnose-proxy-url__text) {
+  overflow-wrap: anywhere;
 }
 </style>

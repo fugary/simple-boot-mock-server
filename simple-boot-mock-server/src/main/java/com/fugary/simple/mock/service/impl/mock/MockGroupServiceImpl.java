@@ -216,9 +216,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         .eq(!testRequest, "status", 1)
                         .eq(testRequest, "id", requestId)
                         .isNull(DB_MODIFY_FROM_KEY);
+                String activeScenarioCode = StringUtils.trimToNull(mockGroup.getActiveScenarioCode());
+                Integer groupId = mockGroup.getId();
                 if (!forceMockTarget) {
-                    String activeScenarioCode = StringUtils.trimToNull(mockGroup.getActiveScenarioCode());
-                    Integer groupId = mockGroup.getId();
                     diagnoseRecorder.scenarioSelected(activeScenarioCode, () -> mockScenarioService
                             .getOne(Wrappers.<MockScenario>query()
                                     .eq("group_id", groupId)
@@ -228,11 +228,9 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     } else {
                         requestQuery.eq("scenario_code", activeScenarioCode);
                     }
-                } else {
-                    diagnoseRecorder.scenarioSkippedByTarget(StringUtils.trimToNull(mockGroup.getActiveScenarioCode()));
                 }
                 List<MockRequest> mockRequests = mockRequestService.list(requestQuery);
-                diagnoseRecorder.requestCandidates(mockRequests.size());
+                diagnoseRecorder.requestCandidates(mockRequests);
                 diagnoseRecorder.forceRequestSelected(requestId, mockRequests);
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
                 int requestPathMatchedCount = 0;
@@ -250,22 +248,29 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                             MockJsUtils.setCurrentRequestVo(requestVo);
                             boolean requestPatternMatched = matchRequestPattern(mockRequest, testRequest, diagnoseRecorder);
                             if (requestPatternMatched || testRequest) {
+                                if (forceMockTarget) {
+                                    String requestScenarioCode = StringUtils.trimToNull(mockRequest.getScenarioCode());
+                                    diagnoseRecorder.scenarioMatched(requestScenarioCode, () -> mockScenarioService
+                                            .getOne(Wrappers.<MockScenario>query()
+                                                    .eq("group_id", groupId)
+                                                    .eq("scenario_code", requestScenarioCode), false));
+                                }
                                 if (Boolean.TRUE.equals(mockRequest.getDisableMock()) && !testData && !testRequest) {
-                                    diagnoseRecorder.requestDisabled(mockRequest);
+                                    diagnoseRecorder.requestPaused(mockRequest);
                                     return Triple.of(mockGroup, mockRequest, null);
                                 }
                                 List<MockData> mockDataList = mockRequestService
                                         .loadAllDataByRequest(mockRequest.getId());
-                                int totalDataCount = mockDataList.size();
                                 MockData mockData = mockRequestService.findForceMockData(mockDataList, defaultId);
                                 diagnoseRecorder.forceDataSelected(mockData);
                                 if (mockData == null && testData) {
                                     diagnoseRecorder.forceDataNotFound(defaultId, mockRequest);
                                     continue;
                                 }
-                                mockDataList = mockDataList.stream().filter(MockBase::isEnabled)
+                                List<MockData> enabledMockDataList = mockDataList.stream().filter(MockBase::isEnabled)
                                         .collect(Collectors.toList());
-                                diagnoseRecorder.dataCandidates(totalDataCount, mockDataList.size());
+                                diagnoseRecorder.dataCandidates(mockDataList, enabledMockDataList.size());
+                                mockDataList = enabledMockDataList;
                                 if (mockData == null) { // request匹配的数据查找
                                     mockData = mockRequestService.findMockDataByRequest(mockDataList, requestVo);
                                     diagnoseRecorder.dataPatternMatched(mockData, mockDataList);
@@ -284,7 +289,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 }
                 diagnoseRecorder.requestNotMatched(requestPathMatchedCount, mockRequests.size());
             } else if (mockGroup != null) {
-                diagnoseRecorder.groupDisabled(mockGroup);
+                diagnoseRecorder.groupPaused(mockGroup);
             }
         } else {
             diagnoseRecorder.groupPathEmpty(requestPath);

@@ -26,6 +26,8 @@ public class MockDiagnoseVo {
 
     private String proxyUrl;
 
+    private String contentType;
+
     private List<Step> steps = new ArrayList<>();
 
     public void finish(String resultType, String code, Object... details) {
@@ -57,7 +59,12 @@ public class MockDiagnoseVo {
     }
 
     public void setDataInfo(MockData data) {
-        this.data = data == null ? null : new Item(data.getId(), String.valueOf(data.getStatusCode()), data.getDataName());
+        setDataInfo(data, data == null ? null : data.getContentType());
+    }
+
+    public void setDataInfo(MockData data, String contentType) {
+        this.data = data == null ? null : new DataItem(data.getId(), data.getDataName(),
+                data.getStatusCode(), contentType);
     }
 
     private Map<String, Object> toDetails(Object... details) {
@@ -83,6 +90,20 @@ public class MockDiagnoseVo {
         private final String key;
 
         private final String name;
+    }
+
+    @Data
+    public static class DataItem extends Item {
+
+        private final Integer statusCode;
+
+        private final String contentType;
+
+        public DataItem(Integer id, String name, Integer statusCode, String contentType) {
+            super(id, null, name);
+            this.statusCode = statusCode;
+            this.contentType = contentType;
+        }
     }
 
     @Data
