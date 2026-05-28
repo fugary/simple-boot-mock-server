@@ -13,6 +13,7 @@ import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
 import com.fugary.simple.mock.web.controllers.MockController;
 import com.fugary.simple.mock.web.vo.SimpleResult;
+import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -26,7 +27,9 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.ContentCachingRequestWrapper;
@@ -116,9 +119,10 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
             String logName = getLogName(signature);
             MockUser loginUser = SecurityUtils.getLoginUser();
             Date createDate = new Date();
+            long logTime = createDate.getTime() - startTime;
             logBuilder.logName(logName)
                     .createDate(createDate)
-                    .logTime(createDate.getTime() - startTime)
+                    .logTime(logTime)
                     .exceptions(exception == null ? null : ExceptionUtils.getStackTrace(exception));
             if (loginUser != null) {
                 logBuilder.userName(loginUser.getUserName())
@@ -146,8 +150,9 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
             }
             HttpServletRequest request = HttpRequestUtils.getCurrentRequest();
             HttpServletResponse response = HttpRequestUtils.getCurrentResponse();
+            Map<String, String> responseHeaders = new LinkedHashMap<>();
             if (request != null && response != null) {
-                Map<String, String> responseHeaders = getResponseHeaders(response, result);
+                responseHeaders = getResponseHeaders(response, result);
                 String header = getHeader(responseHeaders, MockConstants.MOCK_DATA_ID_HEADER);
                 String userName = StringUtils.defaultIfBlank(getHeader(responseHeaders, MockConstants.MOCK_DATA_USER_HEADER),
                         request.getHeader(MockConstants.MOCK_DATA_USER_HEADER));
@@ -164,8 +169,46 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                 logBuilder.responseHeaders(JsonUtils.toJson(responseHeaders));
             }
             MockLog mockLog = logBuilder.build();
+            completeDiagnoseInfo(mockLog, request, response, result, logTime, responseHeaders);
             publishEvent(mockLog);
         }
+    }
+
+    private void completeDiagnoseInfo(MockLog mockLog, HttpServletRequest request, HttpServletResponse response,
+                                      Object result, long logTime, Map<String, String> responseHeaders) {
+        MockDiagnoseVo diagnose = getDiagnose(request);
+        if (mockLog == null || diagnose == null) {
+            return;
+        }
+        diagnose.completeHttpInfo(getResponseStatus(response, result),
+                getResponseContentType(response, result, responseHeaders), logTime);
+        mockLog.setExtend2(JsonUtils.toJson(diagnose));
+        if (request != null && response != null && SimpleMockUtils.isMockPreview(request) && !response.isCommitted()) {
+            response.setHeader(MockConstants.MOCK_DIAGNOSE_META_HEADER, JsonUtils.toHeaderJson(diagnose));
+        }
+    }
+
+    private MockDiagnoseVo getDiagnose(HttpServletRequest request) {
+        Object diagnose = request == null ? null : request.getAttribute(MockConstants.MOCK_DIAGNOSE_REQUEST_ATTR);
+        return diagnose instanceof MockDiagnoseVo ? (MockDiagnoseVo) diagnose : null;
+    }
+
+    private Integer getResponseStatus(HttpServletResponse response, Object result) {
+        if (result instanceof ResponseEntity) {
+            return ((ResponseEntity<?>) result).getStatusCodeValue();
+        }
+        return response == null ? null : response.getStatus();
+    }
+
+    private String getResponseContentType(HttpServletResponse response, Object result, Map<String, String> responseHeaders) {
+        if (result instanceof ResponseEntity) {
+            MediaType mediaType = ((ResponseEntity<?>) result).getHeaders().getContentType();
+            if (mediaType != null) {
+                return mediaType.toString();
+            }
+        }
+        String contentType = responseHeaders == null ? null : getHeader(responseHeaders, HttpHeaders.CONTENT_TYPE);
+        return StringUtils.defaultIfBlank(contentType, response == null ? null : response.getContentType());
     }
 
     private Object processRequestBody(Object arg) {

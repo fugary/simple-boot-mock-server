@@ -224,10 +224,7 @@ public class MockController {
     private void finishDiagnose(HttpServletRequest request, HttpServletResponse response, MockDiagnoseVo diagnose,
             String resultType, String code, Object... details) {
         diagnose.finish(resultType, code, details);
-        if (SimpleLogUtils.getLogBuilder() != null) {
-            String diagnoseJson = JsonUtils.toJson(diagnose);
-            SimpleLogUtils.addLogData(logBuilder -> logBuilder.extend2(diagnoseJson));
-        }
+        request.setAttribute(MockConstants.MOCK_DIAGNOSE_REQUEST_ATTR, diagnose);
         if (SimpleMockUtils.isMockPreview(request)) {
             response.setHeader(MockConstants.MOCK_DIAGNOSE_META_HEADER, JsonUtils.toHeaderJson(diagnose));
         }

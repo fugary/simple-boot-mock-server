@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nBundle } from '@/messages'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import { ElTag } from 'element-plus'
 
 const props = defineProps({
   diagnoseInfo: {
@@ -33,7 +34,16 @@ const diagnoseResultTypeLabel = computed(() => {
 })
 const diagnoseResultTagType = computed(() => diagnoseTagTypes[props.diagnoseInfo?.resultType] || diagnoseTagTypes.none)
 const stepTagType = status => diagnoseTagTypes[status] || diagnoseTagTypes.info
-const formatText = text => text ? <span>{text}</span> : ''
+const formatText = text => text === undefined || text === null || text === '' ? '' : <span>{text}</span>
+const statusCodeTagType = statusCode => {
+  const code = Number(statusCode)
+  if (!Number.isFinite(code)) return 'info'
+  if (code >= 500) return 'danger'
+  if (code >= 400) return 'warning'
+  if (code >= 300) return 'info'
+  return 'success'
+}
+const formatDuration = duration => duration === undefined || duration === null || duration === '' ? '' : `${duration} ms`
 const formatItem = item => {
   if (!item) return ''
   const id = item.id == null ? '' : `#${item.id}`
@@ -51,12 +61,38 @@ const formatProxyUrl = proxyUrl => {
     <MockUrlCopyLink content={proxyUrl} class="margin-left1" />
   </span>
 }
+const formatHttpInfo = diagnoseInfo => {
+  const duration = formatDuration(diagnoseInfo?.durationMs)
+  const items = [
+    diagnoseInfo?.statusCode !== undefined && diagnoseInfo?.statusCode !== null
+      ? <span key="statusCode" class="mock-diagnose-http-info__item">
+        <span class="mock-diagnose-http-info__label">{$i18nBundle('mock.label.statusCode')}</span>
+        <ElTag size="small" type={statusCodeTagType(diagnoseInfo.statusCode)}>
+          {diagnoseInfo.statusCode}
+        </ElTag>
+      </span>
+      : '',
+    diagnoseInfo?.contentType
+      ? <span key="contentType" class="mock-diagnose-http-info__item">
+        <span class="mock-diagnose-http-info__label">Content Type</span>
+        <span class="mock-diagnose-http-info__value">{diagnoseInfo.contentType}</span>
+      </span>
+      : '',
+    duration
+      ? <span key="durationMs" class="mock-diagnose-http-info__item">
+        <span class="mock-diagnose-http-info__label">{$i18nBundle('mock.label.logTime')}</span>
+        <span class="mock-diagnose-http-info__value">{duration}</span>
+      </span>
+      : ''
+  ].filter(Boolean)
+  return items.length ? <span class="mock-diagnose-http-info">{items}</span> : ''
+}
 const diagnoseSummaryItems = computed(() => [
   { labelKey: 'mock.label.mockGroup', value: formatItem(props.diagnoseInfo?.group) },
   { labelKey: 'mock.label.scenario', value: formatItem(props.diagnoseInfo?.scenario) },
   { labelKey: 'mock.label.mockRequest', value: formatItem(props.diagnoseInfo?.request) },
   { labelKey: 'mock.label.mockData', value: formatItem(props.diagnoseInfo?.data) },
-  { label: 'Content Type', value: formatText(props.diagnoseInfo?.contentType) },
+  { label: 'HTTP', value: formatHttpInfo(props.diagnoseInfo) },
   { labelKey: 'mock.label.proxyUrl', value: formatProxyUrl(props.diagnoseInfo?.proxyUrl) }
 ].filter(item => item.value))
 const toJson = data => typeof data === 'string' ? data : JSON.stringify(data, null, 2)
@@ -162,6 +198,30 @@ const diagnoseStepColumns = [
 }
 
 :deep(.mock-diagnose-proxy-url__text) {
+  overflow-wrap: anywhere;
+}
+
+:deep(.mock-diagnose-http-info) {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  max-width: 100%;
+}
+
+:deep(.mock-diagnose-http-info__item) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+:deep(.mock-diagnose-http-info__label) {
+  color: var(--el-text-color-secondary);
+  white-space: nowrap;
+}
+
+:deep(.mock-diagnose-http-info__value) {
   overflow-wrap: anywhere;
 }
 </style>

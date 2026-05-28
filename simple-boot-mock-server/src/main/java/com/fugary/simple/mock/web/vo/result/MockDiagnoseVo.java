@@ -14,6 +14,10 @@ import java.util.Map;
 @Data
 public class MockDiagnoseVo {
 
+    private static final String KEY_STATUS_CODE = "statusCode";
+    private static final String KEY_CONTENT_TYPE = "contentType";
+    private static final String KEY_DURATION_MS = "durationMs";
+
     private String resultType = "none";
 
     private Item group;
@@ -28,11 +32,29 @@ public class MockDiagnoseVo {
 
     private String contentType;
 
+    private Integer statusCode;
+
+    private Long durationMs;
+
     private List<Step> steps = new ArrayList<>();
 
     public void finish(String resultType, String code, Object... details) {
         this.resultType = resultType;
         step("result", calcStatus(resultType), code, details);
+        appendResultDetails(steps.get(steps.size() - 1));
+    }
+
+    public void completeHttpInfo(Integer statusCode, String contentType, Long durationMs) {
+        if (statusCode != null) {
+            this.statusCode = statusCode;
+        }
+        if (contentType != null) {
+            this.contentType = contentType;
+        }
+        if (durationMs != null) {
+            this.durationMs = durationMs;
+        }
+        appendResultDetails();
     }
 
     public void step(String stage, String status, String code, Object... details) {
@@ -75,11 +97,33 @@ public class MockDiagnoseVo {
         return map;
     }
 
+    private void appendResultDetails(Step step) {
+        if (statusCode != null) {
+            step.getDetails().put(KEY_STATUS_CODE, statusCode);
+        }
+        if (contentType != null) {
+            step.getDetails().put(KEY_CONTENT_TYPE, contentType);
+        }
+        if (durationMs != null) {
+            step.getDetails().put(KEY_DURATION_MS, durationMs);
+        }
+    }
+
+    private void appendResultDetails() {
+        for (int i = steps.size() - 1; i >= 0; i--) {
+            Step step = steps.get(i);
+            if ("result".equals(step.getStage())) {
+                appendResultDetails(step);
+                return;
+            }
+        }
+    }
+
     private String calcStatus(String resultType) {
         if ("mock".equals(resultType) || "proxy".equals(resultType)) {
             return "success";
         }
-        return "error".equals(resultType) ? "danger" : "warning";
+        return "error".equals(resultType) || "none".equals(resultType) ? "danger" : "info";
     }
 
     @Data
