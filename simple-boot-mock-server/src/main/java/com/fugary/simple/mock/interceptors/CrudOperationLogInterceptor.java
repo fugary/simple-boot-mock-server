@@ -168,21 +168,28 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                 }
                 logBuilder.responseHeaders(JsonUtils.toJson(responseHeaders));
             }
+            Integer responseStatusCode = getResponseStatus(response, result);
+            String responseContentType = getResponseContentType(response, result, responseHeaders);
+            if (responseStatusCode != null) {
+                logBuilder.responseStatusCode(responseStatusCode);
+            }
+            if (StringUtils.isNotBlank(responseContentType)) {
+                logBuilder.responseContentType(responseContentType);
+            }
             MockLog mockLog = logBuilder.build();
-            completeDiagnoseInfo(mockLog, request, response, result, logTime, responseHeaders);
+            completeDiagnoseInfo(mockLog, request, response, responseStatusCode, responseContentType, logTime);
             publishEvent(mockLog);
         }
     }
 
     private void completeDiagnoseInfo(MockLog mockLog, HttpServletRequest request, HttpServletResponse response,
-                                      Object result, long logTime, Map<String, String> responseHeaders) {
+                                      Integer responseStatusCode, String responseContentType, long logTime) {
         MockDiagnoseVo diagnose = getDiagnose(request);
         if (mockLog == null || diagnose == null) {
             return;
         }
-        diagnose.completeHttpInfo(getResponseStatus(response, result),
-                getResponseContentType(response, result, responseHeaders), logTime);
-        mockLog.setExtend2(JsonUtils.toJson(diagnose));
+        diagnose.completeHttpInfo(responseStatusCode, responseContentType, logTime);
+        mockLog.setDiagnoseData(JsonUtils.toJson(diagnose));
         if (request != null && response != null && SimpleMockUtils.isMockPreview(request) && !response.isCommitted()) {
             response.setHeader(MockConstants.MOCK_DIAGNOSE_META_HEADER, JsonUtils.toHeaderJson(diagnose));
         }

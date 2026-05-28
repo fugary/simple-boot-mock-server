@@ -24,6 +24,8 @@ public class MockLog implements Serializable {
     private String logData;
     private String headers;
     private String responseHeaders;
+    private Integer responseStatusCode;
+    private String responseContentType;
     private String ipAddress;
     private Long logTime;
     private String exceptions;
@@ -31,6 +33,7 @@ public class MockLog implements Serializable {
     private String proxyUrl;
     private String mockGroupPath;
     private String responseBody;
+    private String diagnoseData;
     private String extend1;
     private String extend2;
 }

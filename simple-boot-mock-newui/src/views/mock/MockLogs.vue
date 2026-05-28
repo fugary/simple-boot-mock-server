@@ -4,12 +4,13 @@ import { checkShowColumn, formatDate, getSingleSelectOptions, isAdminUser, useCu
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import MockLogApi from '@/api/mock/MockLogApi'
+import { ALL_STATUS_CODES } from '@/api/mock/MockDataApi'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { ElText, ElTag } from 'element-plus'
 import { useDefaultPage } from '@/config'
 import MethodTag from '@/views/components/utils/MethodTag.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { $i18nKey } from '@/messages'
+import { $i18nKey, $i18nMsg } from '@/messages'
 import { useRoute, useRouter } from 'vue-router'
 import { resolveDashboardLogPreset } from '@/services/mock/DashboardLogPreset'
 import MockDiagnoseInfo from '@/views/components/mock/MockDiagnoseInfo.vue'
@@ -118,6 +119,35 @@ watch(() => LOG_ROUTE_QUERY_KEYS.map(key => normalizeQueryValue(route.query[key]
   await loadApiLogs(1)
 })
 
+const statusCodeTagType = statusCode => {
+  const code = Number(statusCode)
+  if (!Number.isFinite(code)) return 'info'
+  if (code >= 500) return 'danger'
+  if (code >= 400) return 'warning'
+  if (code >= 300) return 'info'
+  return 'success'
+}
+
+const statusCodeOptions = computed(() => ALL_STATUS_CODES.map(status => {
+  const label = $i18nMsg(`${status.labelCn} - ${(status.labelEn)}`, `${status.labelEn} - ${(status.labelCn)}`)
+  return {
+    value: status.code,
+    label: `${status.code} - ${label}`
+  }
+}))
+
+const formatLogResult = data => {
+  if (data.logResult) {
+    return <ElTag type={data.logResult === 'SUCCESS' ? 'success' : 'danger'}>{data.logResult}</ElTag>
+  }
+}
+
+const formatStatusCode = data => {
+  if (data.responseStatusCode != null) {
+    return <ElTag type={statusCodeTagType(data.responseStatusCode)}>{data.responseStatusCode}</ElTag>
+  }
+}
+
 const columns = computed(() => {
   return [{
     labelKey: 'common.label.user',
@@ -130,12 +160,11 @@ const columns = computed(() => {
   }, {
     labelKey: 'mock.label.logResult',
     minWidth: '100px',
-    formatter (data) {
-      if (data.logResult) {
-        const type = data.logResult === 'SUCCESS' ? 'success' : 'danger'
-        return <ElTag type={type}>{data.logResult}</ElTag>
-      }
-    }
+    formatter: formatLogResult
+  }, {
+    labelKey: 'mock.label.statusCode',
+    minWidth: '90px',
+    formatter: formatStatusCode
   }, {
     labelKey: 'mock.label.logTime',
     prop: 'logTime'
@@ -235,10 +264,10 @@ const showLogDetail = item => showCodeWindow(JSON.stringify(item), {
 
 const showDiagnoseDetail = item => {
   try {
-    currentDiagnoseInfo.value = JSON.parse(item.extend2)
+    currentDiagnoseInfo.value = JSON.parse(item.diagnoseData)
     showDiagnoseWindow.value = true
   } catch {
-    showCodeWindow(item.extend2)
+    showCodeWindow(item.diagnoseData)
   }
 }
 
@@ -250,7 +279,7 @@ const buttons = computed(() => {
   }, {
     labelKey: 'mock.label.diagnose',
     type: 'warning',
-    buttonIf: item => !!item.extend2,
+    buttonIf: item => !!item.diagnoseData,
     click: showDiagnoseDetail
   }]
 })
@@ -276,6 +305,17 @@ const searchFormOptions = computed(() => {
     prop: 'logResult',
     type: 'select',
     children: getSingleSelectOptions('SUCCESS', 'FAIL'),
+    change () {
+      loadApiLogs()
+    }
+  }, {
+    labelKey: 'mock.label.statusCode',
+    prop: 'responseStatusCode',
+    type: 'select',
+    children: statusCodeOptions.value,
+    attrs: {
+      filterable: true
+    },
     change () {
       loadApiLogs()
     }

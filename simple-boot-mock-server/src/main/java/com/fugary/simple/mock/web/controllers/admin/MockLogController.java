@@ -41,6 +41,7 @@ public class MockLogController {
                 .eq(StringUtils.isNotBlank(queryVo.getUserName()), "user_name", queryVo.getUserName())
                 .eq(StringUtils.isNotBlank(queryVo.getLogType()), "log_type", StringUtils.trimToEmpty(queryVo.getLogType()))
                 .eq(StringUtils.isNotBlank(queryVo.getLogResult()), "log_result", StringUtils.trimToEmpty(queryVo.getLogResult()))
+                .eq(queryVo.getResponseStatusCode() != null, "response_status_code", queryVo.getResponseStatusCode())
                 .eq(StringUtils.isNotBlank(queryVo.getIpAddress()), "ip_address", StringUtils.trimToEmpty(queryVo.getIpAddress()))
                 .eq(StringUtils.isNotBlank(queryVo.getDataId()), "data_id", StringUtils.trimToEmpty(queryVo.getDataId()))
                 .eq(StringUtils.isNotBlank(queryVo.getMockGroupPath()), "mock_group_path", StringUtils.trimToEmpty(queryVo.getMockGroupPath()))
