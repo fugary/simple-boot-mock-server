@@ -58,7 +58,7 @@ public class MockLogController {
             }
             appendAccessibleLogsScope(queryWrapper, loginUserName);
         }
-        queryWrapper.orderByDesc("id");
+        queryWrapper.orderByDesc("create_date", "id");
         return SimpleResultUtils.createSimpleResult(mockLogService.page(page, queryWrapper));
     }
 

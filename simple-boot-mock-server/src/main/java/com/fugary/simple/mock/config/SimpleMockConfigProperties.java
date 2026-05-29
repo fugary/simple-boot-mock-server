@@ -25,5 +25,10 @@ public class SimpleMockConfigProperties {
 
     private boolean mockLogEnabled = true;
 
+    /**
+     * Mock日志保留天数，设置小于等于0时不自动清理
+     */
+    private Integer mockLogRetentionDays = 180;
+
     private boolean fetchEnabled = true;
 }

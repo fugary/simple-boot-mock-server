@@ -50,7 +50,7 @@ dbs:
   h2:
     driver-class-name: org.h2.Driver
     data-dir: ${MOCK_DB_DATA_DIR:~}
-    url: jdbc:h2:file:${dbs.h2.data-dir}/simple-boot-mock/mockdb_v2;AUTO_SERVER=TRUE
+    url: ${MOCK_DB_URL:jdbc:h2:mem:simple-boot-mock-test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
     username: root
     password: 123456
   mysql:
