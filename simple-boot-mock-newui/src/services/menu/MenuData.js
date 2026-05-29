@@ -63,6 +63,15 @@ export const ALL_MENUS = [
     menuUrl: '/admin/logs'
   },
   {
+    id: 54,
+    parentId: 5,
+    iconCls: 'Timer',
+    nameCn: '定时任务',
+    nameEn: 'Scheduled Tasks',
+    menuUrl: '/admin/scheduled-tasks',
+    checkEnabled: isAdminUser
+  },
+  {
     id: 53,
     parentId: 5,
     iconCls: 'GridViewFilled',

@@ -31,6 +31,10 @@ export default [{
   name: 'MockLogs',
   component: () => import('@/views/mock/MockLogs.vue')
 }, {
+  path: `${BASE_PATH}/scheduled-tasks`,
+  name: 'ScheduledTasks',
+  component: () => import('@/views/admin/ScheduledTasks.vue')
+}, {
   path: `${BASE_PATH}/dbs`,
   name: 'SimpleDbs',
   component: () => import('@/views/admin/SimpleDbs.vue')
