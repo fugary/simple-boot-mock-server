@@ -542,6 +542,21 @@ const toShowJsonDataWindow = () => {
         </el-descriptions>
       </el-tab-pane>
       <el-tab-pane
+        v-if="diagnoseInfo"
+        name="diagnoseInfo"
+      >
+        <template #label>
+          <el-badge
+            type="primary"
+            :value="diagnoseInfo.steps?.length"
+            :show-zero="false"
+          >
+            {{ $t('mock.label.diagnose') }}
+          </el-badge>
+        </template>
+        <mock-diagnose-info :diagnose-info="diagnoseInfo" />
+      </el-tab-pane>
+      <el-tab-pane
         v-if="mockResponseEditable"
         name="mockResponseBody"
       >
@@ -684,21 +699,6 @@ const toShowJsonDataWindow = () => {
             @mount="editorRef2=$event"
           />
         </el-container>
-      </el-tab-pane>
-      <el-tab-pane
-        v-if="diagnoseInfo"
-        name="diagnoseInfo"
-      >
-        <template #label>
-          <el-badge
-            type="primary"
-            :value="diagnoseInfo.steps?.length"
-            :show-zero="false"
-          >
-            {{ $t('mock.label.diagnose') }}
-          </el-badge>
-        </template>
-        <mock-diagnose-info :diagnose-info="diagnoseInfo" />
       </el-tab-pane>
     </el-tabs>
   </el-container>
