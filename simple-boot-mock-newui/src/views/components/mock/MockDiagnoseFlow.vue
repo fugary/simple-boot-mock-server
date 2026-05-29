@@ -125,6 +125,7 @@ const showStep = step => emit('showRawData', step.raw)
       :key="`${step.index}-${step.stage}-${step.code}`"
       :status="step.stepStatus"
       :class="['mock-diagnose-flow__step', `is-${step.status || 'info'}`]"
+      :style="{ '--mock-step-index': `'${step.index}'` }"
     >
       <template #title>
         <div
@@ -187,6 +188,25 @@ const showStep = step => emit('showRawData', step.raw)
 :deep(.mock-diagnose-flow__step.is-warning .el-step__icon.is-text) {
   color: var(--el-color-warning);
   border-color: var(--el-color-warning);
+}
+
+:deep(.mock-diagnose-flow__step .el-step__icon-inner.is-status) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  transform: none;
+}
+
+:deep(.mock-diagnose-flow__step .el-step__icon-inner.is-status svg) {
+  display: none;
+}
+
+:deep(.mock-diagnose-flow__step .el-step__icon-inner.is-status::before) {
+  content: var(--mock-step-index);
 }
 
 .mock-diagnose-flow__title {

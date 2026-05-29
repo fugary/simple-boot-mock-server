@@ -107,6 +107,14 @@ const toShowRawData = data => {
 const formatDetails = row => JSON.stringify(row.details || {})
 const diagnoseStepColumns = [
   {
+    label: '#',
+    width: '60px',
+    attrs: {
+      type: 'index',
+      align: 'center'
+    }
+  },
+  {
     labelKey: 'mock.label.diagnoseStage',
     prop: 'stage',
     minWidth: '140px',
