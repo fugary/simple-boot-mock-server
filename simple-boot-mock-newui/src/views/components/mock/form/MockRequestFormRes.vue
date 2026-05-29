@@ -173,6 +173,7 @@ const proxyResponseSavable = computed(() => {
     props.responseTarget?.data !== undefined && !props.responseTarget?.savedAsMockData
 })
 const diagnoseInfo = computed(() => props.responseTarget?.diagnoseInfo)
+const requestMismatchInfo = computed(() => props.responseTarget?.requestMismatchInfo)
 
 const {
   contentRef: contentRef2, languageRef: languageRef2, editorRef: editorRef2, monacoEditorOptions: monacoEditorOptions2,
@@ -280,6 +281,29 @@ const toShowJsonDataWindow = () => {
     ref="currentElRef"
     class="flex-column padding-top2"
   >
+    <el-alert
+      v-if="requestMismatchInfo"
+      type="warning"
+      show-icon
+      :closable="false"
+      class="mock-request-mismatch-alert"
+    >
+      <template #title>
+        <span class="mock-request-mismatch-alert__content">
+          <span>{{ $t('mock.msg.realDebugRequestMismatch') }}</span>
+          <span>{{ $t('mock.label.currentRequest') }}: {{ requestMismatchInfo.current }}</span>
+          <span>{{ $t('mock.label.matchedRequest') }}: {{ requestMismatchInfo.matched }}</span>
+          <el-link
+            v-if="diagnoseInfo"
+            type="primary"
+            underline="never"
+            @click="currentTabName='diagnoseInfo'"
+          >
+            {{ $i18nKey('common.label.commonView', 'mock.label.diagnose') }}
+          </el-link>
+        </span>
+      </template>
+    </el-alert>
     <el-tabs
       v-model="currentTabName"
       type="border-card"
@@ -705,5 +729,11 @@ const toShowJsonDataWindow = () => {
 </template>
 
 <style scoped>
-
+.mock-request-mismatch-alert__content {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  line-height: 20px;
+}
 </style>

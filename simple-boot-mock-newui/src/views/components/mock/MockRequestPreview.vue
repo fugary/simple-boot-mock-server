@@ -128,8 +128,29 @@ const doDataPreview = () => doPreviewRequest()
 
 const doRealDebug = () => doPreviewRequest({ realDebug: true })
 
+const formatMismatchRequest = request => [
+  request?.id ? `#${request.id}` : '',
+  request?.requestName || request?.name || request?.requestPath || request?.key || ''
+].filter(Boolean).join(' ')
+
+const calcRequestMismatchInfo = (target, response) => {
+  const currentRequest = requestItem.value
+  const matchedRequest = target?.diagnoseInfo?.request
+  const realDebug = response?.response?.config?.realDebug || response?.config?.realDebug
+  if (!realDebug || !currentRequest?.id || !matchedRequest?.id ||
+    String(currentRequest.id) === String(matchedRequest.id)) {
+    return null
+  }
+  return {
+    current: formatMismatchRequest(currentRequest),
+    matched: formatMismatchRequest(matchedRequest)
+  }
+}
+
 const calcResponse = (response) => {
-  responseTarget.value = processResponse(response)
+  const target = processResponse(response)
+  target.requestMismatchInfo = calcRequestMismatchInfo(target, response)
+  responseTarget.value = target
   console.log('===============================responseTarget', responseTarget.value)
 }
 
