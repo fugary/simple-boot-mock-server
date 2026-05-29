@@ -5,6 +5,7 @@ import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
+import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import lombok.Getter;
 import lombok.Setter;
@@ -123,7 +124,8 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             mockParams.setHeaderParams(headers);
             CompletableFuture<Value> future = new CompletableFuture<>();
             AtomicBoolean diagnoseRecorded = new AtomicBoolean(false);
-            MockDiagnoseRecorder diagnoseRecorder = MockDiagnoseRecorder.of(MockDiagnoseContext.get());
+            MockDiagnoseVo diagnose = MockDiagnoseContext.get();
+            MockDiagnoseRecorder diagnoseRecorder = MockDiagnoseRecorder.of(diagnose);
             String fetchMethod = method;
             if (timeout != null) {
                 future.orTimeout(timeout, TimeUnit.MILLISECONDS);
@@ -178,14 +180,16 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                 Value resolve = promiseArgs[0];
                 Value reject = promiseArgs[1];
                 future.whenComplete((result, err) -> {
-                    log.info("fetch请求构建Promise:{}/{}", url, result, err);
-                    if (err != null) {
-                        recordFetchDiagnose(diagnoseRecorder, diagnoseRecorded, fetchMethod, url,
-                                null, null, null, err);
-                        reject.executeVoid(Value.asValue(err));
-                    } else {
-                        resolve.executeVoid(result);
-                    }
+                    runWithDiagnoseContext(diagnose, () -> {
+                        log.info("fetch请求构建Promise:{}/{}", url, result, err);
+                        if (err != null) {
+                            recordFetchDiagnose(diagnoseRecorder, diagnoseRecorded, fetchMethod, url,
+                                    null, null, null, err);
+                            reject.executeVoid(Value.asValue(err));
+                        } else {
+                            resolve.executeVoid(result);
+                        }
+                    });
                 });
                 return null;
             });
@@ -197,6 +201,24 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
         if (recorded.compareAndSet(false, true)) {
             diagnoseRecorder.externalFetch(method, url, statusCode,
                     contentType == null ? null : contentType.toString(), durationMs, error);
+        }
+    }
+
+    private void runWithDiagnoseContext(MockDiagnoseVo diagnose, Runnable runnable) {
+        if (diagnose == null) {
+            runnable.run();
+            return;
+        }
+        MockDiagnoseVo previous = MockDiagnoseContext.get();
+        try {
+            MockDiagnoseContext.set(diagnose);
+            runnable.run();
+        } finally {
+            if (previous == null) {
+                MockDiagnoseContext.clear();
+            } else {
+                MockDiagnoseContext.set(previous);
+            }
         }
     }
 
