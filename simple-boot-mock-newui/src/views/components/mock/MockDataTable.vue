@@ -452,7 +452,11 @@ const onSelectDataItem = (dataItem) => {
     selectDataItem.value = dataItem
     selectDataId.value = dataItem?.id
     startLoading()
-    mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, dataItem => {
+    mockPreviewRef.value?.toPreviewRequest(props.groupItem, requestItem.value, selectDataItem.value, (dataItem, options = {}) => {
+      if (options.created) {
+        selectDataId.value = dataItem.id
+        return loadMockData()
+      }
       Object.assign(selectDataItem.value, dataItem)
     }, props.writable)
   }

@@ -242,9 +242,9 @@ export const previewRequest = function (reqData, config = {}) {
 }
 
 const calcMockHitInfo = (headers, realDebug) => {
-  if (!realDebug) return null
   const dataId = getHeader(headers, MOCK_DATA_ID_HEADER)
   const proxyUrl = getHeader(headers, MOCK_PROXY_URL_HEADER)
+  if (!realDebug && !dataId && !proxyUrl) return null
   return {
     dataId,
     proxyUrl,

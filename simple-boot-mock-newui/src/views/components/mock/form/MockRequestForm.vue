@@ -71,7 +71,7 @@ const requestUrl = computed(() => buildFullUrl(props.requestPath))
 const requestBaseUrl = computed(() => buildFullUrl(props.requestPath, false))
 const proxyRequestUrl = computed(() => buildFullUrl(props.proxyRequestPath))
 
-const emit = defineEmits(['sendRequest', 'saveMockResponseBody', 'saveMatchPattern', 'resetRequestForm'])
+const emit = defineEmits(['sendRequest', 'saveMockResponseBody', 'saveProxyResponseData', 'saveMatchPattern', 'resetRequestForm'])
 const formRef = ref()
 const sendRequest = (form) => {
   form.validate(valid => {
@@ -224,6 +224,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
       :schema-spec="schemaSpec"
       :examples="responseExamples"
       @save-mock-response-body="emit('saveMockResponseBody', $event)"
+      @save-proxy-response-data="emit('saveProxyResponseData', $event)"
       @send-mock-request="sendRequest(formRef?.form)"
     />
   </el-container>

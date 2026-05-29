@@ -168,6 +168,10 @@ const mockHitTagType = computed(() => {
   }
   return tagTypeMap[mockHitInfo.value?.returnType] || tagTypeMap.none
 })
+const proxyResponseSavable = computed(() => {
+  return props.editable && mockHitInfo.value?.returnType === 'proxy' &&
+    props.responseTarget?.data !== undefined && !props.responseTarget?.savedAsMockData
+})
 const diagnoseInfo = computed(() => props.responseTarget?.diagnoseInfo)
 
 const {
@@ -183,7 +187,7 @@ contentRef2.value = paramTarget.value?.responseBody
 
 const codeHeight = '300px'
 
-const emit = defineEmits(['saveMockResponseBody', 'sendMockRequest'])
+const emit = defineEmits(['saveMockResponseBody', 'saveProxyResponseData', 'sendMockRequest'])
 
 const generateSample = async (schema) => {
   contentRef2.value = await generateSchemaSample(schema.schema, schema.type)
@@ -307,8 +311,21 @@ const toShowJsonDataWindow = () => {
             :type="mockHitTagType"
             class="margin-right3"
           >
-            {{ $t('mock.label.realDebug') }}: {{ mockHitTypeLabel }}
+            {{ mockHitTypeLabel }}
           </el-tag>
+          <el-link
+            v-if="proxyResponseSavable"
+            v-common-tooltip="$i18nKey('common.label.commonSave', 'mock.label.mockData')"
+            type="success"
+            underline="never"
+            class="margin-right3"
+            @click="emit('saveProxyResponseData', responseTarget)"
+          >
+            <common-icon
+              :size="18"
+              icon="SaveOutlined"
+            />
+          </el-link>
           <el-link
             v-if="mediaConfig.responseHtml"
             v-common-tooltip="previewHtml?$i18nKey('common.label.commonView', 'common.label.code'):$t('common.label.preview')"

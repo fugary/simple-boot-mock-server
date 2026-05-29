@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from 'vue'
 import MockRequestApi, { loadSchemas, saveMockParams } from '@/api/mock/MockRequestApi'
 import MockDataApi, {
+  DEFAULT_CONTENT_TYPE,
   calcParamTarget,
   calcRequestBody,
   preProcessParams,
@@ -12,7 +13,7 @@ import MockRequestForm from '@/views/components/mock/form/MockRequestForm.vue'
 import { ElMessage } from 'element-plus'
 import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
-import { MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
+import { calcContentLanguage, MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
 import { cloneDeep, isArray, pickBy, isString } from 'lodash-es'
 import { addRequestParamsToResult, calcPreviewHeaders, processEvnParams, calcProxyUrl } from '@/services/mock/MockCommonService'
 import { toGetParams } from '@/utils'
@@ -200,6 +201,84 @@ const checkMockParamsChange = (item) => {
   }
 }
 
+const findResponseHeader = (headers = [], name) => {
+  return headers.find(header => header.name?.toLowerCase() === name)?.value
+}
+
+const parseContentType = (response) => {
+  const rawContentType = findResponseHeader(response.responseHeaders, 'content-type') || response.data?.type || DEFAULT_CONTENT_TYPE
+  const parts = rawContentType.split(';').map(item => item.trim()).filter(Boolean)
+  const charset = parts.find(part => part.toLowerCase().startsWith('charset='))?.substring('charset='.length)
+  return {
+    contentType: parts[0] || DEFAULT_CONTENT_TYPE,
+    defaultCharset: charset || 'UTF-8'
+  }
+}
+
+const readAsDataUrl = (blob) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result || '')
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+const toResponseBody = async (data, contentType) => {
+  if (data instanceof Blob) {
+    return readAsDataUrl(data)
+  }
+  if (data instanceof ArrayBuffer) {
+    return readAsDataUrl(new Blob([data], { type: contentType }))
+  }
+  if (isString(data)) {
+    return data
+  }
+  if (data == null) {
+    return ''
+  }
+  return JSON.stringify(data, null, 2)
+}
+
+const doSaveProxyResponseData = async (response = responseTarget.value) => {
+  if (!editable.value || response?.mockHitInfo?.returnType !== 'proxy') {
+    return
+  }
+  const { contentType, defaultCharset } = parseContentType(response)
+  const responseBody = await toResponseBody(response.data, contentType)
+  const dataName = `${requestItem.value?.requestName || requestItem.value?.requestPath || 'Proxy'} - ${$i18nBundle('mock.label.proxyReturn')}`
+  const mockData = {
+    groupId: groupItem.value?.id,
+    requestId: requestItem.value?.id,
+    status: 1,
+    defaultFlag: requestItem.value?.dataCount ? 0 : 1,
+    statusCode: response.requestInfo?.status || 200,
+    dataName,
+    contentType,
+    defaultCharset,
+    responseFormat: calcContentLanguage(contentType) || 'text',
+    responseBody,
+    mockParams: JSON.stringify(calcMockParams())
+  }
+  return MockDataApi.saveOrUpdate(mockData, { loading: true })
+    .then(data => {
+      if (data.success && data.resultData) {
+        ElMessage.success($i18nBundle('common.msg.saveSuccess'))
+        previewData.value = data.resultData
+        requestItem.value.dataCount = (requestItem.value.dataCount || 0) + 1
+        response.savedAsMockData = true
+        Object.assign(paramTarget.value, {
+          responseStatusCode: data.resultData.statusCode,
+          responseBody: data.resultData.responseBody,
+          responseFormat: data.resultData.responseFormat,
+          contentType: data.resultData.contentType,
+          defaultCharset: data.resultData.defaultCharset
+        })
+        return saveCallback?.(data.resultData, { created: true })
+      }
+    })
+}
+
 const clearParamsAndResponse = () => {
   responseTarget.value = undefined
   paramTarget.value = undefined
@@ -228,6 +307,7 @@ defineExpose({
       v-bind="$attrs"
       @send-request="doDataPreview"
       @save-mock-response-body="doSaveMockResponseBody"
+      @save-proxy-response-data="doSaveProxyResponseData"
       @reset-request-form="resetParamTarget"
     />
   </el-container>
