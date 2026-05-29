@@ -71,9 +71,14 @@ public class MockDiagnoseVo {
     }
 
     public void setScenarioInfo(String scenarioCode, MockScenario scenario) {
+        setScenarioInfo(scenarioCode, scenario, false);
+    }
+
+    public void setScenarioInfo(String scenarioCode, MockScenario scenario, boolean defaultScenario) {
         this.scenario = new Item(scenario == null ? null : scenario.getId(),
                 scenario == null ? scenarioCode : scenario.getScenarioCode(),
                 scenario == null ? null : scenario.getScenarioName());
+        this.scenario.setDefaultScenario(defaultScenario ? Boolean.TRUE : null);
     }
 
     public void setRequestInfo(MockRequest request) {
@@ -134,6 +139,8 @@ public class MockDiagnoseVo {
         private final String key;
 
         private final String name;
+
+        private Boolean defaultScenario;
     }
 
     @Data

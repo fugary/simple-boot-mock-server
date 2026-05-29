@@ -46,10 +46,10 @@ const statusCodeTagType = statusCode => {
   return 'success'
 }
 const formatDuration = duration => duration === undefined || duration === null || duration === '' ? '' : `${duration} ms`
-const formatItem = item => {
+const formatItem = (item, defaultLabelKey) => {
   if (!item) return ''
   const id = item.id == null ? '' : `#${item.id}`
-  const mainText = item.name || item.key || id
+  const mainText = item.name || item.key || id || (item.defaultScenario && defaultLabelKey ? $i18nBundle(defaultLabelKey) : '')
   const metaTexts = [
     id && mainText !== id ? id : '',
     item.name && item.key ? item.key : ''
@@ -91,7 +91,7 @@ const formatHttpInfo = diagnoseInfo => {
 }
 const diagnoseSummaryItems = computed(() => [
   { labelKey: 'mock.label.mockGroup', value: formatItem(props.diagnoseInfo?.group) },
-  { labelKey: 'mock.label.scenario', value: formatItem(props.diagnoseInfo?.scenario) },
+  { labelKey: 'mock.label.scenario', value: formatItem(props.diagnoseInfo?.scenario, 'mock.label.defaultScenario') },
   { labelKey: 'mock.label.mockRequest', value: formatItem(props.diagnoseInfo?.request) },
   { labelKey: 'mock.label.mockData', value: formatItem(props.diagnoseInfo?.data) },
   { labelKey: 'mock.label.proxyUrl', value: formatProxyUrl(props.diagnoseInfo?.proxyUrl) },

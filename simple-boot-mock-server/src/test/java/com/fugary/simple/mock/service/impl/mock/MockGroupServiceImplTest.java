@@ -176,6 +176,32 @@ class MockGroupServiceImplTest {
     }
 
     @Test
+    void matchMockDataShouldDiagnoseDefaultScenarioWhenScenariosExist() {
+        MockGroup mockGroup = createGroup("demo", null);
+        MockRequest request = createRequest(32, mockGroup.getId(), "/users/{id}", null);
+        MockData data = createData(302, mockGroup.getId(), request.getId(), "{\"ok\":true}");
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+
+        doReturn(mockGroup).when(mockGroupService).getOne(any());
+        when(mockScenarioService.count(any(QueryWrapper.class))).thenReturn(1L);
+        when(mockRequestService.list(any(QueryWrapper.class))).thenReturn(new ArrayList<>(List.of(request)));
+        when(mockRequestService.loadAllDataByRequest(request.getId())).thenReturn(List.of(data));
+
+        Triple<MockGroup, MockRequest, MockData> result = mockGroupService.matchMockData(
+                buildRequest("/mock/demo/users/1"),
+                0,
+                0,
+                group -> true,
+                diagnose
+        );
+
+        assertNotNull(result.getMiddle());
+        assertNotNull(diagnose.getScenario());
+        assertEquals(Boolean.TRUE, diagnose.getScenario().getDefaultScenario());
+        assertTrue(diagnose.getSteps().stream().anyMatch(step -> "scenario_selected".equals(step.getCode())));
+    }
+
+    @Test
     void matchMockDataShouldDiagnoseDisabledGroup() {
         MockGroup disabledGroup = createGroup("demo", null);
         disabledGroup.setStatus(0);

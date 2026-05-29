@@ -72,6 +72,7 @@ public class MockDiagnoseRecorder {
     private static final String KEY_DATA = "data";
     private static final String KEY_DATA_ID = "dataId";
     private static final String KEY_DATA_NAME = "dataName";
+    private static final String KEY_DEFAULT_SCENARIO = "defaultScenario";
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_ENABLED_COUNT = "enabledCount";
     private static final String KEY_FORCE_REQUEST = "forceRequest";
@@ -176,26 +177,30 @@ public class MockDiagnoseRecorder {
         step(STAGE_GROUP, STATUS_DANGER, CODE_GROUP_PATH_EMPTY, KEY_PATH, requestPath);
     }
 
-    void scenarioSelected(String activeScenarioCode, Supplier<MockScenario> scenarioSupplier) {
-        if (!isEnabled() || StringUtils.isBlank(activeScenarioCode)) {
+    void scenarioSelected(String activeScenarioCode, boolean defaultScenario,
+            Supplier<MockScenario> scenarioSupplier) {
+        if (!isEnabled() || (StringUtils.isBlank(activeScenarioCode) && !defaultScenario)) {
             return;
         }
-        MockScenario scenario = scenarioSupplier.get();
-        diagnose.setScenarioInfo(activeScenarioCode, scenario);
-        step(STAGE_SCENARIO, scenario == null ? STATUS_WARNING : STATUS_SUCCESS,
-                scenario == null ? CODE_SCENARIO_NOT_FOUND : CODE_SCENARIO_SELECTED,
-                KEY_SCENARIO, scenarioInfo(activeScenarioCode, scenario));
+        MockScenario scenario = defaultScenario ? null : scenarioSupplier.get();
+        boolean notFound = !defaultScenario && scenario == null;
+        diagnose.setScenarioInfo(activeScenarioCode, scenario, defaultScenario);
+        step(STAGE_SCENARIO, notFound ? STATUS_WARNING : STATUS_SUCCESS,
+                notFound ? CODE_SCENARIO_NOT_FOUND : CODE_SCENARIO_SELECTED,
+                KEY_SCENARIO, scenarioInfo(activeScenarioCode, scenario, defaultScenario));
     }
 
-    void scenarioMatched(String scenarioCode, Supplier<MockScenario> scenarioSupplier) {
-        if (!isEnabled() || StringUtils.isBlank(scenarioCode)) {
+    void scenarioMatched(String scenarioCode, boolean defaultScenario,
+            Supplier<MockScenario> scenarioSupplier) {
+        if (!isEnabled() || (StringUtils.isBlank(scenarioCode) && !defaultScenario)) {
             return;
         }
-        MockScenario scenario = scenarioSupplier.get();
-        diagnose.setScenarioInfo(scenarioCode, scenario);
-        step(STAGE_SCENARIO, scenario == null ? STATUS_WARNING : STATUS_SUCCESS,
-                scenario == null ? CODE_SCENARIO_NOT_FOUND : CODE_SCENARIO_MATCHED,
-                KEY_SCENARIO, scenarioInfo(scenarioCode, scenario));
+        MockScenario scenario = defaultScenario ? null : scenarioSupplier.get();
+        boolean notFound = !defaultScenario && scenario == null;
+        diagnose.setScenarioInfo(scenarioCode, scenario, defaultScenario);
+        step(STAGE_SCENARIO, notFound ? STATUS_WARNING : STATUS_SUCCESS,
+                notFound ? CODE_SCENARIO_NOT_FOUND : CODE_SCENARIO_MATCHED,
+                KEY_SCENARIO, scenarioInfo(scenarioCode, scenario, defaultScenario));
     }
 
     void requestCandidates(List<MockRequest> requests) {
@@ -357,11 +362,12 @@ public class MockDiagnoseRecorder {
         return info;
     }
 
-    private Map<String, Object> scenarioInfo(String scenarioCode, MockScenario scenario) {
+    private Map<String, Object> scenarioInfo(String scenarioCode, MockScenario scenario, boolean defaultScenario) {
         Map<String, Object> info = new LinkedHashMap<>();
         put(info, KEY_SCENARIO_ID, scenario == null ? null : scenario.getId());
         put(info, KEY_SCENARIO_NAME, scenario == null ? null : scenario.getScenarioName());
         put(info, KEY_SCENARIO_CODE, scenario == null ? scenarioCode : scenario.getScenarioCode());
+        put(info, KEY_DEFAULT_SCENARIO, defaultScenario ? Boolean.TRUE : null);
         return info;
     }
 

@@ -220,14 +220,15 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                         .isNull(DB_MODIFY_FROM_KEY);
                 String activeScenarioCode = StringUtils.trimToNull(mockGroup.getActiveScenarioCode());
                 Integer groupId = mockGroup.getId();
+                Boolean hasScenarioConfig = null;
                 if (!forceMockTarget) {
-                    diagnoseRecorder.scenarioSelected(activeScenarioCode, () -> mockScenarioService
-                            .getOne(Wrappers.<MockScenario>query()
-                                    .eq("group_id", groupId)
-                                    .eq("scenario_code", activeScenarioCode), false));
                     if (StringUtils.isBlank(activeScenarioCode)) {
+                        hasScenarioConfig = diagnose != null && hasScenarios(groupId);
+                        diagnoseRecorder.scenarioSelected(activeScenarioCode, hasScenarioConfig, () -> null);
                         requestQuery.isNull("scenario_code");
                     } else {
+                        diagnoseRecorder.scenarioSelected(activeScenarioCode, false,
+                                () -> getScenario(groupId, activeScenarioCode));
                         requestQuery.eq("scenario_code", activeScenarioCode);
                     }
                 }
@@ -251,10 +252,16 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                             if (requestPatternMatched || testRequest) {
                                 if (forceMockTarget) {
                                     String requestScenarioCode = StringUtils.trimToNull(mockRequest.getScenarioCode());
-                                    diagnoseRecorder.scenarioMatched(requestScenarioCode, () -> mockScenarioService
-                                            .getOne(Wrappers.<MockScenario>query()
-                                                    .eq("group_id", groupId)
-                                                    .eq("scenario_code", requestScenarioCode), false));
+                                    if (StringUtils.isBlank(requestScenarioCode)) {
+                                        if (hasScenarioConfig == null) {
+                                            hasScenarioConfig = diagnose != null && hasScenarios(groupId);
+                                        }
+                                        diagnoseRecorder.scenarioMatched(requestScenarioCode, hasScenarioConfig,
+                                                () -> null);
+                                    } else {
+                                        diagnoseRecorder.scenarioMatched(requestScenarioCode, false,
+                                                () -> getScenario(groupId, requestScenarioCode));
+                                    }
                                 }
                                 if (Boolean.TRUE.equals(mockRequest.getDisableMock()) && !testData && !testRequest) {
                                     diagnoseRecorder.requestPaused(mockRequest);
@@ -310,6 +317,17 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 .filter(request -> !request.isEnabled())
                 .filter(request -> pathMatcher.match(calcConfigPath(groupPath, request.getRequestPath()), requestPath))
                 .findFirst().orElse(null);
+    }
+
+    private MockScenario getScenario(Integer groupId, String scenarioCode) {
+        return mockScenarioService.getOne(Wrappers.<MockScenario>query()
+                .eq("group_id", groupId)
+                .eq("scenario_code", scenarioCode), false);
+    }
+
+    private boolean hasScenarios(Integer groupId) {
+        return groupId != null && mockScenarioService.count(Wrappers.<MockScenario>query()
+                .eq("group_id", groupId)) > 0;
     }
 
     private String calcConfigPath(String groupPath, String requestPath) {

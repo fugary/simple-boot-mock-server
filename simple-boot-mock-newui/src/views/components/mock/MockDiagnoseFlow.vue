@@ -69,14 +69,15 @@ const detailLabel = key => {
   return label?.includes('.') ? $i18nBundle(label) : label || key
 }
 const formatDuration = value => value === undefined || value === null || value === '' ? '' : `${value} ms`
-const formatInfoObject = value => {
+const formatInfoObject = (key, value) => {
   const id = value.id ?? value.groupId ?? value.requestId ?? value.dataId ?? value.scenarioId
   const name = value.name || value.groupName || value.requestName || value.dataName || value.scenarioName
-  const key = value.key || value.groupPath || value.requestPath || value.scenarioCode
-  const mainText = name || key || (id == null ? '' : `#${id}`)
+  const itemKey = value.key || value.groupPath || value.requestPath || value.scenarioCode
+  const defaultLabel = key === 'scenario' && value.defaultScenario ? $i18nBundle('mock.label.defaultScenario') : ''
+  const mainText = name || itemKey || (id == null ? '' : `#${id}`) || defaultLabel
   const metaTexts = [
     id != null && mainText !== `#${id}` ? `#${id}` : '',
-    name && key ? key : ''
+    name && itemKey ? itemKey : ''
   ].filter(Boolean)
   return mainText && metaTexts.length ? `${mainText} (${metaTexts.join(', ')})` : mainText
 }
@@ -84,7 +85,7 @@ const formatDetailValue = (key, value) => {
   if (value === undefined || value === null || value === '') return ''
   if (key === 'durationMs') return formatDuration(value)
   if (Array.isArray(value)) return `${value.length}`
-  if (typeof value === 'object') return formatInfoObject(value) || JSON.stringify(value)
+  if (typeof value === 'object') return formatInfoObject(key, value) || JSON.stringify(value)
   return String(value)
 }
 const toDetailChips = details => {
