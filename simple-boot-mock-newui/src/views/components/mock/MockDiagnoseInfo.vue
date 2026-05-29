@@ -1,8 +1,9 @@
 <script setup lang="jsx">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nBundle } from '@/messages'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import MockDiagnoseFlow from '@/views/components/mock/MockDiagnoseFlow.vue'
 import { ElTag } from 'element-plus'
 
 const props = defineProps({
@@ -12,6 +13,7 @@ const props = defineProps({
   }
 })
 
+const diagnoseViewMode = ref('flow')
 const diagnoseTagTypes = {
   mock: 'success',
   proxy: 'warning',
@@ -107,13 +109,8 @@ const diagnoseStepColumns = [
   {
     labelKey: 'mock.label.diagnoseStage',
     prop: 'stage',
-    minWidth: '130px'
-  },
-  {
-    labelKey: 'common.label.status',
-    prop: 'status',
-    minWidth: '100px',
-    slot: 'status'
+    minWidth: '140px',
+    slot: 'stage'
   },
   {
     labelKey: 'mock.label.diagnoseCode',
@@ -137,15 +134,27 @@ const diagnoseStepColumns = [
 
 <template>
   <el-container class="flex-column">
-    <div class="margin-bottom2">
-      <el-tag :type="diagnoseResultTagType">
-        {{ diagnoseResultTypeLabel }}
-      </el-tag>
+    <div class="mock-diagnose-header margin-bottom2">
+      <div class="mock-diagnose-header__main">
+        <el-tag :type="diagnoseResultTagType">
+          {{ diagnoseResultTypeLabel }}
+        </el-tag>
+        <el-radio-group
+          v-model="diagnoseViewMode"
+          size="small"
+        >
+          <el-radio-button value="flow">
+            {{ $t('mock.label.diagnoseFlow') }}
+          </el-radio-button>
+          <el-radio-button value="table">
+            {{ $t('mock.label.diagnoseDetails') }}
+          </el-radio-button>
+        </el-radio-group>
+      </div>
       <el-link
         v-common-tooltip="$t('mock.msg.showRawData')"
         type="primary"
         underline="never"
-        class="margin-left3"
         @click="toShowRawData(diagnoseInfo)"
       >
         <common-icon
@@ -162,16 +171,22 @@ const diagnoseStepColumns = [
       size="small"
       class="margin-bottom3"
     />
+    <mock-diagnose-flow
+      v-if="diagnoseViewMode === 'flow'"
+      :steps="diagnoseInfo.steps || []"
+      @show-raw-data="toShowRawData"
+    />
     <common-table
+      v-else
       :data="diagnoseInfo.steps || []"
       :columns="diagnoseStepColumns"
       class="mock-diagnose-table"
       size="small"
       @row-dblclick="toShowRawData"
     >
-      <template #status="{ row }">
+      <template #stage="{ row }">
         <el-tag :type="stepTagType(row.status)">
-          {{ row.status }}
+          {{ row.stage }}
         </el-tag>
       </template>
     </common-table>
@@ -179,6 +194,21 @@ const diagnoseStepColumns = [
 </template>
 
 <style scoped>
+.mock-diagnose-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mock-diagnose-header__main {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
 :deep(.mock-diagnose-table .el-table__row) {
   cursor: pointer;
 }
