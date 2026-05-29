@@ -1,6 +1,8 @@
 package com.fugary.simple.mock.security;
 
+import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.MockJsUtils;
+import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ public class MockScriptInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws IOException {
+        MockDiagnoseContext.set(new MockDiagnoseVo());
         try {
             ScriptEngine scriptEngine = scriptEnginePool.borrowObject();
             MockJsUtils.setCurrentScriptEngine(scriptEngine);
@@ -36,6 +39,10 @@ public class MockScriptInterceptor implements HandlerInterceptor {
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
             throws Exception {
-        MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
+        try {
+            MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
+        } finally {
+            MockDiagnoseContext.clear();
+        }
     }
 }

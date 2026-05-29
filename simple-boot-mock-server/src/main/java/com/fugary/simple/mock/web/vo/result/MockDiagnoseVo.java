@@ -38,13 +38,13 @@ public class MockDiagnoseVo {
 
     private List<Step> steps = new ArrayList<>();
 
-    public void finish(String resultType, String code, Object... details) {
+    public synchronized void finish(String resultType, String code, Object... details) {
         this.resultType = resultType;
         step("result", calcStatus(resultType), code, details);
         appendResultDetails(steps.get(steps.size() - 1));
     }
 
-    public void completeHttpInfo(Integer statusCode, String contentType, Long durationMs) {
+    public synchronized void completeHttpInfo(Integer statusCode, String contentType, Long durationMs) {
         if (statusCode != null) {
             this.statusCode = statusCode;
         }
@@ -57,7 +57,7 @@ public class MockDiagnoseVo {
         appendResultDetails();
     }
 
-    public void step(String stage, String status, String code, Object... details) {
+    public synchronized void step(String stage, String status, String code, Object... details) {
         Step step = new Step();
         step.setStage(stage);
         step.setStatus(status);

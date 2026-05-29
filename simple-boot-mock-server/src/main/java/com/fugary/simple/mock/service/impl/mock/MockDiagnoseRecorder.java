@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-class MockDiagnoseRecorder {
+public class MockDiagnoseRecorder {
 
     private static final String STATUS_INFO = "info";
     private static final String STATUS_SUCCESS = "success";
@@ -32,6 +32,7 @@ class MockDiagnoseRecorder {
     private static final String STAGE_DATA_CANDIDATES = "data_candidates";
     private static final String STAGE_DATA_PATTERN = "data_pattern";
     private static final String STAGE_DATA_DEFAULT = "data_default";
+    private static final String STAGE_EXTERNAL_FETCH = "external_fetch";
 
     private static final String CODE_REQUEST_RECEIVED = "request_received";
     private static final String CODE_GROUP_NOT_FOUND = "group_not_found";
@@ -61,6 +62,8 @@ class MockDiagnoseRecorder {
     private static final String CODE_DATA_PATTERN_MATCHED = "data_pattern_matched";
     private static final String CODE_DEFAULT_DATA_NOT_FOUND = "default_data_not_found";
     private static final String CODE_DEFAULT_DATA_SELECTED = "default_data_selected";
+    private static final String CODE_FETCH_RETURN = "fetch_return";
+    private static final String CODE_FETCH_ERROR = "fetch_error";
 
     private static final String KEY_ACTIVE_SCENARIO_CODE = "activeScenarioCode";
     private static final String KEY_CANDIDATES = "candidates";
@@ -91,6 +94,8 @@ class MockDiagnoseRecorder {
     private static final String KEY_SCENARIO_NAME = "scenarioName";
     private static final String KEY_STATUS_CODE = "statusCode";
     private static final String KEY_TOTAL = "total";
+    private static final String KEY_URL = "url";
+    private static final String KEY_DURATION_MS = "durationMs";
 
     private static final MockDiagnoseRecorder NOOP = new MockDiagnoseRecorder(null);
 
@@ -100,12 +105,27 @@ class MockDiagnoseRecorder {
         this.diagnose = diagnose;
     }
 
-    static MockDiagnoseRecorder of(MockDiagnoseVo diagnose) {
+    public static MockDiagnoseRecorder of(MockDiagnoseVo diagnose) {
         return diagnose == null ? NOOP : new MockDiagnoseRecorder(diagnose);
     }
 
-    boolean isEnabled() {
+    private boolean isEnabled() {
         return diagnose != null;
+    }
+
+    public void externalFetch(String method, String url, Integer statusCode, String contentType,
+                              Long durationMs, Throwable error) {
+        if (!isEnabled()) {
+            return;
+        }
+        step(STAGE_EXTERNAL_FETCH, calcFetchStatus(statusCode, error),
+                error == null ? CODE_FETCH_RETURN : CODE_FETCH_ERROR,
+                KEY_METHOD, method,
+                KEY_URL, url,
+                KEY_STATUS_CODE, statusCode,
+                KEY_CONTENT_TYPE, contentType,
+                KEY_DURATION_MS, durationMs,
+                KEY_MESSAGE, error == null ? null : error.getMessage());
     }
 
     void requestReceived(String requestPath, String method, String requestGroupPath) {
@@ -314,6 +334,13 @@ class MockDiagnoseRecorder {
         if (isEnabled()) {
             diagnose.step(stage, status, code, details);
         }
+    }
+
+    private static String calcFetchStatus(Integer statusCode, Throwable error) {
+        if (error != null) {
+            return STATUS_DANGER;
+        }
+        return statusCode != null && (statusCode < 200 || statusCode >= 300) ? STATUS_WARNING : STATUS_SUCCESS;
     }
 
     private Map<String, Object> groupInfo(MockGroup group) {

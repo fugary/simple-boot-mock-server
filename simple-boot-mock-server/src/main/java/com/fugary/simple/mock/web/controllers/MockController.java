@@ -89,7 +89,10 @@ public class MockController {
     public Object doMock(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String requestId = request.getHeader(MockConstants.MOCK_REQUEST_ID_HEADER);
         String dataId = request.getHeader(MockConstants.MOCK_DATA_ID_HEADER);
-        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+        MockDiagnoseVo diagnose = MockDiagnoseContext.get();
+        if (diagnose == null) {
+            diagnose = new MockDiagnoseVo();
+        }
         Triple<MockGroup, MockRequest, MockData> dataPair = mockGroupService.matchMockData(request,
                 NumberUtils.toInt(requestId), NumberUtils.toInt(dataId), mockGroup -> {
                     if (StringUtils.isBlank(requestId) && StringUtils.isBlank(dataId)) {
@@ -224,7 +227,6 @@ public class MockController {
     private void finishDiagnose(HttpServletRequest request, HttpServletResponse response, MockDiagnoseVo diagnose,
             String resultType, String code, Object... details) {
         diagnose.finish(resultType, code, details);
-        request.setAttribute(MockConstants.MOCK_DIAGNOSE_REQUEST_ATTR, diagnose);
         if (SimpleMockUtils.isMockPreview(request)) {
             response.setHeader(MockConstants.MOCK_DIAGNOSE_META_HEADER, JsonUtils.toHeaderJson(diagnose));
         }

@@ -1,5 +1,7 @@
 package com.fugary.simple.mock.push;
 
+import com.fugary.simple.mock.service.impl.mock.MockDiagnoseRecorder;
+import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
@@ -38,6 +40,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Create date 2025/6/17<br>
@@ -119,11 +122,15 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             mockParams.setRequestBody(body);
             mockParams.setHeaderParams(headers);
             CompletableFuture<Value> future = new CompletableFuture<>();
+            AtomicBoolean diagnoseRecorded = new AtomicBoolean(false);
+            MockDiagnoseRecorder diagnoseRecorder = MockDiagnoseRecorder.of(MockDiagnoseContext.get());
+            String fetchMethod = method;
             if (timeout != null) {
                 future.orTimeout(timeout, TimeUnit.MILLISECONDS);
             }
             log.info("fetch请求url:{}", url);
             fetchScriptThreadPool.execute(() -> {
+                long startTime = System.currentTimeMillis();
                 try {
                     ResponseEntity<byte[]> response = mockPushProcessor.doPush(mockParams);
                     log.info("fetch请求url完成:{}/{}", url, response);
@@ -135,6 +142,8 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                         charset = contentType.getCharset();
                     }
                     boolean isSuccess = httpStatus.is2xxSuccessful();
+                    recordFetchDiagnose(diagnoseRecorder, diagnoseRecorded, fetchMethod, url,
+                            httpStatus.value(), contentType, System.currentTimeMillis() - startTime, null);
                     String responseText = new String(responseBytes, charset);
                     Map<String, String> headerMap = response.getHeaders().toSingleValueMap();
                     Map<String, Object> headerObj = new LinkedHashMap<>(headerMap);
@@ -159,6 +168,8 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                     ));
                     future.complete(Value.asValue(responseObj));
                 } catch (Throwable e) {
+                    recordFetchDiagnose(diagnoseRecorder, diagnoseRecorded, fetchMethod, url,
+                            null, null, System.currentTimeMillis() - startTime, e);
                     future.completeExceptionally(e);
                 }
             });
@@ -169,6 +180,8 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                 future.whenComplete((result, err) -> {
                     log.info("fetch请求构建Promise:{}/{}", url, result, err);
                     if (err != null) {
+                        recordFetchDiagnose(diagnoseRecorder, diagnoseRecorded, fetchMethod, url,
+                                null, null, null, err);
                         reject.executeVoid(Value.asValue(err));
                     } else {
                         resolve.executeVoid(result);
@@ -177,6 +190,14 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                 return null;
             });
         };
+    }
+
+    private void recordFetchDiagnose(MockDiagnoseRecorder diagnoseRecorder, AtomicBoolean recorded, String method, String url,
+            Integer statusCode, MediaType contentType, Long durationMs, Throwable error) {
+        if (recorded.compareAndSet(false, true)) {
+            diagnoseRecorder.externalFetch(method, url, statusCode,
+                    contentType == null ? null : contentType.toString(), durationMs, error);
+        }
     }
 
     private static String getHeaderIgnoreCase(Map<String, String> headerMap, Value[] args) {

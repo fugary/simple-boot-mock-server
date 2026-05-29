@@ -7,6 +7,7 @@ import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.events.OperationLogEvent;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.utils.JsonUtils;
+import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.SimpleLogUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
@@ -184,8 +185,8 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
 
     private void completeDiagnoseInfo(MockLog mockLog, HttpServletRequest request, HttpServletResponse response,
                                       Integer responseStatusCode, String responseContentType, long logTime) {
-        MockDiagnoseVo diagnose = getDiagnose(request);
-        if (mockLog == null || diagnose == null) {
+        MockDiagnoseVo diagnose = MockDiagnoseContext.get();
+        if (mockLog == null || diagnose == null || diagnose.getSteps().isEmpty()) {
             return;
         }
         diagnose.completeHttpInfo(responseStatusCode, responseContentType, logTime);
@@ -193,11 +194,6 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
         if (request != null && response != null && SimpleMockUtils.isMockPreview(request) && !response.isCommitted()) {
             response.setHeader(MockConstants.MOCK_DIAGNOSE_META_HEADER, JsonUtils.toHeaderJson(diagnose));
         }
-    }
-
-    private MockDiagnoseVo getDiagnose(HttpServletRequest request) {
-        Object diagnose = request == null ? null : request.getAttribute(MockConstants.MOCK_DIAGNOSE_REQUEST_ATTR);
-        return diagnose instanceof MockDiagnoseVo ? (MockDiagnoseVo) diagnose : null;
     }
 
     private Integer getResponseStatus(HttpServletResponse response, Object result) {
