@@ -31,13 +31,29 @@ const columns = computed(() => {
     prop: 'idleCount'
   }]
 })
+
+const buttons = [{
+  labelKey: 'common.label.view',
+  type: 'primary',
+  click: item => showCodeWindow(JSON.stringify(item), { language: 'json' })
+}]
 </script>
 
 <template>
   <el-container class="flex-column">
+    <div class="simple-dbs-toolbar">
+      <el-button
+        type="primary"
+        @click="loadApiDbs()"
+      >
+        {{ $t('common.label.refresh') }}
+      </el-button>
+    </div>
     <common-table
       :data="tableData"
       :columns="columns"
+      :buttons="buttons"
+      :buttons-column-attrs="{width:'100px',fixed:'right'}"
       :loading="loading"
       @row-dblclick="showCodeWindow(JSON.stringify($event), {language: 'json'})"
     />
@@ -45,5 +61,7 @@ const columns = computed(() => {
 </template>
 
 <style scoped>
-
+.simple-dbs-toolbar {
+  margin-bottom: 10px;
+}
 </style>

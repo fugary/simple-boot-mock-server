@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolExecutorFactoryBean;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -41,6 +43,9 @@ public class DataSourceController {
 
     @Autowired
     private List<ExecutorService> executorServices;
+
+    @Autowired
+    private Map<String, ThreadPoolTaskScheduler> taskSchedulers;
 
     @GetMapping
     public SimpleResult<List<DsPoolVo>> list() {
@@ -92,6 +97,20 @@ public class DataSourceController {
                 dsPool.setWaitingCount(threadPool.getQueue().size());
                 results.add(dsPool);
             }
+        }
+        for (Map.Entry<String, ThreadPoolTaskScheduler> entry : taskSchedulers.entrySet()) {
+            ThreadPoolTaskScheduler scheduler = entry.getValue();
+            ScheduledThreadPoolExecutor threadPool = scheduler.getScheduledThreadPoolExecutor();
+            Map<String, String> info = new LinkedHashMap<>();
+            info.put("factory", scheduler.getClass().getName());
+            info.put("threadNamePrefix", scheduler.getThreadNamePrefix());
+            DsPoolVo dsPool = new DsPoolVo(entry.getKey(), info);
+            dsPool.setMaxPoolSize(threadPool.getCorePoolSize());
+            dsPool.setTotalCount(threadPool.getPoolSize());
+            dsPool.setActiveCount(threadPool.getActiveCount());
+            dsPool.setIdleCount(threadPool.getPoolSize() - threadPool.getActiveCount());
+            dsPool.setWaitingCount(threadPool.getQueue().size());
+            results.add(dsPool);
         }
         return SimpleResultUtils.createSimpleResult(results);
     }
