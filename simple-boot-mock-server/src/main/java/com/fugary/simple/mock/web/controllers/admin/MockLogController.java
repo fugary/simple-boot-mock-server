@@ -72,7 +72,7 @@ public class MockLogController {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
         QueryWrapper<MockLog> queryWrapper = Wrappers.<MockLog>query()
-                .eq("extend1", diagnoseId);
+                .eq("diagnose_id", diagnoseId);
         if (!SecurityUtils.isAdminUser()) {
             String loginUserName = StringUtils.trimToNull(SecurityUtils.getLoginUserName());
             if (loginUserName == null) {

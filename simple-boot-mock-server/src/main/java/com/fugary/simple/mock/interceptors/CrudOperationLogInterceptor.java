@@ -101,17 +101,12 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                         .headers(JsonUtils.toJson(HttpRequestUtils.getRequestHeadersMap(request)))
                         .mockGroupPath(groupPath)
                         .requestUrl(HttpRequestUtils.getRequestUrl(request))
-                        .extend1(calcLogExtend1(request));
+                        .diagnoseId(SimpleMockUtils.isMockPreview(request)
+                                ? SimpleMockUtils.getOrCreateMockDiagnoseId(request) : null)
+                        .extend1(request.getHeader("mock_uuid"));
             }
         }
         return logBuilder;
-    }
-
-    private String calcLogExtend1(HttpServletRequest request) {
-        if (SimpleMockUtils.isMockPreview(request)) {
-            return SimpleMockUtils.getOrCreateMockDiagnoseId(request);
-        }
-        return request.getHeader("mock_uuid");
     }
 
     private boolean checkNeedLog(ProceedingJoinPoint joinpoint) {

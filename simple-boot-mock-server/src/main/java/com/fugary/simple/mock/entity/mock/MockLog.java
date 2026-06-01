@@ -34,6 +34,7 @@ public class MockLog implements Serializable {
     private String mockGroupPath;
     private String responseBody;
     private String diagnoseData;
+    private String diagnoseId;
     private String extend1;
     private String extend2;
 }
