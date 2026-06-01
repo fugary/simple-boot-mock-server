@@ -292,8 +292,20 @@ const toShowJsonDataWindow = () => {
       <template #title>
         <span class="mock-request-mismatch-alert__content">
           <span>{{ $t('mock.msg.realDebugRequestMismatch') }}</span>
-          <span>{{ $t('mock.label.currentRequest') }}: {{ requestMismatchInfo.current }}</span>
-          <span>{{ $t('mock.label.matchedRequest') }}: {{ requestMismatchInfo.matched }}</span>
+          <el-tag
+            type="primary"
+            effect="light"
+            class="mock-request-mismatch-alert__item"
+          >
+            {{ $t('mock.label.currentRequest') }}: {{ requestMismatchInfo.current }}
+          </el-tag>
+          <el-tag
+            type="success"
+            effect="light"
+            class="mock-request-mismatch-alert__item"
+          >
+            {{ $t('mock.label.matchedRequest') }}: {{ requestMismatchInfo.matched }}
+          </el-tag>
           <el-link
             v-if="diagnoseInfo"
             type="primary"
@@ -736,5 +748,12 @@ const toShowJsonDataWindow = () => {
   flex-wrap: wrap;
   gap: 6px 12px;
   line-height: 20px;
+}
+
+.mock-request-mismatch-alert__item {
+  height: auto;
+  min-height: 22px;
+  padding: 3px 8px;
+  white-space: normal;
 }
 </style>

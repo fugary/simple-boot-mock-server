@@ -27,10 +27,12 @@ const paramTarget = ref()
 const responseTarget = ref()
 const schemasConf = ref({})
 const editable = ref(true)
+const previewScenarioList = ref([])
 const { endLoading } = useInjectDataLoading()
 let saveCallback
-const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback, isEditable = true) => {
+const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback, isEditable = true, scenarioList = []) => {
   editable.value = isEditable
+  previewScenarioList.value = scenarioList || []
   groupItem.value = mockGroup
   requestItem.value = mockRequest
   previewData.value = viewData
@@ -129,22 +131,47 @@ const doDataPreview = () => doPreviewRequest()
 
 const doRealDebug = () => doPreviewRequest({ realDebug: true })
 
-const formatMismatchRequest = request => [
-  request?.id ? `#${request.id}` : '',
-  request?.requestName || request?.name || request?.requestPath || request?.key || ''
-].filter(Boolean).join(' ')
+const scenarioCodeOf = scenario => {
+  if (!scenario || scenario.defaultScenario) {
+    return ''
+  }
+  return String(scenario.scenarioCode ?? scenario.key ?? scenario)
+}
+const scenarioLabel = scenario => {
+  const code = scenarioCodeOf(scenario)
+  if (!code) {
+    return $i18nBundle('mock.label.defaultScenario')
+  }
+  return scenario?.scenarioName || scenario?.name ||
+    previewScenarioList.value.find(item => String(item.scenarioCode) === code)?.scenarioName ||
+    $i18nBundle('mock.label.scenario')
+}
+const formatMismatchRequest = (request, scenario, showScenario = false) => {
+  const requestText = [
+    request?.id ? `#${request.id}` : '',
+    request?.requestName || request?.name || request?.requestPath || request?.key || ''
+  ].filter(Boolean).join(' ')
+  return showScenario ? `${requestText} | ${$i18nBundle('mock.label.scenario')}: ${scenarioLabel(scenario)}` : requestText
+}
 
 const calcRequestMismatchInfo = (target, response) => {
   const currentRequest = requestItem.value
   const matchedRequest = target?.diagnoseInfo?.request
+  const matchedScenario = target?.diagnoseInfo?.scenario
   const realDebug = response?.response?.config?.realDebug || response?.config?.realDebug
-  if (!realDebug || !currentRequest?.id || !matchedRequest?.id ||
-    String(currentRequest.id) === String(matchedRequest.id)) {
+  if (!realDebug) {
     return null
   }
+  const requestMismatch = currentRequest?.id && matchedRequest?.id &&
+    String(currentRequest.id) !== String(matchedRequest.id)
+  const currentScenarioCode = scenarioCodeOf(currentRequest?.scenarioCode)
+  const matchedScenarioCode = scenarioCodeOf(matchedScenario)
+  const scenarioMismatch = (currentRequest?.scenarioCode !== undefined || matchedScenario) &&
+    currentScenarioCode !== matchedScenarioCode
+  if (!requestMismatch && !scenarioMismatch) return null
   return {
-    current: formatMismatchRequest(currentRequest),
-    matched: formatMismatchRequest(matchedRequest)
+    current: formatMismatchRequest(currentRequest, currentRequest?.scenarioCode, scenarioMismatch),
+    matched: formatMismatchRequest(matchedRequest || currentRequest, matchedScenario, scenarioMismatch)
   }
 }
 

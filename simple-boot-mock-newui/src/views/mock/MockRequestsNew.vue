@@ -426,7 +426,7 @@ const newColumns = computed(() => {
       return <MockRequestMenuItem v-model={data}
                                   writable={projectWritable.value}
                                   deletable={projectDeletable.value}
-                                  onToTestMockRequest={() => previewMockRequest(groupItem.value, data, null, () => loadMockRequests(), projectWritable.value)}
+                                  onToTestMockRequest={() => previewMockRequest(groupItem.value, data, null, () => loadMockRequests(), projectWritable.value, scenarioList.value)}
                                   onToTestMatchPattern={() => { toTestMatchPattern(groupItem.value, data, null, projectWritable.value) }}
                                   onToEditMockRequest={() => { newOrEdit(data.id) }}
                                   onToCopyMockRequest={() => { toCopyMockRequest(data) }}
