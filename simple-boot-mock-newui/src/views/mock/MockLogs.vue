@@ -365,7 +365,7 @@ const searchFormOptions = computed(() => {
     />
     <common-window
       v-model="showDiagnoseWindow"
-      width="920px"
+      width="1100px"
       :show-cancel="false"
       :ok-label="$t('common.label.close')"
       destroy-on-close

@@ -56,6 +56,7 @@ const detailPriorityKeys = [
   'matchPattern',
   'message'
 ]
+const patternMatchedCodes = new Set(['request_pattern_matched', 'data_pattern_matched'])
 
 const stepTagType = status => statusTagTypes[status] || statusTagTypes.info
 const stepStatus = status => stepStatusMap[status] || stepStatusMap.info
@@ -105,7 +106,18 @@ const toDetailChip = (key, value) => {
     externalLink: isExternalLink(text) ? text : ''
   }
 }
-const toDetailChips = details => {
+const getMatchedPattern = step => {
+  if (!patternMatchedCodes.has(step?.code) || step?.details?.matchPattern) return ''
+  return step?.details?.request?.matchPattern || step?.details?.data?.matchPattern || ''
+}
+const normalizeStepDetails = step => {
+  const details = step?.details
+  if (!details) return null
+  const matchPattern = getMatchedPattern(step)
+  return matchPattern ? { ...details, matchPattern } : details
+}
+const toDetailChips = step => {
+  const details = normalizeStepDetails(step)
   if (!details) return []
   const entries = Object.entries(details)
   return detailPriorityKeys
@@ -128,7 +140,7 @@ const flowSteps = computed(() => (props.steps || []).map((step, index) => ({
   showCodeKey: shouldShowDiagnoseKey(getDiagnoseCodeLabel(step.code), step.code),
   statusType: stepTagType(step.status),
   stepStatus: stepStatus(step.status),
-  chips: toDetailChips(step.details)
+  chips: toDetailChips(step)
 })))
 const showStep = step => emit('showRawData', step.raw)
 const copyChip = chip => {
