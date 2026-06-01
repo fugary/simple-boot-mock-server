@@ -168,9 +168,10 @@ const columns = computed(() => {
       }
     }
   }, {
-    labelKey: 'mock.label.ipAddress',
+    labelKey: 'common.label.createDate',
+    property: 'createDate',
     minWidth: '150px',
-    prop: 'ipAddress'
+    dateFormat: 'YYYY-MM-DD HH:mm:ss'
   }, {
     labelKey: 'mock.label.mockReturn',
     minWidth: '200px',
@@ -214,10 +215,9 @@ const columns = computed(() => {
       </ElText>
     }
   }, {
-    labelKey: 'common.label.createDate',
-    property: 'createDate',
+    labelKey: 'mock.label.ipAddress',
     minWidth: '150px',
-    dateFormat: 'YYYY-MM-DD HH:mm:ss'
+    prop: 'ipAddress'
   }]
 })
 
