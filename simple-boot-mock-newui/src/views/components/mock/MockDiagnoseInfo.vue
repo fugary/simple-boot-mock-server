@@ -5,6 +5,7 @@ import { $i18nBundle } from '@/messages'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import MockDiagnoseFlow from '@/views/components/mock/MockDiagnoseFlow.vue'
 import { ElTag } from 'element-plus'
+import { statusCodeTagType } from '@/services/mock/MockCommonService'
 
 const props = defineProps({
   diagnoseInfo: {
@@ -37,14 +38,6 @@ const diagnoseResultTypeLabel = computed(() => {
 const diagnoseResultTagType = computed(() => diagnoseTagTypes[props.diagnoseInfo?.resultType] || diagnoseTagTypes.none)
 const stepTagType = status => diagnoseTagTypes[status] || diagnoseTagTypes.info
 const formatText = text => text === undefined || text === null || text === '' ? '' : <span>{text}</span>
-const statusCodeTagType = statusCode => {
-  const code = Number(statusCode)
-  if (!Number.isFinite(code)) return 'info'
-  if (code >= 500) return 'danger'
-  if (code >= 400) return 'warning'
-  if (code >= 300) return 'info'
-  return 'success'
-}
 const formatDuration = duration => duration === undefined || duration === null || duration === '' ? '' : `${duration} ms`
 const formatItem = (item, defaultLabelKey) => {
   if (!item) return ''

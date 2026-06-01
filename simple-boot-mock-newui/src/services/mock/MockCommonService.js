@@ -199,6 +199,15 @@ export const useContentTypeOption = (config = {}) => {
 
 export const checkImageAccept = headers => Object.entries(headers || {}).find(([key]) => key.toLowerCase() === 'accept')?.[1]
 
+export const statusCodeTagType = statusCode => {
+  const code = Number(statusCode)
+  if (!Number.isFinite(code)) return 'info'
+  if (code >= 500) return 'danger'
+  if (code >= 400) return 'warning'
+  if (code >= 300) return 'info'
+  return 'success'
+}
+
 export const isMediaUrl = (url) => /\.(png|jpg|jpeg|gif|webp|bmp|svg|mp3|wav|mp4|webm|ogg|pdf|zip|doc|docx|xls|xlsx|ppt|pptx)(\?.*)?$/i.test(url)
 
 export const calcPreviewHeaders = (paramTarget, url, config) => {

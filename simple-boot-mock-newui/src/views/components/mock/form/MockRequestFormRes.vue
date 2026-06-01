@@ -11,6 +11,7 @@ import {
   isJson,
   isXml,
   isMediaContentType,
+  statusCodeTagType,
   useContentTypeOption
 } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
@@ -378,7 +379,7 @@ const toShowJsonDataWindow = () => {
           </el-link>
           <el-text
             v-common-tooltip="responseTarget?.error?.message"
-            :type="requestInfo.status===200?'success':'danger'"
+            :type="statusCodeTagType(requestInfo.status)"
             class="padding-right3"
           >
             Status: {{ requestInfo.status }}

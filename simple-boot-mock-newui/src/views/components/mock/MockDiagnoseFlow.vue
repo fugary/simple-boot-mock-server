@@ -1,6 +1,9 @@
 <script setup>
 import { computed } from 'vue'
 import { $i18nBundle } from '@/messages'
+import { $copyText, $openNewWin } from '@/utils'
+import { isExternalLink } from '@/components/utils'
+import { statusCodeTagType } from '@/services/mock/MockCommonService'
 
 const props = defineProps({
   steps: {
@@ -15,14 +18,14 @@ const statusTagTypes = {
   warning: 'warning',
   danger: 'danger',
   error: 'danger',
-  info: 'info'
+  info: 'primary'
 }
 const stepStatusMap = {
   success: 'success',
   warning: 'process',
   danger: 'error',
   error: 'error',
-  info: 'wait'
+  info: 'process'
 }
 const detailLabelMap = {
   group: 'mock.label.mockGroup',
@@ -36,7 +39,12 @@ const detailLabelMap = {
   method: 'mock.label.method',
   path: 'mock.label.requestPath',
   requestPath: 'mock.label.requestPath',
-  matchPattern: 'mock.label.matchPattern'
+  groupPath: 'mock.label.pathId',
+  matchPattern: 'mock.label.matchPattern',
+  dataId: 'mock.label.dataId',
+  message: 'mock.label.message',
+  url: 'URL',
+  requestId: 'mock.label.requestId'
 }
 const detailPriorityKeys = [
   'group',
@@ -57,7 +65,6 @@ const detailPriorityKeys = [
   'enabledCount',
   'requestId',
   'dataId',
-  'scenarioCode',
   'matchPattern',
   'message'
 ]
@@ -69,15 +76,19 @@ const detailLabel = key => {
   return label?.includes('.') ? $i18nBundle(label) : label || key
 }
 const formatDuration = value => value === undefined || value === null || value === '' ? '' : `${value} ms`
+const getInfoId = value => value?.id ?? value?.groupId ?? value?.requestId ?? value?.dataId ?? value?.scenarioId
+const getInfoName = value => value?.name || value?.groupName || value?.requestName || value?.dataName || value?.scenarioName
+const getInfoKey = value => value?.key || value?.groupPath || value?.requestPath || value?.scenarioCode
 const formatInfoObject = (key, value) => {
-  const id = value.id ?? value.groupId ?? value.requestId ?? value.dataId ?? value.scenarioId
-  const name = value.name || value.groupName || value.requestName || value.dataName || value.scenarioName
-  const itemKey = value.key || value.groupPath || value.requestPath || value.scenarioCode
+  const id = getInfoId(value)
+  const name = getInfoName(value)
+  const itemKey = getInfoKey(value)
   const defaultLabel = key === 'scenario' && value.defaultScenario ? $i18nBundle('mock.label.defaultScenario') : ''
-  const mainText = name || itemKey || (id == null ? '' : `#${id}`) || defaultLabel
+  const idText = id == null ? '' : `#${id}`
+  const mainText = name || itemKey || idText || defaultLabel
   const metaTexts = [
-    id != null && mainText !== `#${id}` ? `#${id}` : '',
-    name && itemKey ? itemKey : ''
+    idText && mainText !== idText ? idText : '',
+    defaultLabel && mainText !== defaultLabel ? defaultLabel : ''
   ].filter(Boolean)
   return mainText && metaTexts.length ? `${mainText} (${metaTexts.join(', ')})` : mainText
 }
@@ -88,19 +99,40 @@ const formatDetailValue = (key, value) => {
   if (typeof value === 'object') return formatInfoObject(key, value) || JSON.stringify(value)
   return String(value)
 }
+const shouldShowDetail = (details, key, value) => {
+  if (key === 'requestId' && details.request && getInfoId(details.request) === value) return false
+  if (key === 'dataId' && details.data && getInfoId(details.data) === value) return false
+  if (key === 'groupPath' && details.group && !getInfoName(details.group) && getInfoKey(details.group) === value) {
+    return false
+  }
+  return true
+}
+const toDetailChip = (key, value) => {
+  const text = formatDetailValue(key, value)
+  return {
+    key,
+    label: detailLabel(key),
+    value: text,
+    type: key === 'statusCode' ? statusCodeTagType(value) : '',
+    copyText: text,
+    externalLink: isExternalLink(text) ? text : ''
+  }
+}
 const toDetailChips = details => {
   if (!details) return []
   const entries = Object.entries(details)
   return detailPriorityKeys
     .map(key => entries.find(([entryKey]) => entryKey === key))
     .filter(Boolean)
-    .map(([key, value]) => ({ key, label: detailLabel(key), value: formatDetailValue(key, value) }))
+    .filter(([key, value]) => shouldShowDetail(details, key, value))
+    .map(([key, value]) => toDetailChip(key, value))
     .filter(item => item.value)
 }
 const flowSteps = computed(() => (props.steps || []).map((step, index) => ({
   raw: step,
   index: index + 1,
   stage: step.stage,
+  isResult: step.stage === 'result',
   status: step.status,
   code: step.code,
   statusType: stepTagType(step.status),
@@ -108,6 +140,16 @@ const flowSteps = computed(() => (props.steps || []).map((step, index) => ({
   chips: toDetailChips(step.details)
 })))
 const showStep = step => emit('showRawData', step.raw)
+const copyChip = chip => {
+  if (chip.copyText) {
+    $copyText(chip.copyText)
+  }
+}
+const openChipLink = chip => {
+  if (chip.externalLink) {
+    $openNewWin(chip.externalLink)
+  }
+}
 </script>
 
 <template>
@@ -124,7 +166,7 @@ const showStep = step => emit('showRawData', step.raw)
       v-for="step in flowSteps"
       :key="`${step.index}-${step.stage}-${step.code}`"
       :status="step.stepStatus"
-      :class="['mock-diagnose-flow__step', `is-${step.status || 'info'}`]"
+      :class="['mock-diagnose-flow__step', `is-${step.status || 'info'}`, { 'is-result': step.isResult }]"
       :style="{ '--mock-step-index': `'${step.index}'` }"
     >
       <template #title>
@@ -163,10 +205,30 @@ const showStep = step => emit('showRawData', step.raw)
               :key="chip.key"
               size="small"
               effect="plain"
+              :type="chip.type"
               class="mock-diagnose-flow__chip"
+              role="button"
+              tabindex="0"
+              @click.stop="copyChip(chip)"
+              @dblclick.stop
+              @keydown.enter.prevent.stop="copyChip(chip)"
+              @keydown.space.prevent.stop="copyChip(chip)"
             >
               <span class="mock-diagnose-flow__chip-label">{{ chip.label }}</span>
               <span class="mock-diagnose-flow__chip-value">{{ chip.value }}</span>
+              <el-link
+                v-if="chip.externalLink"
+                v-common-tooltip="$t('mock.label.linkAddress')"
+                type="primary"
+                underline="never"
+                class="mock-diagnose-flow__chip-link"
+                @click.stop="openChipLink(chip)"
+              >
+                <common-icon
+                  :size="13"
+                  icon="Link"
+                />
+              </el-link>
             </el-tag>
           </div>
         </div>
@@ -188,6 +250,11 @@ const showStep = step => emit('showRawData', step.raw)
 :deep(.mock-diagnose-flow__step.is-warning .el-step__icon.is-text) {
   color: var(--el-color-warning);
   border-color: var(--el-color-warning);
+}
+
+:deep(.mock-diagnose-flow__step.is-info .el-step__icon.is-text) {
+  color: var(--el-color-primary);
+  border-color: var(--el-color-primary);
 }
 
 :deep(.mock-diagnose-flow__step .el-step__icon-inner.is-status) {
@@ -245,6 +312,13 @@ const showStep = step => emit('showRawData', step.raw)
 
 .mock-diagnose-flow__chip {
   max-width: 100%;
+  cursor: pointer;
+  transition: border-color var(--el-transition-duration), background-color var(--el-transition-duration);
+}
+
+.mock-diagnose-flow__chip:hover {
+  background-color: var(--el-fill-color-light);
+  border-color: var(--el-tag-hover-color);
 }
 
 .mock-diagnose-flow__chip-label {
@@ -263,6 +337,11 @@ const showStep = step => emit('showRawData', step.raw)
   text-overflow: ellipsis;
   vertical-align: bottom;
   white-space: nowrap;
+}
+
+.mock-diagnose-flow__chip-link {
+  margin-left: 6px;
+  vertical-align: text-bottom;
 }
 
 @media (max-width: 768px) {

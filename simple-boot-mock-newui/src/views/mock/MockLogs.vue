@@ -14,6 +14,7 @@ import { $i18nKey, $i18nMsg } from '@/messages'
 import { useRoute, useRouter } from 'vue-router'
 import { resolveDashboardLogPreset } from '@/services/mock/DashboardLogPreset'
 import MockDiagnoseInfo from '@/views/components/mock/MockDiagnoseInfo.vue'
+import { statusCodeTagType } from '@/services/mock/MockCommonService'
 
 const route = useRoute()
 const router = useRouter()
@@ -118,15 +119,6 @@ watch(() => LOG_ROUTE_QUERY_KEYS.map(key => normalizeQueryValue(route.query[key]
   await loadUsersAndRefreshOptions(false)
   await loadApiLogs(1)
 })
-
-const statusCodeTagType = statusCode => {
-  const code = Number(statusCode)
-  if (!Number.isFinite(code)) return 'info'
-  if (code >= 500) return 'danger'
-  if (code >= 400) return 'warning'
-  if (code >= 300) return 'info'
-  return 'success'
-}
 
 const statusCodeOptions = computed(() => ALL_STATUS_CODES.map(status => {
   const label = $i18nMsg(`${status.labelCn} - ${(status.labelEn)}`, `${status.labelEn} - ${(status.labelCn)}`)
