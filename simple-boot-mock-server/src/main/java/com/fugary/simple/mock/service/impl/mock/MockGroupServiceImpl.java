@@ -269,15 +269,15 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                                 }
                                 List<MockData> mockDataList = mockRequestService
                                         .loadAllDataByRequest(mockRequest.getId());
+                                List<MockData> enabledMockDataList = mockDataList.stream().filter(MockBase::isEnabled)
+                                        .collect(Collectors.toList());
+                                diagnoseRecorder.dataCandidates(mockDataList, enabledMockDataList.size());
                                 MockData mockData = mockRequestService.findForceMockData(mockDataList, defaultId);
                                 diagnoseRecorder.forceDataSelected(mockData);
                                 if (mockData == null && testData) {
                                     diagnoseRecorder.forceDataNotFound(defaultId, mockRequest);
                                     continue;
                                 }
-                                List<MockData> enabledMockDataList = mockDataList.stream().filter(MockBase::isEnabled)
-                                        .collect(Collectors.toList());
-                                diagnoseRecorder.dataCandidates(mockDataList, enabledMockDataList.size());
                                 mockDataList = enabledMockDataList;
                                 if (mockData == null) { // request匹配的数据查找
                                     mockData = mockRequestService.findMockDataByRequest(mockDataList, requestVo);

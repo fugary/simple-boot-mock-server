@@ -176,6 +176,34 @@ class MockGroupServiceImplTest {
     }
 
     @Test
+    void matchMockDataShouldRecordDataCandidatesBeforeForcedDataDiagnose() {
+        MockGroup mockGroup = createGroup("demo", null);
+        MockRequest request = createRequest(33, mockGroup.getId(), "/users/{id}", null);
+        MockData data = createData(303, mockGroup.getId(), request.getId(), "{\"ok\":true}");
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+
+        doReturn(mockGroup).when(mockGroupService).getOne(any());
+        when(mockRequestService.list(any(QueryWrapper.class))).thenReturn(new ArrayList<>(List.of(request)));
+        when(mockRequestService.loadAllDataByRequest(request.getId())).thenReturn(List.of(data));
+
+        Triple<MockGroup, MockRequest, MockData> result = mockGroupService.matchMockData(
+                buildRequest("/mock/demo/users/1"),
+                request.getId(),
+                data.getId(),
+                group -> true,
+                diagnose
+        );
+
+        assertNotNull(result.getRight());
+        assertEquals(data.getId(), diagnose.getData().getId());
+        int dataCandidatesIndex = indexOfStepCode(diagnose, "data_candidates_loaded");
+        int forceDataIndex = indexOfStepCode(diagnose, "force_data_selected");
+        assertTrue(dataCandidatesIndex >= 0);
+        assertTrue(forceDataIndex >= 0);
+        assertTrue(dataCandidatesIndex < forceDataIndex);
+    }
+
+    @Test
     void matchMockDataShouldDiagnoseDefaultScenarioWhenScenariosExist() {
         MockGroup mockGroup = createGroup("demo", null);
         MockRequest request = createRequest(32, mockGroup.getId(), "/users/{id}", null);
@@ -253,6 +281,15 @@ class MockGroupServiceImplTest {
         request.setMethod("GET");
         request.setServletPath(servletPath);
         return request;
+    }
+
+    private int indexOfStepCode(MockDiagnoseVo diagnose, String code) {
+        for (int i = 0; i < diagnose.getSteps().size(); i++) {
+            if (code.equals(diagnose.getSteps().get(i).getCode())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private MockGroup createGroup(String groupPath, String activeScenarioCode) {
