@@ -2,6 +2,7 @@ import { useResourceApi } from '@/hooks/ApiHooks'
 import { $http, hasLoading } from '@/vendors/axios'
 import { $coreHideLoading, $coreShowLoading, toGetParams } from '@/utils'
 import { isArray, isString, isObject } from 'lodash-es'
+import MockLogApi from '@/api/mock/MockLogApi'
 import {
   FORM_DATA,
   FORM_URL_ENCODED,
@@ -9,8 +10,7 @@ import {
   LANG_TO_CONTENT_TYPES,
   MOCK_DATA_ID_HEADER,
   MOCK_DATA_PREVIEW_HEADER,
-  MOCK_DIAGNOSE_META_HEADER,
-  MOCK_META_DATA_REQ,
+  MOCK_DIAGNOSE_ID_HEADER,
   MOCK_PROXY_URL_HEADER,
   NONE
 } from '@/consts/MockConstants'
@@ -252,32 +252,58 @@ const calcMockHitInfo = (headers, realDebug) => {
   }
 }
 
-const HEADER_JSON_BASE64_PREFIX = 'base64:'
-const decodeHeaderJson = (headerValue) => {
-  if (headerValue?.startsWith(HEADER_JSON_BASE64_PREFIX)) {
-    const base64Value = headerValue.substring(HEADER_JSON_BASE64_PREFIX.length)
-    const binary = atob(base64Value)
-    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0))
-    return new TextDecoder().decode(bytes)
+const INTERNAL_PREVIEW_HEADERS = [
+  MOCK_DATA_PREVIEW_HEADER,
+  MOCK_DIAGNOSE_ID_HEADER
+]
+
+const isInternalPreviewHeader = name => INTERNAL_PREVIEW_HEADERS.some(key => isSameHeader(name, key))
+
+const parseJson = value => {
+  if (!value || isObject(value)) return value
+  try {
+    return JSON.parse(value)
+  } catch {
+    return null
   }
-  return headerValue
 }
 
-const parseHeaderJson = (headers, key) => {
-  const headerValue = getHeader(headers, key)
-  if (headerValue) {
-    try {
-      return JSON.parse(decodeHeaderJson(headerValue))
-    } catch {
-      return {
-        parseError: true,
-        rawData: headerValue
-      }
+const sortHeaders = headers => headers
+  .filter(header => header?.name)
+  .sort((a, b) => a.name.localeCompare(b.name))
+
+const parseLogHeaders = headers => sortHeaders(Object.entries(parseJson(headers) || {})
+  .filter(([name]) => !isInternalPreviewHeader(name))
+  .map(([name, value]) => ({ name, value })))
+
+const PREVIEW_META_RETRY_TIMES = 8
+const PREVIEW_META_RETRY_INTERVAL = 250
+const wait = delay => new Promise(resolve => setTimeout(resolve, delay))
+
+const applyPreviewMeta = (target, previewMeta) => {
+  if (!target || !previewMeta) return target
+  target.requestHeaders = parseLogHeaders(previewMeta.headers)
+  const diagnoseInfo = parseJson(previewMeta.diagnoseData)
+  if (diagnoseInfo) {
+    target.diagnoseInfo = diagnoseInfo
+  }
+  return target
+}
+
+export const loadPreviewMeta = async target => {
+  const diagnoseId = target?.diagnoseId
+  if (!diagnoseId) return target
+  for (let i = 0; i <= PREVIEW_META_RETRY_TIMES; i++) {
+    const data = await MockLogApi.loadPreviewMeta(diagnoseId).catch(() => null)
+    if (data?.success && data.resultData) {
+      return applyPreviewMeta(target, data.resultData)
+    }
+    if (i < PREVIEW_META_RETRY_TIMES) {
+      await wait(PREVIEW_META_RETRY_INTERVAL)
     }
   }
+  return target
 }
-const isInternalPreviewHeader = name => [MOCK_META_DATA_REQ, MOCK_DIAGNOSE_META_HEADER]
-  .some(key => isSameHeader(name, key))
 
 export const processResponse = function (response) {
   console.log('=========================response', response)
@@ -297,29 +323,20 @@ export const processResponse = function (response) {
     status,
     duration: config.__startTime ? new Date().getTime() - config.__startTime : 0
   }
-  const requestHeaderList = parseHeaderJson(headers, MOCK_META_DATA_REQ)
-  const requestHeaders = (isArray(requestHeaderList) ? requestHeaderList : [])
-    .sort((a, b) => a.name.localeCompare(b.name))
-  const responseHeaders = []
-  for (const name in headers) {
-    if (!isInternalPreviewHeader(name)) {
-      responseHeaders.push({
-        name,
-        value: headers[name]
-      })
-    }
-  }
+  const responseHeaders = Object.entries(headers)
+    .filter(([name]) => !isInternalPreviewHeader(name))
+    .map(([name, value]) => ({ name, value }))
   const mockHitInfo = calcMockHitInfo(headers, config.realDebug)
-  const diagnoseInfo = parseHeaderJson(headers, MOCK_DIAGNOSE_META_HEADER)
+  const diagnoseId = getHeader(headers, MOCK_DIAGNOSE_ID_HEADER)
   const data = response.data
   return {
     error,
     data,
+    diagnoseId,
     requestInfo,
-    requestHeaders,
+    requestHeaders: [],
     responseHeaders,
-    mockHitInfo,
-    diagnoseInfo
+    mockHitInfo
   }
 }
 

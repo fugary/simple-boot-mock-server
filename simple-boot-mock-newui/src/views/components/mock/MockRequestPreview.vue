@@ -5,6 +5,7 @@ import MockDataApi, {
   DEFAULT_CONTENT_TYPE,
   calcParamTarget,
   calcRequestBody,
+  loadPreviewMeta,
   preProcessParams,
   previewRequest,
   processResponse
@@ -147,10 +148,16 @@ const calcRequestMismatchInfo = (target, response) => {
   }
 }
 
-const calcResponse = (response) => {
+const calcResponse = async (response) => {
   const target = processResponse(response)
-  target.requestMismatchInfo = calcRequestMismatchInfo(target, response)
   responseTarget.value = target
+  if (!response?.chunk) {
+    await loadPreviewMeta(target)
+    target.requestMismatchInfo = calcRequestMismatchInfo(target, response)
+    if (responseTarget.value?.diagnoseId === target.diagnoseId) {
+      responseTarget.value = { ...target }
+    }
+  }
   console.log('===============================responseTarget', responseTarget.value)
 }
 

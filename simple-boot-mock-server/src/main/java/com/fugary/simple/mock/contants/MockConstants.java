@@ -57,7 +57,7 @@ public class MockConstants {
 
     public static final String MOCK_DATA_PREVIEW_HEADER = "mock-data-preview";
 
-    public static final String MOCK_DIAGNOSE_META_HEADER = "mock-diagnose-meta";
+    public static final String MOCK_DIAGNOSE_ID_HEADER = "mock-diagnose-id";
 
     public static final String MOCK_DATA_REDIRECT_HEADER = "mock-data-redirect";
 
@@ -65,7 +65,6 @@ public class MockConstants {
 
     public static final String MOCK_DATA_PATH_PARAMS_HEADER = "mock-data-path-params";
 
-    public static final String MOCK_META_DATA_REQ = "mock-meta-req";
     /**
      * 成功
      */

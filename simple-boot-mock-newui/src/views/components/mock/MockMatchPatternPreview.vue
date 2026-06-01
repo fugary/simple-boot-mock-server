@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import MockDataApi, {
   calcParamTarget,
   calcRequestBody,
+  loadPreviewMeta,
   preProcessParams,
   previewRequest,
   processResponse
@@ -91,8 +92,15 @@ const doDataPreview = () => {
   }, config).then(calcResponse, calcResponse)
 }
 
-const calcResponse = (response) => {
+const calcResponse = async (response) => {
   responseTarget.value = processResponse(response)
+  if (!response?.chunk) {
+    const target = responseTarget.value
+    await loadPreviewMeta(target)
+    if (responseTarget.value?.diagnoseId === target.diagnoseId) {
+      responseTarget.value = { ...target }
+    }
+  }
 }
 
 const saveMatchPattern = () => {

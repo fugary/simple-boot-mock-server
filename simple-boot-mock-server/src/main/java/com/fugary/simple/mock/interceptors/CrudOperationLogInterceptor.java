@@ -101,10 +101,17 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                         .headers(JsonUtils.toJson(HttpRequestUtils.getRequestHeadersMap(request)))
                         .mockGroupPath(groupPath)
                         .requestUrl(HttpRequestUtils.getRequestUrl(request))
-                        .extend1(request.getHeader("mock_uuid"));
+                        .extend1(calcLogExtend1(request));
             }
         }
         return logBuilder;
+    }
+
+    private String calcLogExtend1(HttpServletRequest request) {
+        if (SimpleMockUtils.isMockPreview(request)) {
+            return SimpleMockUtils.getOrCreateMockDiagnoseId(request);
+        }
+        return request.getHeader("mock_uuid");
     }
 
     private boolean checkNeedLog(ProceedingJoinPoint joinpoint) {
@@ -178,22 +185,19 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
                 logBuilder.responseContentType(responseContentType);
             }
             MockLog mockLog = logBuilder.build();
-            completeDiagnoseInfo(mockLog, request, response, responseStatusCode, responseContentType, logTime);
+            completeDiagnoseInfo(mockLog, responseStatusCode, responseContentType, logTime);
             publishEvent(mockLog);
         }
     }
 
-    private void completeDiagnoseInfo(MockLog mockLog, HttpServletRequest request, HttpServletResponse response,
-                                      Integer responseStatusCode, String responseContentType, long logTime) {
+    private void completeDiagnoseInfo(MockLog mockLog, Integer responseStatusCode, String responseContentType,
+                                      long logTime) {
         MockDiagnoseVo diagnose = MockDiagnoseContext.get();
         if (mockLog == null || diagnose == null || diagnose.getSteps().isEmpty()) {
             return;
         }
         diagnose.completeHttpInfo(responseStatusCode, responseContentType, logTime);
         mockLog.setDiagnoseData(JsonUtils.toJson(diagnose));
-        if (request != null && response != null && SimpleMockUtils.isMockPreview(request) && !response.isCommitted()) {
-            response.setHeader(MockConstants.MOCK_DIAGNOSE_META_HEADER, JsonUtils.toHeaderJson(diagnose));
-        }
     }
 
     private Integer getResponseStatus(HttpServletResponse response, Object result) {
@@ -254,8 +258,7 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
             responseEntity.getHeaders().forEach((headerName, values) ->
                     putHeader(responseHeaders, headerName, StringUtils.join(values, ",")));
         }
-        removeHeader(responseHeaders, MockConstants.MOCK_META_DATA_REQ);
-        removeHeader(responseHeaders, MockConstants.MOCK_DIAGNOSE_META_HEADER);
+        removeHeader(responseHeaders, MockConstants.MOCK_DIAGNOSE_ID_HEADER);
         return responseHeaders;
     }
 

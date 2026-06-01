@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 /**
  * Created on 2020/5/14 18:31 .<br>
@@ -26,7 +25,6 @@ import java.util.Base64;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JsonUtils {
 
-    public static final String HEADER_JSON_BASE64_PREFIX = "base64:";
     /**
      * 默认Mapper
      */
@@ -64,11 +62,6 @@ public class JsonUtils {
             log.error("输出Json错误", e);
         }
         return result;
-    }
-
-    public static String toHeaderJson(Object input) {
-        return HEADER_JSON_BASE64_PREFIX + Base64.getEncoder()
-                .encodeToString(toJson(input).getBytes(StandardCharsets.UTF_8));
     }
 
     /**

@@ -82,6 +82,8 @@ public class SimpleMockUtils {
             "text"
     );
 
+    private static final String MOCK_DIAGNOSE_ID_ATTR = SimpleMockUtils.class.getName() + ".mockDiagnoseId";
+
     /**
      * 转byte数组
      * @param list
@@ -106,6 +108,15 @@ public class SimpleMockUtils {
      */
     public static String uuid() {
         return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    public static String getOrCreateMockDiagnoseId(HttpServletRequest request) {
+        String diagnoseId = (String) request.getAttribute(MOCK_DIAGNOSE_ID_ATTR);
+        if (StringUtils.isBlank(diagnoseId)) {
+            diagnoseId = uuid();
+            request.setAttribute(MOCK_DIAGNOSE_ID_ATTR, diagnoseId);
+        }
+        return diagnoseId;
     }
 
     /**

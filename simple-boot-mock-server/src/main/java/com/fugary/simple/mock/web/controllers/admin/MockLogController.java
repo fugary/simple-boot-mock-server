@@ -4,17 +4,20 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fugary.simple.mock.contants.MockConstants;
+import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockLog;
 import com.fugary.simple.mock.service.mock.MockLogService;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.MockLogQueryVo;
+import com.fugary.simple.mock.web.vo.result.MockPreviewMetaVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -60,6 +63,33 @@ public class MockLogController {
         }
         queryWrapper.orderByDesc("create_date", "id");
         return SimpleResultUtils.createSimpleResult(mockLogService.page(page, queryWrapper));
+    }
+
+    @GetMapping("/diagnose/{diagnoseId}")
+    public SimpleResult<MockPreviewMetaVo> getPreviewMeta(@PathVariable String diagnoseId) {
+        diagnoseId = StringUtils.trimToEmpty(diagnoseId);
+        if (StringUtils.isBlank(diagnoseId)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        QueryWrapper<MockLog> queryWrapper = Wrappers.<MockLog>query()
+                .eq("extend1", diagnoseId);
+        if (!SecurityUtils.isAdminUser()) {
+            String loginUserName = StringUtils.trimToNull(SecurityUtils.getLoginUserName());
+            if (loginUserName == null) {
+                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+            }
+            appendAccessibleLogsScope(queryWrapper, loginUserName);
+        }
+        queryWrapper.orderByDesc("create_date", "id");
+        List<MockLog> records = mockLogService.page(new Page<>(1, 1), queryWrapper).getRecords();
+        if (records.isEmpty()) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        MockLog mockLog = records.get(0);
+        return SimpleResultUtils.createSimpleResult(MockPreviewMetaVo.builder()
+                .headers(mockLog.getHeaders())
+                .diagnoseData(mockLog.getDiagnoseData())
+                .build());
     }
 
     private SimpleResult<List<MockLog>> createEmptyLogResult(Page<MockLog> page) {
