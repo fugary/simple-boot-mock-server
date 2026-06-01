@@ -6,6 +6,11 @@ import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import MockDiagnoseFlow from '@/views/components/mock/MockDiagnoseFlow.vue'
 import { ElTag } from 'element-plus'
 import { statusCodeTagType } from '@/services/mock/MockCommonService'
+import {
+  getDiagnoseCodeLabel,
+  getDiagnoseStageLabel,
+  shouldShowDiagnoseKey
+} from '@/services/mock/MockDiagnoseService'
 
 const props = defineProps({
   diagnoseInfo: {
@@ -23,7 +28,7 @@ const diagnoseTagTypes = {
   success: 'success',
   warning: 'warning',
   danger: 'danger',
-  info: 'info'
+  info: 'primary'
 }
 const diagnoseResultLabelKeys = {
   mock: 'mock.label.mockReturn',
@@ -97,6 +102,8 @@ const toShowRawData = data => {
     title: $i18nBundle('mock.label.diagnose')
   })
 }
+const getStageLabel = row => getDiagnoseStageLabel(row?.stage)
+const getCodeLabel = row => getDiagnoseCodeLabel(row?.code)
 const formatDetails = row => JSON.stringify(row.details || {})
 const diagnoseStepColumns = [
   {
@@ -117,7 +124,7 @@ const diagnoseStepColumns = [
     labelKey: 'mock.label.diagnoseCode',
     prop: 'code',
     minWidth: '180px',
-    click: toShowRawData
+    slot: 'code'
   },
   {
     labelKey: 'mock.label.diagnoseDetails',
@@ -186,9 +193,34 @@ const diagnoseStepColumns = [
       @row-dblclick="toShowRawData"
     >
       <template #stage="{ row }">
-        <el-tag :type="stepTagType(row.status)">
-          {{ row.stage }}
+        <el-tag
+          :type="stepTagType(row.status)"
+          class="mock-diagnose-key-tag"
+        >
+          <span class="mock-diagnose-key-tag__label">{{ getStageLabel(row) }}</span>
+          <span
+            v-if="shouldShowDiagnoseKey(getStageLabel(row), row.stage)"
+            class="mock-diagnose-key-tag__key"
+          >
+            {{ row.stage }}
+          </span>
         </el-tag>
+      </template>
+      <template #code="{ row }">
+        <el-link
+          type="primary"
+          underline="never"
+          class="mock-diagnose-table-code"
+          @click="toShowRawData(row)"
+        >
+          <span class="mock-diagnose-table-code__label">{{ getCodeLabel(row) }}</span>
+          <span
+            v-if="shouldShowDiagnoseKey(getCodeLabel(row), row.code)"
+            class="mock-diagnose-table-code__key"
+          >
+            {{ row.code }}
+          </span>
+        </el-link>
       </template>
     </common-table>
   </el-container>
@@ -220,6 +252,43 @@ const diagnoseStepColumns = [
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.mock-diagnose-key-tag {
+  max-width: 100%;
+  height: auto;
+  min-height: 24px;
+  padding: 4px 8px;
+  white-space: normal;
+}
+
+.mock-diagnose-key-tag__label,
+.mock-diagnose-table-code__label {
+  font-weight: 600;
+}
+
+.mock-diagnose-key-tag__key,
+.mock-diagnose-table-code__key {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.72;
+}
+
+.mock-diagnose-key-tag__key::before,
+.mock-diagnose-table-code__key::before {
+  content: "(";
+  margin-left: 4px;
+}
+
+.mock-diagnose-key-tag__key::after,
+.mock-diagnose-table-code__key::after {
+  content: ")";
+}
+
+.mock-diagnose-table-code {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  vertical-align: top;
 }
 
 :deep(.mock-diagnose-proxy-url) {

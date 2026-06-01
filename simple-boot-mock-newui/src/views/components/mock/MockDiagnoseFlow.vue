@@ -4,6 +4,12 @@ import { $i18nBundle } from '@/messages'
 import { $copyText, $openNewWin } from '@/utils'
 import { isExternalLink } from '@/components/utils'
 import { statusCodeTagType } from '@/services/mock/MockCommonService'
+import {
+  getDiagnoseCodeLabel,
+  getDiagnoseDetailLabel,
+  getDiagnoseStageLabel,
+  shouldShowDiagnoseKey
+} from '@/services/mock/MockDiagnoseService'
 
 const props = defineProps({
   steps: {
@@ -27,25 +33,6 @@ const stepStatusMap = {
   error: 'error',
   info: 'process'
 }
-const detailLabelMap = {
-  group: 'mock.label.mockGroup',
-  request: 'mock.label.mockRequest',
-  data: 'mock.label.mockData',
-  scenario: 'mock.label.scenario',
-  proxyUrl: 'mock.label.proxyUrl',
-  statusCode: 'mock.label.statusCode',
-  contentType: 'Content Type',
-  durationMs: 'mock.label.logTime',
-  method: 'mock.label.method',
-  path: 'mock.label.requestPath',
-  requestPath: 'mock.label.requestPath',
-  groupPath: 'mock.label.pathId',
-  matchPattern: 'mock.label.matchPattern',
-  dataId: 'mock.label.dataId',
-  message: 'mock.label.message',
-  url: 'URL',
-  requestId: 'mock.label.requestId'
-}
 const detailPriorityKeys = [
   'group',
   'scenario',
@@ -60,6 +47,7 @@ const detailPriorityKeys = [
   'statusCode',
   'contentType',
   'durationMs',
+  'forceRequest',
   'count',
   'total',
   'enabledCount',
@@ -71,10 +59,6 @@ const detailPriorityKeys = [
 
 const stepTagType = status => statusTagTypes[status] || statusTagTypes.info
 const stepStatus = status => stepStatusMap[status] || stepStatusMap.info
-const detailLabel = key => {
-  const label = detailLabelMap[key]
-  return label?.includes('.') ? $i18nBundle(label) : label || key
-}
 const formatDuration = value => value === undefined || value === null || value === '' ? '' : `${value} ms`
 const getInfoId = value => value?.id ?? value?.groupId ?? value?.requestId ?? value?.dataId ?? value?.scenarioId
 const getInfoName = value => value?.name || value?.groupName || value?.requestName || value?.dataName || value?.scenarioName
@@ -83,7 +67,7 @@ const formatInfoObject = (key, value) => {
   const id = getInfoId(value)
   const name = getInfoName(value)
   const itemKey = getInfoKey(value)
-  const defaultLabel = key === 'scenario' && value.defaultScenario ? $i18nBundle('mock.label.defaultScenario') : ''
+  const defaultLabel = key === 'scenario' && value.defaultScenario ? getDiagnoseDetailLabel('defaultScenario') : ''
   const idText = id == null ? '' : `#${id}`
   const mainText = name || itemKey || idText || defaultLabel
   const metaTexts = [
@@ -96,10 +80,12 @@ const formatDetailValue = (key, value) => {
   if (value === undefined || value === null || value === '') return ''
   if (key === 'durationMs') return formatDuration(value)
   if (Array.isArray(value)) return `${value.length}`
+  if (typeof value === 'boolean') return $i18nBundle(value ? 'common.label.yes' : 'common.label.no')
   if (typeof value === 'object') return formatInfoObject(key, value) || JSON.stringify(value)
   return String(value)
 }
 const shouldShowDetail = (details, key, value) => {
+  if (key === 'forceRequest' && value !== true) return false
   if (key === 'requestId' && details.request && getInfoId(details.request) === value) return false
   if (key === 'dataId' && details.data && getInfoId(details.data) === value) return false
   if (key === 'groupPath' && details.group && !getInfoName(details.group) && getInfoKey(details.group) === value) {
@@ -109,9 +95,11 @@ const shouldShowDetail = (details, key, value) => {
 }
 const toDetailChip = (key, value) => {
   const text = formatDetailValue(key, value)
+  const label = getDiagnoseDetailLabel(key)
   return {
     key,
-    label: detailLabel(key),
+    label,
+    showKey: shouldShowDiagnoseKey(label, key),
     value: text,
     type: key === 'statusCode' ? statusCodeTagType(value) : '',
     copyText: text,
@@ -132,9 +120,13 @@ const flowSteps = computed(() => (props.steps || []).map((step, index) => ({
   raw: step,
   index: index + 1,
   stage: step.stage,
+  stageLabel: getDiagnoseStageLabel(step.stage),
+  showStageKey: shouldShowDiagnoseKey(getDiagnoseStageLabel(step.stage), step.stage),
   isResult: step.stage === 'result',
   status: step.status,
   code: step.code,
+  codeLabel: getDiagnoseCodeLabel(step.code),
+  showCodeKey: shouldShowDiagnoseKey(getDiagnoseCodeLabel(step.code), step.code),
   statusType: stepTagType(step.status),
   stepStatus: stepStatus(step.status),
   chips: toDetailChips(step.details)
@@ -179,7 +171,13 @@ const openChipLink = chip => {
             :type="step.statusType"
             class="mock-diagnose-flow__stage"
           >
-            {{ step.stage }}
+            <span class="mock-diagnose-flow__stage-label">{{ step.stageLabel }}</span>
+            <span
+              v-if="step.showStageKey"
+              class="mock-diagnose-flow__stage-key"
+            >
+              {{ step.stage }}
+            </span>
           </el-tag>
         </div>
       </template>
@@ -194,7 +192,13 @@ const openChipLink = chip => {
             class="mock-diagnose-flow__code"
             @click="showStep(step)"
           >
-            {{ step.code }}
+            <span class="mock-diagnose-flow__code-label">{{ step.codeLabel }}</span>
+            <span
+              v-if="step.showCodeKey"
+              class="mock-diagnose-flow__code-key"
+            >
+              {{ step.code }}
+            </span>
           </el-link>
           <div
             v-if="step.chips.length"
@@ -214,7 +218,15 @@ const openChipLink = chip => {
               @keydown.enter.prevent.stop="copyChip(chip)"
               @keydown.space.prevent.stop="copyChip(chip)"
             >
-              <span class="mock-diagnose-flow__chip-label">{{ chip.label }}</span>
+              <span class="mock-diagnose-flow__chip-label">
+                <span>{{ chip.label }}</span>
+                <span
+                  v-if="chip.showKey"
+                  class="mock-diagnose-flow__chip-key"
+                >
+                  {{ chip.key }}
+                </span>
+              </span>
               <span class="mock-diagnose-flow__chip-value">{{ chip.value }}</span>
               <el-link
                 v-if="chip.externalLink"
@@ -290,6 +302,33 @@ const openChipLink = chip => {
   min-height: 24px;
   padding: 4px 8px;
   white-space: normal;
+}
+
+.mock-diagnose-flow__stage-label,
+.mock-diagnose-flow__code-label {
+  font-weight: 600;
+}
+
+.mock-diagnose-flow__stage-key,
+.mock-diagnose-flow__code-key,
+.mock-diagnose-flow__chip-key {
+  font-family: var(--el-font-family);
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.72;
+}
+
+.mock-diagnose-flow__stage-key::before,
+.mock-diagnose-flow__code-key::before,
+.mock-diagnose-flow__chip-key::before {
+  content: "(";
+  margin-left: 4px;
+}
+
+.mock-diagnose-flow__stage-key::after,
+.mock-diagnose-flow__code-key::after,
+.mock-diagnose-flow__chip-key::after {
+  content: ")";
 }
 
 .mock-diagnose-flow__content {
