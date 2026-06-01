@@ -99,7 +99,6 @@ const toDetailChip = (key, value) => {
   return {
     key,
     label,
-    showKey: shouldShowDiagnoseKey(label, key),
     value: text,
     type: key === 'statusCode' ? statusCodeTagType(value) : '',
     copyText: text,
@@ -220,12 +219,6 @@ const openChipLink = chip => {
             >
               <span class="mock-diagnose-flow__chip-label">
                 <span>{{ chip.label }}</span>
-                <span
-                  v-if="chip.showKey"
-                  class="mock-diagnose-flow__chip-key"
-                >
-                  {{ chip.key }}
-                </span>
               </span>
               <span class="mock-diagnose-flow__chip-value">{{ chip.value }}</span>
               <el-link
@@ -310,8 +303,7 @@ const openChipLink = chip => {
 }
 
 .mock-diagnose-flow__stage-key,
-.mock-diagnose-flow__code-key,
-.mock-diagnose-flow__chip-key {
+.mock-diagnose-flow__code-key {
   font-family: var(--el-font-family);
   font-size: 12px;
   font-weight: 400;
@@ -319,15 +311,13 @@ const openChipLink = chip => {
 }
 
 .mock-diagnose-flow__stage-key::before,
-.mock-diagnose-flow__code-key::before,
-.mock-diagnose-flow__chip-key::before {
+.mock-diagnose-flow__code-key::before {
   content: "(";
   margin-left: 4px;
 }
 
 .mock-diagnose-flow__stage-key::after,
-.mock-diagnose-flow__code-key::after,
-.mock-diagnose-flow__chip-key::after {
+.mock-diagnose-flow__code-key::after {
   content: ")";
 }
 
