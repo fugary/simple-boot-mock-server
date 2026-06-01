@@ -17,7 +17,7 @@ import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { calcContentLanguage, MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
 import { cloneDeep, isArray, pickBy, isString } from 'lodash-es'
 import { addRequestParamsToResult, calcPreviewHeaders, processEvnParams, calcProxyUrl } from '@/services/mock/MockCommonService'
-import { toGetParams } from '@/utils'
+import { $coreConfirm, toGetParams } from '@/utils'
 import { useInjectDataLoading } from '@/hooks/CommonHooks'
 
 const groupItem = ref()
@@ -297,6 +297,11 @@ const toResponseBody = async (data, contentType) => {
 
 const doSaveProxyResponseData = async (response = responseTarget.value) => {
   if (!editable.value || response?.mockHitInfo?.returnType !== 'proxy') {
+    return
+  }
+  try {
+    await $coreConfirm($i18nBundle('mock.msg.saveProxyResponseConfirm'))
+  } catch {
     return
   }
   const { contentType, defaultCharset } = parseContentType(response)
