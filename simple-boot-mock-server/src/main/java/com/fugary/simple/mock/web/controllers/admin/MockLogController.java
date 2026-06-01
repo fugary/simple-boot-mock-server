@@ -3,10 +3,14 @@ package com.fugary.simple.mock.web.controllers.admin;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fugary.simple.mock.cache.MockPreviewMetaCache;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
+import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockLog;
+import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockLogService;
+import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
@@ -35,6 +39,15 @@ public class MockLogController {
 
     @Autowired
     private MockLogService mockLogService;
+
+    @Autowired
+    private MockPreviewMetaCache mockPreviewMetaCache;
+
+    @Autowired
+    private MockGroupService mockGroupService;
+
+    @Autowired
+    private MockProjectService mockProjectService;
 
     @GetMapping
     public SimpleResult<List<MockLog>> search(@ModelAttribute MockLogQueryVo queryVo) {
@@ -71,25 +84,50 @@ public class MockLogController {
         if (StringUtils.isBlank(diagnoseId)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
+        MockPreviewMetaVo cachedMeta = mockPreviewMetaCache.get(diagnoseId);
+        if (cachedMeta != null) {
+            return canAccessPreviewMeta(cachedMeta)
+                    ? SimpleResultUtils.createSimpleResult(cachedMeta)
+                    : SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
         QueryWrapper<MockLog> queryWrapper = Wrappers.<MockLog>query()
                 .eq("diagnose_id", diagnoseId);
-        if (!SecurityUtils.isAdminUser()) {
-            String loginUserName = StringUtils.trimToNull(SecurityUtils.getLoginUserName());
-            if (loginUserName == null) {
-                return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
-            }
-            appendAccessibleLogsScope(queryWrapper, loginUserName);
-        }
         queryWrapper.orderByDesc("create_date", "id");
         List<MockLog> records = mockLogService.page(new Page<>(1, 1), queryWrapper).getRecords();
         if (records.isEmpty()) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
         }
         MockLog mockLog = records.get(0);
-        return SimpleResultUtils.createSimpleResult(MockPreviewMetaVo.builder()
-                .headers(mockLog.getHeaders())
-                .diagnoseData(mockLog.getDiagnoseData())
-                .build());
+        MockPreviewMetaVo meta = MockPreviewMetaVo.of(mockLog);
+        if (meta == null || !canAccessPreviewMeta(meta)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        mockPreviewMetaCache.put(mockLog);
+        return SimpleResultUtils.createSimpleResult(meta);
+    }
+
+    private boolean canAccessPreviewMeta(MockPreviewMetaVo meta) {
+        if (SecurityUtils.isAdminUser()) {
+            return true;
+        }
+        String loginUserName = StringUtils.trimToNull(SecurityUtils.getLoginUserName());
+        if (loginUserName == null) {
+            return false;
+        }
+        if (StringUtils.equals(loginUserName, StringUtils.trimToEmpty(meta.getUserName()))) {
+            return true;
+        }
+        MockGroup mockGroup = loadMockGroup(meta.getMockGroupPath());
+        return mockGroup != null
+                && !StringUtils.equalsIgnoreCase(MockConstants.MOCK_DEFAULT_PROJECT, mockGroup.getProjectCode())
+                && mockProjectService.hasGroupAuthority(mockGroup, MockConstants.AUTHORITY_READABLE);
+    }
+
+    private MockGroup loadMockGroup(String mockGroupPath) {
+        mockGroupPath = StringUtils.trimToNull(mockGroupPath);
+        return mockGroupPath == null ? null : mockGroupService.getOne(Wrappers.<MockGroup>query()
+                .eq("group_path", mockGroupPath)
+                .isNull(MockConstants.DB_MODIFY_FROM_KEY), false);
     }
 
     private SimpleResult<List<MockLog>> createEmptyLogResult(Page<MockLog> page) {

@@ -2,6 +2,7 @@ package com.fugary.simple.mock.interceptors;
 
 import com.fugary.simple.mock.config.SimpleMockConfigProperties;
 import com.fugary.simple.mock.contants.MockConstants;
+import com.fugary.simple.mock.cache.MockPreviewMetaCache;
 import com.fugary.simple.mock.entity.mock.MockLog;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.events.OperationLogEvent;
@@ -58,6 +59,9 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
 
     @Autowired
     private MockGroupService mockGroupService;
+
+    @Autowired
+    private MockPreviewMetaCache mockPreviewMetaCache;
 
     private ApplicationContext applicationContext;
 
@@ -181,6 +185,7 @@ public class CrudOperationLogInterceptor implements ApplicationContextAware {
             }
             MockLog mockLog = logBuilder.build();
             completeDiagnoseInfo(mockLog, responseStatusCode, responseContentType, logTime);
+            mockPreviewMetaCache.put(mockLog);
             publishEvent(mockLog);
         }
     }
