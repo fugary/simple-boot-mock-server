@@ -1,4 +1,7 @@
 ;(function (globalThis) {
+    const isBareModuleSpecifier = function (url) {
+        return typeof url !== 'string' || !/^(?:[a-z][a-z\d+\-.]*:|\/\/|\/|\.{1,2}\/)/i.test(url);
+    };
     /**
      * require 支持，加载第三方库（CommonJS风格）
      * 不支持 ESM 模块
@@ -7,6 +10,9 @@
      * @returns {Promise} Promise，resolve 到模块导出的对象
      */
     globalThis.require = function (url, options) {
+        if (isBareModuleSpecifier(url)) {
+            throw new Error("Unsupported require module specifier: " + url);
+        }
         const { cache, ...fetchOptions } = options || {};
         const cacheEnabled = cache !== false;
         const requireCache = globalThis.__requireCache__ || {};

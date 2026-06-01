@@ -77,6 +77,51 @@ class DefaultScriptWithFetchProviderImplTest {
         assertEquals("https://example.com/second", fetchSteps.get(1).getDetails().get("url"));
     }
 
+    @Test
+    void requireShouldNotFetchBareCommonJsModuleProbe() throws Exception {
+        String libraryUrl = "https://cdn.example.com/crypto-js.min.js";
+        String targetUrl = "https://example.com/asset.js";
+        fetchProvider.setMockPushProcessor(mockParams -> {
+            sleepQuietly(50);
+            if (libraryUrl.equals(mockParams.getTargetUrl())) {
+                String script = "let cryptoProbeError;\n"
+                        + "try {\n"
+                        + "  require('crypto');\n"
+                        + "} catch (e) {\n"
+                        + "  cryptoProbeError = e.message;\n"
+                        + "}\n"
+                        + "module.exports = { loaded: true, cryptoProbeError: cryptoProbeError };";
+                return ResponseEntity.ok()
+                        .contentType(MediaType.valueOf("application/javascript"))
+                        .body(script.getBytes(StandardCharsets.UTF_8));
+            }
+            String body = "{\"url\":\"" + mockParams.getTargetUrl() + "\"}";
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body.getBytes(StandardCharsets.UTF_8));
+        });
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+        MockDiagnoseContext.set(diagnose);
+
+        Object result = fetchProvider.internalEval(
+                "(async function(){\n"
+                        + "  const lib = await require('" + libraryUrl + "');\n"
+                        + "  const response = await fetch('" + targetUrl + "');\n"
+                        + "  const responseBody = await response.json();\n"
+                        + "  return lib.loaded + '|' + responseBody.url + '|' + lib.cryptoProbeError;\n"
+                        + "})()",
+                scriptEngine,
+                createScriptContext());
+
+        assertEquals("true|" + targetUrl + "|Unsupported require module specifier: crypto", result);
+        List<MockDiagnoseVo.Step> fetchSteps = diagnose.getSteps().stream()
+                .filter(step -> "external_fetch".equals(step.getStage()))
+                .collect(Collectors.toList());
+        assertEquals(2, fetchSteps.size());
+        assertEquals(libraryUrl, fetchSteps.get(0).getDetails().get("url"));
+        assertEquals(targetUrl, fetchSteps.get(1).getDetails().get("url"));
+    }
+
     private ScriptContext createScriptContext() {
         ScriptContext context = new SimpleScriptContext();
         context.setBindings(scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
