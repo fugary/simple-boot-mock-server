@@ -10,6 +10,8 @@ import CommonIcon from '@/components/common-icon/index.vue'
 import { statusCodeTagType } from '@/services/mock/MockCommonService'
 import {
   getDiagnoseCodeLabel,
+  getDiagnoseDataSelectionLabel,
+  getDiagnoseDetailLabel,
   getDiagnoseStageLabel,
   shouldShowDiagnoseKey
 } from '@/services/mock/MockDiagnoseService'
@@ -97,15 +99,28 @@ const toSummaryChips = chipConfigs => {
 const formatItemText = (item, defaultLabelKey) => {
   if (!item) return ''
   const id = item.id == null ? '' : `#${item.id}`
-  const mainText = item.name || item.key || id || (item.defaultScenario && defaultLabelKey ? $i18nBundle(defaultLabelKey) : '')
+  const defaultLabel = item.defaultScenario && defaultLabelKey ? $i18nBundle(defaultLabelKey) : ''
+  const mainText = item.name || item.key || id || defaultLabel
   const metaTexts = [
     id && mainText !== id ? id : '',
-    item.name && item.key ? item.key : ''
+    item.name && item.key ? item.key : '',
+    defaultLabel && mainText !== defaultLabel ? defaultLabel : ''
   ].filter(Boolean)
   return metaTexts.length ? `${mainText} (${metaTexts.join(', ')})` : mainText
 }
 const formatItem = (item, defaultLabelKey) => {
   return toSummaryChips([{ text: formatItemText(item, defaultLabelKey) }])
+}
+const formatDataItem = item => {
+  return toSummaryChips([
+    { text: formatItemText(item) },
+    item?.dataSelection
+      ? {
+          label: getDiagnoseDetailLabel('dataSelection'),
+          text: getDiagnoseDataSelectionLabel(item.dataSelection)
+        }
+      : ''
+  ])
 }
 const formatProxyUrl = proxyUrl => {
   return toSummaryChips([{
@@ -141,7 +156,7 @@ const diagnoseSummaryItems = computed(() => [
   { labelKey: 'mock.label.mockGroup', value: formatItem(props.diagnoseInfo?.group) },
   { labelKey: 'mock.label.scenario', value: formatItem(props.diagnoseInfo?.scenario, 'mock.label.defaultScenario') },
   { labelKey: 'mock.label.mockRequest', value: formatItem(props.diagnoseInfo?.request) },
-  { labelKey: 'mock.label.mockData', value: formatItem(props.diagnoseInfo?.data) },
+  { labelKey: 'mock.label.mockData', value: formatDataItem(props.diagnoseInfo?.data) },
   { labelKey: 'mock.label.proxyUrl', value: formatProxyUrl(props.diagnoseInfo?.proxyUrl) },
   { label: 'HTTP', value: formatHttpInfo(props.diagnoseInfo) }
 ].filter(item => item.value))

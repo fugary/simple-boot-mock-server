@@ -285,7 +285,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                                 }
                                 if (mockData == null) { // 没有配置参数匹配，或者没有匹配，过滤掉配置有参数匹配的数据
                                     mockData = mockRequestService.findMockData(mockRequest, mockDataList);
-                                    diagnoseRecorder.defaultDataSelected(mockData);
+                                    diagnoseRecorder.defaultDataSelected(mockRequest, mockData, mockDataList);
                                 }
                                 processMockData(mockRequest, mockData, requestVo);
                                 return Triple.of(mockGroup, mockRequest, mockData);

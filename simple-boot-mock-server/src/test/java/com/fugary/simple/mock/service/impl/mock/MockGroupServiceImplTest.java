@@ -1,6 +1,7 @@
 package com.fugary.simple.mock.service.impl.mock;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
@@ -22,6 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -201,6 +203,39 @@ class MockGroupServiceImplTest {
         assertTrue(dataCandidatesIndex >= 0);
         assertTrue(forceDataIndex >= 0);
         assertTrue(dataCandidatesIndex < forceDataIndex);
+    }
+
+    @Test
+    void matchMockDataShouldRecordDataSelectionModeDiagnose() {
+        MockGroup mockGroup = createGroup("demo", null);
+        MockRequest request = createRequest(34, mockGroup.getId(), "/users/{id}", null);
+        request.setLoadBalancer(MockConstants.MOCK_REQUEST_LOAD_BALANCE_ROUND_ROBIN);
+        MockData firstData = createData(304, mockGroup.getId(), request.getId(), "{\"index\":1}");
+        MockData secondData = createData(305, mockGroup.getId(), request.getId(), "{\"index\":2}");
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+
+        doReturn(mockGroup).when(mockGroupService).getOne(any());
+        when(mockRequestService.list(any(QueryWrapper.class))).thenReturn(new ArrayList<>(List.of(request)));
+        when(mockRequestService.loadAllDataByRequest(request.getId())).thenReturn(List.of(firstData, secondData));
+        when(mockRequestService.findMockData(any(MockRequest.class), anyList())).thenReturn(secondData);
+
+        Triple<MockGroup, MockRequest, MockData> result = mockGroupService.matchMockData(
+                buildRequest("/mock/demo/users/1"),
+                0,
+                0,
+                group -> true,
+                diagnose
+        );
+
+        assertEquals(secondData.getId(), result.getRight().getId());
+        MockDiagnoseVo.DataItem dataItem = (MockDiagnoseVo.DataItem) diagnose.getData();
+        assertEquals("round_robin", dataItem.getDataSelection());
+        MockDiagnoseVo.Step selectionStep = diagnose.getSteps().stream()
+                .filter(step -> "default_data_selected".equals(step.getCode()))
+                .findFirst().orElse(null);
+        assertNotNull(selectionStep);
+        assertEquals("round_robin", ((Map<?, ?>) selectionStep.getDetails().get("data"))
+                .get("dataSelection"));
     }
 
     @Test

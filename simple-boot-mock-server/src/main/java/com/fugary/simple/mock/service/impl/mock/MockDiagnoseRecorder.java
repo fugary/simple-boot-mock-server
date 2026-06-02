@@ -1,10 +1,12 @@
 package com.fugary.simple.mock.service.impl.mock;
 
+import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockScenario;
 import com.fugary.simple.mock.utils.MockDiagnoseContext;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import org.apache.commons.lang3.StringUtils;
 
@@ -105,9 +107,16 @@ public class MockDiagnoseRecorder {
     private static final String KEY_SCENARIO_ID = "scenarioId";
     private static final String KEY_SCENARIO_NAME = "scenarioName";
     private static final String KEY_STATUS_CODE = "statusCode";
+    private static final String KEY_DATA_SELECTION = "dataSelection";
     private static final String KEY_TOTAL = "total";
     private static final String KEY_URL = "url";
     private static final String KEY_DURATION_MS = "durationMs";
+
+    private static final String DATA_SELECTION_SINGLE = "single";
+    private static final String DATA_SELECTION_DEFAULT = "default";
+    private static final String DATA_SELECTION_FIRST = "first";
+    private static final String DATA_SELECTION_RANDOM = "random";
+    private static final String DATA_SELECTION_ROUND_ROBIN = "round_robin";
 
     private static final MockDiagnoseRecorder NOOP = new MockDiagnoseRecorder(null);
 
@@ -364,14 +373,16 @@ public class MockDiagnoseRecorder {
         }
     }
 
-    void defaultDataSelected(MockData data) {
+    void defaultDataSelected(MockRequest request, MockData data, List<MockData> dataList) {
         if (!isEnabled()) {
             return;
         }
         setDataInfo(data);
+        String dataSelection = calcDataSelection(request, data, dataList);
+        diagnose.setDataSelectionInfo(dataSelection);
         step(GROUP_DATA, STAGE_DATA_DEFAULT, data == null ? STATUS_WARNING : STATUS_SUCCESS,
                 data == null ? CODE_DEFAULT_DATA_NOT_FOUND : CODE_DEFAULT_DATA_SELECTED,
-                KEY_DATA, dataInfo(data));
+                KEY_DATA, dataInfo(data, dataSelection));
     }
 
     private void setDataInfo(MockData data) {
@@ -444,6 +455,10 @@ public class MockDiagnoseRecorder {
     }
 
     private Map<String, Object> dataInfo(MockData data) {
+        return dataInfo(data, null);
+    }
+
+    private Map<String, Object> dataInfo(MockData data, String dataSelection) {
         if (data == null) {
             return null;
         }
@@ -454,7 +469,35 @@ public class MockDiagnoseRecorder {
         put(info, KEY_STATUS_CODE, data.getStatusCode());
         put(info, KEY_CONTENT_TYPE, data.getContentType());
         put(info, KEY_MATCH_PATTERN, data.getMatchPattern());
+        put(info, KEY_DATA_SELECTION, dataSelection);
         return info;
+    }
+
+    private int countStrategyCandidates(List<MockData> dataList) {
+        if (dataList == null) {
+            return 0;
+        }
+        return (int) dataList.stream()
+                .filter(data -> StringUtils.isBlank(data.getMatchPattern()))
+                .count();
+    }
+
+    private String calcDataSelection(MockRequest request, MockData data, List<MockData> dataList) {
+        if (data == null) {
+            return null;
+        }
+        String loadBalancer = StringUtils.defaultIfBlank(request == null ? null : request.getLoadBalancer(),
+                MockConstants.MOCK_REQUEST_LOAD_BALANCE_AUTO);
+        if (countStrategyCandidates(dataList) == 1) {
+            return DATA_SELECTION_SINGLE;
+        }
+        if (MockConstants.MOCK_REQUEST_LOAD_BALANCE_RANDOM.equals(loadBalancer)) {
+            return DATA_SELECTION_RANDOM;
+        }
+        if (MockConstants.MOCK_REQUEST_LOAD_BALANCE_ROUND_ROBIN.equals(loadBalancer)) {
+            return DATA_SELECTION_ROUND_ROBIN;
+        }
+        return SimpleMockUtils.isDefault(data) ? DATA_SELECTION_DEFAULT : DATA_SELECTION_FIRST;
     }
 
     private void put(Map<String, Object> info, String key, Object value) {

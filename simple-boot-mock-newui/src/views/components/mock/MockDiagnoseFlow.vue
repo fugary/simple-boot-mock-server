@@ -6,6 +6,7 @@ import { statusCodeTagType } from '@/services/mock/MockCommonService'
 import MockDiagnoseStepDetail from '@/views/components/mock/MockDiagnoseStepDetail.vue'
 import {
   getDiagnoseCodeLabel,
+  getDiagnoseDataSelectionLabel,
   getDiagnoseDetailLabel,
   getDiagnoseStageLabel,
   shouldShowDiagnoseKey
@@ -134,6 +135,7 @@ const formatInfoObject = (key, value) => {
 const formatDetailValue = (key, value) => {
   if (value === undefined || value === null || value === '') return ''
   if (key === 'durationMs') return formatDuration(value)
+  if (key === 'dataSelection') return getDiagnoseDataSelectionLabel(value)
   if (Array.isArray(value)) return `${value.length}`
   if (typeof value === 'boolean') return $i18nBundle(value ? 'common.label.yes' : 'common.label.no')
   if (typeof value === 'object') return formatInfoObject(key, value) || JSON.stringify(value)
@@ -160,6 +162,13 @@ const toDetailChip = (key, value) => {
     externalLink: isExternalLink(text) ? text : ''
   }
 }
+const toDetailItemChips = (key, value) => {
+  const chips = [toDetailChip(key, value)]
+  if (key === 'data' && value?.dataSelection) {
+    chips.push(toDetailChip('dataSelection', value.dataSelection))
+  }
+  return chips
+}
 const getMatchedPattern = step => {
   if (!patternMatchedCodes.has(step?.code) || step?.details?.matchPattern) return ''
   return step?.details?.request?.matchPattern || step?.details?.data?.matchPattern || ''
@@ -178,7 +187,7 @@ const toDetailChips = step => {
     .map(key => entries.find(([entryKey]) => entryKey === key))
     .filter(Boolean)
     .filter(([key, value]) => shouldShowDetail(details, key, value))
-    .map(([key, value]) => toDetailChip(key, value))
+    .flatMap(([key, value]) => toDetailItemChips(key, value))
     .filter(item => item.value)
 }
 const toFlowStep = (step, index) => {

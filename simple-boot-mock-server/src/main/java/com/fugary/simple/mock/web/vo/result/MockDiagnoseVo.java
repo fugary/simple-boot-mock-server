@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Data
 public class MockDiagnoseVo {
@@ -93,8 +94,19 @@ public class MockDiagnoseVo {
     }
 
     public void setDataInfo(MockData data, String contentType) {
-        this.data = data == null ? null : new DataItem(data.getId(), data.getDataName(),
+        DataItem previousData = this.data instanceof DataItem ? (DataItem) this.data : null;
+        DataItem newData = data == null ? null : new DataItem(data.getId(), data.getDataName(),
                 data.getStatusCode(), contentType);
+        if (previousData != null && newData != null && Objects.equals(previousData.getId(), newData.getId())) {
+            newData.setDataSelection(previousData.getDataSelection());
+        }
+        this.data = newData;
+    }
+
+    public void setDataSelectionInfo(String dataSelection) {
+        if (this.data instanceof DataItem) {
+            ((DataItem) this.data).setDataSelection(dataSelection);
+        }
     }
 
     private Map<String, Object> toDetails(Object... details) {
@@ -152,6 +164,8 @@ public class MockDiagnoseVo {
         private final Integer statusCode;
 
         private final String contentType;
+
+        private String dataSelection;
 
         public DataItem(Integer id, String name, Integer statusCode, String contentType) {
             super(id, null, name);
