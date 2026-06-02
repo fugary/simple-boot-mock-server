@@ -1,9 +1,9 @@
 <script setup>
 import { computed } from 'vue'
 import { $i18nBundle } from '@/messages'
-import { $copyText, $openNewWin } from '@/utils'
 import { isExternalLink } from '@/components/utils'
 import { statusCodeTagType } from '@/services/mock/MockCommonService'
+import MockDiagnoseStepDetail from '@/views/components/mock/MockDiagnoseStepDetail.vue'
 import {
   getDiagnoseCodeLabel,
   getDiagnoseDetailLabel,
@@ -57,6 +57,84 @@ const detailPriorityKeys = [
   'message'
 ]
 const patternMatchedCodes = new Set(['request_pattern_matched', 'data_pattern_matched'])
+const diagnoseStageGroups = [
+  {
+    name: 'ingress',
+    labelKey: 'mock.label.diagnoseGroupIngress',
+    descriptionKey: 'mock.label.diagnoseGroupIngressDesc',
+    stages: ['init']
+  },
+  {
+    name: 'group',
+    labelKey: 'mock.label.diagnoseGroupGroup',
+    descriptionKey: 'mock.label.diagnoseGroupGroupDesc',
+    stages: ['group']
+  },
+  {
+    name: 'scenario',
+    labelKey: 'mock.label.diagnoseGroupScenario',
+    descriptionKey: 'mock.label.diagnoseGroupScenarioDesc',
+    stages: ['scenario']
+  },
+  {
+    name: 'request',
+    labelKey: 'mock.label.diagnoseGroupRequest',
+    descriptionKey: 'mock.label.diagnoseGroupRequestDesc',
+    stages: [
+      'request_candidates',
+      'request_force',
+      'request_path',
+      'request_pattern',
+      'request'
+    ]
+  },
+  {
+    name: 'data',
+    labelKey: 'mock.label.diagnoseGroupData',
+    descriptionKey: 'mock.label.diagnoseGroupDataDesc',
+    stages: [
+      'data_force',
+      'data_candidates',
+      'data_pattern',
+      'data_default'
+    ]
+  },
+  {
+    name: 'post_processor',
+    labelKey: 'mock.label.diagnoseGroupPostProcessor',
+    descriptionKey: 'mock.label.diagnoseGroupPostProcessorDesc',
+    stages: [
+      'post_processor',
+      'external_fetch'
+    ]
+  },
+  {
+    name: 'result',
+    labelKey: 'mock.label.diagnoseGroupResult',
+    descriptionKey: 'mock.label.diagnoseGroupResultDesc',
+    stages: ['result']
+  }
+]
+const otherStageGroup = {
+  name: 'other',
+  labelKey: 'mock.label.diagnoseGroupOther',
+  descriptionKey: 'mock.label.diagnoseGroupOtherDesc',
+  stages: []
+}
+const diagnoseStageGroupOrder = diagnoseStageGroups.concat(otherStageGroup)
+const diagnoseStageGroupMap = diagnoseStageGroups.reduce((result, group) => {
+  group.stages.forEach(stage => {
+    result[stage] = group
+  })
+  return result
+}, {})
+const statusPriority = {
+  danger: 4,
+  error: 4,
+  warning: 3,
+  success: 2,
+  info: 1
+}
 
 const stepTagType = status => statusTagTypes[status] || statusTagTypes.info
 const stepStatus = status => stepStatusMap[status] || stepStatusMap.info
@@ -127,32 +205,67 @@ const toDetailChips = step => {
     .map(([key, value]) => toDetailChip(key, value))
     .filter(item => item.value)
 }
-const flowSteps = computed(() => (props.steps || []).map((step, index) => ({
-  raw: step,
-  index: index + 1,
-  stage: step.stage,
-  stageLabel: getDiagnoseStageLabel(step.stage),
-  showStageKey: shouldShowDiagnoseKey(getDiagnoseStageLabel(step.stage), step.stage),
-  isResult: step.stage === 'result',
-  status: step.status,
-  code: step.code,
-  codeLabel: getDiagnoseCodeLabel(step.code),
-  showCodeKey: shouldShowDiagnoseKey(getDiagnoseCodeLabel(step.code), step.code),
-  statusType: stepTagType(step.status),
-  stepStatus: stepStatus(step.status),
-  chips: toDetailChips(step)
-})))
+const toFlowStep = (step, index) => {
+  const stageLabel = getDiagnoseStageLabel(step.stage)
+  const codeLabel = getDiagnoseCodeLabel(step.code)
+  return {
+    raw: step,
+    index: index + 1,
+    stage: step.stage,
+    stageLabel,
+    showStageKey: shouldShowDiagnoseKey(stageLabel, step.stage),
+    status: step.status,
+    code: step.code,
+    codeLabel,
+    showCodeKey: shouldShowDiagnoseKey(codeLabel, step.code),
+    statusType: stepTagType(step.status),
+    stepStatus: stepStatus(step.status),
+    chips: toDetailChips(step)
+  }
+}
+const flowSteps = computed(() => (props.steps || []).map(toFlowStep))
+const getStageGroup = stage => diagnoseStageGroupMap[stage] || otherStageGroup
+const getGroupStatus = steps => {
+  return steps.reduce((target, step) => {
+    const status = step.status || 'info'
+    return (statusPriority[status] || 0) > (statusPriority[target] || 0) ? status : target
+  }, 'info')
+}
+const flowGroups = computed(() => {
+  const groupMap = new Map()
+  flowSteps.value.forEach(step => {
+    const groupConfig = getStageGroup(step.stage)
+    if (!groupMap.has(groupConfig.name)) {
+      groupMap.set(groupConfig.name, {
+        name: groupConfig.name,
+        label: $i18nBundle(groupConfig.labelKey),
+        description: $i18nBundle(groupConfig.descriptionKey),
+        steps: []
+      })
+    }
+    groupMap.get(groupConfig.name).steps.push(step)
+  })
+  return diagnoseStageGroupOrder
+    .map(groupConfig => groupMap.get(groupConfig.name))
+    .filter(Boolean)
+    .map((group, index) => {
+      const steps = group.steps.map((step, stepIndex) => ({
+        ...step,
+        subIndex: stepIndex + 1
+      }))
+      const status = getGroupStatus(group.steps)
+      return {
+        ...group,
+        index: index + 1,
+        steps,
+        singleStep: steps.length === 1 ? steps[0] : null,
+        status,
+        statusType: stepTagType(status),
+        stepStatus: stepStatus(status)
+      }
+    })
+})
 const showStep = step => emit('showRawData', step.raw)
-const copyChip = chip => {
-  if (chip.copyText) {
-    $copyText(chip.copyText)
-  }
-}
-const openChipLink = chip => {
-  if (chip.externalLink) {
-    $openNewWin(chip.externalLink)
-  }
-}
 </script>
 
 <template>
@@ -163,91 +276,76 @@ const openChipLink = chip => {
   <el-steps
     v-else
     direction="vertical"
-    class="mock-diagnose-flow"
+    class="mock-diagnose-stage-flow"
   >
     <el-step
-      v-for="step in flowSteps"
-      :key="`${step.index}-${step.stage}-${step.code}`"
-      :status="step.stepStatus"
-      :class="['mock-diagnose-flow__step', `is-${step.status || 'info'}`, { 'is-result': step.isResult }]"
-      :style="{ '--mock-step-index': `'${step.index}'` }"
+      v-for="group in flowGroups"
+      :key="group.name"
+      :status="group.stepStatus"
+      :class="['mock-diagnose-stage-flow__step', `is-${group.status || 'info'}`]"
+      :style="{ '--mock-stage-index': `'${group.index}'` }"
     >
       <template #title>
-        <div
-          class="mock-diagnose-flow__title"
-          @dblclick="showStep(step)"
-        >
+        <div class="mock-diagnose-stage-flow__title">
           <el-tag
             effect="light"
-            :type="step.statusType"
-            class="mock-diagnose-flow__stage"
+            :type="group.statusType"
+            class="mock-diagnose-stage-flow__stage"
           >
-            <span class="mock-diagnose-flow__stage-label">{{ step.stageLabel }}</span>
-            <span
-              v-if="step.showStageKey"
-              class="mock-diagnose-flow__stage-key"
-            >
-              {{ step.stage }}
-            </span>
+            {{ group.label }}
           </el-tag>
+          <div class="mock-diagnose-stage-flow__desc">
+            {{ group.description }}
+          </div>
         </div>
       </template>
       <template #description>
-        <div
-          class="mock-diagnose-flow__content"
-          @dblclick="showStep(step)"
-        >
-          <el-link
-            type="primary"
-            underline="never"
-            class="mock-diagnose-flow__code"
-            @click="showStep(step)"
+        <div class="mock-diagnose-stage-flow__content">
+          <mock-diagnose-step-detail
+            v-if="group.singleStep"
+            :step="group.singleStep"
+            @show-raw-data="showStep"
+          />
+          <el-steps
+            v-else
+            direction="vertical"
+            class="mock-diagnose-flow"
           >
-            <span class="mock-diagnose-flow__code-label">{{ step.codeLabel }}</span>
-            <span
-              v-if="step.showCodeKey"
-              class="mock-diagnose-flow__code-key"
+            <el-step
+              v-for="step in group.steps"
+              :key="`${step.index}-${step.stage}-${step.code}`"
+              :status="step.stepStatus"
+              :class="['mock-diagnose-flow__step', `is-${step.status || 'info'}`]"
+              :style="{ '--mock-step-index': `'${step.subIndex}'` }"
             >
-              {{ step.code }}
-            </span>
-          </el-link>
-          <div
-            v-if="step.chips.length"
-            class="mock-diagnose-flow__chips"
-          >
-            <el-tag
-              v-for="chip in step.chips"
-              :key="chip.key"
-              size="small"
-              effect="plain"
-              :type="chip.type"
-              class="mock-diagnose-flow__chip"
-              role="button"
-              tabindex="0"
-              @click.stop="copyChip(chip)"
-              @dblclick.stop
-              @keydown.enter.prevent.stop="copyChip(chip)"
-              @keydown.space.prevent.stop="copyChip(chip)"
-            >
-              <span class="mock-diagnose-flow__chip-label">
-                <span>{{ chip.label }}</span>
-              </span>
-              <span class="mock-diagnose-flow__chip-value">{{ chip.value }}</span>
-              <el-link
-                v-if="chip.externalLink"
-                v-common-tooltip="$t('mock.label.linkAddress')"
-                type="primary"
-                underline="never"
-                class="mock-diagnose-flow__chip-link"
-                @click.stop="openChipLink(chip)"
-              >
-                <common-icon
-                  :size="13"
-                  icon="Link"
+              <template #title>
+                <div
+                  class="mock-diagnose-flow__title"
+                  @dblclick="showStep(step)"
+                >
+                  <el-tag
+                    effect="light"
+                    :type="step.statusType"
+                    class="mock-diagnose-flow__stage"
+                  >
+                    <span class="mock-diagnose-flow__stage-label">{{ step.stageLabel }}</span>
+                    <span
+                      v-if="step.showStageKey"
+                      class="mock-diagnose-flow__stage-key"
+                    >
+                      {{ step.stage }}
+                    </span>
+                  </el-tag>
+                </div>
+              </template>
+              <template #description>
+                <mock-diagnose-step-detail
+                  :step="step"
+                  @show-raw-data="showStep"
                 />
-              </el-link>
-            </el-tag>
-          </div>
+              </template>
+            </el-step>
+          </el-steps>
         </div>
       </template>
     </el-step>
@@ -255,8 +353,73 @@ const openChipLink = chip => {
 </template>
 
 <style scoped>
+.mock-diagnose-stage-flow {
+  padding: 2px 0 0 2px;
+}
+
+:deep(.mock-diagnose-stage-flow__step > .el-step__main) {
+  min-height: 112px;
+  padding-bottom: 18px;
+}
+
+:deep(.mock-diagnose-stage-flow__step.is-warning > .el-step__head .el-step__icon.is-text) {
+  color: var(--el-color-warning);
+  border-color: var(--el-color-warning);
+}
+
+:deep(.mock-diagnose-stage-flow__step.is-info > .el-step__head .el-step__icon.is-text) {
+  color: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+}
+
+:deep(.mock-diagnose-stage-flow__step > .el-step__head .el-step__icon-inner.is-status) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  transform: none;
+}
+
+:deep(.mock-diagnose-stage-flow__step > .el-step__head .el-step__icon-inner.is-status svg) {
+  display: none;
+}
+
+:deep(.mock-diagnose-stage-flow__step > .el-step__head .el-step__icon-inner.is-status::before) {
+  content: var(--mock-stage-index);
+}
+
+.mock-diagnose-stage-flow__title {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.mock-diagnose-stage-flow__stage {
+  height: auto;
+  min-height: 26px;
+  padding: 4px 10px;
+  font-weight: 700;
+  white-space: normal;
+}
+
+.mock-diagnose-stage-flow__content {
+  padding: 6px 0 0;
+}
+
+.mock-diagnose-stage-flow__desc {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--el-text-color-secondary);
+  line-height: 1.4;
+}
+
 .mock-diagnose-flow {
-  padding: 4px 0 0 2px;
+  padding: 2px 0 0 2px;
 }
 
 :deep(.mock-diagnose-flow__step .el-step__main) {
@@ -309,85 +472,35 @@ const openChipLink = chip => {
   white-space: normal;
 }
 
-.mock-diagnose-flow__stage-label,
-.mock-diagnose-flow__code-label {
+.mock-diagnose-flow__stage-label {
   font-weight: 600;
 }
 
-.mock-diagnose-flow__stage-key,
-.mock-diagnose-flow__code-key {
+.mock-diagnose-flow__stage-key {
   font-family: var(--el-font-family);
   font-size: 12px;
   font-weight: 400;
   opacity: 0.72;
 }
 
-.mock-diagnose-flow__stage-key::before,
-.mock-diagnose-flow__code-key::before {
+.mock-diagnose-flow__stage-key::before {
   content: "(";
   margin-left: 4px;
 }
 
-.mock-diagnose-flow__stage-key::after,
-.mock-diagnose-flow__code-key::after {
+.mock-diagnose-flow__stage-key::after {
   content: ")";
 }
 
-.mock-diagnose-flow__content {
-  padding-top: 2px;
-  cursor: pointer;
-}
-
-.mock-diagnose-flow__code {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  vertical-align: top;
-}
-
-.mock-diagnose-flow__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.mock-diagnose-flow__chip {
-  max-width: 100%;
-  cursor: pointer;
-  transition: border-color var(--el-transition-duration), background-color var(--el-transition-duration);
-}
-
-.mock-diagnose-flow__chip:hover {
-  background-color: var(--el-fill-color-light);
-  border-color: var(--el-tag-hover-color);
-}
-
-.mock-diagnose-flow__chip-label {
-  color: var(--el-text-color-secondary);
-}
-
-.mock-diagnose-flow__chip-label::after {
-  content: ":";
-  margin-right: 4px;
-}
-
-.mock-diagnose-flow__chip-value {
-  display: inline-block;
-  max-width: min(420px, 58vw);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: bottom;
-  white-space: nowrap;
-}
-
-.mock-diagnose-flow__chip-link {
-  margin-left: 6px;
-  vertical-align: text-bottom;
-}
-
 @media (max-width: 768px) {
-  .mock-diagnose-flow__chip-value {
-    max-width: 220px;
+  :deep(.mock-diagnose-stage-flow__step > .el-step__main) {
+    padding-left: 2px;
+  }
+
+  .mock-diagnose-stage-flow__title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 }
 </style>
