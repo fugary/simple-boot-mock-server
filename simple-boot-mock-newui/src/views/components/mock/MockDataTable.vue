@@ -22,7 +22,7 @@ import {
   toTestMatchPattern,
   showCodeWindow
 } from '@/utils/DynamicUtils'
-import { $i18nBundle, $i18nKey, $i18nMsg } from '@/messages'
+import { $i18nBundle, $i18nConcat, $i18nKey, $i18nMsg } from '@/messages'
 import { ElLink, ElMessage, ElTag } from 'element-plus'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
@@ -93,7 +93,11 @@ const columns = computed(() => {
     labelKey: 'mock.label.statusCode',
     property: 'statusCode',
     minWidth: '120px',
-    formatter: getStatusCode,
+    formatter (data) {
+      return getStatusCode(data, {
+        onToggleDefault: props.writable ? cancelDefaultByIcon : null
+      })
+    },
     headerFormatter () {
       const statusCodeOption = {
         prop: 'statusCode',
@@ -235,12 +239,7 @@ const buttons = computed(() => defineTableButtons([{
     return !item.defaultFlag && !item.matchPattern && props.writable
   },
   click: item => {
-    $coreConfirm($i18nBundle('mock.msg.configSetDefault'))
-      .then(() => {
-        item.defaultFlag = 1
-        return markDefault(item)
-      })
-      .then(() => loadMockData())
+    changeDefaultFlag(item, 1)
   }
 }, {
   labelKey: 'common.label.delete',
@@ -253,6 +252,18 @@ const buttons = computed(() => defineTableButtons([{
       .then(() => loadMockData())
   }
 }]))
+const changeDefaultFlag = (item, defaultFlag) => {
+  const message = defaultFlag
+    ? $i18nBundle('mock.msg.configSetDefault')
+    : $i18nKey('common.msg.commonConfirm', $i18nConcat($i18nBundle('common.label.cancel'), $i18nBundle('mock.label.default')))
+  return $coreConfirm(message)
+    .then(() => markDefault({ ...item, defaultFlag }))
+    .then(() => loadMockData())
+}
+const cancelDefaultByIcon = (item, event) => {
+  event?.stopPropagation()
+  return changeDefaultFlag(item, 0)
+}
 const deleteDataList = () => {
   $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
     .then(() => MockDataApi.removeByIds(selectedRows.value.map(item => item.id), { loading: true }))

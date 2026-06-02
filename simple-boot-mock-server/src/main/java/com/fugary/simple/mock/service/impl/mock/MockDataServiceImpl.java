@@ -35,7 +35,7 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
         MockData existMockData = getById(mockData.getId());
         boolean result = false;
         if (existMockData != null && existMockData.getRequestId().equals(mockData.getRequestId())) {
-            mockData.setDefaultFlag(1);
+            mockData.setDefaultFlag(SimpleMockUtils.getDefaultFlag(mockData.getDefaultFlag()));
             return this.saveOrUpdate(mockData);
         }
         return result;

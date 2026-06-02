@@ -3,7 +3,7 @@ import { ElTag, ElText } from 'element-plus'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { ALL_STATUS_CODES } from '@/api/mock/MockDataApi'
 
-export const getStatusCode = (data) => {
+export const getStatusCode = (data, options = {}) => {
   let type = 'danger'
   if (data.statusCode < 300) {
     type = 'success'
@@ -17,11 +17,14 @@ export const getStatusCode = (data) => {
   if (!status) {
     return ''
   }
+  const toggleDefault = options?.onToggleDefault
   return <ElText type="success">
     {data.defaultFlag
       ? <CommonIcon type="success"
+                      class={toggleDefault ? 'pointer' : ''}
                       v-common-tooltip={$i18nBundle('mock.label.default')}
-                      icon="Flag"/>
+                      icon="Flag"
+                      onClick={toggleDefault ? event => toggleDefault(data, event) : undefined}/>
       : ''}
     <ElTag v-common-tooltip={statusLabel} type={type} class={data.defaultFlag ? 'margin-left1' : ''}>{data.statusCode}</ElTag>
   </ElText>
