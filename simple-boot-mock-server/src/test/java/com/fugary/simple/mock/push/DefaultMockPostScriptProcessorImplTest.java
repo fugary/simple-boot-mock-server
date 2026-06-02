@@ -41,6 +41,7 @@ class DefaultMockPostScriptProcessorImplTest {
         MockData data = new MockData();
         data.setStatusCode(200);
         data.setContentType("text/plain");
+        diagnose.setDataInfo(data);
 
         String responseBody = processor.process(request, data, "{\"before\":true}");
         diagnose.finish("mock", "mock_return");
@@ -56,7 +57,29 @@ class DefaultMockPostScriptProcessorImplTest {
         assertTrue(fetchIndex > postStartIndex);
         assertTrue(postReturnIndex > fetchIndex);
         assertTrue(resultIndex > postReturnIndex);
+        assertPostProcessorStageGroup(diagnose, MockDiagnoseRecorder.GROUP_POST_PROCESSOR);
         assertNull(MockJsUtils.getCurrentResponseVo());
+    }
+
+    @Test
+    void dataPostProcessorShouldRecordDataStageGroup() {
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+        MockDiagnoseContext.set(diagnose);
+        DefaultMockPostScriptProcessorImpl processor = new DefaultMockPostScriptProcessorImpl();
+        ReflectionTestUtils.setField(processor, "scriptEngineProvider", new FetchDiagnoseScriptEngineProvider());
+
+        MockRequest request = new MockRequest();
+        request.setPostProcessor("(async function () { return response.body; }())");
+        MockData data = new MockData();
+        data.setStatusCode(200);
+        data.setContentType("text/plain");
+        data.setPostProcessor("(async function () { return response.body; }())");
+        diagnose.setDataInfo(data);
+
+        String responseBody = processor.process(request, data, "{\"before\":true}");
+
+        assertEquals("{\"ok\":true}", responseBody);
+        assertPostProcessorStageGroup(diagnose, MockDiagnoseRecorder.GROUP_DATA);
     }
 
     private int indexOfStepCode(MockDiagnoseVo diagnose, String code) {
@@ -66,6 +89,20 @@ class DefaultMockPostScriptProcessorImplTest {
             }
         }
         return -1;
+    }
+
+    private String stageGroupOfStepCode(MockDiagnoseVo diagnose, String code) {
+        return diagnose.getSteps().stream()
+                .filter(step -> code.equals(step.getCode()))
+                .findFirst()
+                .map(MockDiagnoseVo.Step::getStageGroup)
+                .orElse(null);
+    }
+
+    private void assertPostProcessorStageGroup(MockDiagnoseVo diagnose, String stageGroup) {
+        assertEquals(stageGroup, stageGroupOfStepCode(diagnose, "post_processor_start"));
+        assertEquals(stageGroup, stageGroupOfStepCode(diagnose, "fetch_return"));
+        assertEquals(stageGroup, stageGroupOfStepCode(diagnose, "post_processor_return"));
     }
 
     private static class FetchDiagnoseScriptEngineProvider implements ScriptEngineProvider {

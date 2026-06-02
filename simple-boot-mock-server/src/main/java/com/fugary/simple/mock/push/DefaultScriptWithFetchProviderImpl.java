@@ -125,6 +125,7 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             CompletableFuture<Value> future = new CompletableFuture<>();
             AtomicBoolean diagnoseRecorded = new AtomicBoolean(false);
             MockDiagnoseVo diagnose = MockDiagnoseContext.get();
+            String postProcessorStageGroup = MockDiagnoseContext.getPostProcessorStageGroup();
             MockDiagnoseRecorder diagnoseRecorder = MockDiagnoseRecorder.of(diagnose);
             String fetchMethod = method;
             if (timeout != null) {
@@ -180,7 +181,7 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                 Value resolve = promiseArgs[0];
                 Value reject = promiseArgs[1];
                 future.whenComplete((result, err) -> {
-                    runWithDiagnoseContext(diagnose, () -> {
+                    MockDiagnoseContext.runWith(diagnose, postProcessorStageGroup, () -> {
                         log.info("fetch请求构建Promise:{}/{}", url, result, err);
                         if (err != null) {
                             recordFetchDiagnose(diagnoseRecorder, diagnoseRecorded, fetchMethod, url,
@@ -201,24 +202,6 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
         if (recorded.compareAndSet(false, true)) {
             diagnoseRecorder.externalFetch(method, url, statusCode,
                     contentType == null ? null : contentType.toString(), durationMs, error);
-        }
-    }
-
-    private void runWithDiagnoseContext(MockDiagnoseVo diagnose, Runnable runnable) {
-        if (diagnose == null) {
-            runnable.run();
-            return;
-        }
-        MockDiagnoseVo previous = MockDiagnoseContext.get();
-        try {
-            MockDiagnoseContext.set(diagnose);
-            runnable.run();
-        } finally {
-            if (previous == null) {
-                MockDiagnoseContext.clear();
-            } else {
-                MockDiagnoseContext.set(previous);
-            }
         }
     }
 

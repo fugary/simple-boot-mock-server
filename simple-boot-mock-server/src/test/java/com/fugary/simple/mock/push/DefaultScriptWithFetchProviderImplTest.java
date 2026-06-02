@@ -1,6 +1,8 @@
 package com.fugary.simple.mock.push;
 
+import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.script.JavaScriptEngineFactory;
+import com.fugary.simple.mock.service.impl.mock.MockDiagnoseRecorder;
 import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import org.junit.jupiter.api.AfterEach;
@@ -57,24 +59,29 @@ class DefaultScriptWithFetchProviderImplTest {
         MockDiagnoseVo diagnose = new MockDiagnoseVo();
         MockDiagnoseContext.set(diagnose);
 
-        Object result = fetchProvider.internalEval(
-                "(async function(){\n"
-                        + "  const first = await fetch('https://example.com/first');\n"
-                        + "  const firstBody = await first.json();\n"
-                        + "  const second = await fetch('https://example.com/second');\n"
-                        + "  const secondBody = await second.json();\n"
-                        + "  return firstBody.url + '|' + secondBody.url;\n"
-                        + "})()",
-                scriptEngine,
-                createScriptContext());
+        Object result = evalSequentialFetch();
 
         assertEquals("https://example.com/first|https://example.com/second", result);
-        List<MockDiagnoseVo.Step> fetchSteps = diagnose.getSteps().stream()
-                .filter(step -> "external_fetch".equals(step.getStage()))
-                .collect(Collectors.toList());
+        List<MockDiagnoseVo.Step> fetchSteps = fetchSteps(diagnose);
         assertEquals(2, fetchSteps.size());
         assertEquals("https://example.com/first", fetchSteps.get(0).getDetails().get("url"));
         assertEquals("https://example.com/second", fetchSteps.get(1).getDetails().get("url"));
+    }
+
+    @Test
+    void sequentialAwaitFetchShouldKeepPostProcessorStageGroup() throws Exception {
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+        diagnose.setDataInfo(new MockData());
+        MockDiagnoseContext.set(diagnose);
+        MockDiagnoseContext.setPostProcessorStageGroup(MockDiagnoseRecorder.GROUP_POST_PROCESSOR);
+
+        Object result = evalSequentialFetch();
+
+        assertEquals("https://example.com/first|https://example.com/second", result);
+        List<MockDiagnoseVo.Step> fetchSteps = fetchSteps(diagnose);
+        assertEquals(2, fetchSteps.size());
+        assertEquals(MockDiagnoseRecorder.GROUP_POST_PROCESSOR, fetchSteps.get(0).getStageGroup());
+        assertEquals(MockDiagnoseRecorder.GROUP_POST_PROCESSOR, fetchSteps.get(1).getStageGroup());
     }
 
     @Test
@@ -114,9 +121,7 @@ class DefaultScriptWithFetchProviderImplTest {
                 createScriptContext());
 
         assertEquals("true|" + targetUrl + "|Unsupported require module specifier: crypto", result);
-        List<MockDiagnoseVo.Step> fetchSteps = diagnose.getSteps().stream()
-                .filter(step -> "external_fetch".equals(step.getStage()))
-                .collect(Collectors.toList());
+        List<MockDiagnoseVo.Step> fetchSteps = fetchSteps(diagnose);
         assertEquals(2, fetchSteps.size());
         assertEquals(libraryUrl, fetchSteps.get(0).getDetails().get("url"));
         assertEquals(targetUrl, fetchSteps.get(1).getDetails().get("url"));
@@ -126,6 +131,25 @@ class DefaultScriptWithFetchProviderImplTest {
         ScriptContext context = new SimpleScriptContext();
         context.setBindings(scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         return context;
+    }
+
+    private Object evalSequentialFetch() throws Exception {
+        return fetchProvider.internalEval(
+                "(async function(){\n"
+                        + "  const first = await fetch('https://example.com/first');\n"
+                        + "  const firstBody = await first.json();\n"
+                        + "  const second = await fetch('https://example.com/second');\n"
+                        + "  const secondBody = await second.json();\n"
+                        + "  return firstBody.url + '|' + secondBody.url;\n"
+                        + "})()",
+                scriptEngine,
+                createScriptContext());
+    }
+
+    private List<MockDiagnoseVo.Step> fetchSteps(MockDiagnoseVo diagnose) {
+        return diagnose.getSteps().stream()
+                .filter(step -> "external_fetch".equals(step.getStage()))
+                .collect(Collectors.toList());
     }
 
     private void sleepQuietly(long millis) {

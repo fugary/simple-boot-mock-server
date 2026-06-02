@@ -43,7 +43,7 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
                     responseBody);
             MockJsUtils.setCurrentResponseVo(responseVo);
             try {
-                Pair<String, HttpResponseVo> resultPair = executePostProcessor(postProcessor);
+                Pair<String, HttpResponseVo> resultPair = executePostProcessor(mockData, postProcessor);
                 overrideResponse(mockData, resultPair.getValue());
                 responseBody = StringUtils.defaultString(resultPair.getKey());
             } finally {
@@ -67,7 +67,7 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
             HttpResponseVo responseVo = createResponseVo(responseEntity.getStatusCode().value(), responseBody);
             MockJsUtils.setCurrentResponseVo(responseVo);
             try {
-                Pair<String, HttpResponseVo> resultPair = executePostProcessor(postProcessor);
+                Pair<String, HttpResponseVo> resultPair = executePostProcessor(null, postProcessor);
                 responseBody = StringUtils.defaultString(resultPair.getKey());
                 byte[] bodyBytes = responseBody.getBytes(StandardCharsets.UTF_8);
                 responseEntity = overrideResponse(responseEntity, bodyBytes, resultPair.getValue());
@@ -135,6 +135,16 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
         return responseVo;
     }
 
+    private Pair<String, HttpResponseVo> executePostProcessor(MockData mockData, String postProcessor) {
+        return MockDiagnoseContext.callWithPostProcessorStageGroup(calcPostProcessorStageGroup(mockData),
+                () -> executePostProcessor(postProcessor));
+    }
+
+    private String calcPostProcessorStageGroup(MockData mockData) {
+        return mockData != null && StringUtils.isNotBlank(mockData.getPostProcessor())
+                ? MockDiagnoseRecorder.GROUP_DATA : MockDiagnoseRecorder.GROUP_POST_PROCESSOR;
+    }
+
     protected Pair<String, HttpResponseVo> executePostProcessor(String postProcessor) {
         MockDiagnoseRecorder diagnoseRecorder = MockDiagnoseRecorder.of(MockDiagnoseContext.get());
         diagnoseRecorder.postProcessorStart();
@@ -199,7 +209,7 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
             responseVo.setBody(sseItem);
             MockJsUtils.setCurrentResponseVo(responseVo);
             try {
-                Pair<String, HttpResponseVo> resultPair = executePostProcessor(postProcessor);
+                Pair<String, HttpResponseVo> resultPair = executePostProcessor(mockData, postProcessor);
                 Object resultItem = sseItem;
                 if (resultPair.getKey() != null) {
                     String processedBodyStr = resultPair.getKey();

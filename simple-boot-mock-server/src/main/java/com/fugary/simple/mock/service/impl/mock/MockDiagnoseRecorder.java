@@ -4,6 +4,7 @@ import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockScenario;
+import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import org.apache.commons.lang3.StringUtils;
 
@@ -38,8 +39,8 @@ public class MockDiagnoseRecorder {
     private static final String GROUP_GROUP = "group";
     private static final String GROUP_SCENARIO = "scenario";
     private static final String GROUP_REQUEST = "request";
-    private static final String GROUP_DATA = "data";
-    private static final String GROUP_POST_PROCESSOR = "post_processor";
+    public static final String GROUP_DATA = "data";
+    public static final String GROUP_POST_PROCESSOR = "post_processor";
 
     private static final String CODE_REQUEST_RECEIVED = "request_received";
     private static final String CODE_GROUP_NOT_FOUND = "group_not_found";
@@ -111,9 +112,11 @@ public class MockDiagnoseRecorder {
     private static final MockDiagnoseRecorder NOOP = new MockDiagnoseRecorder(null);
 
     private final MockDiagnoseVo diagnose;
+    private final String postProcessorStageGroup;
 
     private MockDiagnoseRecorder(MockDiagnoseVo diagnose) {
         this.diagnose = diagnose;
+        this.postProcessorStageGroup = MockDiagnoseContext.getPostProcessorStageGroup();
     }
 
     public static MockDiagnoseRecorder of(MockDiagnoseVo diagnose) {
@@ -382,7 +385,8 @@ public class MockDiagnoseRecorder {
     }
 
     private String currentPostProcessorGroup() {
-        return diagnose.getData() == null ? GROUP_POST_PROCESSOR : GROUP_DATA;
+        return StringUtils.defaultIfBlank(postProcessorStageGroup,
+                diagnose.getData() == null ? GROUP_POST_PROCESSOR : GROUP_DATA);
     }
 
     private static String calcFetchStatus(Integer statusCode, Throwable error) {
