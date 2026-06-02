@@ -2,7 +2,7 @@
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { computed, watch, ref, reactive, nextTick, useTemplateRef, onBeforeUnmount, toRaw } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { showCodeWindow, showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
+import { showCodeWindow, showDiagnoseWindow, showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
 import { $i18nKey, $i18nBundle } from '@/messages'
 import {
   generateSampleCheckResults,
@@ -24,7 +24,6 @@ import MockDictionaryPopover from '@/views/components/mock/form/MockDictionaryPo
 import { generateMockTemplateFromData } from '@/vendors/mockjs/MockDataTransformer'
 import { downloadByLink } from '@/api/mock/MockGroupApi'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
-import MockDiagnoseInfo from '@/views/components/mock/MockDiagnoseInfo.vue'
 
 const props = defineProps({
   responseTarget: {
@@ -174,6 +173,7 @@ const proxyResponseSavable = computed(() => {
     props.responseTarget?.data !== undefined && !props.responseTarget?.savedAsMockData
 })
 const diagnoseInfo = computed(() => props.responseTarget?.diagnoseInfo)
+const openDiagnoseDialog = () => showDiagnoseWindow(diagnoseInfo.value)
 const requestMismatchInfo = computed(() => props.responseTarget?.requestMismatchInfo)
 
 const {
@@ -309,8 +309,7 @@ const toShowJsonDataWindow = () => {
           <el-link
             v-if="diagnoseInfo"
             type="primary"
-            underline="never"
-            @click="currentTabName='diagnoseInfo'"
+            @click="openDiagnoseDialog"
           >
             {{ $i18nKey('common.label.commonView', 'mock.label.diagnose') }}
           </el-link>
@@ -343,8 +342,17 @@ const toShowJsonDataWindow = () => {
           v-else-if="responseTarget"
           style="display: flex; margin-top: -7px;"
         >
+          <el-link
+            v-if="mockHitInfo && diagnoseInfo"
+            v-common-tooltip="$i18nKey('common.label.commonView', 'mock.label.diagnose')"
+            :type="mockHitTagType"
+            class="mock-hit-diagnose-link margin-right3"
+            @click="openDiagnoseDialog"
+          >
+            <span>{{ mockHitTypeLabel }}</span>
+          </el-link>
           <el-tag
-            v-if="mockHitInfo"
+            v-else-if="mockHitInfo"
             :type="mockHitTagType"
             class="margin-right3"
           >
@@ -579,21 +587,6 @@ const toShowJsonDataWindow = () => {
         </el-descriptions>
       </el-tab-pane>
       <el-tab-pane
-        v-if="diagnoseInfo"
-        name="diagnoseInfo"
-      >
-        <template #label>
-          <el-badge
-            type="primary"
-            :value="diagnoseInfo.steps?.length"
-            :show-zero="false"
-          >
-            {{ $t('mock.label.diagnose') }}
-          </el-badge>
-        </template>
-        <mock-diagnose-info :diagnose-info="diagnoseInfo" />
-      </el-tab-pane>
-      <el-tab-pane
         v-if="mockResponseEditable"
         name="mockResponseBody"
       >
@@ -755,5 +748,12 @@ const toShowJsonDataWindow = () => {
   min-height: 22px;
   padding: 3px 8px;
   white-space: normal;
+}
+
+.mock-hit-diagnose-link {
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  line-height: 24px;
 }
 </style>

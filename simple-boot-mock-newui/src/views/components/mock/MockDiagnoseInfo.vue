@@ -2,9 +2,11 @@
 import { computed, ref } from 'vue'
 import { showCodeWindow } from '@/utils/DynamicUtils'
 import { $i18nBundle } from '@/messages'
-import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import MockDiagnoseFlow from '@/views/components/mock/MockDiagnoseFlow.vue'
-import { ElTag } from 'element-plus'
+import { $copyText, $openNewWin } from '@/utils'
+import { isExternalLink } from '@/components/utils'
+import { ElLink, ElTag } from 'element-plus'
+import CommonIcon from '@/components/common-icon/index.vue'
 import { statusCodeTagType } from '@/services/mock/MockCommonService'
 import {
   getDiagnoseCodeLabel,
@@ -42,9 +44,57 @@ const diagnoseResultTypeLabel = computed(() => {
 })
 const diagnoseResultTagType = computed(() => diagnoseTagTypes[props.diagnoseInfo?.resultType] || diagnoseTagTypes.none)
 const stepTagType = status => diagnoseTagTypes[status] || diagnoseTagTypes.info
-const formatText = text => text === undefined || text === null || text === '' ? '' : <span>{text}</span>
-const formatDuration = duration => duration === undefined || duration === null || duration === '' ? '' : `${duration} ms`
-const formatItem = (item, defaultLabelKey) => {
+const hasValue = value => value !== undefined && value !== null && value !== ''
+const formatDuration = duration => hasValue(duration) ? `${duration} ms` : ''
+const copySummaryText = (event, text) => {
+  event?.stopPropagation()
+  if (text) {
+    $copyText(text)
+  }
+}
+const onSummaryChipKeydown = (event, text) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    copySummaryText(event, text)
+  }
+}
+const toSummaryChip = ({ label, text, type = '', externalLink = '' }) => {
+  if (!hasValue(text)) return ''
+  const copyText = String(text)
+  return <ElTag
+    size="small"
+    effect="plain"
+    type={type}
+    class="mock-diagnose-summary-chip"
+    role="button"
+    tabindex={0}
+    title={$i18nBundle('common.msg.clickToCopy')}
+    onClick={event => copySummaryText(event, copyText)}
+    onKeydown={event => onSummaryChipKeydown(event, copyText)}
+  >
+    {label ? <span class="mock-diagnose-summary-chip__label">{label}</span> : ''}
+    <span class="mock-diagnose-summary-chip__value">{copyText}</span>
+    {externalLink
+      ? <ElLink
+          type="primary"
+          underline="never"
+          class="mock-diagnose-summary-chip__link"
+          title={$i18nBundle('mock.label.linkAddress')}
+          onClick={event => {
+            event.stopPropagation()
+            $openNewWin(externalLink)
+          }}
+        >
+          <CommonIcon size={13} icon="Link"/>
+        </ElLink>
+      : ''}
+  </ElTag>
+}
+const toSummaryChips = chipConfigs => {
+  const visibleChips = chipConfigs.filter(Boolean).map(toSummaryChip).filter(Boolean)
+  return visibleChips.length ? <span class="mock-diagnose-summary-chips">{visibleChips}</span> : ''
+}
+const formatItemText = (item, defaultLabelKey) => {
   if (!item) return ''
   const id = item.id == null ? '' : `#${item.id}`
   const mainText = item.name || item.key || id || (item.defaultScenario && defaultLabelKey ? $i18nBundle(defaultLabelKey) : '')
@@ -52,40 +102,40 @@ const formatItem = (item, defaultLabelKey) => {
     id && mainText !== id ? id : '',
     item.name && item.key ? item.key : ''
   ].filter(Boolean)
-  return formatText(metaTexts.length ? `${mainText} (${metaTexts.join(', ')})` : mainText)
+  return metaTexts.length ? `${mainText} (${metaTexts.join(', ')})` : mainText
+}
+const formatItem = (item, defaultLabelKey) => {
+  return toSummaryChips([{ text: formatItemText(item, defaultLabelKey) }])
 }
 const formatProxyUrl = proxyUrl => {
-  if (!proxyUrl) return ''
-  return <span class="mock-diagnose-proxy-url">
-    <span class="mock-diagnose-proxy-url__text">{proxyUrl}</span>
-    <MockUrlCopyLink content={proxyUrl} class="margin-left1" />
-  </span>
+  return toSummaryChips([{
+    text: proxyUrl,
+    externalLink: isExternalLink(proxyUrl) ? proxyUrl : ''
+  }])
 }
 const formatHttpInfo = diagnoseInfo => {
   const duration = formatDuration(diagnoseInfo?.durationMs)
-  const items = [
-    diagnoseInfo?.statusCode !== undefined && diagnoseInfo?.statusCode !== null
-      ? <span key="statusCode" class="mock-diagnose-http-info__item">
-        <span class="mock-diagnose-http-info__label">{$i18nBundle('mock.label.statusCode')}</span>
-        <ElTag size="small" type={statusCodeTagType(diagnoseInfo.statusCode)}>
-          {diagnoseInfo.statusCode}
-        </ElTag>
-      </span>
+  return toSummaryChips([
+    hasValue(diagnoseInfo?.statusCode)
+      ? {
+          label: $i18nBundle('mock.label.statusCode'),
+          text: diagnoseInfo.statusCode,
+          type: statusCodeTagType(diagnoseInfo.statusCode)
+        }
       : '',
     diagnoseInfo?.contentType
-      ? <span key="contentType" class="mock-diagnose-http-info__item">
-        <span class="mock-diagnose-http-info__label">Content Type</span>
-        <span class="mock-diagnose-http-info__value">{diagnoseInfo.contentType}</span>
-      </span>
+      ? {
+          label: 'Content Type',
+          text: diagnoseInfo.contentType
+        }
       : '',
     duration
-      ? <span key="durationMs" class="mock-diagnose-http-info__item">
-        <span class="mock-diagnose-http-info__label">{$i18nBundle('mock.label.logTime')}</span>
-        <span class="mock-diagnose-http-info__value">{duration}</span>
-      </span>
+      ? {
+          label: $i18nBundle('mock.label.logTime'),
+          text: duration
+        }
       : ''
-  ].filter(Boolean)
-  return items.length ? <span class="mock-diagnose-http-info">{items}</span> : ''
+  ])
 }
 const diagnoseSummaryItems = computed(() => [
   { labelKey: 'mock.label.mockGroup', value: formatItem(props.diagnoseInfo?.group) },
@@ -291,37 +341,51 @@ const diagnoseStepColumns = [
   vertical-align: top;
 }
 
-:deep(.mock-diagnose-proxy-url) {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-}
-
-:deep(.mock-diagnose-proxy-url__text) {
-  overflow-wrap: anywhere;
-}
-
-:deep(.mock-diagnose-http-info) {
+:deep(.mock-diagnose-summary-chips) {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px 12px;
+  gap: 6px;
   max-width: 100%;
 }
 
-:deep(.mock-diagnose-http-info__item) {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
+:deep(.mock-diagnose-summary-chip) {
+  max-width: 100%;
+  cursor: pointer;
+  transition: border-color var(--el-transition-duration), background-color var(--el-transition-duration);
 }
 
-:deep(.mock-diagnose-http-info__label) {
+:deep(.mock-diagnose-summary-chip:hover) {
+  background-color: var(--el-fill-color-light);
+  border-color: var(--el-tag-hover-color);
+}
+
+:deep(.mock-diagnose-summary-chip__label) {
   color: var(--el-text-color-secondary);
+}
+
+:deep(.mock-diagnose-summary-chip__label::after) {
+  content: ":";
+  margin-right: 4px;
+}
+
+:deep(.mock-diagnose-summary-chip__value) {
+  display: inline-block;
+  max-width: min(680px, 62vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
   white-space: nowrap;
 }
 
-:deep(.mock-diagnose-http-info__value) {
-  overflow-wrap: anywhere;
+:deep(.mock-diagnose-summary-chip__link) {
+  margin-left: 6px;
+  vertical-align: text-bottom;
+}
+
+@media (max-width: 768px) {
+  :deep(.mock-diagnose-summary-chip__value) {
+    max-width: 220px;
+  }
 }
 </style>

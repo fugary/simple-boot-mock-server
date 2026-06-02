@@ -5,7 +5,7 @@ import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { useAllUsers } from '@/api/mock/MockUserApi'
 import MockLogApi from '@/api/mock/MockLogApi'
 import { ALL_STATUS_CODES } from '@/api/mock/MockDataApi'
-import { showCodeWindow } from '@/utils/DynamicUtils'
+import { showCodeWindow, showDiagnoseWindow } from '@/utils/DynamicUtils'
 import { ElText, ElTag } from 'element-plus'
 import { useDefaultPage } from '@/config'
 import MethodTag from '@/views/components/utils/MethodTag.vue'
@@ -13,7 +13,6 @@ import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { $i18nKey, $i18nMsg } from '@/messages'
 import { useRoute, useRouter } from 'vue-router'
 import { resolveDashboardLogPreset } from '@/services/mock/DashboardLogPreset'
-import MockDiagnoseInfo from '@/views/components/mock/MockDiagnoseInfo.vue'
 import { statusCodeTagType } from '@/services/mock/MockCommonService'
 
 const route = useRoute()
@@ -38,8 +37,6 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
 })
 
 const dateParam = ref(createDefaultDateParam())
-const showDiagnoseWindow = ref(false)
-const currentDiagnoseInfo = ref()
 
 const resetLogSearchState = () => {
   searchParam.value = createDefaultSearchParam()
@@ -254,14 +251,7 @@ const showLogDetail = item => showCodeWindow(JSON.stringify(item), {
   }]
 })
 
-const showDiagnoseDetail = item => {
-  try {
-    currentDiagnoseInfo.value = JSON.parse(item.diagnoseData)
-    showDiagnoseWindow.value = true
-  } catch {
-    showCodeWindow(item.diagnoseData)
-  }
-}
+const showDiagnoseDetail = item => showDiagnoseWindow(item.diagnoseData)
 
 const buttons = computed(() => {
   return [{
@@ -363,23 +353,6 @@ const searchFormOptions = computed(() => {
       @current-page-change="loadApiLogs()"
       @row-dblclick="showLogDetail($event)"
     />
-    <common-window
-      v-model="showDiagnoseWindow"
-      width="1100px"
-      :show-cancel="false"
-      :ok-label="$t('common.label.close')"
-      destroy-on-close
-    >
-      <template #header>
-        <span class="el-dialog__title">
-          {{ $t('mock.label.diagnose') }}
-        </span>
-      </template>
-      <mock-diagnose-info
-        v-if="currentDiagnoseInfo"
-        :diagnose-info="currentDiagnoseInfo"
-      />
-    </common-window>
   </el-container>
 </template>
 

@@ -12,6 +12,7 @@ const MockHistoryListWindow = () => import('@/views/components/utils/MockHistory
 const MockCompareWindowNew = () => import('@/views/components/utils/MockCompareWindowNew.vue')
 const MockTipsWindow = () => import('@/views/components/utils/MockTipsWindow.vue')
 const SimpleJsonDataWindow = () => import('@/views/components/utils/SimpleJsonDataWindow.vue')
+const MockDiagnoseInfoWindow = () => import('@/views/components/utils/MockDiagnoseInfoWindow.vue')
 
 export const closeAllOnRouteChange = () => {
   document.querySelectorAll('.el-overlay:not([style*="display: none"]) .common-window .el-dialog__headerbtn:not(.dialog-fullscreen-btn)')
@@ -104,6 +105,26 @@ export const showJsonDataWindow = async (data, config) => {
     ...config
   })
   vnode.component?.exposed?.showJsonDataWindow(data)
+}
+
+export const showDiagnoseWindow = async (diagnoseInfo, config = {}) => {
+  if (!diagnoseInfo) {
+    return
+  }
+  let parsedDiagnoseInfo = diagnoseInfo
+  if (typeof diagnoseInfo === 'string') {
+    try {
+      parsedDiagnoseInfo = JSON.parse(diagnoseInfo)
+    } catch {
+      return showCodeWindow(diagnoseInfo)
+    }
+  }
+  const dynamicHelper = new DynamicHelper()
+  const vnode = await dynamicHelper.createAndRender(MockDiagnoseInfoWindow, {
+    onClosed: () => dynamicHelper.destroy(),
+    ...config
+  })
+  vnode.component?.exposed?.showDiagnoseWindow(parsedDiagnoseInfo)
 }
 
 /**
