@@ -17,6 +17,8 @@ public class MockDiagnoseVo {
     private static final String KEY_STATUS_CODE = "statusCode";
     private static final String KEY_CONTENT_TYPE = "contentType";
     private static final String KEY_DURATION_MS = "durationMs";
+    private static final String STAGE_RESULT = "result";
+    private static final String GROUP_RESULT = "result";
 
     private String resultType = "none";
 
@@ -40,7 +42,7 @@ public class MockDiagnoseVo {
 
     public synchronized void finish(String resultType, String code, Object... details) {
         this.resultType = resultType;
-        step("result", calcStatus(resultType), code, details);
+        step(GROUP_RESULT, STAGE_RESULT, calcStatus(resultType), code, details);
         appendResultDetails(steps.get(steps.size() - 1));
     }
 
@@ -57,8 +59,9 @@ public class MockDiagnoseVo {
         appendResultDetails();
     }
 
-    public synchronized void step(String stage, String status, String code, Object... details) {
+    public synchronized void step(String stageGroup, String stage, String status, String code, Object... details) {
         Step step = new Step();
+        step.setStageGroup(stageGroup);
         step.setStage(stage);
         step.setStatus(status);
         step.setCode(code);
@@ -117,7 +120,7 @@ public class MockDiagnoseVo {
     private void appendResultDetails() {
         for (int i = steps.size() - 1; i >= 0; i--) {
             Step step = steps.get(i);
-            if ("result".equals(step.getStage())) {
+            if (STAGE_RESULT.equals(step.getStage())) {
                 appendResultDetails(step);
                 return;
             }
@@ -159,6 +162,8 @@ public class MockDiagnoseVo {
 
     @Data
     public static class Step {
+
+        private String stageGroup;
 
         private String stage;
 

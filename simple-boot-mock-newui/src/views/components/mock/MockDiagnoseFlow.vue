@@ -61,71 +61,47 @@ const diagnoseStageGroups = [
   {
     name: 'ingress',
     labelKey: 'mock.label.diagnoseGroupIngress',
-    descriptionKey: 'mock.label.diagnoseGroupIngressDesc',
-    stages: ['init']
+    descriptionKey: 'mock.label.diagnoseGroupIngressDesc'
   },
   {
     name: 'group',
     labelKey: 'mock.label.diagnoseGroupGroup',
-    descriptionKey: 'mock.label.diagnoseGroupGroupDesc',
-    stages: ['group']
+    descriptionKey: 'mock.label.diagnoseGroupGroupDesc'
   },
   {
     name: 'scenario',
     labelKey: 'mock.label.diagnoseGroupScenario',
-    descriptionKey: 'mock.label.diagnoseGroupScenarioDesc',
-    stages: ['scenario']
+    descriptionKey: 'mock.label.diagnoseGroupScenarioDesc'
   },
   {
     name: 'request',
     labelKey: 'mock.label.diagnoseGroupRequest',
-    descriptionKey: 'mock.label.diagnoseGroupRequestDesc',
-    stages: [
-      'request_candidates',
-      'request_force',
-      'request_path',
-      'request_pattern',
-      'request'
-    ]
+    descriptionKey: 'mock.label.diagnoseGroupRequestDesc'
   },
   {
     name: 'data',
     labelKey: 'mock.label.diagnoseGroupData',
-    descriptionKey: 'mock.label.diagnoseGroupDataDesc',
-    stages: [
-      'data_force',
-      'data_candidates',
-      'data_pattern',
-      'data_default'
-    ]
+    descriptionKey: 'mock.label.diagnoseGroupDataDesc'
   },
   {
     name: 'post_processor',
     labelKey: 'mock.label.diagnoseGroupPostProcessor',
-    descriptionKey: 'mock.label.diagnoseGroupPostProcessorDesc',
-    stages: [
-      'post_processor',
-      'external_fetch'
-    ]
+    descriptionKey: 'mock.label.diagnoseGroupPostProcessorDesc'
   },
   {
     name: 'result',
     labelKey: 'mock.label.diagnoseGroupResult',
-    descriptionKey: 'mock.label.diagnoseGroupResultDesc',
-    stages: ['result']
+    descriptionKey: 'mock.label.diagnoseGroupResultDesc'
   }
 ]
 const otherStageGroup = {
   name: 'other',
   labelKey: 'mock.label.diagnoseGroupOther',
-  descriptionKey: 'mock.label.diagnoseGroupOtherDesc',
-  stages: []
+  descriptionKey: 'mock.label.diagnoseGroupOtherDesc'
 }
 const diagnoseStageGroupOrder = diagnoseStageGroups.concat(otherStageGroup)
 const diagnoseStageGroupMap = diagnoseStageGroups.reduce((result, group) => {
-  group.stages.forEach(stage => {
-    result[stage] = group
-  })
+  result[group.name] = group
   return result
 }, {})
 const statusPriority = {
@@ -211,6 +187,7 @@ const toFlowStep = (step, index) => {
   return {
     raw: step,
     index: index + 1,
+    stageGroup: step.stageGroup,
     stage: step.stage,
     stageLabel,
     showStageKey: shouldShowDiagnoseKey(stageLabel, step.stage),
@@ -224,7 +201,8 @@ const toFlowStep = (step, index) => {
   }
 }
 const flowSteps = computed(() => (props.steps || []).map(toFlowStep))
-const getStageGroup = stage => diagnoseStageGroupMap[stage] || otherStageGroup
+const useGroupedFlow = computed(() => flowSteps.value.every(step => step.stageGroup))
+const getStageGroup = step => diagnoseStageGroupMap[step.stageGroup] || otherStageGroup
 const getGroupStatus = steps => {
   return steps.reduce((target, step) => {
     const status = step.status || 'info'
@@ -234,7 +212,7 @@ const getGroupStatus = steps => {
 const flowGroups = computed(() => {
   const groupMap = new Map()
   flowSteps.value.forEach(step => {
-    const groupConfig = getStageGroup(step.stage)
+    const groupConfig = getStageGroup(step)
     if (!groupMap.has(groupConfig.name)) {
       groupMap.set(groupConfig.name, {
         name: groupConfig.name,
@@ -273,6 +251,46 @@ const showStep = step => emit('showRawData', step.raw)
     v-if="!flowSteps.length"
     :description="$t('common.msg.noData')"
   />
+  <el-steps
+    v-else-if="!useGroupedFlow"
+    direction="vertical"
+    class="mock-diagnose-flow"
+  >
+    <el-step
+      v-for="step in flowSteps"
+      :key="`${step.index}-${step.stage}-${step.code}`"
+      :status="step.stepStatus"
+      :class="['mock-diagnose-flow__step', `is-${step.status || 'info'}`]"
+      :style="{ '--mock-step-index': `'${step.index}'` }"
+    >
+      <template #title>
+        <div
+          class="mock-diagnose-flow__title"
+          @dblclick="showStep(step)"
+        >
+          <el-tag
+            effect="light"
+            :type="step.statusType"
+            class="mock-diagnose-flow__stage"
+          >
+            <span class="mock-diagnose-flow__stage-label">{{ step.stageLabel }}</span>
+            <span
+              v-if="step.showStageKey"
+              class="mock-diagnose-flow__stage-key"
+            >
+              {{ step.stage }}
+            </span>
+          </el-tag>
+        </div>
+      </template>
+      <template #description>
+        <mock-diagnose-step-detail
+          :step="step"
+          @show-raw-data="showStep"
+        />
+      </template>
+    </el-step>
+  </el-steps>
   <el-steps
     v-else
     direction="vertical"
@@ -358,21 +376,23 @@ const showStep = step => emit('showRawData', step.raw)
 }
 
 :deep(.mock-diagnose-stage-flow__step > .el-step__main) {
-  min-height: 112px;
-  padding-bottom: 18px;
+  padding-bottom: 10px;
 }
 
-:deep(.mock-diagnose-stage-flow__step.is-warning > .el-step__head .el-step__icon.is-text) {
+:deep(.mock-diagnose-stage-flow__step.is-warning > .el-step__head .el-step__icon.is-text),
+:deep(.mock-diagnose-flow__step.is-warning .el-step__icon.is-text) {
   color: var(--el-color-warning);
   border-color: var(--el-color-warning);
 }
 
-:deep(.mock-diagnose-stage-flow__step.is-info > .el-step__head .el-step__icon.is-text) {
+:deep(.mock-diagnose-stage-flow__step.is-info > .el-step__head .el-step__icon.is-text),
+:deep(.mock-diagnose-flow__step.is-info .el-step__icon.is-text) {
   color: var(--el-color-primary);
   border-color: var(--el-color-primary);
 }
 
-:deep(.mock-diagnose-stage-flow__step > .el-step__head .el-step__icon-inner.is-status) {
+:deep(.mock-diagnose-stage-flow__step > .el-step__head .el-step__icon-inner.is-status),
+:deep(.mock-diagnose-flow__step .el-step__icon-inner.is-status) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -383,7 +403,8 @@ const showStep = step => emit('showRawData', step.raw)
   transform: none;
 }
 
-:deep(.mock-diagnose-stage-flow__step > .el-step__head .el-step__icon-inner.is-status svg) {
+:deep(.mock-diagnose-stage-flow__step > .el-step__head .el-step__icon-inner.is-status svg),
+:deep(.mock-diagnose-flow__step .el-step__icon-inner.is-status svg) {
   display: none;
 }
 
@@ -408,7 +429,7 @@ const showStep = step => emit('showRawData', step.raw)
 }
 
 .mock-diagnose-stage-flow__content {
-  padding: 6px 0 0;
+  padding: 4px 0 0;
 }
 
 .mock-diagnose-stage-flow__desc {
@@ -423,33 +444,7 @@ const showStep = step => emit('showRawData', step.raw)
 }
 
 :deep(.mock-diagnose-flow__step .el-step__main) {
-  min-height: 72px;
-  padding-bottom: 8px;
-}
-
-:deep(.mock-diagnose-flow__step.is-warning .el-step__icon.is-text) {
-  color: var(--el-color-warning);
-  border-color: var(--el-color-warning);
-}
-
-:deep(.mock-diagnose-flow__step.is-info .el-step__icon.is-text) {
-  color: var(--el-color-primary);
-  border-color: var(--el-color-primary);
-}
-
-:deep(.mock-diagnose-flow__step .el-step__icon-inner.is-status) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 1;
-  transform: none;
-}
-
-:deep(.mock-diagnose-flow__step .el-step__icon-inner.is-status svg) {
-  display: none;
+  padding-bottom: 10px;
 }
 
 :deep(.mock-diagnose-flow__step .el-step__icon-inner.is-status::before) {

@@ -34,6 +34,12 @@ public class MockDiagnoseRecorder {
     private static final String STAGE_DATA_DEFAULT = "data_default";
     private static final String STAGE_POST_PROCESSOR = "post_processor";
     private static final String STAGE_EXTERNAL_FETCH = "external_fetch";
+    private static final String GROUP_INGRESS = "ingress";
+    private static final String GROUP_GROUP = "group";
+    private static final String GROUP_SCENARIO = "scenario";
+    private static final String GROUP_REQUEST = "request";
+    private static final String GROUP_DATA = "data";
+    private static final String GROUP_POST_PROCESSOR = "post_processor";
 
     private static final String CODE_REQUEST_RECEIVED = "request_received";
     private static final String CODE_GROUP_NOT_FOUND = "group_not_found";
@@ -123,7 +129,7 @@ public class MockDiagnoseRecorder {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_EXTERNAL_FETCH, calcFetchStatus(statusCode, error),
+        step(currentPostProcessorGroup(), STAGE_EXTERNAL_FETCH, calcFetchStatus(statusCode, error),
                 error == null ? CODE_FETCH_RETURN : CODE_FETCH_ERROR,
                 KEY_METHOD, method,
                 KEY_URL, url,
@@ -137,14 +143,14 @@ public class MockDiagnoseRecorder {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_POST_PROCESSOR, STATUS_INFO, CODE_POST_PROCESSOR_START);
+        step(currentPostProcessorGroup(), STAGE_POST_PROCESSOR, STATUS_INFO, CODE_POST_PROCESSOR_START);
     }
 
     public void postProcessorReturn(Long durationMs) {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_POST_PROCESSOR, STATUS_SUCCESS, CODE_POST_PROCESSOR_RETURN,
+        step(currentPostProcessorGroup(), STAGE_POST_PROCESSOR, STATUS_SUCCESS, CODE_POST_PROCESSOR_RETURN,
                 KEY_DURATION_MS, durationMs);
     }
 
@@ -156,7 +162,7 @@ public class MockDiagnoseRecorder {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_POST_PROCESSOR, STATUS_DANGER, CODE_POST_PROCESSOR_ERROR,
+        step(currentPostProcessorGroup(), STAGE_POST_PROCESSOR, STATUS_DANGER, CODE_POST_PROCESSOR_ERROR,
                 KEY_DURATION_MS, durationMs,
                 KEY_MESSAGE, message);
     }
@@ -165,7 +171,7 @@ public class MockDiagnoseRecorder {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_INIT, STATUS_INFO, CODE_REQUEST_RECEIVED,
+        step(GROUP_INGRESS, STAGE_INIT, STATUS_INFO, CODE_REQUEST_RECEIVED,
                 KEY_PATH, requestPath, KEY_METHOD, method, KEY_GROUP_PATH, requestGroupPath);
     }
 
@@ -174,7 +180,7 @@ public class MockDiagnoseRecorder {
             return;
         }
         diagnose.setGroupInfo(group);
-        step(STAGE_GROUP, group == null ? STATUS_DANGER : STATUS_SUCCESS,
+        step(GROUP_GROUP, STAGE_GROUP, group == null ? STATUS_DANGER : STATUS_SUCCESS,
                 group == null ? CODE_GROUP_NOT_FOUND : CODE_GROUP_MATCHED,
                 KEY_GROUP_PATH, groupPath, KEY_GROUP, groupInfo(group));
     }
@@ -183,7 +189,7 @@ public class MockDiagnoseRecorder {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_GROUP, STATUS_DANGER, CODE_GROUP_CHECK_FAILED, KEY_GROUP, groupInfo(group));
+        step(GROUP_GROUP, STAGE_GROUP, STATUS_DANGER, CODE_GROUP_CHECK_FAILED, KEY_GROUP, groupInfo(group));
     }
 
     void groupDisabled(MockGroup group) {
@@ -191,7 +197,7 @@ public class MockDiagnoseRecorder {
             return;
         }
         diagnose.setGroupInfo(group);
-        step(STAGE_GROUP, STATUS_WARNING, CODE_GROUP_DISABLED, KEY_GROUP, groupInfo(group));
+        step(GROUP_GROUP, STAGE_GROUP, STATUS_WARNING, CODE_GROUP_DISABLED, KEY_GROUP, groupInfo(group));
     }
 
     void groupPaused(MockGroup group) {
@@ -199,14 +205,14 @@ public class MockDiagnoseRecorder {
             return;
         }
         diagnose.setGroupInfo(group);
-        step(STAGE_GROUP, STATUS_WARNING, CODE_GROUP_PAUSED, KEY_GROUP, groupInfo(group));
+        step(GROUP_GROUP, STAGE_GROUP, STATUS_WARNING, CODE_GROUP_PAUSED, KEY_GROUP, groupInfo(group));
     }
 
     void groupPathEmpty(String requestPath) {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_GROUP, STATUS_DANGER, CODE_GROUP_PATH_EMPTY, KEY_PATH, requestPath);
+        step(GROUP_GROUP, STAGE_GROUP, STATUS_DANGER, CODE_GROUP_PATH_EMPTY, KEY_PATH, requestPath);
     }
 
     void scenarioSelected(String activeScenarioCode, boolean defaultScenario,
@@ -217,7 +223,7 @@ public class MockDiagnoseRecorder {
         MockScenario scenario = defaultScenario ? null : scenarioSupplier.get();
         boolean notFound = !defaultScenario && scenario == null;
         diagnose.setScenarioInfo(activeScenarioCode, scenario, defaultScenario);
-        step(STAGE_SCENARIO, notFound ? STATUS_WARNING : STATUS_SUCCESS,
+        step(GROUP_SCENARIO, STAGE_SCENARIO, notFound ? STATUS_WARNING : STATUS_SUCCESS,
                 notFound ? CODE_SCENARIO_NOT_FOUND : CODE_SCENARIO_SELECTED,
                 KEY_SCENARIO, scenarioInfo(activeScenarioCode, scenario, defaultScenario));
     }
@@ -230,7 +236,7 @@ public class MockDiagnoseRecorder {
         MockScenario scenario = defaultScenario ? null : scenarioSupplier.get();
         boolean notFound = !defaultScenario && scenario == null;
         diagnose.setScenarioInfo(scenarioCode, scenario, defaultScenario);
-        step(STAGE_SCENARIO, notFound ? STATUS_WARNING : STATUS_SUCCESS,
+        step(GROUP_REQUEST, STAGE_SCENARIO, notFound ? STATUS_WARNING : STATUS_SUCCESS,
                 notFound ? CODE_SCENARIO_NOT_FOUND : CODE_SCENARIO_MATCHED,
                 KEY_SCENARIO, scenarioInfo(scenarioCode, scenario, defaultScenario));
     }
@@ -239,7 +245,7 @@ public class MockDiagnoseRecorder {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_REQUEST_CANDIDATES, requests.isEmpty() ? STATUS_WARNING : STATUS_SUCCESS,
+        step(GROUP_REQUEST, STAGE_REQUEST_CANDIDATES, requests.isEmpty() ? STATUS_WARNING : STATUS_SUCCESS,
                 CODE_REQUEST_CANDIDATES_LOADED,
                 KEY_COUNT, requests.size(), KEY_CANDIDATES, requestInfos(requests));
     }
@@ -252,7 +258,7 @@ public class MockDiagnoseRecorder {
         if (request != null) {
             diagnose.setRequestInfo(request);
         }
-        step(STAGE_REQUEST_FORCE, request == null ? STATUS_WARNING : STATUS_SUCCESS,
+        step(GROUP_REQUEST, STAGE_REQUEST_FORCE, request == null ? STATUS_WARNING : STATUS_SUCCESS,
                 request == null ? CODE_FORCE_REQUEST_NOT_FOUND : CODE_FORCE_REQUEST_SELECTED,
                 KEY_REQUEST_ID, requestId, KEY_REQUEST, requestInfo(request));
     }
@@ -262,7 +268,8 @@ public class MockDiagnoseRecorder {
             return;
         }
         diagnose.setRequestInfo(request);
-        step(STAGE_REQUEST_PATH, STATUS_SUCCESS, CODE_REQUEST_PATH_MATCHED, KEY_REQUEST, requestInfo(request));
+        step(GROUP_REQUEST, STAGE_REQUEST_PATH, STATUS_SUCCESS, CODE_REQUEST_PATH_MATCHED,
+                KEY_REQUEST, requestInfo(request));
     }
 
     void requestPatternMatched(MockRequest request, boolean matched, boolean testRequest) {
@@ -270,7 +277,7 @@ public class MockDiagnoseRecorder {
             return;
         }
         if (StringUtils.isNotBlank(request.getMatchPattern())) {
-            step(STAGE_REQUEST_PATTERN, matched || testRequest ? STATUS_SUCCESS : STATUS_WARNING,
+            step(GROUP_REQUEST, STAGE_REQUEST_PATTERN, matched || testRequest ? STATUS_SUCCESS : STATUS_WARNING,
                     matched ? CODE_REQUEST_PATTERN_MATCHED : CODE_REQUEST_PATTERN_NOT_MATCHED,
                     KEY_REQUEST, requestInfo(request), KEY_FORCE_REQUEST, testRequest);
         }
@@ -280,7 +287,7 @@ public class MockDiagnoseRecorder {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_REQUEST_PATTERN, STATUS_DANGER, CODE_REQUEST_PATTERN_ERROR,
+        step(GROUP_REQUEST, STAGE_REQUEST_PATTERN, STATUS_DANGER, CODE_REQUEST_PATTERN_ERROR,
                 KEY_REQUEST, requestInfo(request), KEY_MESSAGE, e.getMessage());
     }
 
@@ -289,7 +296,7 @@ public class MockDiagnoseRecorder {
             return;
         }
         diagnose.setRequestInfo(request);
-        step(STAGE_REQUEST, STATUS_WARNING, CODE_REQUEST_DISABLED, KEY_REQUEST, requestInfo(request));
+        step(GROUP_REQUEST, STAGE_REQUEST, STATUS_WARNING, CODE_REQUEST_DISABLED, KEY_REQUEST, requestInfo(request));
     }
 
     void requestPaused(MockRequest request) {
@@ -297,7 +304,7 @@ public class MockDiagnoseRecorder {
             return;
         }
         diagnose.setRequestInfo(request);
-        step(STAGE_REQUEST, STATUS_WARNING, CODE_REQUEST_PAUSED, KEY_REQUEST, requestInfo(request));
+        step(GROUP_REQUEST, STAGE_REQUEST, STATUS_WARNING, CODE_REQUEST_PAUSED, KEY_REQUEST, requestInfo(request));
     }
 
     void requestNotMatched(int pathMatchedCount, int requestCount) {
@@ -305,9 +312,10 @@ public class MockDiagnoseRecorder {
             return;
         }
         if (pathMatchedCount == 0) {
-            step(STAGE_REQUEST_PATH, STATUS_DANGER, CODE_REQUEST_PATH_NOT_MATCHED, KEY_COUNT, requestCount);
+            step(GROUP_REQUEST, STAGE_REQUEST_PATH, STATUS_DANGER, CODE_REQUEST_PATH_NOT_MATCHED,
+                    KEY_COUNT, requestCount);
         } else if (pathMatchedCount > 1) {
-            step(STAGE_REQUEST_PATTERN, STATUS_DANGER, CODE_REQUEST_PATTERN_NOT_MATCHED_ALL,
+            step(GROUP_REQUEST, STAGE_REQUEST_PATTERN, STATUS_DANGER, CODE_REQUEST_PATTERN_NOT_MATCHED_ALL,
                     KEY_COUNT, pathMatchedCount);
         }
     }
@@ -318,7 +326,7 @@ public class MockDiagnoseRecorder {
         }
         setDataInfo(data);
         if (data != null) {
-            step(STAGE_DATA_FORCE, STATUS_SUCCESS, CODE_FORCE_DATA_SELECTED, KEY_DATA, dataInfo(data));
+            step(GROUP_DATA, STAGE_DATA_FORCE, STATUS_SUCCESS, CODE_FORCE_DATA_SELECTED, KEY_DATA, dataInfo(data));
         }
     }
 
@@ -326,7 +334,7 @@ public class MockDiagnoseRecorder {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_DATA_FORCE, STATUS_WARNING, CODE_FORCE_DATA_NOT_FOUND,
+        step(GROUP_DATA, STAGE_DATA_FORCE, STATUS_WARNING, CODE_FORCE_DATA_NOT_FOUND,
                 KEY_DATA_ID, dataId, KEY_REQUEST, requestInfo(request));
     }
 
@@ -334,7 +342,7 @@ public class MockDiagnoseRecorder {
         if (!isEnabled()) {
             return;
         }
-        step(STAGE_DATA_CANDIDATES, enabledCount == 0 ? STATUS_WARNING : STATUS_SUCCESS,
+        step(GROUP_DATA, STAGE_DATA_CANDIDATES, enabledCount == 0 ? STATUS_WARNING : STATUS_SUCCESS,
                 CODE_DATA_CANDIDATES_LOADED,
                 KEY_TOTAL, allData.size(),
                 KEY_ENABLED_COUNT, enabledCount,
@@ -347,7 +355,7 @@ public class MockDiagnoseRecorder {
         }
         setDataInfo(data);
         if (dataList.stream().anyMatch(item -> StringUtils.isNotBlank(item.getMatchPattern()))) {
-            step(STAGE_DATA_PATTERN, data == null ? STATUS_WARNING : STATUS_SUCCESS,
+            step(GROUP_DATA, STAGE_DATA_PATTERN, data == null ? STATUS_WARNING : STATUS_SUCCESS,
                     data == null ? CODE_DATA_PATTERN_NOT_MATCHED : CODE_DATA_PATTERN_MATCHED,
                     KEY_DATA, dataInfo(data));
         }
@@ -358,7 +366,7 @@ public class MockDiagnoseRecorder {
             return;
         }
         setDataInfo(data);
-        step(STAGE_DATA_DEFAULT, data == null ? STATUS_WARNING : STATUS_SUCCESS,
+        step(GROUP_DATA, STAGE_DATA_DEFAULT, data == null ? STATUS_WARNING : STATUS_SUCCESS,
                 data == null ? CODE_DEFAULT_DATA_NOT_FOUND : CODE_DEFAULT_DATA_SELECTED,
                 KEY_DATA, dataInfo(data));
     }
@@ -367,10 +375,14 @@ public class MockDiagnoseRecorder {
         diagnose.setDataInfo(data);
     }
 
-    private void step(String stage, String status, String code, Object... details) {
+    private void step(String stageGroup, String stage, String status, String code, Object... details) {
         if (isEnabled()) {
-            diagnose.step(stage, status, code, details);
+            diagnose.step(stageGroup, stage, status, code, details);
         }
+    }
+
+    private String currentPostProcessorGroup() {
+        return diagnose.getData() == null ? GROUP_POST_PROCESSOR : GROUP_DATA;
     }
 
     private static String calcFetchStatus(Integer statusCode, Throwable error) {
