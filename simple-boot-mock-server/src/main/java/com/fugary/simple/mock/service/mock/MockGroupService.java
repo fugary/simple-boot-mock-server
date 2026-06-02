@@ -9,6 +9,7 @@ import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
 import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,6 +23,11 @@ import java.util.function.Predicate;
  * @author gary.fu
  */
 public interface MockGroupService extends IService<MockGroup> {
+
+    String DELAY_SOURCE_GROUP = "group";
+    String DELAY_SOURCE_REQUEST = "request";
+    String DELAY_SOURCE_DATA = "data";
+
     /**
      * 级联删除请求和数据
      *
@@ -66,12 +72,14 @@ public interface MockGroupService extends IService<MockGroup> {
      */
     Integer calcDelayTime(MockGroup group, MockRequest request, MockData mockData);
 
+    Pair<Integer, String> calcDelayInfo(MockGroup group, MockRequest request, MockData mockData);
+
     /**
      * 延迟时间
      * @param stateTime
      * @param delayTime
      */
-    void delayTime(long stateTime,Integer delayTime);
+    long delayTime(long stateTime,Integer delayTime);
 
     /**
      * 计算groupPath

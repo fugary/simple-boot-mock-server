@@ -5,10 +5,12 @@ import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockGroup;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.entity.mock.MockScenario;
+import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,12 +39,14 @@ public class MockDiagnoseRecorder {
     private static final String STAGE_DATA_DEFAULT = "data_default";
     private static final String STAGE_POST_PROCESSOR = "post_processor";
     private static final String STAGE_EXTERNAL_FETCH = "external_fetch";
+    private static final String STAGE_DELAY = "delay";
     private static final String GROUP_INGRESS = "ingress";
     private static final String GROUP_GROUP = "group";
     private static final String GROUP_SCENARIO = "scenario";
     private static final String GROUP_REQUEST = "request";
     public static final String GROUP_DATA = "data";
     public static final String GROUP_POST_PROCESSOR = "post_processor";
+    private static final String GROUP_DELAY = "delay";
 
     private static final String CODE_REQUEST_RECEIVED = "request_received";
     private static final String CODE_GROUP_NOT_FOUND = "group_not_found";
@@ -77,6 +81,7 @@ public class MockDiagnoseRecorder {
     private static final String CODE_POST_PROCESSOR_ERROR = "post_processor_error";
     private static final String CODE_FETCH_RETURN = "fetch_return";
     private static final String CODE_FETCH_ERROR = "fetch_error";
+    private static final String CODE_DELAY_RESOLVED = "delay_resolved";
 
     private static final String KEY_ACTIVE_SCENARIO_CODE = "activeScenarioCode";
     private static final String KEY_CANDIDATES = "candidates";
@@ -111,6 +116,9 @@ public class MockDiagnoseRecorder {
     private static final String KEY_TOTAL = "total";
     private static final String KEY_URL = "url";
     private static final String KEY_DURATION_MS = "durationMs";
+    private static final String KEY_CONFIGURED_DELAY_MS = "configuredDelayMs";
+    private static final String KEY_ACTUAL_DELAY_MS = "actualDelayMs";
+    private static final String KEY_DELAY_SOURCE = "delaySource";
 
     private static final String DATA_SELECTION_SINGLE = "single";
     private static final String DATA_SELECTION_DEFAULT = "default";
@@ -177,6 +185,27 @@ public class MockDiagnoseRecorder {
         step(currentPostProcessorGroup(), STAGE_POST_PROCESSOR, STATUS_DANGER, CODE_POST_PROCESSOR_ERROR,
                 KEY_DURATION_MS, durationMs,
                 KEY_MESSAGE, message);
+    }
+
+    public void delayResolved(Pair<Integer, String> delayInfo, Long actualDelayMs,
+            MockGroup group, MockRequest request, MockData data) {
+        if (!isEnabled() || delayInfo == null || delayInfo.getLeft() == null) {
+            return;
+        }
+        String delaySource = delayInfo.getRight();
+        Map<String, Object> sourceInfo = delaySourceInfo(delaySource, group, request, data);
+        if (sourceInfo == null) {
+            step(GROUP_DELAY, STAGE_DELAY, calcDelayStatus(actualDelayMs), CODE_DELAY_RESOLVED,
+                    KEY_CONFIGURED_DELAY_MS, delayInfo.getLeft(),
+                    KEY_ACTUAL_DELAY_MS, actualDelayMs,
+                    KEY_DELAY_SOURCE, delaySource);
+        } else {
+            step(GROUP_DELAY, STAGE_DELAY, calcDelayStatus(actualDelayMs), CODE_DELAY_RESOLVED,
+                    KEY_CONFIGURED_DELAY_MS, delayInfo.getLeft(),
+                    KEY_ACTUAL_DELAY_MS, actualDelayMs,
+                    KEY_DELAY_SOURCE, delaySource,
+                    delaySource, sourceInfo);
+        }
     }
 
     void requestReceived(String requestPath, String method, String requestGroupPath) {
@@ -405,6 +434,24 @@ public class MockDiagnoseRecorder {
             return STATUS_DANGER;
         }
         return statusCode != null && (statusCode < 200 || statusCode >= 300) ? STATUS_WARNING : STATUS_SUCCESS;
+    }
+
+    private static String calcDelayStatus(Long actualDelayMs) {
+        return actualDelayMs != null && actualDelayMs > 0 ? STATUS_SUCCESS : STATUS_INFO;
+    }
+
+    private Map<String, Object> delaySourceInfo(String delaySource, MockGroup group, MockRequest request,
+            MockData data) {
+        if (MockGroupService.DELAY_SOURCE_DATA.equals(delaySource)) {
+            return dataInfo(data);
+        }
+        if (MockGroupService.DELAY_SOURCE_REQUEST.equals(delaySource)) {
+            return requestInfo(request);
+        }
+        if (MockGroupService.DELAY_SOURCE_GROUP.equals(delaySource)) {
+            return groupInfo(group);
+        }
+        return null;
     }
 
     private Map<String, Object> groupInfo(MockGroup group) {

@@ -32,6 +32,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -350,31 +351,41 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
 
     @Override
     public Integer calcDelayTime(MockGroup group, MockRequest request, MockData mockData) {
+        Pair<Integer, String> delayInfo = calcDelayInfo(group, request, mockData);
+        return delayInfo == null ? null : delayInfo.getLeft();
+    }
+
+    @Override
+    public Pair<Integer, String> calcDelayInfo(MockGroup group, MockRequest request, MockData mockData) {
         if (mockData != null && mockData.getDelay() != null) {
-            return mockData.getDelay();
+            return Pair.of(mockData.getDelay(), MockGroupService.DELAY_SOURCE_DATA);
         }
         if (request != null && request.getDelay() != null) {
-            return request.getDelay();
+            return Pair.of(request.getDelay(), MockGroupService.DELAY_SOURCE_REQUEST);
         }
         if (group != null && group.getDelay() != null) {
-            return group.getDelay();
+            return Pair.of(group.getDelay(), MockGroupService.DELAY_SOURCE_GROUP);
         }
         return null;
     }
 
     @Override
-    public void delayTime(long stateTime, Integer delayTime) {
+    public long delayTime(long stateTime, Integer delayTime) {
         if (delayTime != null) {
             long nowTime = System.currentTimeMillis();
             long sleepTime = stateTime + delayTime - nowTime;
             if (sleepTime > 0) {
+                long sleepStart = System.currentTimeMillis();
                 try {
                     TimeUnit.MILLISECONDS.sleep(sleepTime);
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     log.error("delayTime error", e);
                 }
+                return Math.max(System.currentTimeMillis() - sleepStart, 0L);
             }
         }
+        return 0L;
     }
 
     protected List<MockRequest> sortMockRequests(List<MockRequest> mockRequests) {

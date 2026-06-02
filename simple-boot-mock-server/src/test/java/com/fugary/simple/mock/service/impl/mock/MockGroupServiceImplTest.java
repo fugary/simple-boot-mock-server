@@ -8,10 +8,12 @@ import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.push.MockPostScriptProcessor;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockDataService;
+import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockScenarioService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -309,6 +311,56 @@ class MockGroupServiceImplTest {
         assertEquals(disabledRequest.getId(), diagnose.getRequest().getId());
         assertTrue(diagnose.getSteps().stream().anyMatch(step -> "request_disabled".equals(step.getCode())));
         assertTrue(diagnose.getSteps().stream().noneMatch(step -> "request_path_not_matched".equals(step.getCode())));
+    }
+
+    @Test
+    void calcDelayInfoShouldKeepDelaySourcePriority() {
+        MockGroup mockGroup = createGroup("demo", null);
+        MockRequest request = createRequest(42, mockGroup.getId(), "/users/{id}", null);
+        MockData data = createData(402, mockGroup.getId(), request.getId(), "{\"ok\":true}");
+        mockGroup.setDelay(300);
+        request.setDelay(200);
+        data.setDelay(0);
+
+        Pair<Integer, String> delayInfo = mockGroupService.calcDelayInfo(mockGroup, request, data);
+
+        assertNotNull(delayInfo);
+        assertEquals(Integer.valueOf(0), delayInfo.getLeft());
+        assertEquals(MockGroupService.DELAY_SOURCE_DATA, delayInfo.getRight());
+
+        data.setDelay(null);
+        delayInfo = mockGroupService.calcDelayInfo(mockGroup, request, data);
+        assertNotNull(delayInfo);
+        assertEquals(Integer.valueOf(200), delayInfo.getLeft());
+        assertEquals(MockGroupService.DELAY_SOURCE_REQUEST, delayInfo.getRight());
+
+        request.setDelay(null);
+        delayInfo = mockGroupService.calcDelayInfo(mockGroup, request, data);
+        assertNotNull(delayInfo);
+        assertEquals(Integer.valueOf(300), delayInfo.getLeft());
+        assertEquals(MockGroupService.DELAY_SOURCE_GROUP, delayInfo.getRight());
+    }
+
+    @Test
+    void delayResolvedShouldRecordDelayDiagnoseStep() {
+        MockGroup mockGroup = createGroup("demo", null);
+        MockRequest request = createRequest(43, mockGroup.getId(), "/users/{id}", null);
+        MockData data = createData(403, mockGroup.getId(), request.getId(), "{\"ok\":true}");
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+
+        MockDiagnoseRecorder.of(diagnose).delayResolved(
+                Pair.of(120, MockGroupService.DELAY_SOURCE_REQUEST), 80L, mockGroup, request, data);
+
+        MockDiagnoseVo.Step delayStep = diagnose.getSteps().stream()
+                .filter(step -> "delay_resolved".equals(step.getCode()))
+                .findFirst().orElse(null);
+        assertNotNull(delayStep);
+        assertEquals("delay", delayStep.getStageGroup());
+        assertEquals("delay", delayStep.getStage());
+        assertEquals(Integer.valueOf(120), delayStep.getDetails().get("configuredDelayMs"));
+        assertEquals(Long.valueOf(80), delayStep.getDetails().get("actualDelayMs"));
+        assertEquals(MockGroupService.DELAY_SOURCE_REQUEST, delayStep.getDetails().get("delaySource"));
+        assertEquals(request.getId(), ((Map<?, ?>) delayStep.getDetails().get("request")).get("requestId"));
     }
 
     private MockHttpServletRequest buildRequest(String servletPath) {

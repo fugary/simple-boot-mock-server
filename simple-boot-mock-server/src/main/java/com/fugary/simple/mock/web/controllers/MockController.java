@@ -12,6 +12,7 @@ import com.fugary.simple.mock.push.MockPostScriptProcessor;
 import com.fugary.simple.mock.push.MockPushProcessor;
 import com.fugary.simple.mock.push.MockSsePushProcessor;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
+import com.fugary.simple.mock.service.impl.mock.MockDiagnoseRecorder;
 import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockUserService;
@@ -107,8 +108,8 @@ public class MockController {
         MockGroup mockGroup = dataPair.getLeft();
         long start = System.currentTimeMillis();
         ResponseEntity<?> responseEntity = ResponseEntity.notFound().build();
-        Integer delayTime = mockGroupService.calcDelayTime(dataPair.getLeft(), dataPair.getMiddle(),
-                dataPair.getRight());
+        Pair<Integer, String> delayInfo = mockGroupService.calcDelayInfo(mockGroup, mockRequest, data);
+        Integer delayTime = delayInfo == null ? null : delayInfo.getLeft();
         if (delayTime != null && delayTime > 0) {
             response.setHeader(MockConstants.MOCK_DELAY_TIME_HEADER, String.valueOf(delayTime));
         }
@@ -119,7 +120,7 @@ public class MockController {
             HttpHeaders httpHeaders = SimpleMockUtils.calcHeaders(data.getHeaders());
             HttpStatus httpStatus = HttpStatus.resolve(data.getStatusCode());
             if (httpStatus != null && httpStatus.is3xxRedirection()) { // 重定向
-                mockGroupService.delayTime(start, delayTime);
+                delayTime(start, delayInfo, diagnose, mockGroup, mockRequest, data);
                 finishMockDiagnose(diagnose, "mock_redirect", data, contentType);
                 if (SimpleMockUtils.isMockPreview(request)) {
                     return ResponseEntity.status(HttpStatus.OK).header(MockConstants.MOCK_DATA_REDIRECT_HEADER, "1")
@@ -131,7 +132,7 @@ public class MockController {
                         .header(HttpHeaders.LOCATION, data.getResponseBody()).body(null);
             }
             if (StringUtils.contains(contentType, MediaType.TEXT_EVENT_STREAM_VALUE)) {
-                mockGroupService.delayTime(start, delayTime);
+                delayTime(start, delayInfo, diagnose, mockGroup, mockRequest, data);
                 httpHeaders.forEach((k, v) -> v.forEach(val -> response.setHeader(k, val)));
                 response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
                 response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
@@ -164,7 +165,7 @@ public class MockController {
             if (StringUtils.contains(acceptHeader, MediaType.TEXT_EVENT_STREAM_VALUE)
                     || StringUtils.contains(contentType, MediaType.TEXT_EVENT_STREAM_VALUE)) {
                 // SSE 代理请求
-                mockGroupService.delayTime(start, delayTime);
+                delayTime(start, delayInfo, diagnose, mockGroup, mockRequest, data);
                 response.setHeader(MockConstants.MOCK_PROXY_URL_HEADER, proxyTargetUrl);
                 response.setCharacterEncoding(StandardCharsets.UTF_8.name());
                 MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
@@ -187,6 +188,7 @@ public class MockController {
                 response.setHeader(MockConstants.MOCK_DATA_PAUSED_HEADER, "true");
             }
         }
+        delayTime(start, delayInfo, diagnose, mockGroup, mockRequest, data);
         if (data != null) {
             finishMockDiagnose(diagnose, "mock_return", data, contentType);
         } else if (StringUtils.isNotBlank(proxyUrl)) {
@@ -195,8 +197,13 @@ public class MockController {
         } else {
             finishDiagnose(diagnose, "none", "no_mock_or_proxy");
         }
-        mockGroupService.delayTime(start, delayTime);
         return responseEntity;
+    }
+
+    private void delayTime(long start, Pair<Integer, String> delayInfo, MockDiagnoseVo diagnose,
+            MockGroup mockGroup, MockRequest mockRequest, MockData data) {
+        long actualDelayMs = mockGroupService.delayTime(start, delayInfo == null ? null : delayInfo.getLeft());
+        MockDiagnoseRecorder.of(diagnose).delayResolved(delayInfo, actualDelayMs, mockGroup, mockRequest, data);
     }
 
     private void finishMockDiagnose(MockDiagnoseVo diagnose, String code, MockData data, String contentType) {

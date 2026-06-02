@@ -35,6 +35,9 @@ const stepStatusMap = {
   info: 'process'
 }
 const detailPriorityKeys = [
+  'actualDelayMs',
+  'configuredDelayMs',
+  'delaySource',
   'group',
   'scenario',
   'request',
@@ -90,6 +93,11 @@ const diagnoseStageGroups = [
     descriptionKey: 'mock.label.diagnoseGroupPostProcessorDesc'
   },
   {
+    name: 'delay',
+    labelKey: 'mock.label.diagnoseGroupDelay',
+    descriptionKey: 'mock.label.diagnoseGroupDelayDesc'
+  },
+  {
     name: 'result',
     labelKey: 'mock.label.diagnoseGroupResult',
     descriptionKey: 'mock.label.diagnoseGroupResultDesc'
@@ -134,7 +142,8 @@ const formatInfoObject = (key, value) => {
 }
 const formatDetailValue = (key, value) => {
   if (value === undefined || value === null || value === '') return ''
-  if (key === 'durationMs') return formatDuration(value)
+  if (key === 'durationMs' || key === 'actualDelayMs' || key === 'configuredDelayMs') return formatDuration(value)
+  if (key === 'delaySource') return getDiagnoseDetailLabel(value)
   if (key === 'dataSelection') return getDiagnoseDataSelectionLabel(value)
   if (Array.isArray(value)) return `${value.length}`
   if (typeof value === 'boolean') return $i18nBundle(value ? 'common.label.yes' : 'common.label.no')
