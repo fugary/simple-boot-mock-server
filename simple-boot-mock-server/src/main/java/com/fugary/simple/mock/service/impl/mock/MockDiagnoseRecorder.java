@@ -32,6 +32,7 @@ public class MockDiagnoseRecorder {
     private static final String STAGE_DATA_CANDIDATES = "data_candidates";
     private static final String STAGE_DATA_PATTERN = "data_pattern";
     private static final String STAGE_DATA_DEFAULT = "data_default";
+    private static final String STAGE_POST_PROCESSOR = "post_processor";
     private static final String STAGE_EXTERNAL_FETCH = "external_fetch";
 
     private static final String CODE_REQUEST_RECEIVED = "request_received";
@@ -62,6 +63,9 @@ public class MockDiagnoseRecorder {
     private static final String CODE_DATA_PATTERN_MATCHED = "data_pattern_matched";
     private static final String CODE_DEFAULT_DATA_NOT_FOUND = "default_data_not_found";
     private static final String CODE_DEFAULT_DATA_SELECTED = "default_data_selected";
+    private static final String CODE_POST_PROCESSOR_START = "post_processor_start";
+    private static final String CODE_POST_PROCESSOR_RETURN = "post_processor_return";
+    private static final String CODE_POST_PROCESSOR_ERROR = "post_processor_error";
     private static final String CODE_FETCH_RETURN = "fetch_return";
     private static final String CODE_FETCH_ERROR = "fetch_error";
 
@@ -127,6 +131,34 @@ public class MockDiagnoseRecorder {
                 KEY_CONTENT_TYPE, contentType,
                 KEY_DURATION_MS, durationMs,
                 KEY_MESSAGE, error == null ? null : error.getMessage());
+    }
+
+    public void postProcessorStart() {
+        if (!isEnabled()) {
+            return;
+        }
+        step(STAGE_POST_PROCESSOR, STATUS_INFO, CODE_POST_PROCESSOR_START);
+    }
+
+    public void postProcessorReturn(Long durationMs) {
+        if (!isEnabled()) {
+            return;
+        }
+        step(STAGE_POST_PROCESSOR, STATUS_SUCCESS, CODE_POST_PROCESSOR_RETURN,
+                KEY_DURATION_MS, durationMs);
+    }
+
+    public void postProcessorError(Long durationMs, Throwable error) {
+        postProcessorError(durationMs, error == null ? null : error.getMessage());
+    }
+
+    public void postProcessorError(Long durationMs, String message) {
+        if (!isEnabled()) {
+            return;
+        }
+        step(STAGE_POST_PROCESSOR, STATUS_DANGER, CODE_POST_PROCESSOR_ERROR,
+                KEY_DURATION_MS, durationMs,
+                KEY_MESSAGE, message);
     }
 
     void requestReceived(String requestPath, String method, String requestGroupPath) {

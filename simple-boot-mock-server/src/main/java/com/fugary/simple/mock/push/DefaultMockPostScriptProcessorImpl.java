@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
+import com.fugary.simple.mock.service.impl.mock.MockDiagnoseRecorder;
+import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
@@ -37,14 +39,16 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
     public String process(MockRequest mockRequest, MockData mockData, String responseBody) {
         String postProcessor = SimpleMockUtils.getPostProcessor(mockRequest, mockData);
         if (StringUtils.isNotBlank(postProcessor)) {
-            HttpResponseVo responseVo = new HttpResponseVo();
-            responseVo.setStatusCode(mockData.getStatusCode());
-            responseVo.setBodyStr(responseBody);
-            responseVo.setBody(MockJsUtils.getObjectBody(responseVo.getBodyStr()));
+            HttpResponseVo responseVo = createResponseVo(mockData == null ? null : mockData.getStatusCode(),
+                    responseBody);
             MockJsUtils.setCurrentResponseVo(responseVo);
-            Pair<String, HttpResponseVo> resultPair = executePostProcessor(postProcessor);
-            overrideResponse(mockData, resultPair.getValue());
-            responseBody = resultPair.getKey();
+            try {
+                Pair<String, HttpResponseVo> resultPair = executePostProcessor(postProcessor);
+                overrideResponse(mockData, resultPair.getValue());
+                responseBody = StringUtils.defaultString(resultPair.getKey());
+            } finally {
+                MockJsUtils.removeCurrentResponseVo();
+            }
         }
         return responseBody;
     }
@@ -53,8 +57,6 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
     public ResponseEntity<?> process(MockRequest mockRequest, ResponseEntity<?> responseEntity) {
         String postProcessor = SimpleMockUtils.getPostProcessor(mockRequest, null);
         if (StringUtils.isNotBlank(postProcessor)) {
-            HttpResponseVo responseVo = new HttpResponseVo();
-            responseVo.setStatusCode(responseEntity.getStatusCode().value());
             Object body = responseEntity.getBody();
             String responseBody = StringUtils.EMPTY;
             if (body instanceof byte[]) {
@@ -62,19 +64,22 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
             } else if (body instanceof String) {
                 responseBody = (String) body;
             }
-            responseVo.setBodyStr(responseBody);
-            responseVo.setBody(MockJsUtils.getObjectBody(responseVo.getBodyStr()));
+            HttpResponseVo responseVo = createResponseVo(responseEntity.getStatusCode().value(), responseBody);
             MockJsUtils.setCurrentResponseVo(responseVo);
-            Pair<String, HttpResponseVo> resultPair = executePostProcessor(postProcessor);
-            responseBody = resultPair.getKey();
-            byte[] bodyBytes = responseBody.getBytes(StandardCharsets.UTF_8);
-            responseEntity = overrideResponse(responseEntity, bodyBytes, resultPair.getValue());
+            try {
+                Pair<String, HttpResponseVo> resultPair = executePostProcessor(postProcessor);
+                responseBody = StringUtils.defaultString(resultPair.getKey());
+                byte[] bodyBytes = responseBody.getBytes(StandardCharsets.UTF_8);
+                responseEntity = overrideResponse(responseEntity, bodyBytes, resultPair.getValue());
+            } finally {
+                MockJsUtils.removeCurrentResponseVo();
+            }
         }
         return responseEntity;
     }
 
     protected void overrideResponse(MockData mockData, HttpResponseVo httpResponse) {
-        if (httpResponse != null) {
+        if (mockData != null && httpResponse != null) {
             mockData.setStatusCode(httpResponse.getStatusCode());
             if (MapUtils.isNotEmpty(httpResponse.getHeaders())) {
                 String headers = StringUtils.defaultIfBlank(mockData.getHeaders(), "[]");
@@ -122,7 +127,18 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
         return null;
     }
 
+    private HttpResponseVo createResponseVo(Integer statusCode, String bodyStr) {
+        HttpResponseVo responseVo = new HttpResponseVo();
+        responseVo.setStatusCode(statusCode);
+        responseVo.setBodyStr(StringUtils.defaultString(bodyStr));
+        responseVo.setBody(MockJsUtils.getObjectBody(responseVo.getBodyStr()));
+        return responseVo;
+    }
+
     protected Pair<String, HttpResponseVo> executePostProcessor(String postProcessor) {
+        MockDiagnoseRecorder diagnoseRecorder = MockDiagnoseRecorder.of(MockDiagnoseContext.get());
+        diagnoseRecorder.postProcessorStart();
+        long startTime = System.currentTimeMillis();
         StringBuilder sb = new StringBuilder("(async function(){\n");
         sb.append("const bodyStr = await mockStringify(");
         sb.append(MockJsUtils.getJsExpression(postProcessor));
@@ -130,53 +146,71 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
         sb.append("const responseStr = mockStringify(response);");
         sb.append("return JSON.stringify({bodyStr, responseStr});");
         sb.append("})()");
-        Object mockRes = scriptEngineProvider.eval(sb.toString());
-        String responseBody = StringUtils.EMPTY;
-        String responseStr = null;
-        if (mockRes instanceof SimpleResult) {
-            responseBody = JsonUtils.toJson(mockRes);
-        } else if (mockRes instanceof String) {
-            Map<String, String> resultMap = JsonUtils.fromJson((String) mockRes, Map.class);
-            if (resultMap != null) {
-                responseBody = resultMap.get("bodyStr");
-                responseStr = resultMap.get("responseStr");
+        try {
+            Object mockRes = scriptEngineProvider.eval(sb.toString());
+            String responseBody = StringUtils.EMPTY;
+            String responseStr = null;
+            if (mockRes instanceof SimpleResult) {
+                SimpleResult<?> simpleResult = (SimpleResult<?>) mockRes;
+                responseBody = JsonUtils.toJson(mockRes);
+                if (!simpleResult.isSuccess()) {
+                    diagnoseRecorder.postProcessorError(System.currentTimeMillis() - startTime,
+                            getSimpleResultMessage(simpleResult));
+                    return Pair.of(responseBody, null);
+                }
+            } else {
+                Map<String, String> resultMap = toResultMap(mockRes);
+                if (resultMap != null) {
+                    responseBody = resultMap.get("bodyStr");
+                    responseStr = resultMap.get("responseStr");
+                }
             }
-        } else if (mockRes instanceof Map) {
-            String json = JsonUtils.toJson(mockRes);
-            Map<String, String> resultMap = JsonUtils.fromJson(json, Map.class);
-            if (resultMap != null) {
-                responseBody = resultMap.get("bodyStr");
-                responseStr = resultMap.get("responseStr");
-            }
+            HttpResponseVo processedResponse = checkResponseVo(responseStr);
+            diagnoseRecorder.postProcessorReturn(System.currentTimeMillis() - startTime);
+            return Pair.of(responseBody, processedResponse);
+        } catch (RuntimeException e) {
+            diagnoseRecorder.postProcessorError(System.currentTimeMillis() - startTime, e);
+            throw e;
         }
-        return Pair.of(responseBody, checkResponseVo(responseStr));
+    }
+
+    private String getSimpleResultMessage(SimpleResult<?> simpleResult) {
+        Object resultData = simpleResult.getResultData();
+        return StringUtils.defaultIfBlank(simpleResult.getMessage(),
+                resultData == null ? null : String.valueOf(resultData));
+    }
+
+    private Map<String, String> toResultMap(Object mockRes) {
+        if (mockRes instanceof String) {
+            return JsonUtils.fromJson((String) mockRes, Map.class);
+        }
+        if (mockRes instanceof Map) {
+            return JsonUtils.fromJson(JsonUtils.toJson(mockRes), Map.class);
+        }
+        return null;
     }
 
     @Override
     public Object processSse(MockRequest mockRequest, MockData mockData, Object sseItem) {
         String postProcessor = SimpleMockUtils.getPostProcessor(mockRequest, mockData);
         if (StringUtils.isNotBlank(postProcessor)) {
-            HttpResponseVo responseVo = new HttpResponseVo();
+            String sseBodyStr = sseItem instanceof String ? (String) sseItem : JsonUtils.toJson(sseItem);
+            HttpResponseVo responseVo = createResponseVo(mockData == null ? null : mockData.getStatusCode(), sseBodyStr);
             responseVo.setBody(sseItem);
-            if (sseItem instanceof String) {
-                responseVo.setBodyStr((String) sseItem);
-            } else {
-                responseVo.setBodyStr(JsonUtils.toJson(sseItem));
-            }
             MockJsUtils.setCurrentResponseVo(responseVo);
             try {
                 Pair<String, HttpResponseVo> resultPair = executePostProcessor(postProcessor);
                 Object resultItem = sseItem;
                 if (resultPair.getKey() != null) {
-                    String bodyStr = resultPair.getKey();
-                    if (StringUtils.isNotBlank(bodyStr)) {
-                        if (sseItem instanceof Map || MockJsUtils.isJson(bodyStr)) {
-                            resultItem = JsonUtils.fromJson(bodyStr, Map.class); // Assuming Map for structured events
+                    String processedBodyStr = resultPair.getKey();
+                    if (StringUtils.isNotBlank(processedBodyStr)) {
+                        if (sseItem instanceof Map || MockJsUtils.isJson(processedBodyStr)) {
+                            resultItem = JsonUtils.fromJson(processedBodyStr, Map.class); // Assuming Map for structured events
                             if (resultItem == null) {
-                                resultItem = bodyStr; // Fallback
+                                resultItem = processedBodyStr; // Fallback
                             }
                         } else {
-                            resultItem = bodyStr;
+                            resultItem = processedBodyStr;
                         }
                     }
                 }
