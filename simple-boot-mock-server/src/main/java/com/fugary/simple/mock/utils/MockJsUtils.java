@@ -12,8 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.SourceSection;
 
 import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import javax.servlet.http.HttpServletRequest;
 import java.text.MessageFormat;
 import java.util.Map;
@@ -34,6 +37,10 @@ import java.util.regex.Pattern;
 public class MockJsUtils {
 
     private static final String REQUEST_PREFIX_KEY = "request.";
+
+    private static final String MOCK_STRINGIFY_PREFIX = "mockStringify(";
+
+    private static final int SCRIPT_SOURCE_LINE_MAX_LENGTH = 240;
 
     private static final ThreadLocal<HttpRequestVo> CURRENT_REQUEST_VO = new ThreadLocal<>();
 
@@ -150,6 +157,103 @@ public class MockJsUtils {
         return expression;
     }
 
+    public static String formatScriptError(String script, Throwable throwable) {
+        String errorMessage = getScriptErrorMessage(throwable);
+        StringBuilder builder = new StringBuilder("Script execution failed");
+        if (StringUtils.isNotBlank(errorMessage)) {
+            builder.append(": ").append(errorMessage);
+        }
+        String sourceLine = getScriptErrorSourceLine(script, throwable);
+        if (StringUtils.isNotBlank(sourceLine)) {
+            builder.append(". Source: ")
+                    .append(StringUtils.abbreviate(StringUtils.normalizeSpace(unwrapMockStringify(sourceLine)),
+                            SCRIPT_SOURCE_LINE_MAX_LENGTH));
+        }
+        return builder.toString();
+    }
+
+    private static String getScriptErrorMessage(Throwable throwable) {
+        PolyglotException polyglotException = findCause(throwable, PolyglotException.class);
+        if (polyglotException != null && StringUtils.isNotBlank(polyglotException.getMessage())) {
+            return StringUtils.normalizeSpace(polyglotException.getMessage());
+        }
+        return unwrapJavaExceptionMessage(throwable == null ? null : throwable.getMessage());
+    }
+
+    private static String unwrapJavaExceptionMessage(String errorMessage) {
+        String result = StringUtils.normalizeSpace(StringUtils.defaultString(errorMessage));
+        int colonIndex = result.indexOf(": ");
+        while (colonIndex > 0 && isJavaExceptionPrefix(result.substring(0, colonIndex))) {
+            result = result.substring(colonIndex + 2);
+            colonIndex = result.indexOf(": ");
+        }
+        return result;
+    }
+
+    private static boolean isJavaExceptionPrefix(String prefix) {
+        return StringUtils.endsWith(prefix, "Exception")
+                || (StringUtils.contains(prefix, ".") && StringUtils.endsWith(prefix, "Error"));
+    }
+
+    private static String getScriptErrorSourceLine(String script, Throwable throwable) {
+        String sourceLine = getScriptSourceLine(script, getScriptErrorLineNumber(throwable));
+        if (StringUtils.isBlank(sourceLine)) {
+            sourceLine = getPolyglotSourceText(throwable);
+        }
+        return sourceLine;
+    }
+
+    private static int getScriptErrorLineNumber(Throwable throwable) {
+        ScriptException scriptException = findCause(throwable, ScriptException.class);
+        if (scriptException != null && scriptException.getLineNumber() > 0) {
+            return scriptException.getLineNumber();
+        }
+        SourceSection sourceSection = getPolyglotSourceSection(throwable);
+        return sourceSection == null ? -1 : sourceSection.getStartLine();
+    }
+
+    private static String getPolyglotSourceText(Throwable throwable) {
+        SourceSection sourceSection = getPolyglotSourceSection(throwable);
+        if (sourceSection != null) {
+            return sourceSection.getCharacters().toString();
+        }
+        return null;
+    }
+
+    private static SourceSection getPolyglotSourceSection(Throwable throwable) {
+        PolyglotException polyglotException = findCause(throwable, PolyglotException.class);
+        SourceSection sourceSection = polyglotException == null ? null : polyglotException.getSourceLocation();
+        return sourceSection != null && sourceSection.isAvailable() ? sourceSection : null;
+    }
+
+    private static <T extends Throwable> T findCause(Throwable throwable, Class<T> type) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (type.isInstance(current)) {
+                return type.cast(current);
+            }
+            current = current.getCause();
+        }
+        return null;
+    }
+
+    private static String getScriptSourceLine(String script, int lineNumber) {
+        if (StringUtils.isBlank(script) || lineNumber <= 0) {
+            return null;
+        }
+        String normalizedScript = StringUtils.replace(StringUtils.replace(script, "\r\n", "\n"), "\r", "\n");
+        String[] lines = StringUtils.splitByWholeSeparatorPreserveAllTokens(normalizedScript, "\n");
+        return lineNumber <= lines.length ? lines[lineNumber - 1] : null;
+    }
+
+    private static String unwrapMockStringify(String sourceLine) {
+        String result = getJsExpression(StringUtils.trimToEmpty(sourceLine));
+        if (StringUtils.startsWith(result, MOCK_STRINGIFY_PREFIX) && StringUtils.endsWith(result, ")")) {
+            return StringUtils.trimToEmpty(result.substring(MOCK_STRINGIFY_PREFIX.length(), result.length() - 1));
+        }
+        return sourceLine;
+    }
+
     /**
      * 参数替换
      *
@@ -174,8 +278,9 @@ public class MockJsUtils {
                 } else {
                     paramValue = processor.apply(beanParamKey);
                     if (paramValue instanceof SimpleResult) {
-                        log.error("处理表达式{}错误: {}", beanParamKey, ((SimpleResult) paramValue).getResultData());
-                        paramValue = null;
+                        SimpleResult<?> simpleResult = (SimpleResult<?>) paramValue;
+                        log.error("处理表达式{}错误: {}", beanParamKey, simpleResult.getResultData());
+                        paramValue = JsonUtils.toJson(simpleResult);
                     }
                 }
             } catch (Exception e) {

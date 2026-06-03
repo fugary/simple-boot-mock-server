@@ -13,7 +13,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.graalvm.polyglot.proxy.ProxyArray;
 import org.graalvm.polyglot.proxy.ProxyObject;
@@ -116,7 +115,8 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
             return scriptEngine.eval(script, context);
         } catch (Exception e) {
             log.error(MessageFormat.format("执行MockJs错误：{0}", script), e);
-            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400, ExceptionUtils.getMessage(e));
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400,
+                    MockJsUtils.formatScriptError(script, e));
         } finally {
             if (scriptEngine != null && !isThreadEngine) {
                 scriptEnginePool.returnObject(scriptEngine);
