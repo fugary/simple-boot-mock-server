@@ -5,11 +5,28 @@
         const frame = String(stack || '').split('\n').slice(2).find(line => line.includes(evalPrefix));
         return frame ? frame.split(evalPrefix)[1].split(':')[0] : '';
     };
+    const markScriptLine = function (error, lineNumber) {
+        const message = error == null ? 'Unknown fetch error'
+            : (typeof error === 'string' ? error : (error.message || String(error)));
+        if (!lineNumber || String(message).includes(scriptLineMarker)) {
+            return message;
+        }
+        return message + ' ' + scriptLineMarker + lineNumber;
+    };
 
     const nativeFetch = globalThis.fetch;
     if (typeof nativeFetch === 'function') {
         globalThis.fetch = function (...args) {
-            return nativeFetch(...args).then(response => new Proxy(response, {
+            const lineNumber = getUserScriptLineNumber(new Error().stack);
+            let fetchPromise;
+            try {
+                fetchPromise = nativeFetch(...args);
+            } catch (e) {
+                throw markScriptLine(e, lineNumber);
+            }
+            return Promise.resolve(fetchPromise).catch(e => {
+                throw markScriptLine(e, lineNumber);
+            }).then(response => new Proxy(response, {
                 get(target, key) {
                     if (key === 'json') {
                         return function () {
@@ -17,7 +34,7 @@
                             try {
                                 return target.json();
                             } catch (e) {
-                                throw 'Invalid JSON in response' + (lineNumber ? ' ' + scriptLineMarker + lineNumber : '');
+                                throw markScriptLine('Invalid JSON in response', lineNumber);
                             }
                         };
                     }

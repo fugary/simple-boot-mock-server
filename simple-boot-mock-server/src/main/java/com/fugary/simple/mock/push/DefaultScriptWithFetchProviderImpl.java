@@ -39,8 +39,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -128,8 +130,9 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             String postProcessorStageGroup = MockDiagnoseContext.getPostProcessorStageGroup();
             MockDiagnoseRecorder diagnoseRecorder = MockDiagnoseRecorder.of(diagnose);
             String fetchMethod = method;
-            if (timeout != null) {
-                future.orTimeout(timeout, TimeUnit.MILLISECONDS);
+            Long fetchTimeout = timeout;
+            if (fetchTimeout != null) {
+                future.orTimeout(fetchTimeout, TimeUnit.MILLISECONDS);
             }
             log.info("fetch请求url:{}", url);
             fetchScriptThreadPool.execute(() -> {
@@ -176,11 +179,13 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                 Value reject = promiseArgs[1];
                 future.whenComplete((result, err) -> {
                     MockDiagnoseContext.runWith(diagnose, postProcessorStageGroup, () -> {
-                        log.info("fetch请求构建Promise:{}/{}", url, result, err);
+                        log.info("fetch请求构建Promise:{}/{}/{}", url, result,
+                                err == null ? null : err.toString());
                         if (err != null) {
+                            String errorMessage = formatFetchError(fetchMethod, url, fetchTimeout, err);
                             recordFetchDiagnose(diagnoseRecorder, diagnoseRecorded, fetchMethod, url,
-                                    null, null, null, err);
-                            reject.executeVoid(Value.asValue(err));
+                                    null, null, null, new ScriptException(errorMessage));
+                            reject.executeVoid(errorMessage);
                         } else {
                             resolve.executeVoid(result);
                         }
@@ -189,6 +194,18 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                 return null;
             });
         };
+    }
+
+    private static String formatFetchError(String method, String url, Long timeout, Throwable error) {
+        while (error instanceof CompletionException && error.getCause() != null) {
+            error = error.getCause();
+        }
+        if (error instanceof TimeoutException && timeout != null) {
+            return "Fetch request timeout after " + timeout + " ms: " + method + " " + url;
+        }
+        String message = error == null ? null : StringUtils.defaultIfBlank(error.getMessage(), error.toString());
+        return "Fetch request failed: " + method + " " + url
+                + (StringUtils.isBlank(message) ? StringUtils.EMPTY : " - " + message);
     }
 
     private void recordFetchDiagnose(MockDiagnoseRecorder diagnoseRecorder, AtomicBoolean recorded, String method, String url,

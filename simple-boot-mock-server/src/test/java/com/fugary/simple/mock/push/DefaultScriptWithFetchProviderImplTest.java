@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_POST_PROCESSOR;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.KEY_MESSAGE;
 import static com.fugary.simple.mock.contants.MockDiagnoseConstants.KEY_URL;
 import static com.fugary.simple.mock.contants.MockDiagnoseConstants.STAGE_EXTERNAL_FETCH;
 import static com.fugary.simple.mock.utils.MockJsUtils.formatScriptError;
@@ -155,6 +156,35 @@ class DefaultScriptWithFetchProviderImplTest {
         assertTrue(result.contains("Script execution failed: Invalid JSON in response"), result);
         assertTrue(result.contains("Source: const responseBody = await response.json();"), result);
         assertFalse(result.contains("__simpleMockScriptLine__"), result);
+    }
+
+    @Test
+    void fetchTimeoutShouldReportUrlTimeoutAndSourceLine() {
+        String targetUrl = "https://example.com/timeout";
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+        MockDiagnoseContext.set(diagnose);
+        String script = "(async function(){\n"
+                + "  const response = await fetch('" + targetUrl + "', { timeout: 20 });\n"
+                + "  return await response.text();\n"
+                + "})()";
+        String expectedError = "Fetch request timeout after 20 ms: GET " + targetUrl;
+
+        ScriptException exception = assertThrows(ScriptException.class, () -> fetchProvider.internalEval(
+                script,
+                scriptEngine,
+                createScriptContext()));
+        String result = formatScriptError(script, exception);
+
+        assertTrue(result.contains("Script execution failed: " + expectedError), result);
+        assertTrue(result.contains("Source: const response = await fetch('" + targetUrl
+                + "', { timeout: 20 });"), result);
+        assertFalse(result.contains("TimeoutException"), result);
+        assertFalse(result.contains("__simpleMockScriptLine__"), result);
+        List<MockDiagnoseVo.Step> fetchSteps = fetchSteps(diagnose);
+        assertEquals(1, fetchSteps.size());
+        assertEquals(targetUrl, fetchSteps.get(0).getDetails().get(KEY_URL));
+        assertTrue(String.valueOf(fetchSteps.get(0).getDetails().get(KEY_MESSAGE))
+                .contains(expectedError), fetchSteps.get(0).getDetails().toString());
     }
 
     private ScriptContext createScriptContext() {
