@@ -56,6 +56,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_DATA;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_GROUP;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_REQUEST;
 
 /**
  * Created on 2020/5/3 22:37 .<br>
@@ -358,13 +361,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
     @Override
     public Pair<Integer, String> calcDelayInfo(MockGroup group, MockRequest request, MockData mockData) {
         if (mockData != null && mockData.getDelay() != null) {
-            return Pair.of(mockData.getDelay(), MockGroupService.DELAY_SOURCE_DATA);
+            return Pair.of(mockData.getDelay(), GROUP_DATA);
         }
         if (request != null && request.getDelay() != null) {
-            return Pair.of(request.getDelay(), MockGroupService.DELAY_SOURCE_REQUEST);
+            return Pair.of(request.getDelay(), GROUP_REQUEST);
         }
         if (group != null && group.getDelay() != null) {
-            return Pair.of(group.getDelay(), MockGroupService.DELAY_SOURCE_GROUP);
+            return Pair.of(group.getDelay(), GROUP_GROUP);
         }
         return null;
     }

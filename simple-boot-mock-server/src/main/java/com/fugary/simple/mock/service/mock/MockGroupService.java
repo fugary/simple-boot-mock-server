@@ -24,10 +24,6 @@ import java.util.function.Predicate;
  */
 public interface MockGroupService extends IService<MockGroup> {
 
-    String DELAY_SOURCE_GROUP = "group";
-    String DELAY_SOURCE_REQUEST = "request";
-    String DELAY_SOURCE_DATA = "data";
-
     /**
      * 级联删除请求和数据
      *

@@ -52,7 +52,7 @@ const openChipLink = chip => {
         :key="chip.key"
         size="small"
         effect="plain"
-        :type="chip.type"
+        :type="chip.type || undefined"
         class="mock-diagnose-step-detail__chip"
         role="button"
         tabindex="0"

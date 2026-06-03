@@ -47,6 +47,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_GROUP;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_REQUEST;
 import static com.fugary.simple.mock.utils.servlet.HttpRequestUtils.getBodyResource;
 
 /**
@@ -347,11 +349,22 @@ public class SimpleMockUtils {
      * @return
      */
     public static String calcProxyUrl(MockGroup mockGroup, MockRequest mockRequest) {
-        String proxyUrl = mockRequest != null ? calcProxyUrl(mockRequest.getProxyUrl()) : null;
-        if (StringUtils.isBlank(proxyUrl)) {
-            proxyUrl = calcProxyUrl(mockGroup.getProxyUrl());
+        Pair<String, String> proxyUrlInfo = calcProxyUrlInfo(mockGroup, mockRequest);
+        return proxyUrlInfo == null ? null : proxyUrlInfo.getLeft();
+    }
+
+    public static Pair<String, String> calcProxyUrlInfo(MockGroup mockGroup, MockRequest mockRequest) {
+        Pair<String, String> proxyUrlInfo = mockRequest == null ? null
+                : calcProxyUrlInfo(mockRequest.getProxyUrl(), GROUP_REQUEST);
+        if ((proxyUrlInfo == null || StringUtils.isBlank(proxyUrlInfo.getLeft())) && mockGroup != null) {
+            proxyUrlInfo = calcProxyUrlInfo(mockGroup.getProxyUrl(), GROUP_GROUP);
         }
-        return proxyUrl;
+        return proxyUrlInfo;
+    }
+
+    public static Pair<String, String> calcValidProxyUrlInfo(MockGroup mockGroup, MockRequest mockRequest) {
+        Pair<String, String> proxyUrlInfo = calcProxyUrlInfo(mockGroup, mockRequest);
+        return proxyUrlInfo != null && isValidProxyUrl(proxyUrlInfo.getLeft()) ? proxyUrlInfo : null;
     }
 
     /**
@@ -361,14 +374,20 @@ public class SimpleMockUtils {
      * @return
      */
     public static String calcProxyUrl(String proxyUrl) {
+        Pair<String, String> proxyUrlInfo = calcProxyUrlInfo(proxyUrl, null);
+        return proxyUrlInfo == null ? null : proxyUrlInfo.getLeft();
+    }
+
+    private static Pair<String, String> calcProxyUrlInfo(String proxyUrl, String source) {
         if (StringUtils.isNotBlank(proxyUrl)) {
             if (MockJsUtils.isJson(proxyUrl)) {
                 List<MockHeaderVo> proxyUrls = JsonUtils.fromJson(proxyUrl, new TypeReference<>() {
                 });
-                return proxyUrls.stream().filter(MockHeaderVo::isEnabled).findFirst()
+                String url = proxyUrls.stream().filter(MockHeaderVo::isEnabled).findFirst()
                         .orElseGet(MockHeaderVo::new).getValue();
+                return Pair.of(url, source);
             } else {
-                return proxyUrl;
+                return Pair.of(proxyUrl, source);
             }
         }
         return null;

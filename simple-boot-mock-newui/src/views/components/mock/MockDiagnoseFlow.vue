@@ -42,6 +42,7 @@ const detailPriorityKeys = [
   'scenario',
   'request',
   'data',
+  'proxySource',
   'proxyUrl',
   'url',
   'method',
@@ -143,7 +144,7 @@ const formatInfoObject = (key, value) => {
 const formatDetailValue = (key, value) => {
   if (value === undefined || value === null || value === '') return ''
   if (key === 'durationMs' || key === 'actualDelayMs' || key === 'configuredDelayMs') return formatDuration(value)
-  if (key === 'delaySource') return getDiagnoseDetailLabel(value)
+  if (key === 'delaySource' || key === 'proxySource') return getDiagnoseDetailLabel(value)
   if (key === 'dataSelection') return getDiagnoseDataSelectionLabel(value)
   if (Array.isArray(value)) return `${value.length}`
   if (typeof value === 'boolean') return $i18nBundle(value ? 'common.label.yes' : 'common.label.no')
@@ -166,7 +167,7 @@ const toDetailChip = (key, value) => {
     key,
     label,
     value: text,
-    type: key === 'statusCode' ? statusCodeTagType(value) : '',
+    type: key === 'statusCode' ? statusCodeTagType(value) : undefined,
     copyText: text,
     externalLink: isExternalLink(text) ? text : ''
   }

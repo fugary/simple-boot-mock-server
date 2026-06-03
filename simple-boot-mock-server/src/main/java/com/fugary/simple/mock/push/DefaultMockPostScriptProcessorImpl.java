@@ -24,6 +24,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_DATA;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_POST_PROCESSOR;
+
 /**
  * Create date 2026/1/9<br>
  *
@@ -142,7 +145,7 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
 
     private String calcPostProcessorStageGroup(MockData mockData) {
         return mockData != null && StringUtils.isNotBlank(mockData.getPostProcessor())
-                ? MockDiagnoseRecorder.GROUP_DATA : MockDiagnoseRecorder.GROUP_POST_PROCESSOR;
+                ? GROUP_DATA : GROUP_POST_PROCESSOR;
     }
 
     protected Pair<String, HttpResponseVo> executePostProcessor(String postProcessor) {

@@ -8,7 +8,6 @@ import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.push.MockPostScriptProcessor;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockDataService;
-import com.fugary.simple.mock.service.mock.MockGroupService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockScenarioService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
@@ -27,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -175,8 +175,8 @@ class MockGroupServiceImplTest {
         assertNotNull(result.getMiddle());
         assertEquals(request.getId(), diagnose.getRequest().getId());
         assertNull(diagnose.getScenario());
-        assertTrue(diagnose.getSteps().stream().anyMatch(step -> "force_request_selected".equals(step.getCode())));
-        assertTrue(diagnose.getSteps().stream().noneMatch(step -> "scenario".equals(step.getStage())));
+        assertTrue(diagnose.getSteps().stream().anyMatch(step -> CODE_FORCE_REQUEST_SELECTED.equals(step.getCode())));
+        assertTrue(diagnose.getSteps().stream().noneMatch(step -> STAGE_SCENARIO.equals(step.getStage())));
     }
 
     @Test
@@ -200,8 +200,8 @@ class MockGroupServiceImplTest {
 
         assertNotNull(result.getRight());
         assertEquals(data.getId(), diagnose.getData().getId());
-        int dataCandidatesIndex = indexOfStepCode(diagnose, "data_candidates_loaded");
-        int forceDataIndex = indexOfStepCode(diagnose, "force_data_selected");
+        int dataCandidatesIndex = indexOfStepCode(diagnose, CODE_DATA_CANDIDATES_LOADED);
+        int forceDataIndex = indexOfStepCode(diagnose, CODE_FORCE_DATA_SELECTED);
         assertTrue(dataCandidatesIndex >= 0);
         assertTrue(forceDataIndex >= 0);
         assertTrue(dataCandidatesIndex < forceDataIndex);
@@ -231,13 +231,13 @@ class MockGroupServiceImplTest {
 
         assertEquals(secondData.getId(), result.getRight().getId());
         MockDiagnoseVo.DataItem dataItem = (MockDiagnoseVo.DataItem) diagnose.getData();
-        assertEquals("round_robin", dataItem.getDataSelection());
+        assertEquals(DATA_SELECTION_ROUND_ROBIN, dataItem.getDataSelection());
         MockDiagnoseVo.Step selectionStep = diagnose.getSteps().stream()
-                .filter(step -> "default_data_selected".equals(step.getCode()))
+                .filter(step -> CODE_DEFAULT_DATA_SELECTED.equals(step.getCode()))
                 .findFirst().orElse(null);
         assertNotNull(selectionStep);
-        assertEquals("round_robin", ((Map<?, ?>) selectionStep.getDetails().get("data"))
-                .get("dataSelection"));
+        assertEquals(DATA_SELECTION_ROUND_ROBIN, ((Map<?, ?>) selectionStep.getDetails().get(KEY_DATA))
+                .get(KEY_DATA_SELECTION));
     }
 
     @Test
@@ -263,7 +263,7 @@ class MockGroupServiceImplTest {
         assertNotNull(result.getMiddle());
         assertNotNull(diagnose.getScenario());
         assertEquals(Boolean.TRUE, diagnose.getScenario().getDefaultScenario());
-        assertTrue(diagnose.getSteps().stream().anyMatch(step -> "scenario_selected".equals(step.getCode())));
+        assertTrue(diagnose.getSteps().stream().anyMatch(step -> CODE_SCENARIO_SELECTED.equals(step.getCode())));
     }
 
     @Test
@@ -284,8 +284,8 @@ class MockGroupServiceImplTest {
 
         assertNull(result.getLeft());
         assertEquals(disabledGroup.getId(), diagnose.getGroup().getId());
-        assertTrue(diagnose.getSteps().stream().anyMatch(step -> "group_disabled".equals(step.getCode())));
-        assertTrue(diagnose.getSteps().stream().noneMatch(step -> "group_not_found".equals(step.getCode())));
+        assertTrue(diagnose.getSteps().stream().anyMatch(step -> CODE_GROUP_DISABLED.equals(step.getCode())));
+        assertTrue(diagnose.getSteps().stream().noneMatch(step -> CODE_GROUP_NOT_FOUND.equals(step.getCode())));
     }
 
     @Test
@@ -309,8 +309,8 @@ class MockGroupServiceImplTest {
 
         assertNull(result.getMiddle());
         assertEquals(disabledRequest.getId(), diagnose.getRequest().getId());
-        assertTrue(diagnose.getSteps().stream().anyMatch(step -> "request_disabled".equals(step.getCode())));
-        assertTrue(diagnose.getSteps().stream().noneMatch(step -> "request_path_not_matched".equals(step.getCode())));
+        assertTrue(diagnose.getSteps().stream().anyMatch(step -> CODE_REQUEST_DISABLED.equals(step.getCode())));
+        assertTrue(diagnose.getSteps().stream().noneMatch(step -> CODE_REQUEST_PATH_NOT_MATCHED.equals(step.getCode())));
     }
 
     @Test
@@ -326,19 +326,19 @@ class MockGroupServiceImplTest {
 
         assertNotNull(delayInfo);
         assertEquals(Integer.valueOf(0), delayInfo.getLeft());
-        assertEquals(MockGroupService.DELAY_SOURCE_DATA, delayInfo.getRight());
+        assertEquals(GROUP_DATA, delayInfo.getRight());
 
         data.setDelay(null);
         delayInfo = mockGroupService.calcDelayInfo(mockGroup, request, data);
         assertNotNull(delayInfo);
         assertEquals(Integer.valueOf(200), delayInfo.getLeft());
-        assertEquals(MockGroupService.DELAY_SOURCE_REQUEST, delayInfo.getRight());
+        assertEquals(GROUP_REQUEST, delayInfo.getRight());
 
         request.setDelay(null);
         delayInfo = mockGroupService.calcDelayInfo(mockGroup, request, data);
         assertNotNull(delayInfo);
         assertEquals(Integer.valueOf(300), delayInfo.getLeft());
-        assertEquals(MockGroupService.DELAY_SOURCE_GROUP, delayInfo.getRight());
+        assertEquals(GROUP_GROUP, delayInfo.getRight());
     }
 
     @Test
@@ -349,18 +349,18 @@ class MockGroupServiceImplTest {
         MockDiagnoseVo diagnose = new MockDiagnoseVo();
 
         MockDiagnoseRecorder.of(diagnose).delayResolved(
-                Pair.of(120, MockGroupService.DELAY_SOURCE_REQUEST), 80L, mockGroup, request, data);
+                Pair.of(120, GROUP_REQUEST), 80L, mockGroup, request, data);
 
         MockDiagnoseVo.Step delayStep = diagnose.getSteps().stream()
-                .filter(step -> "delay_resolved".equals(step.getCode()))
+                .filter(step -> CODE_DELAY_RESOLVED.equals(step.getCode()))
                 .findFirst().orElse(null);
         assertNotNull(delayStep);
-        assertEquals("delay", delayStep.getStageGroup());
-        assertEquals("delay", delayStep.getStage());
-        assertEquals(Integer.valueOf(120), delayStep.getDetails().get("configuredDelayMs"));
-        assertEquals(Long.valueOf(80), delayStep.getDetails().get("actualDelayMs"));
-        assertEquals(MockGroupService.DELAY_SOURCE_REQUEST, delayStep.getDetails().get("delaySource"));
-        assertEquals(request.getId(), ((Map<?, ?>) delayStep.getDetails().get("request")).get("requestId"));
+        assertEquals(GROUP_DELAY, delayStep.getStageGroup());
+        assertEquals(STAGE_DELAY, delayStep.getStage());
+        assertEquals(Integer.valueOf(120), delayStep.getDetails().get(KEY_CONFIGURED_DELAY_MS));
+        assertEquals(Long.valueOf(80), delayStep.getDetails().get(KEY_ACTUAL_DELAY_MS));
+        assertEquals(GROUP_REQUEST, delayStep.getDetails().get(KEY_DELAY_SOURCE));
+        assertEquals(request.getId(), ((Map<?, ?>) delayStep.getDetails().get(KEY_REQUEST)).get(KEY_REQUEST_ID));
     }
 
     private MockHttpServletRequest buildRequest(String servletPath) {

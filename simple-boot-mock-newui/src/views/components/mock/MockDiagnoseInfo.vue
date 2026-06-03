@@ -60,13 +60,13 @@ const onSummaryChipKeydown = (event, text) => {
     copySummaryText(event, text)
   }
 }
-const toSummaryChip = ({ label, text, type = '', externalLink = '' }) => {
+const toSummaryChip = ({ label, text, type, externalLink = '' }) => {
   if (!hasValue(text)) return ''
   const copyText = String(text)
   return <ElTag
     size="small"
     effect="plain"
-    type={type}
+    type={type || undefined}
     class="mock-diagnose-summary-chip"
     role="button"
     tabindex={0}
@@ -122,11 +122,19 @@ const formatDataItem = item => {
       : ''
   ])
 }
-const formatProxyUrl = proxyUrl => {
-  return toSummaryChips([{
-    text: proxyUrl,
-    externalLink: isExternalLink(proxyUrl) ? proxyUrl : ''
-  }])
+const formatProxyInfo = (proxyUrl, proxySource) => {
+  return toSummaryChips([
+    proxySource
+      ? {
+          label: getDiagnoseDetailLabel('proxySource'),
+          text: getDiagnoseDetailLabel(proxySource)
+        }
+      : '',
+    {
+      text: proxyUrl,
+      externalLink: isExternalLink(proxyUrl) ? proxyUrl : ''
+    }
+  ])
 }
 const formatHttpInfo = diagnoseInfo => {
   const duration = formatDuration(diagnoseInfo?.durationMs)
@@ -157,7 +165,10 @@ const diagnoseSummaryItems = computed(() => [
   { labelKey: 'mock.label.scenario', value: formatItem(props.diagnoseInfo?.scenario, 'mock.label.defaultScenario') },
   { labelKey: 'mock.label.mockRequest', value: formatItem(props.diagnoseInfo?.request) },
   { labelKey: 'mock.label.mockData', value: formatDataItem(props.diagnoseInfo?.data) },
-  { labelKey: 'mock.label.proxyUrl', value: formatProxyUrl(props.diagnoseInfo?.proxyUrl) },
+  {
+    labelKey: 'mock.label.proxyUrl',
+    value: formatProxyInfo(props.diagnoseInfo?.proxyUrl, props.diagnoseInfo?.proxySource)
+  },
   { label: 'HTTP', value: formatHttpInfo(props.diagnoseInfo) }
 ].filter(item => item.value))
 const toJson = data => typeof data === 'string' ? data : JSON.stringify(data, null, 2)

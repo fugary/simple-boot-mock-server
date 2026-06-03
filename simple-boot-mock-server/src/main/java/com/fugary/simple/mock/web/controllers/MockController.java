@@ -48,6 +48,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.*;
+
 /**
  * Created on 2020/5/3 20:23 .<br>
  *
@@ -114,14 +116,14 @@ public class MockController {
             response.setHeader(MockConstants.MOCK_DELAY_TIME_HEADER, String.valueOf(delayTime));
         }
         String contentType = SimpleMockUtils.calcContentType(mockGroup, mockRequest, data);
-        String proxyUrl = null;
         String proxyTargetUrl = null;
+        Pair<String, String> proxyUrlInfo = null;
         if (data != null) {
             HttpHeaders httpHeaders = SimpleMockUtils.calcHeaders(data.getHeaders());
             HttpStatus httpStatus = HttpStatus.resolve(data.getStatusCode());
             if (httpStatus != null && httpStatus.is3xxRedirection()) { // 重定向
                 delayTime(start, delayInfo, diagnose, mockGroup, mockRequest, data);
-                finishMockDiagnose(diagnose, "mock_redirect", data, contentType);
+                finishMockDiagnose(diagnose, CODE_MOCK_REDIRECT, data, contentType);
                 if (SimpleMockUtils.isMockPreview(request)) {
                     return ResponseEntity.status(HttpStatus.OK).header(MockConstants.MOCK_DATA_REDIRECT_HEADER, "1")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -137,7 +139,7 @@ public class MockController {
                 response.setHeader(MockConstants.MOCK_DATA_USER_HEADER, mockGroup.getUserName());
                 response.setHeader(MockConstants.MOCK_DATA_ID_HEADER, String.valueOf(data.getId()));
                 MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
-                finishMockDiagnose(diagnose, "mock_sse_return", data, contentType);
+                finishMockDiagnose(diagnose, CODE_MOCK_SSE_RETURN, data, contentType);
                 return MockEventStreamUtils.processSseRequest(request, response, data, eventStreamThreadPool,
                         mockPostScriptProcessor, mockRequest);
             }
@@ -150,11 +152,12 @@ public class MockController {
                     .body(bodyPair.getValue());
             SimpleLogUtils.addResponseData(data.getResponseBody());
         } else if (mockGroup != null
-                && SimpleMockUtils.isValidProxyUrl(proxyUrl = SimpleMockUtils.calcProxyUrl(mockGroup, mockRequest))) {
+                && (proxyUrlInfo = SimpleMockUtils.calcValidProxyUrlInfo(mockGroup, mockRequest)) != null) {
             // 所有request没有匹配上,但是有proxy地址
+            String proxyUrl = proxyUrlInfo.getLeft();
             String loopCountStr = request.getHeader(MockConstants.SIMPLE_BOOT_MOCK_HEADER);
             if (NumberUtils.toInt(loopCountStr, 0) > 2) {
-                finishProxyDiagnose(diagnose, "error", "proxy_loop_detected", proxyUrl);
+                finishProxyDiagnose(diagnose, RESULT_TYPE_ERROR, CODE_PROXY_LOOP_DETECTED, proxyUrl, proxyUrlInfo);
                 return ResponseEntity.status(HttpStatus.LOOP_DETECTED).contentType(MediaType.APPLICATION_JSON)
                         .body(JsonUtils.toJson(SimpleResultUtils.createError("Proxy Loop Detected")));
             }
@@ -170,7 +173,7 @@ public class MockController {
                 response.setCharacterEncoding(StandardCharsets.UTF_8.name());
                 MockJsUtils.invalidateCurrentAndPrepareScriptEngine(scriptEnginePool);
                 diagnose.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
-                finishProxyDiagnose(diagnose, "proxy", "proxy_sse_return", proxyTargetUrl);
+                finishProxyDiagnose(diagnose, RESULT_TYPE_PROXY, CODE_PROXY_SSE_RETURN, proxyTargetUrl, proxyUrlInfo);
                 return mockSsePushProcessor.processSseProxy(
                         mockParams, mockRequest, null);
             }
@@ -190,12 +193,12 @@ public class MockController {
         }
         delayTime(start, delayInfo, diagnose, mockGroup, mockRequest, data);
         if (data != null) {
-            finishMockDiagnose(diagnose, "mock_return", data, contentType);
-        } else if (StringUtils.isNotBlank(proxyUrl)) {
-            finishProxyDiagnose(diagnose, "proxy", "proxy_return",
-                    StringUtils.defaultIfBlank(proxyTargetUrl, proxyUrl));
+            finishMockDiagnose(diagnose, CODE_MOCK_RETURN, data, contentType);
+        } else if (proxyUrlInfo != null) {
+            finishProxyDiagnose(diagnose, RESULT_TYPE_PROXY, CODE_PROXY_RETURN,
+                    StringUtils.defaultIfBlank(proxyTargetUrl, proxyUrlInfo.getLeft()), proxyUrlInfo);
         } else {
-            finishDiagnose(diagnose, "none", "no_mock_or_proxy");
+            diagnose.finish(RESULT_TYPE_NONE, CODE_NO_MOCK_OR_PROXY);
         }
         return responseEntity;
     }
@@ -209,12 +212,15 @@ public class MockController {
     private void finishMockDiagnose(MockDiagnoseVo diagnose, String code, MockData data, String contentType) {
         diagnose.setContentType(contentType);
         diagnose.setDataInfo(data, contentType);
-        finishDiagnose(diagnose, "mock", code, "data", diagnose.getData());
+        diagnose.finish(RESULT_TYPE_MOCK, code, KEY_DATA, diagnose.getData());
     }
 
-    private void finishProxyDiagnose(MockDiagnoseVo diagnose, String resultType, String code, String proxyUrl) {
+    private void finishProxyDiagnose(MockDiagnoseVo diagnose, String resultType, String code, String proxyUrl,
+            Pair<String, String> proxyUrlInfo) {
+        String proxySource = proxyUrlInfo.getRight();
         diagnose.setProxyUrl(proxyUrl);
-        finishDiagnose(diagnose, resultType, code, "proxyUrl", proxyUrl);
+        diagnose.setProxySource(proxySource);
+        diagnose.finish(resultType, code, KEY_PROXY_URL, proxyUrl, KEY_PROXY_SOURCE, proxySource);
     }
 
     private String calcResponseContentType(ResponseEntity<?> responseEntity, String defaultContentType) {
@@ -227,10 +233,6 @@ public class MockController {
                 + StringUtils.prependIfMissing(StringUtils.defaultString(mockParams.getRequestPath()), "/");
         String queryString = request.getQueryString();
         return StringUtils.isBlank(queryString) ? targetUrl : targetUrl + "?" + queryString;
-    }
-
-    private void finishDiagnose(MockDiagnoseVo diagnose, String resultType, String code, Object... details) {
-        diagnose.finish(resultType, code, details);
     }
 
     /**

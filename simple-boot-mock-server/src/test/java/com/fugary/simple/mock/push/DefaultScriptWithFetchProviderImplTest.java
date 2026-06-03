@@ -2,7 +2,6 @@ package com.fugary.simple.mock.push;
 
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.script.JavaScriptEngineFactory;
-import com.fugary.simple.mock.service.impl.mock.MockDiagnoseRecorder;
 import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import org.junit.jupiter.api.AfterEach;
@@ -20,6 +19,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_POST_PROCESSOR;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.KEY_URL;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.STAGE_EXTERNAL_FETCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DefaultScriptWithFetchProviderImplTest {
@@ -64,8 +66,8 @@ class DefaultScriptWithFetchProviderImplTest {
         assertEquals("https://example.com/first|https://example.com/second", result);
         List<MockDiagnoseVo.Step> fetchSteps = fetchSteps(diagnose);
         assertEquals(2, fetchSteps.size());
-        assertEquals("https://example.com/first", fetchSteps.get(0).getDetails().get("url"));
-        assertEquals("https://example.com/second", fetchSteps.get(1).getDetails().get("url"));
+        assertEquals("https://example.com/first", fetchSteps.get(0).getDetails().get(KEY_URL));
+        assertEquals("https://example.com/second", fetchSteps.get(1).getDetails().get(KEY_URL));
     }
 
     @Test
@@ -73,15 +75,15 @@ class DefaultScriptWithFetchProviderImplTest {
         MockDiagnoseVo diagnose = new MockDiagnoseVo();
         diagnose.setDataInfo(new MockData());
         MockDiagnoseContext.set(diagnose);
-        MockDiagnoseContext.setPostProcessorStageGroup(MockDiagnoseRecorder.GROUP_POST_PROCESSOR);
+        MockDiagnoseContext.setPostProcessorStageGroup(GROUP_POST_PROCESSOR);
 
         Object result = evalSequentialFetch();
 
         assertEquals("https://example.com/first|https://example.com/second", result);
         List<MockDiagnoseVo.Step> fetchSteps = fetchSteps(diagnose);
         assertEquals(2, fetchSteps.size());
-        assertEquals(MockDiagnoseRecorder.GROUP_POST_PROCESSOR, fetchSteps.get(0).getStageGroup());
-        assertEquals(MockDiagnoseRecorder.GROUP_POST_PROCESSOR, fetchSteps.get(1).getStageGroup());
+        assertEquals(GROUP_POST_PROCESSOR, fetchSteps.get(0).getStageGroup());
+        assertEquals(GROUP_POST_PROCESSOR, fetchSteps.get(1).getStageGroup());
     }
 
     @Test
@@ -123,8 +125,8 @@ class DefaultScriptWithFetchProviderImplTest {
         assertEquals("true|" + targetUrl + "|Unsupported require module specifier: crypto", result);
         List<MockDiagnoseVo.Step> fetchSteps = fetchSteps(diagnose);
         assertEquals(2, fetchSteps.size());
-        assertEquals(libraryUrl, fetchSteps.get(0).getDetails().get("url"));
-        assertEquals(targetUrl, fetchSteps.get(1).getDetails().get("url"));
+        assertEquals(libraryUrl, fetchSteps.get(0).getDetails().get(KEY_URL));
+        assertEquals(targetUrl, fetchSteps.get(1).getDetails().get(KEY_URL));
     }
 
     private ScriptContext createScriptContext() {
@@ -148,7 +150,7 @@ class DefaultScriptWithFetchProviderImplTest {
 
     private List<MockDiagnoseVo.Step> fetchSteps(MockDiagnoseVo diagnose) {
         return diagnose.getSteps().stream()
-                .filter(step -> "external_fetch".equals(step.getStage()))
+                .filter(step -> STAGE_EXTERNAL_FETCH.equals(step.getStage()))
                 .collect(Collectors.toList());
     }
 

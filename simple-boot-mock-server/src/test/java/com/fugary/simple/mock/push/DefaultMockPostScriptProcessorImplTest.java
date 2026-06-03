@@ -17,6 +17,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.CODE_FETCH_RETURN;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.CODE_MOCK_RETURN;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.CODE_POST_PROCESSOR_RETURN;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.CODE_POST_PROCESSOR_START;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_DATA;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_POST_PROCESSOR;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.RESULT_TYPE_MOCK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -44,20 +51,20 @@ class DefaultMockPostScriptProcessorImplTest {
         diagnose.setDataInfo(data);
 
         String responseBody = processor.process(request, data, "{\"before\":true}");
-        diagnose.finish("mock", "mock_return");
+        diagnose.finish(RESULT_TYPE_MOCK, CODE_MOCK_RETURN);
 
         assertEquals("{\"ok\":true}", responseBody);
         assertEquals(201, data.getStatusCode());
         assertEquals("application/json", data.getContentType());
-        int postStartIndex = indexOfStepCode(diagnose, "post_processor_start");
-        int fetchIndex = indexOfStepCode(diagnose, "fetch_return");
-        int postReturnIndex = indexOfStepCode(diagnose, "post_processor_return");
-        int resultIndex = indexOfStepCode(diagnose, "mock_return");
+        int postStartIndex = indexOfStepCode(diagnose, CODE_POST_PROCESSOR_START);
+        int fetchIndex = indexOfStepCode(diagnose, CODE_FETCH_RETURN);
+        int postReturnIndex = indexOfStepCode(diagnose, CODE_POST_PROCESSOR_RETURN);
+        int resultIndex = indexOfStepCode(diagnose, CODE_MOCK_RETURN);
         assertTrue(postStartIndex >= 0);
         assertTrue(fetchIndex > postStartIndex);
         assertTrue(postReturnIndex > fetchIndex);
         assertTrue(resultIndex > postReturnIndex);
-        assertPostProcessorStageGroup(diagnose, MockDiagnoseRecorder.GROUP_POST_PROCESSOR);
+        assertPostProcessorStageGroup(diagnose, GROUP_POST_PROCESSOR);
         assertNull(MockJsUtils.getCurrentResponseVo());
     }
 
@@ -79,7 +86,7 @@ class DefaultMockPostScriptProcessorImplTest {
         String responseBody = processor.process(request, data, "{\"before\":true}");
 
         assertEquals("{\"ok\":true}", responseBody);
-        assertPostProcessorStageGroup(diagnose, MockDiagnoseRecorder.GROUP_DATA);
+        assertPostProcessorStageGroup(diagnose, GROUP_DATA);
     }
 
     private int indexOfStepCode(MockDiagnoseVo diagnose, String code) {
@@ -100,9 +107,9 @@ class DefaultMockPostScriptProcessorImplTest {
     }
 
     private void assertPostProcessorStageGroup(MockDiagnoseVo diagnose, String stageGroup) {
-        assertEquals(stageGroup, stageGroupOfStepCode(diagnose, "post_processor_start"));
-        assertEquals(stageGroup, stageGroupOfStepCode(diagnose, "fetch_return"));
-        assertEquals(stageGroup, stageGroupOfStepCode(diagnose, "post_processor_return"));
+        assertEquals(stageGroup, stageGroupOfStepCode(diagnose, CODE_POST_PROCESSOR_START));
+        assertEquals(stageGroup, stageGroupOfStepCode(diagnose, CODE_FETCH_RETURN));
+        assertEquals(stageGroup, stageGroupOfStepCode(diagnose, CODE_POST_PROCESSOR_RETURN));
     }
 
     private static class FetchDiagnoseScriptEngineProvider implements ScriptEngineProvider {

@@ -12,16 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.*;
+
 @Data
 public class MockDiagnoseVo {
 
-    private static final String KEY_STATUS_CODE = "statusCode";
-    private static final String KEY_CONTENT_TYPE = "contentType";
-    private static final String KEY_DURATION_MS = "durationMs";
-    private static final String STAGE_RESULT = "result";
-    private static final String GROUP_RESULT = "result";
-
-    private String resultType = "none";
+    private String resultType = RESULT_TYPE_NONE;
 
     private Item group;
 
@@ -32,6 +28,8 @@ public class MockDiagnoseVo {
     private Item data;
 
     private String proxyUrl;
+
+    private String proxySource;
 
     private String contentType;
 
@@ -140,10 +138,10 @@ public class MockDiagnoseVo {
     }
 
     private String calcStatus(String resultType) {
-        if ("mock".equals(resultType) || "proxy".equals(resultType)) {
-            return "success";
+        if (RESULT_TYPE_MOCK.equals(resultType) || RESULT_TYPE_PROXY.equals(resultType)) {
+            return STATUS_SUCCESS;
         }
-        return "error".equals(resultType) || "none".equals(resultType) ? "danger" : "info";
+        return RESULT_TYPE_ERROR.equals(resultType) || RESULT_TYPE_NONE.equals(resultType) ? STATUS_DANGER : STATUS_INFO;
     }
 
     @Data
