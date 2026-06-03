@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.SimpleScriptContext;
+import javax.script.ScriptException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +23,11 @@ import java.util.stream.Collectors;
 import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_POST_PROCESSOR;
 import static com.fugary.simple.mock.contants.MockDiagnoseConstants.KEY_URL;
 import static com.fugary.simple.mock.contants.MockDiagnoseConstants.STAGE_EXTERNAL_FETCH;
+import static com.fugary.simple.mock.utils.MockJsUtils.formatScriptError;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultScriptWithFetchProviderImplTest {
 
@@ -127,6 +132,29 @@ class DefaultScriptWithFetchProviderImplTest {
         assertEquals(2, fetchSteps.size());
         assertEquals(libraryUrl, fetchSteps.get(0).getDetails().get(KEY_URL));
         assertEquals(targetUrl, fetchSteps.get(1).getDetails().get(KEY_URL));
+    }
+
+    @Test
+    void invalidJsonResponseShouldReportJsonCallSourceLine() {
+        String targetUrl = "https://example.com/invalid-json";
+        fetchProvider.setMockPushProcessor(mockParams -> ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{invalid-json".getBytes(StandardCharsets.UTF_8)));
+        String script = "(async function(){\n"
+                + "  const response = await fetch('" + targetUrl + "');\n"
+                + "  const responseBody = await response.json();\n"
+                + "  return responseBody.url;\n"
+                + "})()";
+
+        ScriptException exception = assertThrows(ScriptException.class, () -> fetchProvider.internalEval(
+                script,
+                scriptEngine,
+                createScriptContext()));
+        String result = formatScriptError(script, exception);
+
+        assertTrue(result.contains("Script execution failed: Invalid JSON in response"), result);
+        assertTrue(result.contains("Source: const responseBody = await response.json();"), result);
+        assertFalse(result.contains("__simpleMockScriptLine__"), result);
     }
 
     private ScriptContext createScriptContext() {

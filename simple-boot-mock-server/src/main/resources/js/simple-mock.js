@@ -1,4 +1,37 @@
 ;(function (globalThis) {
+    const scriptLineMarker = '__simpleMockScriptLine__:';
+    const getUserScriptLineNumber = function (stack) {
+        const evalPrefix = '<eval>:';
+        const frame = String(stack || '').split('\n').slice(2).find(line => line.includes(evalPrefix));
+        return frame ? frame.split(evalPrefix)[1].split(':')[0] : '';
+    };
+
+    const nativeFetch = globalThis.fetch;
+    if (typeof nativeFetch === 'function') {
+        globalThis.fetch = function (...args) {
+            return nativeFetch(...args).then(response => new Proxy(response, {
+                get(target, key) {
+                    if (key === 'json') {
+                        return function () {
+                            const lineNumber = getUserScriptLineNumber(new Error().stack);
+                            try {
+                                return target.json();
+                            } catch (e) {
+                                throw 'Invalid JSON in response' + (lineNumber ? ' ' + scriptLineMarker + lineNumber : '');
+                            }
+                        };
+                    }
+                    if (key === 'text' || key === 'arrayBuffer' || key === 'blob') {
+                        return function (...methodArgs) {
+                            return target[key](...methodArgs);
+                        };
+                    }
+                    return target[key];
+                }
+            }));
+        };
+    }
+
     const isBareModuleSpecifier = function (url) {
         return typeof url !== 'string' || !/^(?:[a-z][a-z\d+\-.]*:|\/\/|\/|\.{1,2}\/)/i.test(url);
     };

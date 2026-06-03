@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.SourceSection;
@@ -41,6 +42,8 @@ public class MockJsUtils {
     private static final String MOCK_STRINGIFY_PREFIX = "mockStringify(";
 
     private static final int SCRIPT_SOURCE_LINE_MAX_LENGTH = 240;
+
+    private static final String SCRIPT_LINE_MARKER = "__simpleMockScriptLine__:";
 
     private static final ThreadLocal<HttpRequestVo> CURRENT_REQUEST_VO = new ThreadLocal<>();
 
@@ -175,7 +178,7 @@ public class MockJsUtils {
     private static String getScriptErrorMessage(Throwable throwable) {
         PolyglotException polyglotException = findCause(throwable, PolyglotException.class);
         if (polyglotException != null && StringUtils.isNotBlank(polyglotException.getMessage())) {
-            return StringUtils.normalizeSpace(polyglotException.getMessage());
+            return stripScriptLineMarker(polyglotException.getMessage());
         }
         return unwrapJavaExceptionMessage(throwable == null ? null : throwable.getMessage());
     }
@@ -187,7 +190,12 @@ public class MockJsUtils {
             result = result.substring(colonIndex + 2);
             colonIndex = result.indexOf(": ");
         }
-        return result;
+        return stripScriptLineMarker(result);
+    }
+
+    private static String stripScriptLineMarker(String errorMessage) {
+        return StringUtils.normalizeSpace(StringUtils.substringBefore(StringUtils.defaultString(errorMessage),
+                SCRIPT_LINE_MARKER));
     }
 
     private static boolean isJavaExceptionPrefix(String prefix) {
@@ -204,12 +212,21 @@ public class MockJsUtils {
     }
 
     private static int getScriptErrorLineNumber(Throwable throwable) {
+        int markedLineNumber = getMarkedScriptLineNumber(throwable);
+        if (markedLineNumber > 0) {
+            return markedLineNumber;
+        }
         ScriptException scriptException = findCause(throwable, ScriptException.class);
         if (scriptException != null && scriptException.getLineNumber() > 0) {
             return scriptException.getLineNumber();
         }
         SourceSection sourceSection = getPolyglotSourceSection(throwable);
         return sourceSection == null ? -1 : sourceSection.getStartLine();
+    }
+
+    private static int getMarkedScriptLineNumber(Throwable throwable) {
+        return NumberUtils.toInt(StringUtils.substringAfter(StringUtils.defaultString(throwable == null ? null
+                : throwable.getMessage()), SCRIPT_LINE_MARKER), -1);
     }
 
     private static String getPolyglotSourceText(Throwable throwable) {

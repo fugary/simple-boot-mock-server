@@ -159,13 +159,7 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
                             "headers", ProxyObject.fromMap(headerObj),
                             "url", url,
                             "text", (ProxyExecutable) ignored -> Value.asValue(responseText),
-                            "json", (ProxyExecutable) ignored -> {
-                                try {
-                                    return context.eval("js", "JSON.parse").execute(responseText);
-                                } catch (Exception e) {
-                                    throw new RuntimeException("Invalid JSON in response");
-                                }
-                            },
+                            "json", (ProxyExecutable) ignored -> context.eval("js", "JSON.parse").execute(responseText),
                             "arrayBuffer", (ProxyExecutable) ignored -> context.eval("js", "Uint8Array").newInstance(responseBytes).getMember("buffer"),
                             "blob", (ProxyExecutable) ignored -> context.eval("js", "Uint8Array").newInstance(responseBytes)
                     ));
