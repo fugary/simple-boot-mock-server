@@ -11,6 +11,7 @@ public class MockDiagnoseContext {
 
     private static final ThreadLocal<MockDiagnoseVo> CURRENT = new ThreadLocal<>();
     private static final ThreadLocal<String> POST_PROCESSOR_STAGE_GROUP = new ThreadLocal<>();
+    private static final ThreadLocal<Boolean> SCRIPT_CONSOLE_ENABLED = new ThreadLocal<>();
 
     public static void set(MockDiagnoseVo diagnose) {
         if (diagnose == null) {
@@ -30,6 +31,18 @@ public class MockDiagnoseContext {
         } else {
             POST_PROCESSOR_STAGE_GROUP.set(stageGroup);
         }
+    }
+
+    public static void setScriptConsoleEnabled(boolean enabled) {
+        if (enabled) {
+            SCRIPT_CONSOLE_ENABLED.set(Boolean.TRUE);
+        } else {
+            SCRIPT_CONSOLE_ENABLED.remove();
+        }
+    }
+
+    public static boolean isScriptConsoleEnabled() {
+        return Boolean.TRUE.equals(SCRIPT_CONSOLE_ENABLED.get());
     }
 
     public static String getPostProcessorStageGroup() {
@@ -62,5 +75,6 @@ public class MockDiagnoseContext {
     public static void clear() {
         CURRENT.remove();
         POST_PROCESSOR_STAGE_GROUP.remove();
+        SCRIPT_CONSOLE_ENABLED.remove();
     }
 }

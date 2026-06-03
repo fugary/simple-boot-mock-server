@@ -67,6 +67,8 @@ public final class MockDiagnoseConstants {
 
     public static final String STAGE_DELAY = "delay";
 
+    public static final String STAGE_CONSOLE = "console";
+
     public static final String STAGE_RESULT = "result";
 
     public static final String CODE_REQUEST_RECEIVED = "request_received";
@@ -136,6 +138,8 @@ public final class MockDiagnoseConstants {
     public static final String CODE_FETCH_ERROR = "fetch_error";
 
     public static final String CODE_DELAY_RESOLVED = "delay_resolved";
+
+    public static final String CODE_CONSOLE = "console";
 
     public static final String CODE_MOCK_REDIRECT = "mock_redirect";
 

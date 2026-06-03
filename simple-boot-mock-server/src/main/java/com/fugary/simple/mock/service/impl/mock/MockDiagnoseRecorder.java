@@ -13,6 +13,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -22,6 +23,12 @@ import static com.fugary.simple.mock.contants.MockDiagnoseConstants.*;
 public class MockDiagnoseRecorder {
 
     private static final MockDiagnoseRecorder NOOP = new MockDiagnoseRecorder(null);
+
+    private static final int MAX_SCRIPT_CONSOLE_STEPS = 100;
+
+    private static final int MAX_SCRIPT_CONSOLE_MESSAGE_LENGTH = 4000;
+
+    private static final String KEY_CONSOLE_LEVEL = "level";
 
     private final MockDiagnoseVo diagnose;
     private final String postProcessorStageGroup;
@@ -52,6 +59,18 @@ public class MockDiagnoseRecorder {
                 KEY_CONTENT_TYPE, contentType,
                 KEY_DURATION_MS, durationMs,
                 KEY_MESSAGE, error == null ? null : error.getMessage());
+    }
+
+    public void scriptConsole(String level, String message) {
+        if (!isEnabled() || StringUtils.isBlank(message) || isScriptConsoleFull()) {
+            return;
+        }
+        String consoleLevel = normalizeConsoleLevel(level);
+        String safeMessage = SimpleMockUtils.PASSWORD_PATTERN
+                .matcher(StringUtils.abbreviate(message, MAX_SCRIPT_CONSOLE_MESSAGE_LENGTH))
+                .replaceAll("$1:$3***$4");
+        step(currentPostProcessorGroup(), STAGE_CONSOLE, calcConsoleStatus(consoleLevel),
+                CODE_CONSOLE + "." + consoleLevel, KEY_CONSOLE_LEVEL, consoleLevel, KEY_MESSAGE, safeMessage);
     }
 
     public void postProcessorStart() {
@@ -318,6 +337,30 @@ public class MockDiagnoseRecorder {
     private String currentPostProcessorGroup() {
         return StringUtils.defaultIfBlank(postProcessorStageGroup,
                 diagnose.getData() == null ? GROUP_POST_PROCESSOR : GROUP_DATA);
+    }
+
+    private boolean isScriptConsoleFull() {
+        return diagnose.getSteps().stream()
+                .filter(step -> STAGE_CONSOLE.equals(step.getStage()))
+                .count() >= MAX_SCRIPT_CONSOLE_STEPS;
+    }
+
+    private static String normalizeConsoleLevel(String level) {
+        level = StringUtils.defaultIfBlank(level, "log").toLowerCase(Locale.ROOT);
+        if (StringUtils.equalsAny(level, "log", "info", "warn", "error", "debug")) {
+            return level;
+        }
+        return "log";
+    }
+
+    private static String calcConsoleStatus(String level) {
+        if ("error".equals(level)) {
+            return STATUS_DANGER;
+        }
+        if ("warn".equals(level)) {
+            return STATUS_WARNING;
+        }
+        return STATUS_INFO;
     }
 
     private static String calcFetchStatus(Integer statusCode, Throwable error) {

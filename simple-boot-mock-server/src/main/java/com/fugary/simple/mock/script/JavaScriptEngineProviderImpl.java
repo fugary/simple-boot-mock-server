@@ -3,6 +3,7 @@ package com.fugary.simple.mock.script;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.push.ScriptWithFetchProvider;
 import com.fugary.simple.mock.utils.JsonUtils;
+import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
@@ -132,6 +133,9 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         HttpRequestVo requestVo = MockJsUtils.getHttpRequestVo();
         ScriptContext scriptContext = new SimpleScriptContext();
         scriptContext.setBindings(scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
+        if (MockDiagnoseContext.isScriptConsoleEnabled()) {
+            ScriptConsoleBridge.install(scriptEngine, scriptContext);
+        }
         if (requestVo != null) {
             scriptContext.setAttribute("request", processValue(requestVo), ScriptContext.ENGINE_SCOPE);
         }

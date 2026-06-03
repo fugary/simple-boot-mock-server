@@ -2,6 +2,7 @@ package com.fugary.simple.mock.security;
 
 import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.MockJsUtils;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +28,7 @@ public class MockScriptInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws IOException {
         MockDiagnoseContext.set(new MockDiagnoseVo());
+        MockDiagnoseContext.setScriptConsoleEnabled(SimpleMockUtils.isMockPreview(request));
         try {
             ScriptEngine scriptEngine = scriptEnginePool.borrowObject();
             MockJsUtils.setCurrentScriptEngine(scriptEngine);
