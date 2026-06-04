@@ -209,7 +209,7 @@ export const getLoadingDiv = (attrs = {}) => {
   return withDirectives(h('div', { style: 'height:100%', ...attrs }), loadingDirective)
 }
 
-const fixEditorSetValue = (props, context) => {
+const fixEditorSetValue = (props, context, mountHook) => {
   const onMountKey = 'onMount'
   const onMountFunc = context.attrs?.[onMountKey] || function () {}
   const newOnMount = instance => { // editor实例
@@ -220,6 +220,7 @@ const fixEditorSetValue = (props, context) => {
       }
       instance.__newSetValue__ = true
     }
+    mountHook?.(instance)
     onMountFunc(instance)
   }
   return { ...props, [onMountKey]: newOnMount }
@@ -278,13 +279,38 @@ export default {
   install (app) {
     app.component(VueMonacoDiffEditor.name, VueMonacoDiffEditor)
     app.component(VueMonacoEditor.name, {
+      props: {
+        height: {
+          type: [Number, String],
+          default: '100%'
+        }
+      },
       setup (props, context) {
         monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
           diagnosticCodesToIgnore: [1003, 1005, 1128]
         })
         initMockJsHints()
         loader.config({ monaco })
-        return () => h(VueMonacoEditor, fixEditorSetValue(props, context), () => [getLoadingDiv()])
+        const resizedHeight = ref()
+        watch(() => props.height, () => {
+          resizedHeight.value = undefined
+        })
+        const bindResizableHeight = editor => {
+          if (!`${context.attrs.class || ''}`.includes('common-resize-vertical')) {
+            return
+          }
+          const disposable = editor.onDidLayoutChange(({ height }) => {
+            const defaultHeight = typeof props.height === 'number' ? props.height : Number(`${props.height}`.match(/^(\d+(?:\.\d+)?)px$/)?.[1])
+            if (!defaultHeight) {
+              return
+            }
+            resizedHeight.value = Math.abs(height - defaultHeight) > 1 ? `${Math.round(height)}px` : undefined
+          })
+          editor.onDidDispose(() => disposable.dispose())
+        }
+        return () => h(VueMonacoEditor, fixEditorSetValue({
+          height: resizedHeight.value || props.height
+        }, context, bindResizableHeight), () => [getLoadingDiv()])
       }
     })
   }
