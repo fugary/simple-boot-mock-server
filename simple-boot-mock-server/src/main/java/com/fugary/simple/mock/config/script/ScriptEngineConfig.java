@@ -25,6 +25,10 @@ import javax.script.ScriptEngine;
 @Slf4j
 public class ScriptEngineConfig {
 
+    private static final int DEFAULT_SCRIPT_ENGINE_MIN_IDLE = 5;
+
+    private static final int DEFAULT_THREAD_POOL_CORE_SIZE = 10;
+
     @Autowired
     private SimpleMockConfigProperties simpleMockConfigProperties;
 
@@ -36,38 +40,53 @@ public class ScriptEngineConfig {
     @Bean
     public GenericObjectPool<ScriptEngine> scriptEnginePool() {
         GenericObjectPoolConfig<ScriptEngine> config = new GenericObjectPoolConfig<>();
-        config.setMaxTotal(10); // 设置池中最大对象数
+        int maxPoolSize = getPositivePoolSize(getPoolProperties().getScriptEngineMaxSize(),
+                SimpleMockConfigProperties.DEFAULT_SCRIPT_ENGINE_MAX_SIZE);
+        config.setMaxTotal(maxPoolSize);
         config.setJmxEnabled(false);
-        config.setMinIdle(5);
+        config.setMinIdle(Math.min(DEFAULT_SCRIPT_ENGINE_MIN_IDLE, maxPoolSize));
         return new ScriptGenericObjectPool<>(javaScriptEngineFactory(), config);
     }
 
     @Bean
     public ThreadPoolExecutorFactoryBean eventStreamThreadPool() {
-        ThreadPoolExecutorFactoryBean pool = new ThreadPoolExecutorFactoryBean();
-        pool.setCorePoolSize(10);
-        pool.setMaxPoolSize(20);
-        return pool;
+        return createThreadPool(getPoolProperties().getEventStreamMaxSize());
     }
 
     @Bean
     public ThreadPoolExecutorFactoryBean fetchScriptThreadPool() {
-        ThreadPoolExecutorFactoryBean pool = new ThreadPoolExecutorFactoryBean();
-        pool.setCorePoolSize(10);
-        pool.setMaxPoolSize(20);
-        return pool;
+        return createThreadPool(getPoolProperties().getFetchScriptMaxSize());
     }
 
     @Bean
     public ThreadPoolExecutorFactoryBean asyncQueryThreadPool() {
+        return createThreadPool(getPoolProperties().getAsyncQueryMaxSize());
+    }
+
+    private ThreadPoolExecutorFactoryBean createThreadPool(int configuredMaxPoolSize) {
+        int maxPoolSize = getPositivePoolSize(configuredMaxPoolSize,
+                SimpleMockConfigProperties.DEFAULT_THREAD_POOL_MAX_SIZE);
         ThreadPoolExecutorFactoryBean pool = new ThreadPoolExecutorFactoryBean();
-        pool.setCorePoolSize(10);
-        pool.setMaxPoolSize(20);
+        pool.setCorePoolSize(Math.min(DEFAULT_THREAD_POOL_CORE_SIZE, maxPoolSize));
+        pool.setMaxPoolSize(maxPoolSize);
         return pool;
     }
 
+    private int getPositivePoolSize(int configuredPoolSize, int defaultPoolSize) {
+        return configuredPoolSize > 0 ? configuredPoolSize : defaultPoolSize;
+    }
+
+    private SimpleMockConfigProperties getConfigProperties() {
+        return simpleMockConfigProperties == null ? new SimpleMockConfigProperties() : simpleMockConfigProperties;
+    }
+
+    private SimpleMockConfigProperties.PoolProperties getPoolProperties() {
+        SimpleMockConfigProperties.PoolProperties poolProperties = getConfigProperties().getPool();
+        return poolProperties == null ? new SimpleMockConfigProperties.PoolProperties() : poolProperties;
+    }
+
     @Bean
-    public JavaScriptEngineFactory javaScriptEngineFactory(){
+    public JavaScriptEngineFactory javaScriptEngineFactory() {
         JavaScriptEngineFactory javaScriptEngineFactory = new JavaScriptEngineFactory();
         javaScriptEngineFactory.setScriptWithFetchProvider(scriptWithFetchProvider());
         return javaScriptEngineFactory;
@@ -78,7 +97,7 @@ public class ScriptEngineConfig {
         JavaScriptEngineProviderImpl javaScriptEngineProvider = new JavaScriptEngineProviderImpl();
         javaScriptEngineProvider.setScriptEnginePool(scriptEnginePool());
         javaScriptEngineProvider.setScriptWithFetchProvider(scriptWithFetchProvider());
-        javaScriptEngineProvider.setFetchEnabled(simpleMockConfigProperties.isFetchEnabled());
+        javaScriptEngineProvider.setFetchEnabled(getConfigProperties().isFetchEnabled());
         return javaScriptEngineProvider;
     }
 }

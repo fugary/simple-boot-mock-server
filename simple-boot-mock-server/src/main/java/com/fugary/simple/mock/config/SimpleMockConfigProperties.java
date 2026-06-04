@@ -14,6 +14,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "simple.mock")
 public class SimpleMockConfigProperties {
 
+    public static final int DEFAULT_SCRIPT_ENGINE_MAX_SIZE = 10;
+
+    public static final int DEFAULT_THREAD_POOL_MAX_SIZE = 20;
+
     private String jwtPassword = "";
 
     private Integer jwtExpire = 7;
@@ -31,4 +35,19 @@ public class SimpleMockConfigProperties {
     private Integer mockLogRetentionDays = 180;
 
     private boolean fetchEnabled = true;
+
+    private PoolProperties pool = new PoolProperties();
+
+    @Getter
+    @Setter
+    public static class PoolProperties {
+
+        private int scriptEngineMaxSize = DEFAULT_SCRIPT_ENGINE_MAX_SIZE;
+
+        private int eventStreamMaxSize = DEFAULT_THREAD_POOL_MAX_SIZE;
+
+        private int fetchScriptMaxSize = DEFAULT_THREAD_POOL_MAX_SIZE;
+
+        private int asyncQueryMaxSize = DEFAULT_THREAD_POOL_MAX_SIZE;
+    }
 }

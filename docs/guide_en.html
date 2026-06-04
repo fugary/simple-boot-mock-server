@@ -749,6 +749,26 @@
                                 <td><code>180</code></td>
                                 <td>Mock log retention days. Set to 0 or less to disable automatic cleanup.</td>
                             </tr>
+                            <tr>
+                                <td><code>MOCK_SCRIPT_ENGINE_POOL_SIZE</code></td>
+                                <td><code>10</code></td>
+                                <td>Maximum number of JavaScript engine instances in the script engine pool</td>
+                            </tr>
+                            <tr>
+                                <td><code>MOCK_EVENT_STREAM_POOL_SIZE</code></td>
+                                <td><code>20</code></td>
+                                <td>Maximum thread pool size for SSE/event-stream processing</td>
+                            </tr>
+                            <tr>
+                                <td><code>MOCK_FETCH_SCRIPT_POOL_SIZE</code></td>
+                                <td><code>20</code></td>
+                                <td>Maximum thread pool size for JavaScript fetch calls</td>
+                            </tr>
+                            <tr>
+                                <td><code>MOCK_ASYNC_QUERY_POOL_SIZE</code></td>
+                                <td><code>20</code></td>
+                                <td>Maximum thread pool size for async admin query tasks</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -758,6 +778,8 @@
   -e MOCK_DB_MYSQL_SERVER=192.168.1.100 \
   -e MOCK_DB_USERNAME=root \
   -e MOCK_DB_PASSWORD=secret \
+  -e MOCK_SCRIPT_ENGINE_POOL_SIZE=20 \
+  -e MOCK_FETCH_SCRIPT_POOL_SIZE=40 \
   fugary/simple-boot-mock-server:latest</code></pre>
 
                 <h2 id="login-usage">Basics</h2>

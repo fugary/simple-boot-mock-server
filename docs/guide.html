@@ -748,6 +748,26 @@
                                 <td><code>180</code></td>
                                 <td>Mock 日志保留天数，小于等于 0 时不自动清理</td>
                             </tr>
+                            <tr>
+                                <td><code>MOCK_SCRIPT_ENGINE_POOL_SIZE</code></td>
+                                <td><code>10</code></td>
+                                <td>JavaScript 脚本引擎对象池最大实例数</td>
+                            </tr>
+                            <tr>
+                                <td><code>MOCK_EVENT_STREAM_POOL_SIZE</code></td>
+                                <td><code>20</code></td>
+                                <td>SSE/Event Stream 处理线程池最大大小</td>
+                            </tr>
+                            <tr>
+                                <td><code>MOCK_FETCH_SCRIPT_POOL_SIZE</code></td>
+                                <td><code>20</code></td>
+                                <td>JavaScript fetch 调用线程池最大大小</td>
+                            </tr>
+                            <tr>
+                                <td><code>MOCK_ASYNC_QUERY_POOL_SIZE</code></td>
+                                <td><code>20</code></td>
+                                <td>后台异步查询任务线程池最大大小</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -757,6 +777,8 @@
   -e MOCK_DB_MYSQL_SERVER=192.168.1.100 \
   -e MOCK_DB_USERNAME=root \
   -e MOCK_DB_PASSWORD=secret \
+  -e MOCK_SCRIPT_ENGINE_POOL_SIZE=20 \
+  -e MOCK_FETCH_SCRIPT_POOL_SIZE=40 \
   fugary/simple-boot-mock-server:latest</code></pre>
 
                 <h2 id="login-usage">基础入门</h2>
