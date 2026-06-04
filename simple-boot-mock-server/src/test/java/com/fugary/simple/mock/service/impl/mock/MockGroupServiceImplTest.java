@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.util.AntPathMatcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -177,6 +180,41 @@ class MockGroupServiceImplTest {
         assertNull(diagnose.getScenario());
         assertTrue(diagnose.getSteps().stream().anyMatch(step -> CODE_FORCE_REQUEST_SELECTED.equals(step.getCode())));
         assertTrue(diagnose.getSteps().stream().noneMatch(step -> STAGE_SCENARIO.equals(step.getStage())));
+    }
+
+    @Test
+    void matchMockDataShouldRecordOnlyPathMatchedRequestCandidates() {
+        MockGroup mockGroup = createGroup("demo", null);
+        MockRequest matchedRequest = createRequest(32, mockGroup.getId(), "/users/{id}", null);
+        MockRequest unmatchedRequest = createRequest(33, mockGroup.getId(), "/orders/{id}", null);
+        MockData data = createData(302, mockGroup.getId(), matchedRequest.getId(), "{\"ok\":true}");
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+        AntPathMatcher pathMatcher = spy(new AntPathMatcher());
+        mockGroupService.setPathMatcher(pathMatcher);
+
+        doReturn(mockGroup).when(mockGroupService).getOne(any());
+        when(mockRequestService.list(any(QueryWrapper.class)))
+                .thenReturn(new ArrayList<>(List.of(unmatchedRequest, matchedRequest)));
+        when(mockRequestService.loadAllDataByRequest(matchedRequest.getId())).thenReturn(List.of(data));
+
+        Triple<MockGroup, MockRequest, MockData> result = mockGroupService.matchMockData(
+                buildRequest("/mock/demo/users/1"),
+                0,
+                0,
+                group -> true,
+                diagnose
+        );
+
+        assertNotNull(result.getMiddle());
+        MockDiagnoseVo.Step candidateStep = diagnose.getSteps().stream()
+                .filter(step -> CODE_REQUEST_CANDIDATES_LOADED.equals(step.getCode()))
+                .findFirst().orElse(null);
+        assertNotNull(candidateStep);
+        assertEquals(1, ((Number) candidateStep.getDetails().get(KEY_COUNT)).intValue());
+        List<?> candidates = (List<?>) candidateStep.getDetails().get(KEY_CANDIDATES);
+        assertEquals(1, candidates.size());
+        assertEquals(matchedRequest.getId(), ((Map<?, ?>) candidates.get(0)).get(KEY_REQUEST_ID));
+        verify(pathMatcher, times(1)).match("/mock/demo/orders/{id}", "/mock/demo/users/1");
     }
 
     @Test
@@ -411,4 +449,5 @@ class MockGroupServiceImplTest {
         mockData.setResponseBody(responseBody);
         return mockData;
     }
+
 }

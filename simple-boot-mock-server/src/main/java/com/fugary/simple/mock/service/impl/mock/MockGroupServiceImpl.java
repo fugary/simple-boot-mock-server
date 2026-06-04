@@ -237,11 +237,12 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     }
                 }
                 List<MockRequest> allMockRequests = mockRequestService.list(requestQuery);
-                diagnoseRecorder.requestCandidates(allMockRequests);
-                diagnoseRecorder.forceRequestSelected(requestId, allMockRequests);
-                List<MockRequest> mockRequests = testRequest ? allMockRequests : allMockRequests.stream()
-                        .filter(MockBase::isEnabled).collect(Collectors.toList());
                 String groupPath = getMockPrefix() + StringUtils.prependIfMissing(mockGroup.getGroupPath(), "/");
+                List<MockRequest> pathMatchedRequests = findPathMatchedRequests(allMockRequests, groupPath, requestPath);
+                diagnoseRecorder.requestCandidates(pathMatchedRequests);
+                diagnoseRecorder.forceRequestSelected(requestId, pathMatchedRequests);
+                List<MockRequest> mockRequests = testRequest ? pathMatchedRequests : pathMatchedRequests.stream()
+                        .filter(MockBase::isEnabled).collect(Collectors.toList());
                 int requestPathMatchedCount = 0;
                 // 请求是否匹配上Request，如果匹配上就查询Data
                 for (MockRequest mockRequest : sortMockRequests(mockRequests)) {
@@ -300,7 +301,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                     }
                 }
                 MockRequest disabledRequest = !testRequest && requestPathMatchedCount == 0
-                        ? findDisabledRequest(allMockRequests, groupPath, requestPath)
+                        ? findDisabledRequest(pathMatchedRequests, groupPath, requestPath)
                         : null;
                 if (disabledRequest == null) {
                     diagnoseRecorder.requestNotMatched(requestPathMatchedCount, mockRequests.size());
@@ -321,6 +322,12 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 .filter(request -> !request.isEnabled())
                 .filter(request -> pathMatcher.match(calcConfigPath(groupPath, request.getRequestPath()), requestPath))
                 .findFirst().orElse(null);
+    }
+
+    private List<MockRequest> findPathMatchedRequests(List<MockRequest> requests, String groupPath, String requestPath) {
+        return requests.stream()
+                .filter(request -> pathMatcher.match(calcConfigPath(groupPath, request.getRequestPath()), requestPath))
+                .collect(Collectors.toList());
     }
 
     private MockScenario getScenario(Integer groupId, String scenarioCode) {
