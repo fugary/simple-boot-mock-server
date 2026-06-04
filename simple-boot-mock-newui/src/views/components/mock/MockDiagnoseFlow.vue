@@ -62,6 +62,11 @@ const detailPriorityKeys = [
   'message'
 ]
 const patternMatchedCodes = new Set(['request_pattern_matched', 'data_pattern_matched'])
+const consoleMessageTagTypes = {
+  error: 'danger',
+  warn: 'warning',
+  debug: 'info'
+}
 const diagnoseStageGroups = [
   {
     name: 'ingress',
@@ -160,22 +165,25 @@ const shouldShowDetail = (details, key, value) => {
   }
   return true
 }
-const toDetailChip = (key, value) => {
+const toDetailChip = (key, value, step) => {
   const text = formatDetailValue(key, value)
   const label = getDiagnoseDetailLabel(key)
+  const type = key === 'statusCode'
+    ? statusCodeTagType(value)
+    : key === 'message' ? consoleMessageTagTypes[step?.details?.level] : undefined
   return {
     key,
     label,
     value: text,
-    type: key === 'statusCode' ? statusCodeTagType(value) : undefined,
+    type,
     copyText: text,
     externalLink: isExternalLink(text) ? text : ''
   }
 }
-const toDetailItemChips = (key, value) => {
-  const chips = [toDetailChip(key, value)]
+const toDetailItemChips = (key, value, step) => {
+  const chips = [toDetailChip(key, value, step)]
   if (key === 'data' && value?.dataSelection) {
-    chips.push(toDetailChip('dataSelection', value.dataSelection))
+    chips.push(toDetailChip('dataSelection', value.dataSelection, step))
   }
   return chips
 }
@@ -197,7 +205,7 @@ const toDetailChips = step => {
     .map(key => entries.find(([entryKey]) => entryKey === key))
     .filter(Boolean)
     .filter(([key, value]) => shouldShowDetail(details, key, value))
-    .flatMap(([key, value]) => toDetailItemChips(key, value))
+    .flatMap(([key, value]) => toDetailItemChips(key, value, step))
     .filter(item => item.value)
 }
 const toFlowStep = (step, index) => {
