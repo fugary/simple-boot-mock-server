@@ -301,7 +301,7 @@ export default {
           }
           const disposable = editor.onDidLayoutChange(({ height }) => {
             const defaultHeight = typeof props.height === 'number' ? props.height : Number(`${props.height}`.match(/^(\d+(?:\.\d+)?)px$/)?.[1])
-            if (!defaultHeight) {
+            if (!defaultHeight || height < Math.min(defaultHeight, 20)) {
               return
             }
             resizedHeight.value = Math.abs(height - defaultHeight) > 1 ? `${Math.round(height)}px` : undefined
