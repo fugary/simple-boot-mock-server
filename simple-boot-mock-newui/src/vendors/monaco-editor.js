@@ -1,5 +1,5 @@
 import VueMonacoEditor, { loader, VueMonacoDiffEditor } from '@guolao/vue-monaco-editor'
-import { ref, watch, toRaw, h, withDirectives, resolveDirective, computed, shallowRef, onBeforeUnmount } from 'vue'
+import { ref, watch, toRaw, h, withDirectives, resolveDirective, computed, shallowRef, onBeforeUnmount, onMounted } from 'vue'
 import * as monaco from 'monaco-editor'
 import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
@@ -209,7 +209,7 @@ export const getLoadingDiv = (attrs = {}) => {
   return withDirectives(h('div', { style: 'height:100%', ...attrs }), loadingDirective)
 }
 
-const fixEditorSetValue = (props, context, mountHook) => {
+const fixEditorSetValue = (props, context) => {
   const onMountKey = 'onMount'
   const onMountFunc = context.attrs?.[onMountKey] || function () {}
   const newOnMount = instance => { // editor实例
@@ -220,7 +220,6 @@ const fixEditorSetValue = (props, context, mountHook) => {
       }
       instance.__newSetValue__ = true
     }
-    mountHook?.(instance)
     onMountFunc(instance)
   }
   return { ...props, [onMountKey]: newOnMount }
@@ -279,7 +278,12 @@ export default {
   install (app) {
     app.component(VueMonacoDiffEditor.name, VueMonacoDiffEditor)
     app.component(VueMonacoEditor.name, {
+      inheritAttrs: false,
       props: {
+        width: {
+          type: [Number, String],
+          default: '100%'
+        },
         height: {
           type: [Number, String],
           default: '100%'
@@ -292,25 +296,42 @@ export default {
         initMockJsHints()
         loader.config({ monaco })
         const resizedHeight = ref()
+        const resizeWrapperRef = ref()
+        const isResizable = () => `${context.attrs.class || ''}`.includes('common-resize-vertical')
+        let resizeObserver
         watch(() => props.height, () => {
           resizedHeight.value = undefined
         })
-        const bindResizableHeight = editor => {
-          if (!`${context.attrs.class || ''}`.includes('common-resize-vertical')) {
+        onMounted(() => {
+          if (!isResizable() || typeof ResizeObserver === 'undefined') {
             return
           }
-          const disposable = editor.onDidLayoutChange(({ height }) => {
-            const defaultHeight = typeof props.height === 'number' ? props.height : Number(`${props.height}`.match(/^(\d+(?:\.\d+)?)px$/)?.[1])
-            if (!defaultHeight || height < Math.min(defaultHeight, 20)) {
-              return
+          resizeObserver = new ResizeObserver(([entry]) => {
+            const height = entry.contentRect.height
+            if (height > 0) {
+              resizedHeight.value = `${Math.round(height)}px`
             }
-            resizedHeight.value = Math.abs(height - defaultHeight) > 1 ? `${Math.round(height)}px` : undefined
           })
-          editor.onDidDispose(() => disposable.dispose())
+          resizeWrapperRef.value && resizeObserver.observe(resizeWrapperRef.value)
+        })
+        onBeforeUnmount(() => resizeObserver?.disconnect())
+        return () => {
+          const resizable = isResizable()
+          const { class: className, style, ...attrs } = context.attrs
+          const editor = h(VueMonacoEditor, fixEditorSetValue({
+            ...(resizable ? attrs : context.attrs),
+            width: resizable ? '100%' : props.width,
+            height: resizable ? '100%' : props.height
+          }, context), () => [getLoadingDiv()])
+          if (!resizable) {
+            return editor
+          }
+          return h('div', {
+            ref: resizeWrapperRef,
+            class: className,
+            style: [style, { width: props.width, height: resizedHeight.value || props.height }]
+          }, [editor])
         }
-        return () => h(VueMonacoEditor, fixEditorSetValue({
-          height: resizedHeight.value || props.height
-        }, context, bindResizableHeight), () => [getLoadingDiv()])
       }
     })
   }
