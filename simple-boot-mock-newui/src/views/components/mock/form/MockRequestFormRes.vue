@@ -192,7 +192,7 @@ const codeHeight = '300px'
 const emit = defineEmits(['saveMockResponseBody', 'saveProxyResponseData', 'sendMockRequest'])
 
 const generateSample = async (schema) => {
-  contentRef2.value = await generateSchemaSample(schema.schema, schema.type)
+  contentRef2.value = await generateSchemaSample(schema.schema, schema.type, props.schemaSpec)
   setTimeout(() => checkEditorLang())
 }
 const selectExample = (example) => {

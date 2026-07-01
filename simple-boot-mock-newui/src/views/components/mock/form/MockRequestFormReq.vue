@@ -160,7 +160,7 @@ initParamTarget()
 const authValid = ref(true)
 
 const generateSample = async (schema) => {
-  contentRef.value = await generateSchemaSample(schema.schema, schema.type)
+  contentRef.value = await generateSchemaSample(schema.schema, schema.type, props.schemaSpec)
   setTimeout(() => checkEditorLang())
 }
 const selectExample = (example) => {

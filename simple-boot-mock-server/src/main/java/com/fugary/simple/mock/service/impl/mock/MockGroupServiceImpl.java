@@ -20,6 +20,7 @@ import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.utils.servlet.HttpRequestUtils;
+import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.*;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
@@ -563,6 +564,45 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 ExportGroupVo newGroup = SimpleMockUtils.copy(groupVo, ExportGroupVo.class);
                 newGroup.setRequests(mockVo.getGroups().stream().flatMap(group -> group.getRequests().stream())
                         .collect(Collectors.toList()));
+                
+                Map<String, Object> mergedComponentSchemas = new HashMap<>();
+                String mergedSpecVersion = "3.0.1";
+                for (ExportGroupVo group : mockVo.getGroups()) {
+                    if (group.getSchemas() != null) {
+                        for (ExportSchemaVo schema : group.getSchemas()) {
+                            if (MockConstants.MOCK_SCHEMA_BODY_TYPE_COMPONENT.equals(schema.getBodyType()) && StringUtils.isNotBlank(schema.getRequestBodySchema())) {
+                                try {
+                                    Map<String, Object> node = JsonUtils.fromJson(schema.getRequestBodySchema(), Map.class);
+                                    if (node != null) {
+                                        if (node.containsKey("openapi")) {
+                                            mergedSpecVersion = String.valueOf(node.get("openapi"));
+                                        } else if (node.containsKey("swagger")) {
+                                            mergedSpecVersion = String.valueOf(node.get("swagger"));
+                                        }
+                                        Map<String, Object> components = (Map<String, Object>) node.get("components");
+                                        if (components != null && components.get("schemas") instanceof Map) {
+                                            mergedComponentSchemas.putAll((Map<String, Object>) components.get("schemas"));
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    log.error("Failed to merge component schema", e);
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!mergedComponentSchemas.isEmpty()) {
+                    ExportSchemaVo componentSchema = new ExportSchemaVo();
+                    componentSchema.setBodyType(MockConstants.MOCK_SCHEMA_BODY_TYPE_COMPONENT);
+                    componentSchema.setRequestBodySchema(JsonUtils.toJson(Map.of(
+                            "openapi", mergedSpecVersion,
+                            "components", Map.of("schemas", mergedComponentSchemas)
+                    )));
+                    newGroup.setSchemas(List.of(componentSchema));
+                } else {
+                    newGroup.setSchemas(null);
+                }
+
                 mockVo.setGroups(List.of(newGroup));
                 if (StringUtils.isNotBlank(importVo.getGroupName())) {
                     newGroup.setGroupName(importVo.getGroupName());

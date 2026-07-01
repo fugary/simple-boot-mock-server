@@ -77,7 +77,7 @@ const responseExamples = computed(() => {
   return examples ? JSON.parse(examples) : []
 })
 const generateSample = async (schema) => {
-  contentRef.value = await generateSchemaSample(schema.schema, schema.type)
+  contentRef.value = await generateSchemaSample(schema.schema, schema.type, componentsSpec.value)
   setTimeout(() => checkEditorLang())
 }
 const selectExample = (example) => {

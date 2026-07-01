@@ -99,17 +99,29 @@ public class SwaggerImporterImpl implements MockGroupImporter {
     protected void calcGroupComponents(OpenAPI openAPI, ExportGroupVo groupVo, Map<String, Schema> groupComponentSchemas) {
         Map<String, Schema> componentSchemas = openAPI.getComponents().getSchemas();
         if (componentSchemas != null) {
-            groupVo.getRequests().stream().flatMap(request -> request.getDataList().stream()
-                    .flatMap(data -> data.getSchemas().stream())).flatMap(schema -> {
+            Set<String> initialKeys = groupVo.getRequests().stream().flatMap(request -> {
+                Stream<ExportSchemaVo> requestSchemas = request.getSchemas() == null ? Stream.empty() : request.getSchemas().stream();
+                Stream<ExportSchemaVo> dataSchemas = request.getDataList() == null ? Stream.empty() : request.getDataList().stream().flatMap(data -> data.getSchemas() == null ? Stream.empty() : data.getSchemas().stream());
+                return Stream.concat(requestSchemas, dataSchemas);
+            }).flatMap(schema -> {
                 Set<String> schemaSet = calcComponentKeys(schema.getParametersSchema());
                 schemaSet.addAll(calcComponentKeys(schema.getRequestBodySchema()));
                 schemaSet.addAll(calcComponentKeys(schema.getResponseBodySchema()));
                 return schemaSet.stream();
-            }).distinct().forEach(schemaKey -> {
-                if (componentSchemas.get(schemaKey) != null) {
-                    groupComponentSchemas.put(schemaKey, componentSchemas.get(schemaKey));
+            }).collect(Collectors.toSet());
+
+            Queue<String> queue = new LinkedList<>(initialKeys);
+            while (!queue.isEmpty()) {
+                String schemaKey = queue.poll();
+                if (!groupComponentSchemas.containsKey(schemaKey)) {
+                    Schema schema = componentSchemas.get(schemaKey);
+                    if (schema != null) {
+                        groupComponentSchemas.put(schemaKey, schema);
+                        String schemaStr = SchemaJsonUtils.toJson(schema, isV31(openAPI));
+                        queue.addAll(calcComponentKeys(schemaStr));
+                    }
                 }
-            });
+            }
         }
     }
 
