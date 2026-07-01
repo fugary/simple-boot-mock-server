@@ -189,7 +189,7 @@ const joinCurlCommand = (lines, shell) => {
     : lines.join(' \\\n  ')
 }
 
-export const buildCurlCommand = async (paramTargetVal, requestPath, shell = CURL_SHELL.BASH) => {
+export const buildCurlCommand = async (paramTargetVal, requestPath, shell = CURL_SHELL.BASH, proxyUrl = null) => {
   if (!paramTargetVal || !requestPath) {
     return ''
   }
@@ -205,14 +205,19 @@ export const buildCurlCommand = async (paramTargetVal, requestPath, shell = CURL
     await AUTH_OPTION_CONFIG[authContent.authType]?.parseAuthInfo(authContent, headers, authParams, { value: paramTargetVal })
   }
 
-  const url = appendQueryParams(getMockUrl(requestPath), authParams)
+  // 计算 URL：优先使用 proxyUrl，降级使用 mock URL
+  let baseUrl = getMockUrl(requestPath)
+  if (proxyUrl) {
+    const normalizedProxy = proxyUrl.endsWith('/') ? proxyUrl.slice(0, -1) : proxyUrl
+    baseUrl = `${normalizedProxy}${requestPath.startsWith('/') ? requestPath : '/' + requestPath}`
+  }
+
+  const url = appendQueryParams(baseUrl, authParams)
   const lines = [`curl ${quoteCurlValue(url, shell)}`]
   const bodyLines = []
-  let hasRequestBody = false
   if (!isGetMethod(method)) {
     const contentType = paramTargetVal.requestContentType
     const { data, hasBody } = calcRequestBody({ value: paramTargetVal })
-    hasRequestBody = hasBody
     if (hasBody) {
       if (contentType && contentType !== LANG_TO_CONTENT_TYPES[FORM_DATA] && !hasHeader(headers, 'Content-Type')) {
         headers['Content-Type'] = contentType
@@ -230,9 +235,7 @@ export const buildCurlCommand = async (paramTargetVal, requestPath, shell = CURL
     }
   }
 
-  if (!['GET', 'POST'].includes(method) || (method === 'POST' && !hasRequestBody)) {
-    appendCurlOption(lines, '-X', method, shell)
-  }
+  appendCurlOption(lines, '-X', method, shell)
   Object.keys(headers).forEach(name => {
     appendCurlOption(lines, '-H', `${name}: ${headers[name] ?? ''}`, shell)
   })

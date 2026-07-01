@@ -14,7 +14,7 @@ import {
   MOCK_PROXY_URL_HEADER,
   NONE
 } from '@/consts/MockConstants'
-import { isMediaContentType, processEvnParams } from '@/services/mock/MockCommonService'
+import { isMediaContentType, processEvnParams, calcProxyUrl } from '@/services/mock/MockCommonService'
 
 const MOCK_DATA_URL = '/admin/data'
 
@@ -348,6 +348,7 @@ export const calcParamTarget = (groupItem, requestItem, previewData, schemasConf
     pathParams = calcParamTargetByUrl(requestPath)
   }
   const target = {
+    proxyUrl: calcProxyUrl(requestItem?.proxyUrl) || calcProxyUrl(groupItem?.proxyUrl) || '',
     pathParams,
     requestParams: calcSchemaParameters(schemasConf),
     headerParams: calcSchemaParameters(schemasConf, item => item.in === 'header'),

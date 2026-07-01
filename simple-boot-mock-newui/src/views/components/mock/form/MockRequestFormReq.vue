@@ -22,7 +22,8 @@ import {
   calcEnvSuggestions,
   calcHeaderSuggestions,
   generateSampleCheckResults,
-  generateSchemaSample
+  generateSchemaSample,
+  calcProxyUrl
 } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
@@ -180,8 +181,15 @@ const curlContent = ref('')
 const CURL_COMMAND = {
   PASTE: 'paste',
   COPY_BASH: 'copyBash',
-  COPY_CMD: 'copyCmd'
+  COPY_CMD: 'copyCmd',
+  COPY_PROXY_BASH: 'copyProxyBash',
+  COPY_PROXY_CMD: 'copyProxyCmd'
 }
+
+const currentProxyUrl = computed(() => {
+  return calcProxyUrl(paramTarget.value?.proxyUrl)
+})
+
 const processCurlWindow = () => {
   showCodeWindow(curlContent, {
     title: $i18nConcat($i18nBundle('common.label.paste'), 'CURL'),
@@ -196,19 +204,21 @@ const processCurlWindow = () => {
   })
 }
 
-const copyAsCurl = async (shell = CURL_SHELL.BASH) => {
-  const curlCommand = await buildCurlCommand(paramTarget.value, props.requestPath, shell)
+const copyAsCurl = async (shell = CURL_SHELL.BASH, useProxyUrl = false) => {
+  const proxyUrl = useProxyUrl ? currentProxyUrl.value : null
+  const curlCommand = await buildCurlCommand(paramTarget.value, props.requestPath, shell, proxyUrl)
   $copyText(curlCommand)
 }
 
 const handleCurlCommand = (command) => {
-  if (command === CURL_COMMAND.PASTE) {
-    processCurlWindow()
-  } else if (command === CURL_COMMAND.COPY_CMD) {
-    copyAsCurl(CURL_SHELL.CMD)
-  } else {
-    copyAsCurl(CURL_SHELL.BASH)
+  const commandMap = {
+    [CURL_COMMAND.PASTE]: () => processCurlWindow(),
+    [CURL_COMMAND.COPY_BASH]: () => copyAsCurl(CURL_SHELL.BASH, false),
+    [CURL_COMMAND.COPY_CMD]: () => copyAsCurl(CURL_SHELL.CMD, false),
+    [CURL_COMMAND.COPY_PROXY_BASH]: () => copyAsCurl(CURL_SHELL.BASH, true),
+    [CURL_COMMAND.COPY_PROXY_CMD]: () => copyAsCurl(CURL_SHELL.CMD, true)
   }
+  commandMap[command]?.()
 }
 
 </script>
@@ -243,6 +253,18 @@ const handleCurlCommand = (command) => {
             </el-dropdown-item>
             <el-dropdown-item :command="CURL_COMMAND.COPY_CMD">
               {{ $i18nConcat($i18nBundle('common.label.copy'), 'cURL (cmd)') }}
+            </el-dropdown-item>
+            <el-dropdown-item
+              v-if="currentProxyUrl"
+              :command="CURL_COMMAND.COPY_PROXY_BASH"
+            >
+              {{ $i18nConcat($i18nBundle('common.label.copy'), 'cURL Proxy (bash)') }}
+            </el-dropdown-item>
+            <el-dropdown-item
+              v-if="currentProxyUrl"
+              :command="CURL_COMMAND.COPY_PROXY_CMD"
+            >
+              {{ $i18nConcat($i18nBundle('common.label.copy'), 'cURL Proxy (cmd)') }}
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
