@@ -48,7 +48,7 @@ public class SwaggerImporterImpl implements MockGroupImporter {
     public ExportMockVo doImport(String data) {
         ParseOptions parseOptions = new ParseOptions();
         parseOptions.setResolve(true);
-        parseOptions.setResolveFully(true);
+        parseOptions.setResolveFully(false);
         SwaggerParseResult result = new OpenAPIParser().readContents(data, null, parseOptions);
         OpenAPI openAPI = result.getOpenAPI();
         if (openAPI != null) {

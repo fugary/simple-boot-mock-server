@@ -3,6 +3,9 @@
 本文档完整记录了 `simple-boot-mock-server` 从 2024 年至今的详细开发历程、功能迭代及维护记录。
 
 ## 2026年
+### 2026-07
+- **bug**: [2026-07-01] 修复 Swagger 导入时解析包含循环引用的 JSON 导致 StackOverflowError 的问题 (`resolveFully` 设为 `false`)。
+
 ### 2026-04
 - **refactor**: [2026-04-03] 将项目主关联从 `projectCode` 迁移为 `projectId`，保留默认项目 `default` 的兼容逻辑。
 - **db**: [2026-04-03] 新增 Flyway 迁移脚本，自动为分组与协作成员回填 `project_id` 并修复历史数据。
