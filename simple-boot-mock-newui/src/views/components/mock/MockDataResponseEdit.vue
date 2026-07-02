@@ -4,7 +4,7 @@ import { computed, ref, toRaw } from 'vue'
 import { cloneDeep, isString } from 'lodash-es'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { $i18nKey } from '@/messages'
-import { showCodeWindow, showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
+import { showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import MockDictionaryPopover from '@/views/components/mock/form/MockDictionaryPopover.vue'
@@ -13,7 +13,8 @@ import {
   generateSampleCheckResults,
   generateSchemaSample,
   isJson, isXml,
-  useContentTypeOption
+  useContentTypeOption,
+  showSchemaCodeWindow
 } from '@/services/mock/MockCommonService'
 import { loadSchemas } from '@/api/mock/MockRequestApi'
 import { calcContentType } from '@/consts/MockConstants'
@@ -210,7 +211,7 @@ const transformToMock = () => {
             type="primary"
             underline="never"
             class="margin-left3"
-            @click="showCodeWindow(schemaBody)"
+            @click="showSchemaCodeWindow(schemaBody, componentsSpec)"
           >
             <common-icon
               :size="18"

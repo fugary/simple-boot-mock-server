@@ -23,7 +23,8 @@ import {
   calcHeaderSuggestions,
   generateSampleCheckResults,
   generateSchemaSample,
-  calcProxyUrl
+  calcProxyUrl,
+  showSchemaCodeWindow
 } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
@@ -379,7 +380,7 @@ const handleCurlCommand = (command) => {
               type="primary"
               underline="never"
               class="margin-left3"
-              @click="showCodeWindow(schemaBody)"
+              @click="showSchemaCodeWindow(schemaBody, schemaSpec)"
             >
               <common-icon
                 :size="18"

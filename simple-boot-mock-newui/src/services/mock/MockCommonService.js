@@ -3,6 +3,7 @@ import { $i18nKey, $i18nBundle } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
 import { cloneDeep, isArray, isFunction, isObject, isPlainObject, isString } from 'lodash-es'
+import { showCodeWindow } from '@/utils/DynamicUtils'
 import {
   ALL_CONTENT_TYPES_LIST,
   CHARSET_LIST,
@@ -359,4 +360,53 @@ export const getProxyUrlOptions = () => {
       }
     }
   }
+}
+
+export const resolveSchemaRefs = (schema, componentsSpec, visited = new Set()) => {
+  if (!schema || typeof schema !== 'object') return schema
+  if (Array.isArray(schema)) {
+    return schema.map(item => resolveSchemaRefs(item, componentsSpec, visited))
+  }
+  if (schema.$ref) {
+    if (visited.has(schema.$ref)) {
+      return { $ref: `[Circular] ${schema.$ref}` }
+    }
+    const refPath = schema.$ref.split('/').pop()
+    const targetSchema = componentsSpec?.components?.schemas?.[refPath] || componentsSpec?.schemas?.[refPath] || componentsSpec?.definitions?.[refPath]
+    if (targetSchema) {
+      visited.add(schema.$ref)
+      const resolved = resolveSchemaRefs(targetSchema, componentsSpec, visited)
+      visited.delete(schema.$ref)
+      return resolved
+    }
+  }
+  const result = {}
+  for (const key in schema) {
+    result[key] = resolveSchemaRefs(schema[key], componentsSpec, visited)
+  }
+  return result
+}
+
+export const showSchemaCodeWindow = (schemaBody, componentsSpec) => {
+  const show = (content, expanded) => {
+    showCodeWindow(content, {
+      buttons: expanded || !isString(content) || !content.includes('$ref')
+        ? []
+        : [{
+            label: $i18nKey('common.label.commonExpand', 'Ref'),
+            type: 'primary',
+            click: () => {
+              try {
+                const parsed = JSON.parse(content)
+                const resolvedObj = resolveSchemaRefs(parsed, componentsSpec)
+                show(JSON.stringify(resolvedObj, null, 2), true)
+              } catch (e) {
+                console.error('JSON解析失败', e)
+                show(content, true)
+              }
+            }
+          }]
+    })
+  }
+  show(schemaBody, false)
 }

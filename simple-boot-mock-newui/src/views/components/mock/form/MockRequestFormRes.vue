@@ -2,7 +2,7 @@
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { computed, watch, ref, reactive, nextTick, useTemplateRef, onBeforeUnmount, toRaw } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { showCodeWindow, showDiagnoseWindow, showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
+import { showDiagnoseWindow, showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
 import { $i18nKey, $i18nBundle } from '@/messages'
 import {
   generateSampleCheckResults,
@@ -12,7 +12,8 @@ import {
   isXml,
   isMediaContentType,
   statusCodeTagType,
-  useContentTypeOption
+  useContentTypeOption,
+  showSchemaCodeWindow
 } from '@/services/mock/MockCommonService'
 import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import { isString } from 'lodash-es'
@@ -671,7 +672,7 @@ const toShowJsonDataWindow = () => {
                 type="primary"
                 underline="never"
                 class="margin-left3"
-                @click="showCodeWindow(schemaBody)"
+                @click="showSchemaCodeWindow(schemaBody, schemaSpec)"
               >
                 <common-icon
                   :size="18"
