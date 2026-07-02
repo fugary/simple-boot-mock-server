@@ -52,7 +52,6 @@ const detailPriorityKeys = [
   'statusCode',
   'contentType',
   'durationMs',
-  'costTime',
   'forceRequest',
   'count',
   'total',
@@ -60,7 +59,8 @@ const detailPriorityKeys = [
   'requestId',
   'dataId',
   'matchPattern',
-  'message'
+  'message',
+  'costTime'
 ]
 const patternMatchedCodes = new Set(['request_pattern_matched', 'data_pattern_matched'])
 const consoleMessageTagTypes = {
@@ -164,11 +164,13 @@ const shouldShowDetail = (details, key, value) => {
   if (key === 'groupPath' && details.group && !getInfoName(details.group) && getInfoKey(details.group) === value) {
     return false
   }
+  if (key === 'costTime' && details.durationMs !== undefined) return false
   return true
 }
 const toDetailChip = (key, value, step) => {
   const text = formatDetailValue(key, value)
-  const label = getDiagnoseDetailLabel(key)
+  const labelKey = key === 'costTime' ? 'durationMs' : key
+  const label = getDiagnoseDetailLabel(labelKey)
   const type = key === 'statusCode'
     ? statusCodeTagType(value)
     : key === 'message' ? consoleMessageTagTypes[step?.details?.level] : undefined

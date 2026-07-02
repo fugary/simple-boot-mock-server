@@ -16,6 +16,7 @@ import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockScenarioService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.MockJsUtils;
+import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
@@ -452,6 +453,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             } else {
                 responseBody = scriptEngineProvider.mock(responseBody);
             }
+            MockDiagnoseRecorder.of(MockDiagnoseContext.get()).mockProcess();
             String contentType = SimpleMockUtils.calcContentType(null, mockRequest, mockData);
             if (!StringUtils.contains(contentType, MediaType.TEXT_EVENT_STREAM_VALUE)) {
                 responseBody = mockPostScriptProcessor.process(mockRequest, mockData, responseBody);

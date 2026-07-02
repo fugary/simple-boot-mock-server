@@ -328,6 +328,13 @@ public class MockDiagnoseRecorder {
                 KEY_DATA, dataInfo(data, dataSelection));
     }
 
+    public void mockProcess() {
+        if (!isEnabled()) {
+            return;
+        }
+        step(GROUP_DATA, STAGE_MOCK_PROCESS, STATUS_INFO, CODE_MOCK_PROCESS);
+    }
+
     private void step(String stageGroup, String stage, String status, String code, Object... details) {
         if (isEnabled()) {
             diagnose.step(stageGroup, stage, status, code, details);

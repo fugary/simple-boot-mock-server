@@ -61,6 +61,8 @@ public final class MockDiagnoseConstants {
 
     public static final String STAGE_DATA_DEFAULT = "data_default";
 
+    public static final String STAGE_MOCK_PROCESS = "mock_process";
+
     public static final String STAGE_POST_PROCESSOR = "post_processor";
 
     public static final String STAGE_EXTERNAL_FETCH = "external_fetch";
@@ -126,6 +128,8 @@ public final class MockDiagnoseConstants {
     public static final String CODE_DEFAULT_DATA_NOT_FOUND = "default_data_not_found";
 
     public static final String CODE_DEFAULT_DATA_SELECTED = "default_data_selected";
+
+    public static final String CODE_MOCK_PROCESS = "mock_process";
 
     public static final String CODE_POST_PROCESSOR_START = "post_processor_start";
 

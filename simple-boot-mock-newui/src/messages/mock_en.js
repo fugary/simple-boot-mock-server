@@ -1,4 +1,4 @@
-import { baseMessages } from '@/messages/base'
+﻿import { baseMessages } from '@/messages/base'
 export const mock = baseMessages()
 
 mock.label.method = 'Method'
@@ -364,3 +364,4 @@ mock.label.dictMisc = 'Misc'
 mock.label.insertMockVariable = 'Insert Mock Variable'
 mock.label.toMockTemplate = 'To Mock Template'
 mock.label.restoreOriginal = 'Restore Original'
+mock.label.diagnoseCodeMockProcess = 'Mock Process'

@@ -1,4 +1,4 @@
-import { baseMessages } from '@/messages/base'
+﻿import { baseMessages } from '@/messages/base'
 export const mock = baseMessages()
 
 mock.label.method = '请求方法'
@@ -364,3 +364,4 @@ mock.label.dictMisc = 'Misc (杂项)'
 mock.label.insertMockVariable = '插入Mock变量'
 mock.label.toMockTemplate = '转为Mock模板'
 mock.label.restoreOriginal = '还原原数据'
+mock.label.diagnoseCodeMockProcess = 'Mock数据处理'
