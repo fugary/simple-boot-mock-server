@@ -39,6 +39,8 @@ public class MockDiagnoseVo {
 
     private List<Step> steps = new ArrayList<>();
 
+    private transient long lastStepTime = System.currentTimeMillis();
+
     public synchronized void finish(String resultType, String code, Object... details) {
         this.resultType = resultType;
         step(GROUP_RESULT, STAGE_RESULT, calcStatus(resultType), code, details);
@@ -64,7 +66,14 @@ public class MockDiagnoseVo {
         step.setStage(stage);
         step.setStatus(status);
         step.setCode(code);
-        step.setDetails(toDetails(details));
+        long now = System.currentTimeMillis();
+        long costTime = now - lastStepTime;
+        lastStepTime = now;
+        Map<String, Object> detailsMap = toDetails(details);
+        if (costTime > 0) {
+            detailsMap.put("costTime", costTime);
+        }
+        step.setDetails(detailsMap);
         steps.add(step);
     }
 

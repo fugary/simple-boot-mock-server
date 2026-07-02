@@ -52,6 +52,7 @@ const detailPriorityKeys = [
   'statusCode',
   'contentType',
   'durationMs',
+  'costTime',
   'forceRequest',
   'count',
   'total',
@@ -148,7 +149,7 @@ const formatInfoObject = (key, value) => {
 }
 const formatDetailValue = (key, value) => {
   if (value === undefined || value === null || value === '') return ''
-  if (key === 'durationMs' || key === 'actualDelayMs' || key === 'configuredDelayMs') return formatDuration(value)
+  if (key === 'durationMs' || key === 'actualDelayMs' || key === 'configuredDelayMs' || key === 'costTime') return formatDuration(value)
   if (key === 'delaySource' || key === 'proxySource') return getDiagnoseDetailLabel(value)
   if (key === 'dataSelection') return getDiagnoseDataSelectionLabel(value)
   if (Array.isArray(value)) return `${value.length}`
