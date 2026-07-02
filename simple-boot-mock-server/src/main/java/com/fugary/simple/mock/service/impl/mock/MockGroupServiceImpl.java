@@ -559,12 +559,12 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             }
             if (Set.of("swagger", "postman").contains(importVo.getType())
                     && BooleanUtils.isTrue(importVo.getSingleGroup())
-                    && CollectionUtils.size(mockVo.getGroups()) > 1) {
+                    && CollectionUtils.isNotEmpty(mockVo.getGroups())) {
                 ExportGroupVo groupVo = mockVo.getGroups().get(0);
                 ExportGroupVo newGroup = SimpleMockUtils.copy(groupVo, ExportGroupVo.class);
                 newGroup.setRequests(mockVo.getGroups().stream().flatMap(group -> group.getRequests().stream())
                         .collect(Collectors.toList()));
-                
+
                 Map<String, Object> mergedComponentSchemas = new HashMap<>();
                 String mergedSpecVersion = "3.0.1";
                 for (ExportGroupVo group : mockVo.getGroups()) {
