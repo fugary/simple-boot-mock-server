@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Create date 2024/7/4<br>
@@ -52,6 +53,8 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
     private ScriptWithFetchProvider scriptWithFetchProvider;
 
     private boolean fetchEnabled;
+
+    private static final Pattern MOCK_PATTERN = Pattern.compile("\"[\\w\\-]+\\|[^\"]+\"\\s*:|:\\s*\"[^\"]*@[^\"]+\"|:\\s*function\\s*\\(");
 
     static {
         Resource fastMockJs = new ClassPathResource(FAST_MOCK_JS_PATH);
@@ -84,6 +87,9 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
     public String mock(String template) {
         String result = StringUtils.trimToEmpty(template);
         if (MockJsUtils.isJson(result) || isMockJSFragment(template)) {
+            if (!isMockJSFragment(template) && !MOCK_PATTERN.matcher(template).find()) {
+                return result; // 没有包含mockjs规则时直接原样返回，不进入JS引擎处理，大幅提升长JSON速度
+            }
             return evalStr(parseMockJSFragment(template));
         }
         return result;
