@@ -205,7 +205,7 @@ const doSaveMockResponseBody = () => {
   if (editable.value) {
     if (previewData.value?.id) {
       if (previewData.value && checkDataChange()) {
-        return MockDataApi.saveOrUpdate(previewData.value)
+        return MockDataApi.saveOrUpdate(previewData.value, { loading: true, timeout: 60000 })
           .then((data) => {
             if (data.success && data.resultData) {
               ElMessage.success($i18nBundle('common.msg.saveSuccess'))
@@ -320,7 +320,7 @@ const doSaveProxyResponseData = async (response = responseTarget.value) => {
     responseBody,
     mockParams: JSON.stringify(calcMockParams())
   }
-  return MockDataApi.saveOrUpdate(mockData, { loading: true })
+  return MockDataApi.saveOrUpdate(mockData, { loading: true, timeout: 60000 })
     .then(data => {
       if (data.success && data.resultData) {
         ElMessage.success($i18nBundle('common.msg.saveSuccess'))

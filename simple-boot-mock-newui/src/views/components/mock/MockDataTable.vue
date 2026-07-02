@@ -428,7 +428,7 @@ const saveMockData = (data) => {
     dataItem.headers = JSON.stringify(dataItem.headerParams)
     delete dataItem.headerParams
   }
-  return MockDataApi.saveOrUpdate(dataItem)
+  return MockDataApi.saveOrUpdate(dataItem, { loading: true, timeout: 60000 })
     .then((data) => {
       if (data.success && data.resultData && selectDataId.value !== data.resultData.id) {
         onSelectDataItem(data.resultData)

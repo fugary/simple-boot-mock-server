@@ -1,7 +1,7 @@
 <script setup>
 import { $i18nBundle, $i18nKey } from '@/messages'
 import { ElMessage } from 'element-plus'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { getStyleGrow } from '@/utils'
 
 const props = defineProps({
@@ -45,12 +45,16 @@ const currentItem = defineModel('modelValue', {
   default: () => ({})
 })
 
+const saveLoading = ref(false)
 const internalSaveCurrentItem = ({ form }) => {
   form.validate(valid => {
     if (valid) {
+      saveLoading.value = true
       props.saveCurrentItem(currentItem.value).then(() => {
         ElMessage.success($i18nBundle('common.msg.saveSuccess'))
         showEditWindow.value = false
+      }).finally(() => {
+        saveLoading.value = false
       })
     }
   })
@@ -76,6 +80,7 @@ const calcOptions = computed(() => {
     v-model="showEditWindow"
     :title="currentItem?.id?$i18nKey('common.label.commonEdit', name):$i18nKey('common.label.commonAdd', name)"
     :ok-click="internalSaveCurrentItem"
+    :ok-loading="saveLoading"
     :show-ok="editable"
     append-to-body
     destroy-on-close

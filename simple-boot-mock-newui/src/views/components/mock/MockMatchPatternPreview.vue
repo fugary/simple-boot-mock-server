@@ -106,7 +106,7 @@ const calcResponse = async (response) => {
 const saveMatchPattern = () => {
   currentItem.value.matchPattern = paramTarget.value?.matchPattern
   if (currentItem.value.requestId) {
-    MockDataApi.saveOrUpdate(currentItem.value).then(() => {
+    MockDataApi.saveOrUpdate(currentItem.value, { loading: true, timeout: 60000 }).then(() => {
       showWindow.value = false
       saveResolve?.(currentItem.value)
       ElMessage.success($i18nBundle('common.msg.saveSuccess'))

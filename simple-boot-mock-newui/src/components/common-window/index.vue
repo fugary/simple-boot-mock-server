@@ -65,6 +65,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  okLoading: {
+    type: Boolean,
+    default: false
+  },
   okClick: {
     type: Function,
     default: null
@@ -230,6 +234,7 @@ if (props.showFullscreen && props.dblclickToFullscreen) {
         <el-button
           v-if="showOk"
           type="primary"
+          :loading="okLoading"
           @click="okButtonClick($event)"
         >{{ okLabel||$t('common.label.confirm') }}</el-button>
         <el-button
