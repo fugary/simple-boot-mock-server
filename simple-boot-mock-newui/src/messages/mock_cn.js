@@ -1,4 +1,4 @@
-﻿import { baseMessages } from '@/messages/base'
+import { baseMessages } from '@/messages/base'
 export const mock = baseMessages()
 
 mock.label.method = '请求方法'

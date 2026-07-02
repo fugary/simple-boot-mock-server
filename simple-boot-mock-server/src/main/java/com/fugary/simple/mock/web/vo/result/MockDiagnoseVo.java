@@ -70,8 +70,8 @@ public class MockDiagnoseVo {
         long costTime = now - lastStepTime;
         lastStepTime = now;
         Map<String, Object> detailsMap = toDetails(details);
-        if (costTime > 0) {
-            detailsMap.put("costTime", costTime);
+        if (costTime > 0 && !detailsMap.containsKey(KEY_DURATION_MS)) {
+            detailsMap.put(KEY_DURATION_MS, costTime);
         }
         step.setDetails(detailsMap);
         steps.add(step);
