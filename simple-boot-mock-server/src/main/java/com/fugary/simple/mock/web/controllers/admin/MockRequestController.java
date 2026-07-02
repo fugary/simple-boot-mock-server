@@ -15,6 +15,7 @@ import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
 import com.fugary.simple.mock.utils.AsyncUtils;
+import com.fugary.simple.mock.utils.SchemaJsonUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
@@ -282,7 +283,7 @@ public class MockRequestController {
         List<MockSchema> groupSchemas = mockSchemaService.queryGroupSchemas(request.getGroupId());
         for (MockSchema groupSchema : groupSchemas) {
             if (MockConstants.MOCK_SCHEMA_BODY_TYPE_COMPONENT.equals(groupSchema.getBodyType())) {
-                resultVo.setComponentSchema(groupSchema);
+                resultVo.setComponentSchema(SchemaJsonUtils.filterComponentSchema(groupSchema, schemas));
             }
         }
         return SimpleResultUtils.createSimpleResult(resultVo);
