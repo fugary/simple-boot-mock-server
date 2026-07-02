@@ -696,7 +696,7 @@
                         <tbody>
                             <tr>
                                 <td><code>JAVA_OPTS</code></td>
-                                <td><code>-Xmx512M</code></td>
+                                <td><code>-Xmx1024M</code></td>
                                 <td>JVM startup arguments</td>
                             </tr>
                             <tr>
@@ -1149,11 +1149,11 @@ request.params.type === 'vip' && request.headers.token</code></pre>
                 <pre><code class="language-javascript">(async function () {
     // Load CryptoJS library
     const CryptoJS = await require('https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js');
-    
+
     const message = "hello world";
     const hash = CryptoJS.MD5(message).toString();
     const sha256 = CryptoJS.SHA256(message).toString();
-    
+
     return {
         message: message,
         md5_hash: hash,

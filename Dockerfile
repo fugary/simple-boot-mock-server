@@ -10,7 +10,7 @@ VOLUME /tmp
 # Expose Port 9086
 EXPOSE 9086
 
-ENV JAVA_OPTS="-Xmx512M"
+ENV JAVA_OPTS="-Xmx1024M"
 # 类型支持h2和mysql
 ENV MOCK_DB_TYPE="h2"
 # h2数据库

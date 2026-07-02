@@ -4,5 +4,5 @@ BIN_DIR=`pwd`
 cd ..
 DEPLOY_DIR=`pwd`
 echo -e "Starting the @project.name@ ...\n"
-JAVA_OPTS="-Xms256M -Xmx512M"
+JAVA_OPTS="-Xms512M -Xmx1024M"
 java $JAVA_OPTS -jar $DEPLOY_DIR/@project.build.finalName@.jar &

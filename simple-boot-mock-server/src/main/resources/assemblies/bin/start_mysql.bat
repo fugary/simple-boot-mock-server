@@ -1,7 +1,7 @@
 cd ..
 title @project.name@
 echo Starting the @project.name@ ...
-set JAVA_OPTS=-Xms256M -Xmx512M
+set JAVA_OPTS=-Xms512M -Xmx1024M
 set MOCK_DB_TYPE=mysql
 set MOCK_DB_MYSQL_SERVER=localhost
 set MOCK_DB_MYSQL_PORT=3306
