@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import MockMoreDropdownMenu from './MockMoreDropdownMenu.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import MockRequestApi, { ALL_METHODS } from '@/api/mock/MockRequestApi'
 import CommonIcon from '@/components/common-icon/index.vue'
@@ -8,6 +9,7 @@ import { defineTableButtons } from '@/components/utils'
 import { $coreConfirm } from '@/utils'
 import { $i18nBundle, $i18nConcat, $i18nKey } from '@/messages'
 import { calcProxyUrl } from '@/services/mock/MockCommonService'
+
 const props = defineProps({
   groupItem: {
     type: Object,
@@ -32,7 +34,7 @@ const fullPath = computed(() => {
   return `/mock/${groupItem?.groupPath}${requestItem.value?.requestPath}`
 })
 
-const emit = defineEmits(['requestChanged', 'toTestMockRequest', 'toEditMockRequest', 'toShowRequestHistory', 'toTestMatchPattern', 'toEditDelay', 'toCopyMockRequest', 'saveMockRequest'])
+const emit = defineEmits(['requestChanged', 'toTestMockRequest', 'toEditMockRequest', 'toShowRequestHistory', 'toTestMatchPattern', 'toEditDelay', 'toCopyMockRequest', 'saveMockRequest', 'requestContextMenu', 'closeContextMenu'])
 
 const buttons = computed(() => {
   return defineTableButtons([{
@@ -133,7 +135,10 @@ const requestProxyUrl = computed(() => {
 </script>
 
 <template>
-  <el-container class="flex-column">
+  <el-container
+    class="flex-column"
+    @contextmenu.prevent="emit('requestContextMenu', $event, requestItem, moreButtons)"
+  >
     <el-row class="margin-bottom1">
       <el-col>
         <span class="request-path-link-group">
@@ -225,6 +230,8 @@ const requestProxyUrl = computed(() => {
         <el-dropdown
           placement="bottom"
           style="top: 5px;"
+          @visible-change="val => val && emit('closeContextMenu')"
+          @mouseenter="emit('closeContextMenu')"
         >
           <el-link
             underline="never"
@@ -236,24 +243,10 @@ const requestProxyUrl = computed(() => {
             />
           </el-link>
           <template #dropdown>
-            <el-dropdown-menu>
-              <template v-for="(moreButton, index) in moreButtons">
-                <el-dropdown-item
-                  v-if="moreButton.enabled!==false&&(!moreButton.buttonIf||moreButton.buttonIf(requestItem))"
-                  :key="index"
-                  :disabled="moreButton.disabled"
-                  @click="moreButton.click?.(requestItem)"
-                >
-                  <el-text :type="moreButton.type">
-                    <common-icon
-                      :size="16"
-                      :icon="moreButton.icon"
-                    />
-                    {{ moreButton.label || $t(moreButton.labelKey) }}
-                  </el-text>
-                </el-dropdown-item>
-              </template>
-            </el-dropdown-menu>
+            <mock-more-dropdown-menu
+              :buttons="moreButtons"
+              :item="requestItem"
+            />
           </template>
         </el-dropdown>
       </el-col>

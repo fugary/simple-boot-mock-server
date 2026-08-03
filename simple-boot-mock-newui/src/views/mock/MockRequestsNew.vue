@@ -10,7 +10,7 @@ import MockRequestApi, {
   recoverFromHistory,
   searchHistories
 } from '@/api/mock/MockRequestApi'
-import { useProvideDataLoading, useTableAndSearchForm } from '@/hooks/CommonHooks'
+import { useProvideDataLoading, useTableAndSearchForm, useContextMenu } from '@/hooks/CommonHooks'
 import { defineFormOptions, defineTableColumns, limitStr } from '@/components/utils'
 import { ref, computed, nextTick } from 'vue'
 import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
@@ -26,6 +26,7 @@ import {
   toTestMatchPattern
 } from '@/utils/DynamicUtils'
 import MockRequestMenuItem from '@/views/components/mock/MockRequestMenuItem.vue'
+import MockMoreDropdownMenu from '@/views/components/mock/MockMoreDropdownMenu.vue'
 import CommonIcon from '@/components/common-icon/index.vue'
 import { checkProjectDeletable, checkProjectWritable } from '@/api/mock/MockProjectApi'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
@@ -411,6 +412,15 @@ const saveMockRequest = item => {
 
 const batchMode = ref(false)
 const copyRequestWindowRef = ref()
+const {
+  showContextMenu,
+  contextMenuRef,
+  contextMenuHandlers,
+  contextMenuItem,
+  contextMenuDropdownRef,
+  handleContextMenuVisibleChange,
+  handleRequestContextMenu
+} = useContextMenu()
 
 const newColumns = computed(() => {
   return [{
@@ -434,6 +444,8 @@ const newColumns = computed(() => {
                                   onToEditDelay={() => { newOrEdit(data.id) }}
                                   onRequestChanged={() => loadMockRequests()}
                                   onSaveMockRequest={(item) => saveMockRequest(item)}
+                                  onRequestContextMenu={(event, item, buttons) => handleRequestContextMenu(event, item, buttons)}
+                                  onCloseContextMenu={() => { showContextMenu.value = false }}
                                   onDblclick={() => newOrEdit(data.id)}
                                   group-item={groupItem.value} />
     },
@@ -825,6 +837,21 @@ const toShowHistoryWindow = (current) => {
       :allow-move="projectWritable"
       @transfer-success="onRequestTransferSuccess"
     />
+    <el-dropdown
+      v-if="showContextMenu"
+      ref="contextMenuDropdownRef"
+      trigger="contextmenu"
+      virtual-triggering
+      :virtual-ref="contextMenuRef"
+      @visible-change="handleContextMenuVisibleChange"
+    >
+      <template #dropdown>
+        <mock-more-dropdown-menu
+          :buttons="contextMenuHandlers"
+          :item="contextMenuItem"
+        />
+      </template>
+    </el-dropdown>
   </el-container>
 </template>
 

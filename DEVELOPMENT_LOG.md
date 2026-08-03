@@ -3,6 +3,9 @@
 本文档完整记录了 `simple-boot-mock-server` 从 2024 年至今的详细开发历程、功能迭代及维护记录。
 
 ## 2026年
+### 2026-08
+- **feat**: [2026-08-03] Mock请求列表项增加右键菜单，对应包含编辑、复制、规则测试、历史记录和删除等操作功能。
+
 ### 2026-07
 - **opt**: [2026-07-02] 优化 loadSchemas 接口返回的数据量：对于包含大量组件的合并分组，不再返回完整的 component schema，而是利用正则表达式 `Pattern.compile("\"(?:#/components/schemas/|#/definitions/)([^\"]+)\"")` 递归提取当前 schema 实际引用的 components 并进行过滤裁剪。
 - **bug**: [2026-07-01] 修复 Swagger 导入为单分组时，未合并各个子分组的 component schema 导致生成的 Schema 测试数据缺失引用的问题。

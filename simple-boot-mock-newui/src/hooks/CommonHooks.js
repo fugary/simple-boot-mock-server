@@ -1,4 +1,4 @@
-import { provide, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { provide, inject, onBeforeUnmount, onMounted, ref, watch, nextTick } from 'vue'
 import { isFunction, isNumber, uniqueId } from 'lodash-es'
 import { useGlobalSearchParamStore } from '@/stores/GlobalSearchParamStore'
 import { $coreHideLoading, $coreShowLoading } from '@/utils'
@@ -184,5 +184,53 @@ export const useInjectDataLoading = (loadingKey = 'dataLoading') => {
   return {
     startLoading,
     endLoading
+  }
+}
+
+export const useContextMenu = () => {
+  const showContextMenu = ref(false)
+  const contextMenuRef = ref(null)
+  const contextMenuHandlers = ref([])
+  const contextMenuItem = ref(null)
+  const contextMenuDropdownRef = ref()
+
+  const handleContextMenuVisibleChange = (visible) => {
+    if (!visible) {
+      showContextMenu.value = false
+    }
+  }
+
+  const handleRequestContextMenu = (event, item, buttons) => {
+    showContextMenu.value = false
+    contextMenuItem.value = item
+    contextMenuHandlers.value = buttons || []
+    contextMenuRef.value = {
+      getBoundingClientRect () {
+        return {
+          width: 0,
+          height: 0,
+          top: event.clientY,
+          bottom: event.clientY,
+          left: event.clientX,
+          right: event.clientX
+        }
+      }
+    }
+    nextTick(() => {
+      showContextMenu.value = true
+      nextTick(() => {
+        contextMenuDropdownRef.value?.handleOpen?.()
+      })
+    })
+  }
+
+  return {
+    showContextMenu,
+    contextMenuRef,
+    contextMenuHandlers,
+    contextMenuItem,
+    contextMenuDropdownRef,
+    handleContextMenuVisibleChange,
+    handleRequestContextMenu
   }
 }
