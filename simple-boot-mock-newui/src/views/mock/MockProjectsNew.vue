@@ -302,8 +302,8 @@ const tableProjectItems = computed(() => {
           }
           return <>
             <span v-common-tooltip={$i18nBundle('common.label.createDate')}>
-            <CommonIcon icon="CalendarMonthFilled" size={20} style="top: 4px;"/>
-            {formatDate(project.createDate, format)}
+              <CommonIcon icon="CalendarMonthFilled" size={20} style="top: 4px;"/>
+              {formatDate(project.createDate, format)}
             </span>
             {modifyStr}
           </>
@@ -681,58 +681,53 @@ const pageAttrs = {
 }
 
 .project-card {
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  border: 1px solid var(--el-border-color);
-  border-top: 3px solid rgba(64, 158, 255, 0.22);
-  background:
-    linear-gradient(180deg, rgba(64, 158, 255, 0.06) 0%, rgba(64, 158, 255, 0.01) 96px, transparent 100%),
-    var(--el-bg-color-overlay);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  border-radius: 12px;
+  transition: all 0.25s ease;
   overflow: hidden;
+  /* Sync top border width with hover state to prevent layout shift
+     Use default border color initially so it looks connected */
+  border-top: 3px solid var(--el-border-color-lighter);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .dark .project-card {
-  border-color: rgba(255, 255, 255, 0.1);
-  border-top-color: rgba(64, 158, 255, 0.5);
-  background:
-    linear-gradient(180deg, rgba(64, 158, 255, 0.12) 0%, rgba(64, 158, 255, 0.03) 108px, transparent 100%),
-    rgba(255, 255, 255, 0.02);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
+  border-top-color: var(--el-border-color-darker);
 }
 
 .project-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
-  border-color: rgba(64, 158, 255, 0.38);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   border-top-color: var(--el-color-primary);
 }
 
 .dark .project-card:hover {
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.36);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 
 .project-selected {
-  border-color: var(--el-color-primary);
-  border-top-color: var(--el-color-primary);
-  box-shadow: 0 0 0 1px rgba(64, 158, 255, 0.3), 0 18px 36px rgba(15, 23, 42, 0.18);
+  border-color: var(--el-color-primary) !important;
+  border-top-color: var(--el-color-primary) !important;
+  box-shadow: 0 0 0 1px var(--el-color-primary), 0 8px 24px rgba(64, 158, 255, 0.18) !important;
 }
 
 .project-card :deep(.el-card__header) {
-  padding: 14px 18px 12px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .project-card :deep(.el-card__body) {
-  padding: 14px 18px 16px;
+  padding: 14px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .project-card__header {
   display: flex;
   position: relative;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
 }
@@ -797,37 +792,15 @@ const pageAttrs = {
 
 .project-operations {
   display: flex;
-  position: absolute;
-  top: 0;
-  right: 0;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-width: calc(100% - 48px);
-  flex-shrink: 0;
-  z-index: 1;
-  padding: 2px 0 2px 16px;
-  background: linear-gradient(270deg, var(--el-bg-color-overlay) 70%, transparent 100%);
+  gap: 6px;
   opacity: 0;
-  transform: translateY(-4px);
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .project-card:hover .project-operations,
 .project-card:focus-within .project-operations,
 .project-operations--visible {
   opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-.project-operations :deep(.el-button) {
-  margin-left: 0;
-  min-height: 32px;
-  padding: 0 10px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .project-disabled {
@@ -848,20 +821,20 @@ const pageAttrs = {
 }
 
 .project-card :deep(.el-descriptions__cell) {
-  padding-bottom: 6px;
+  padding-bottom: 12px;
 }
 
 .project-card :deep(.el-descriptions__content) {
-  line-height: 24px;
+  line-height: 1.6;
 }
 
 .project-authority-row {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--el-border-color);
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--el-border-color-lighter);
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
@@ -875,14 +848,14 @@ const pageAttrs = {
   min-width: 42px;
   font-size: 14px;
   font-weight: 500;
-  line-height: 24px;
+  line-height: 1.6;
   color: var(--el-text-color-secondary);
 }
 
 .project-authority-row__content {
   flex: 1;
   min-width: 0;
-  line-height: 24px;
+  line-height: 1.6;
   color: var(--el-text-color-primary);
   display: -webkit-box;
   overflow: hidden;
@@ -918,7 +891,7 @@ const pageAttrs = {
 
 @media (max-width: 768px) {
   .project-card {
-    border-radius: 14px;
+    border-radius: 12px;
   }
 
   .project-card :deep(.el-card__header) {
@@ -926,7 +899,7 @@ const pageAttrs = {
   }
 
   .project-card :deep(.el-card__body) {
-    padding: 12px 14px 14px;
+    padding: 14px 14px 16px;
   }
 
   .project-card__header {
@@ -936,14 +909,9 @@ const pageAttrs = {
   }
 
   .project-operations {
-    position: static;
     opacity: 1;
-    transform: none;
-    pointer-events: auto;
-    max-width: none;
     justify-content: flex-start;
     padding-left: 26px;
-    background: transparent;
   }
 
   .project-authority-row {
