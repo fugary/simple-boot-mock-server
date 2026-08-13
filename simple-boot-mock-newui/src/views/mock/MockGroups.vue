@@ -60,6 +60,15 @@ import {
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import { filterProjectOptionsByAuthority, useProjectEditHook, useSelectProjects } from '@/hooks/mock/MockProjectHooks'
 
+const calcActiveScenarioName = (group) => {
+  const scenarios = scenarioMap.value[group.id] || scenarioMap.value[group.modifyFrom] || []
+  if (group.activeScenarioCode) {
+    const found = scenarios.find(s => String(s.scenarioCode) === String(group.activeScenarioCode))
+    return found?.scenarioName || group.activeScenarioCode
+  }
+  return scenarios.length > 0 ? $i18nBundle('mock.label.defaultScenario') : ''
+}
+
 // Add getGroupHistoryViewOptions
 const getGroupHistoryViewOptions = (group, history) => {
   return [{
@@ -70,16 +79,8 @@ const getGroupHistoryViewOptions = (group, history) => {
     prop: 'groupPath'
   }, {
     labelKey: 'mock.label.activeScenario',
-    enabled: (scenarioMap.value[group.id] || []).length > 0,
-    prop: (group) => {
-      const scenarios = scenarioMap.value[group.id] || []
-      if (!scenarios.length) return ''
-      if (group.activeScenarioCode) {
-        const found = scenarios.find(s => String(s.scenarioCode) === String(group.activeScenarioCode))
-        return found?.scenarioName || group.activeScenarioCode
-      }
-      return $i18nBundle('mock.label.defaultScenario')
-    }
+    enabled: (scenarioMap.value[group.id] || scenarioMap.value[group.modifyFrom] || []).length > 0,
+    prop: calcActiveScenarioName
   }, {
     labelKey: 'mock.label.version',
     prop: () => `${group.version ?? ''}${group.current ? ` <${$i18nBundle('mock.label.current')}>` : ''}`
@@ -98,6 +99,9 @@ const getGroupHistoryViewOptions = (group, history) => {
   }, {
     labelKey: 'mock.label.disabledMock',
     prop: () => group.disableMock !== undefined ? $i18nBundle(group.disableMock ? 'common.label.yes' : 'common.label.no') : ''
+  }, {
+    labelKey: 'mock.label.pinToTop',
+    prop: () => group.topFlag !== undefined ? $i18nBundle(group.topFlag ? 'common.label.yes' : 'common.label.no') : ''
   }, {
     labelKey: 'common.label.delay',
     prop: 'delay'
@@ -386,15 +390,7 @@ const columns = computed(() => {
           projectInfo = projectNameNode
         }
       }
-      const hasScenarios = (scenarioMap.value[data.id] || []).length > 0
-      let activeScenarioName = ''
-      if (data.activeScenarioCode) {
-        const scenarios = scenarioMap.value[data.id] || []
-        const found = scenarios.find(s => String(s.scenarioCode) === String(data.activeScenarioCode))
-        activeScenarioName = found?.scenarioName || data.activeScenarioCode
-      } else if (hasScenarios) {
-        activeScenarioName = $i18nBundle('mock.label.defaultScenario')
-      }
+      const activeScenarioName = calcActiveScenarioName(data)
       return <>
           <ElLink type="primary" onClick={() => $goto(url)}>
             {data.groupName}
@@ -495,7 +491,7 @@ const columns = computed(() => {
               : '')}
       </>
     },
-    minWidth: '120px'
+    minWidth: '150px'
   }, {
     labelKey: 'common.label.createDate',
     minWidth: '180px',
@@ -939,15 +935,7 @@ const historyColumns = computed(() => {
     labelKey: 'mock.label.groupName',
     minWidth: '130px',
     formatter (data) {
-      const hasScenarios = (scenarioMap.value[data.id] || []).length > 0
-      let activeScenarioName = ''
-      if (data.activeScenarioCode) {
-        const scenarios = scenarioMap.value[data.id] || []
-        const found = scenarios.find(s => String(s.scenarioCode) === String(data.activeScenarioCode))
-        activeScenarioName = found?.scenarioName || data.activeScenarioCode
-      } else if (hasScenarios) {
-        activeScenarioName = $i18nBundle('mock.label.defaultScenario')
-      }
+      const activeScenarioName = calcActiveScenarioName(data)
       return <>
         {data.groupName}
         {activeScenarioName
@@ -956,14 +944,8 @@ const historyColumns = computed(() => {
       </>
     }
   }, {
-    labelKey: 'mock.label.pathId',
-    minWidth: '180px',
-    formatter (data) {
-      return data.groupPath
-    }
-  }, {
     labelKey: 'common.label.status',
-    minWidth: '100px',
+    minWidth: '120px',
     formatter (data) {
       let disableMockStr = ''
       if (data.disableMock) {
@@ -977,6 +959,11 @@ const historyColumns = computed(() => {
       return <>
         <DelFlagTag modelValue={data.status} />
         {disableMockStr}
+        {data.topFlag
+          ? <ElLink type="warning" underline={false} class="margin-left1" v-common-tooltip={$i18nBundle('mock.label.pinToTop')} style="cursor: default;">
+              <CommonIcon icon="StarFilled" size={18} />
+            </ElLink>
+          : ''}
       </>
     }
   }, {
