@@ -158,14 +158,20 @@ public class MockProjectController {
         String loginUserName = StringUtils.lowerCase(StringUtils.trimToEmpty(SecurityUtils.getLoginUserName()));
         StringBuilder sortBuilder = new StringBuilder("case when project_code = '")
                 .append(MockConstants.MOCK_DEFAULT_PROJECT)
-                .append("' then 0");
+                .append("' then 0 else 1 end");
+        
+        StringBuilder userSortBuilder = new StringBuilder("case ");
         if (StringUtils.isNotBlank(loginUserName)) {
-            sortBuilder.append(" when lower(user_name) = '")
+            userSortBuilder.append(" when lower(user_name) = '")
                     .append(StringUtils.replace(loginUserName, "'", "''"))
-                    .append("' then 1");
+                    .append("' then 0");
         }
-        sortBuilder.append(" else 2 end");
-        queryWrapper.orderByAsc(sortBuilder.toString()).orderByDesc("id");
+        userSortBuilder.append(" else 1 end");
+        
+        queryWrapper.orderByAsc(sortBuilder.toString())
+                .orderByDesc("top_flag")
+                .orderByAsc(userSortBuilder.toString())
+                .orderByDesc("id");
     }
 
     private void appendCurrentUserProjectCondition(QueryWrapper<MockProject> queryWrapper) {

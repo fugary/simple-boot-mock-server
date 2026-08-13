@@ -8,7 +8,6 @@ import MockProjectApi, {
   checkProjectReadable,
   checkProjectEdit,
   selectProjects,
-  sortProjects,
   transferMockProject
 } from '@/api/mock/MockProjectApi'
 import { $coreConfirm, $goto, formatDate, isAdminUser, useCurrentUserName } from '@/utils'
@@ -185,6 +184,14 @@ const cancelProjectPublicFlag = (project, $event) => {
     .then(() => saveProjectItem({ ...project, publicFlag: false }))
 }
 
+const toggleProjectTop = (project, $event) => {
+  $event?.stopPropagation()
+  if (!checkProjectEdit(project)) {
+    return Promise.resolve()
+  }
+  return saveProjectItem({ ...project, topFlag: !project.topFlag })
+}
+
 const minWidth = '100px'
 
 const projectAuthorityOptions = computed(() => {
@@ -236,7 +243,7 @@ const getProjectAuthorityTooltip = (authorities) => {
 }
 
 const tableProjectItems = computed(() => {
-  return sortProjects(tableData.value).map(project => {
+  return tableData.value.map(project => {
     const defaultProject = isDefaultProject(project.projectCode)
     const publicProject = !!project.publicFlag
     const editable = !defaultProject && checkProjectEdit(project)
@@ -286,6 +293,21 @@ const tableProjectItems = computed(() => {
                   {groupCount}
                 </ElTag>
               : ''}
+            {!defaultProject && checkProjectEdit(project)
+              ? <ElLink
+                  type={project.topFlag ? 'warning' : 'info'}
+                  underline={false}
+                  class={['margin-left1', project.topFlag ? '' : 'project-card__top-icon-unpinned']}
+                  v-common-tooltip={$i18nBundle(project.topFlag ? 'mock.label.unpinFromTop' : 'mock.label.pinToTop')}
+                  onClick={($event) => toggleProjectTop(project, $event)}
+                >
+                  <CommonIcon icon={project.topFlag ? 'StarFilled' : 'Star'} size={18} />
+                </ElLink>
+              : (!defaultProject && project.topFlag
+                  ? <ElLink type="warning" underline={false} class="margin-left1" v-common-tooltip={$i18nBundle('mock.label.pinToTop')} style="cursor: default;">
+                      <CommonIcon icon="StarFilled" size={18} />
+                    </ElLink>
+                  : '')}
           </>
         }
       }, {
@@ -504,7 +526,8 @@ const pageAttrs = {
             :class="{
               pointer: readable,
               'project-selected': project.selected,
-              'project-disabled': project.status!==1
+              'project-disabled': project.status!==1,
+              'project-pinned': project.topFlag
             }"
             @click="gotoMockGroups(project)"
           >
@@ -700,6 +723,21 @@ const pageAttrs = {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   border-top-color: var(--el-color-primary);
+}
+
+.project-pinned {
+  border-top-color: var(--el-color-warning) !important;
+}
+
+:deep(.project-card__top-icon-unpinned) {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.project-card:hover :deep(.project-card__top-icon-unpinned) {
+  visibility: visible;
+  opacity: 1;
 }
 
 .dark .project-card:hover {

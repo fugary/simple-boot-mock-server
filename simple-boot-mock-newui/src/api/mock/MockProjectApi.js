@@ -7,17 +7,6 @@ const MOCK_PROJECT_URL = '/admin/projects'
 const MockProjectApi = useResourceApi(MOCK_PROJECT_URL)
 const FULL_PROJECT_AUTHORITIES = ['readable', 'writable', 'deletable']
 
-export const sortProjects = (projects = []) => {
-  return [...projects].sort((left, right) => {
-    const leftPriority = isDefaultProject(left?.projectCode) ? 0 : (isCurrentUser(left?.userName) ? 1 : 2)
-    const rightPriority = isDefaultProject(right?.projectCode) ? 0 : (isCurrentUser(right?.userName) ? 1 : 2)
-    if (leftPriority !== rightPriority) {
-      return leftPriority - rightPriority
-    }
-    return Number(right?.id || 0) - Number(left?.id || 0)
-  })
-}
-
 const normalizeAuthorities = (authorities) => {
   if (Array.isArray(authorities)) {
     return authorities.filter(Boolean)

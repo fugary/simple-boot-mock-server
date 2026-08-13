@@ -396,7 +396,9 @@ const columns = computed(() => {
         activeScenarioName = $i18nBundle('mock.label.defaultScenario')
       }
       return <>
-          <ElLink type="primary" onClick={() => $goto(url)}>{data.groupName}</ElLink>
+          <ElLink type="primary" onClick={() => $goto(url)}>
+            {data.groupName}
+          </ElLink>
         {projectInfo ? <div class="mock-group-project-info">{projectInfo}</div> : ''}
         {activeScenarioName
           ? <div class="mock-group-scenario-info"><ElTag size="small" type="warning">{activeScenarioName}</ElTag></div>
@@ -476,6 +478,21 @@ const columns = computed(() => {
           <CommonIcon size={18} icon="DoDisturbFilled"/>
         </ElText>
           : ''}
+        {groupWritable(data)
+          ? <ElLink
+              type={data.topFlag ? 'warning' : 'info'}
+              underline={false}
+              class={['margin-left1', data.topFlag ? '' : 'mock-group-top-icon-unpinned']}
+              v-common-tooltip={$i18nBundle(data.topFlag ? 'mock.label.unpinFromTop' : 'mock.label.pinToTop')}
+              onClick={() => toggleGroupTop(data)}
+            >
+              <CommonIcon icon={data.topFlag ? 'StarFilled' : 'Star'} size={18} />
+            </ElLink>
+          : (data.topFlag
+              ? <ElLink type="warning" underline={false} class="margin-left1" v-common-tooltip={$i18nBundle('mock.label.pinToTop')} style="cursor: default;">
+                  <CommonIcon icon="StarFilled" size={18} />
+                </ElLink>
+              : '')}
       </>
     },
     minWidth: '120px'
@@ -559,6 +576,9 @@ const copyGroups = (group) => {
 }
 const moveGroups = (groups) => {
   return toTransferGroups(groups, 'move', canMoveGroups(groups))
+}
+const toggleGroupTop = (item) => {
+  return saveGroupItem({ ...item, topFlag: !item.topFlag })
 }
 const buttons = computed(() => defineTableButtons([{
   tooltip: $i18nBundle('common.label.edit'),
@@ -1256,6 +1276,17 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
 .mock-group-project-info {
   margin-top: 2px;
   line-height: 1.4;
+}
+
+:deep(.mock-group-top-icon-unpinned) {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+:deep(.el-table__row:hover .mock-group-top-icon-unpinned) {
+  visibility: visible;
+  opacity: 1;
 }
 
 .mock-group-project-link {

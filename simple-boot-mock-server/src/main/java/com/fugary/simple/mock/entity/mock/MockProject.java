@@ -19,6 +19,7 @@ public class MockProject extends MockBase {
     private String projectName;
     private String description;
     private Boolean publicFlag;
+    private Boolean topFlag;
 
     @TableField(exist = false)
     private java.util.List<MockProjectUser> projectUsers;

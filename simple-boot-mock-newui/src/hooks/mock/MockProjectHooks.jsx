@@ -1,4 +1,4 @@
-import MockProjectApi, { isProjectEnabled, selectProjects, sortProjects } from '@/api/mock/MockProjectApi'
+import MockProjectApi, { isProjectEnabled, selectProjects } from '@/api/mock/MockProjectApi'
 import { getStyleGrow, isAdminUser, useCurrentUserName } from '@/utils'
 import { useFormStatus } from '@/consts/GlobalConstants'
 import { computed, ref } from 'vue'
@@ -56,7 +56,7 @@ export const useSelectProjects = (searchParam, autoSelect) => {
   const projectOptions = ref([])
   const loadSelectProjects = (data, config) => {
     return selectProjects(data, config).then(result => {
-      projects.value = sortProjects(result || [])
+      projects.value = result || []
       projectOptions.value = projects.value.map(project => {
         if (project.projectCode === MOCK_DEFAULT_PROJECT) {
           return {

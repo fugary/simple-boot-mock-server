@@ -165,7 +165,7 @@ public class MockGroupController {
 
     private SimpleResult<List<MockGroup>> queryGroupPage(Page<MockGroup> page, QueryWrapper<MockGroup> queryWrapper,
             MockProject mockProject, MockGroupQueryVo queryVo) {
-        queryWrapper.orderByDesc("id");
+        queryWrapper.orderByDesc("top_flag").orderByDesc("id");
         boolean isExport = queryVo instanceof MockGroupExportParamVo;
         Page<MockGroup> pageResult = mockGroupService.page(page, queryWrapper);
         Future<Map<Integer, Long>> countMapFuture = null;

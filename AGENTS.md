@@ -49,10 +49,11 @@ Simple Boot Mock Server 是一个基于 Spring Boot 开发的轻量级、高性�
 - [x] 场景管理功能完善。
 - [x] Mock 字典布局优化及 MockJS 函数提示增强。
 - [x] 仪表盘图表增强：Top Active Users, Top Contributors。
+- [x] 项目及分组置顶功能：支持在项目与分组列表将常用记录置顶排列 (`top_flag`)。
 - [x] UI/UX 优化：菜单动画、响应式侧边栏等。
 
 ---
-*Last Updated: 2026-05-27*
+*Last Updated: 2026-08-13*
 
 ## 6. 项目规则 (Project Rules)
 为了保证项目的开发的一致性和质量，AI 代理在协作时需遵循项目内置的规则：
