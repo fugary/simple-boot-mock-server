@@ -2,7 +2,7 @@
 chcp 65001
 if "%1" equ "" goto paramError
 echo 更新simple-boot-mock-server版本号
-call mvn versions:set -DnewVersion=%1
+call mvn versions:set -DnewVersion=%1 -DgenerateBackupPoms=false
 cd simple-boot-mock-newui
 echo 更新simple-boot-mock-newui版本号
 call npm version %1

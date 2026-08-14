@@ -14,7 +14,7 @@ VERSION=$1
 
 # 更新 simple-boot-mock-server 版本号
 echo "更新 simple-boot-mock-server 版本号"
-mvn versions:set -DnewVersion=$VERSION
+mvn versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
 
 # 进入 simple-boot-mock-newui 目录
 cd simple-boot-mock-newui || exit
