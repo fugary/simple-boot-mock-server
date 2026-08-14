@@ -506,7 +506,7 @@ export const $downloadWithLinkClick = (downloadUrl) => {
 
 export const getStyleGrow = flexGrow => ({
   flexGrow,
-  minWidth: `calc(${flexGrow}0%)`
+  minWidth: `${flexGrow * 10}%`
 })
 
 /**

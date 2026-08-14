@@ -1,6 +1,6 @@
 import MockProjectApi, { isProjectEnabled, selectProjects } from '@/api/mock/MockProjectApi'
 import { getStyleGrow, isAdminUser, useCurrentUserName } from '@/utils'
-import { useFormStatus } from '@/consts/GlobalConstants'
+import { useFormStatus, useFormTopFlag } from '@/consts/GlobalConstants'
 import { computed, ref } from 'vue'
 import { defineFormOptions } from '@/components/utils'
 import { $i18nBundle } from '@/messages'
@@ -150,6 +150,7 @@ export const useProjectEditHook = (searchParam, userOptions) => {
     } else {
       currentProject.value = {
         status: 1,
+        topFlag: false,
         userName: searchParam.value?.userName || useCurrentUserName()
       }
     }
@@ -190,10 +191,14 @@ export const useProjectEditHook = (searchParam, userOptions) => {
     required: true
   }, { ...useFormStatus(), style: getStyleGrow(4) }, {
     labelKey: 'mock.label.publicMockProject',
-    style: getStyleGrow(6),
+    style: getStyleGrow(3),
     prop: 'publicFlag',
-    type: 'switch'
-  }, {
+    type: 'switch',
+    attrs: {
+      activeText: $i18nBundle('common.label.yes'),
+      inactiveText: $i18nBundle('common.label.no')
+    }
+  }, { ...useFormTopFlag(), style: getStyleGrow(3) }, {
     labelKey: 'common.label.description',
     prop: 'description',
     attrs: {

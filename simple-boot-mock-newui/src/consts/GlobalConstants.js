@@ -57,6 +57,20 @@ export const useFormDisableMock = (prop = 'disableMock', activeValue = true, ina
   }
 }
 
+export const useFormTopFlag = (prop = 'topFlag', activeValue = true, inactiveValue = false) => {
+  return {
+    labelKey: 'mock.label.pinToTop',
+    prop,
+    type: 'switch',
+    attrs: {
+      activeValue,
+      inactiveValue,
+      activeText: $i18nBundle('common.label.yes'),
+      inactiveText: $i18nBundle('common.label.no')
+    }
+  }
+}
+
 export const useSearchStatus = ({ prop = 'status', activeValue = 1, inactiveValue = 0, change, ...option } = {}) => {
   return {
     labelKey: 'common.label.status',

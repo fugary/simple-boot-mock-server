@@ -28,7 +28,7 @@ import {
 } from '@/utils'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { $i18nBundle, $i18nKey } from '@/messages'
-import { useFormDelay, useFormDisableMock, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
+import { useFormDelay, useFormDisableMock, useFormStatus, useFormTopFlag, useSearchStatus } from '@/consts/GlobalConstants'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import {
@@ -727,6 +727,7 @@ const newOrEdit = async id => {
   } else {
     currentGroup.value = {
       status: 1,
+      topFlag: false,
       userName: searchParam.value?.userName || useCurrentUserName(),
       projectId: searchParam.value?.projectId || null,
       projectCode: searchParam.value?.projectCode || MOCK_DEFAULT_PROJECT,
@@ -872,7 +873,8 @@ const editFormOptions = computed(() => {
     slot: 'proxyUrlParams',
     tooltip: $i18nBundle('mock.msg.proxyUrlTooltip')
   }, { ...useFormStatus(), style: getStyleGrow(4) },
-  { ...useFormDisableMock(), style: getStyleGrow(6) },
+  { ...useFormDisableMock(), style: getStyleGrow(3) },
+  { ...useFormTopFlag(), style: getStyleGrow(3) },
   { ...useFormDelay(), style: getStyleGrow(4) },
   { ...useContentTypeOption({ clearable: true }), style: getStyleGrow(6) }, {
     labelKey: 'common.label.description',
