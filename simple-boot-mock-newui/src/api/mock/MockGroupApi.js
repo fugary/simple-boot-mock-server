@@ -62,6 +62,75 @@ export const IMPORT_TYPES = [{
   labelKey: 'mock.label.importTypeHar'
 }]
 
+/**
+ * 快速嗅探文件或文本的数据格式类型
+ * @param {File|Blob|string} fileOrText 上传文件或字符串
+ * @returns {Promise<string|null>} 'simple' | 'swagger' | 'postman' | 'har' | 'fastmock' | null
+ */
+export const detectImportFileType = async (fileOrText) => {
+  if (!fileOrText) {
+    return null
+  }
+  let text = ''
+  if (typeof fileOrText === 'string') {
+    text = fileOrText.length > 64 * 1024 ? fileOrText.slice(0, 64 * 1024) : fileOrText
+  } else if (fileOrText.slice && typeof fileOrText.slice === 'function') {
+    const sliceBlob = fileOrText.slice(0, 64 * 1024)
+    if (typeof sliceBlob.text === 'function') {
+      text = await sliceBlob.text()
+    } else {
+      text = await new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result || '')
+        reader.onerror = () => resolve('')
+        reader.readAsText(sliceBlob)
+      })
+    }
+  }
+  const trimmed = (text || '').trim()
+  if (!trimmed) {
+    return null
+  }
+
+  // 1. FastMock: 根为 JSON 数组，含 mockRule, folderId 或 url
+  if (trimmed.startsWith('[')) {
+    if (trimmed.includes('"mockRule"') || trimmed.includes('"folderId"') || trimmed.includes('"url"')) {
+      return 'fastmock'
+    }
+  }
+
+  // 2. JSON 对象格式
+  if (trimmed.startsWith('{')) {
+    // 2.1 HAR: 含有 "log" 且包含 "entries" 或 "version"
+    if (trimmed.includes('"log"') && (trimmed.includes('"entries"') || trimmed.includes('"version"'))) {
+      return 'har'
+    }
+    // 2.2 Postman: 包含 postman schema / _postman_id / "info" 与 "item"
+    if (trimmed.includes('schema.getpostman.com') || trimmed.includes('_postman_id') ||
+       (trimmed.includes('"info"') && trimmed.includes('"item"'))) {
+      return 'postman'
+    }
+    // 2.3 Swagger / OpenAPI (JSON): 包含 openapi / swagger 或 paths 与 info
+    if (trimmed.includes('"openapi"') || trimmed.includes('"swagger"') ||
+       (trimmed.includes('"paths"') && trimmed.includes('"info"'))) {
+      return 'swagger'
+    }
+    // 2.4 Simple Boot Mock: 包含 "groups" 且包含 groupName / requests / groupPath
+    if (trimmed.includes('"groups"') && (trimmed.includes('"groupName"') || trimmed.includes('"requests"') || trimmed.includes('"groupPath"'))) {
+      return 'simple'
+    }
+  }
+
+  // 3. Swagger / OpenAPI (YAML 格式)
+  if (/^openapi\s*:\s*['"]?3\./m.test(trimmed) ||
+      /^swagger\s*:\s*['"]?2\./m.test(trimmed) ||
+      (/^paths\s*:/m.test(trimmed) && /^info\s*:/m.test(trimmed))) {
+    return 'swagger'
+  }
+
+  return null
+}
+
 export const uploadFiles = (files, params = {}, config = {}) => {
   const formData = new FormData()
   files = isArray(files) ? files : [files]

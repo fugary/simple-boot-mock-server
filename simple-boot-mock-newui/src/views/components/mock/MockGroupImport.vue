@@ -1,10 +1,10 @@
 <script setup lang="jsx">
 import { ref, computed, watch } from 'vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
-import { $coreAlert, $coreError, getStyleGrow, isAdminUser } from '@/utils'
+import { $coreAlert, $coreConfirm, $coreError, getStyleGrow, isAdminUser } from '@/utils'
 import { defineFormOptions } from '@/components/utils'
 import { ElButton } from 'element-plus'
-import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, uploadFiles } from '@/api/mock/MockGroupApi'
+import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, detectImportFileType, uploadFiles } from '@/api/mock/MockGroupApi'
 import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import MockProjectApi from '@/api/mock/MockProjectApi'
@@ -43,6 +43,9 @@ const importModel = ref({
   duplicateStrategy: IMPORT_DUPLICATE_STRATEGY[0].value,
   singleGroup: true // 调整为默认为单个组
 })
+const detectedType = ref(null)
+const userChangedTypeManually = ref(false)
+
 watch(() => props.defaultUser, (val) => {
   importModel.value.userName = !isAdminUser() ? accountInfo?.userName : (val || accountInfo?.userName)
 })
@@ -52,12 +55,39 @@ watch(() => props.defaultProject, (val) => {
 watch(() => props.defaultProjectId, (val) => {
   importModel.value.projectId = val
 })
+watch(showWindow, (val) => {
+  if (val && !importFiles.value?.length) {
+    detectedType.value = null
+    userChangedTypeManually.value = false
+  }
+})
+
 const importFiles = ref([])
 const calcUserOptions = computed(() => props.userOptions)
 const { showEditWindow: showEditProjectWindow, currentProject, newOrEditProject, editFormOptions: editProjectFormOptions } = useProjectEditHook(importModel, calcUserOptions)
 const saveProjectItem = (item) => {
   return MockProjectApi.saveOrUpdate(item).then(data => emit('updateProjects', data?.resultData || item, importModel))
 }
+
+const getFormatLabel = (type) => {
+  const item = IMPORT_TYPES.find(opt => opt.value === type)
+  return item ? $i18nBundle(item.labelKey) : type
+}
+
+const onFileListUpdate = async (files) => {
+  importFiles.value = files
+  if (files?.length) {
+    const firstFile = files[0]?.raw || files[0]
+    const detected = await detectImportFileType(firstFile)
+    detectedType.value = detected
+    if (detected && !userChangedTypeManually.value) {
+      importModel.value.type = detected
+    }
+  } else {
+    detectedType.value = null
+  }
+}
+
 const formOptions = computed(() => {
   const fileLimits = 3
   return defineFormOptions([{
@@ -104,6 +134,9 @@ const formOptions = computed(() => {
       .map(option => ({ ...option, label: $i18nBundle(option.labelKey) })),
     attrs: {
       clearable: false
+    },
+    change () {
+      userChangedTypeManually.value = true
     }
   }, {
     labelKey: 'mock.label.duplicateStrategy',
@@ -138,20 +171,12 @@ const formOptions = computed(() => {
     attrs: {
       style: 'width: 100%',
       fileList: importFiles.value,
-      'onUpdate:fileList': (files) => {
-        importFiles.value = files
-      },
+      'onUpdate:fileList': onFileListUpdate,
       multiple: true,
       limit: fileLimits,
       showFileList: true,
       autoUpload: false,
       onExceed () {
-        // importFiles.value = [...files.map(file => ({
-        //   name: file.name,
-        //   status: 'ready',
-        //   size: file.size,
-        //   raw: file
-        // }))] // 文件覆盖
         $coreError($i18nBundle('common.msg.exceedFiles'))
       }
     },
@@ -168,22 +193,46 @@ const formOptions = computed(() => {
     return { ...option, style }
   })
 })
+
 const emit = defineEmits(['import-success', 'updateProjects', 'changedUser'])
+
+const executeUpload = () => {
+  return uploadFiles(importFiles.value, importModel.value, {
+    loading: true
+  }).then(data => {
+    if (data.success) {
+      $coreAlert($i18nBundle('mock.msg.importFileSuccess', [data.resultData]))
+      showWindow.value = false
+      emit('import-success', data)
+    }
+  })
+}
+
 const doImportGroups = () => {
-  if (importFiles.value?.length) {
-    uploadFiles(importFiles.value, importModel.value, {
-      loading: true
-    }).then(data => {
-      if (data.success) {
-        $coreAlert($i18nBundle('mock.msg.importFileSuccess', [data.resultData]))
-        showWindow.value = false
-        emit('import-success', data)
+  if (!importFiles.value?.length) {
+    $coreError($i18nBundle('mock.msg.importFileNoFile'))
+    return false
+  }
+  if (detectedType.value && detectedType.value !== importModel.value.type) {
+    $coreConfirm(
+      $i18nBundle('mock.msg.importTypeMismatchConfirm', [getFormatLabel(detectedType.value), getFormatLabel(importModel.value.type)]),
+      $i18nBundle('common.label.reminder'),
+      {
+        confirmButtonText: $i18nBundle('mock.msg.importTypeSwitchAndImport'),
+        cancelButtonText: $i18nBundle('mock.msg.importTypeContinueDirectly'),
+        distinguishCancelAndClose: true
+      }
+    ).then(() => {
+      importModel.value.type = detectedType.value
+      executeUpload()
+    }).catch((action) => {
+      if (action === 'cancel') {
+        executeUpload()
       }
     })
-  } else {
-    $coreError($i18nBundle('mock.msg.importFileNoFile'))
+    return false
   }
-  return false
+  return executeUpload()
 }
 
 </script>
@@ -198,6 +247,35 @@ const doImportGroups = () => {
     :ok-click="doImportGroups"
   >
     <el-container class="flex-column">
+      <el-alert
+        v-if="detectedType && detectedType !== importModel.type"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="margin-bottom2"
+      >
+        <template #title>
+          <div class="flex-center">
+            <span>{{ $t('mock.msg.importTypeMismatchWarning', [getFormatLabel(detectedType), getFormatLabel(importModel.type)]) }}</span>
+            <el-button
+              link
+              type="primary"
+              class="margin-left2"
+              @click="importModel.type = detectedType"
+            >
+              {{ $t('mock.msg.importTypeSwitchTo', [getFormatLabel(detectedType)]) }}
+            </el-button>
+          </div>
+        </template>
+      </el-alert>
+      <el-alert
+        v-else-if="detectedType && detectedType === importModel.type"
+        type="success"
+        :closable="false"
+        show-icon
+        class="margin-bottom2"
+        :title="$t('mock.msg.importTypeAutoDetected', [getFormatLabel(detectedType)])"
+      />
       <common-form
         label-width="150px"
         class="form-edit-width-90"
