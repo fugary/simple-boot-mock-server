@@ -37,11 +37,36 @@ import java.util.stream.Stream;
 @Component
 public class SwaggerImporterImpl implements MockGroupImporter {
 
+    public static final String SWAGGER_TYPE = "swagger";
     public static final Pattern SCHEMA_COMPONENT_PATTERN = Pattern.compile("\"" + Components.COMPONENTS_SCHEMAS_REF + "([^\"]+)\"");
+    private static final Pattern SWAGGER_YAML_PATTERN = Pattern.compile("(?m)^\\s*['\"]?(openapi|swagger)['\"]?\\s*:");
 
     @Override
-    public boolean isSupport(String type) {
-        return "swagger".equals(type);
+    public String getType() {
+        return SWAGGER_TYPE;
+    }
+
+
+    @Override
+    public boolean match(String data) {
+        if (StringUtils.isBlank(data)) {
+            return false;
+        }
+        String trimmed = data.trim();
+        // JSON 格式判断
+        if (trimmed.startsWith("{")) {
+            if (trimmed.contains("\"openapi\"") || trimmed.contains("\"swagger\"")) {
+                return true;
+            }
+            if (trimmed.contains("\"paths\"") && trimmed.contains("\"info\"")) {
+                return true;
+            }
+        }
+        // YAML 格式判断
+        if (SWAGGER_YAML_PATTERN.matcher(trimmed).find()) {
+            return true;
+        }
+        return trimmed.contains("paths:") && trimmed.contains("info:");
     }
 
     @Override

@@ -4,6 +4,12 @@
 
 ## 2026年
 ### 2026-08
+- **feat**: [2026-08-14] 实现数据导入格式提前验证与智能类型识别：
+  - 前端增加轻量文件内容指纹嗅探（`detectImportFileType`），支持 64KB 切片秒级识别 Simple Mock、Swagger/OpenAPI (JSON/YAML)、Postman、HAR、FastMock 5 种数据格式；
+  - 导入弹窗交互升级：上传文件时自动匹配切换对应格式并给出微提示，若用户手动选择的格式与文件内容冲突，展示醒目警告并提供“一键切换”按钮，点击确定时提供纠错二次确认拦截，彻底杜绝手误选错类型；
+  - 后端 `MockGroupImporter` 接口增强 `getType()`、`getTypeName()`、`match(data)` 和 `detectImporter()` 特征指纹识别体系；
+  - 后端导入解析失败时提供智能错误诊断与多语言国际化转换，精准识别并返回“当前选择类型为【当前Mock服务】，但文件格式检测为【FastMock服务】格式，请核对导入类型”或格式损坏的具体提示，透传友好名称与错误诊断原因。
+- **opt**: [2026-08-14] 根据 `/code-review-optimize` 规范深度审查与重构代码：提取并统一各 Importer 的 `isSupport` 默认实现至 `MockGroupImporter` 接口，`findImporter` 与 `detectImporter` 采用 Java 11 Stream API 简化；导入类型名称支持多语言配置；统一 `match` 方法的参数校验规则；执行并全部通过了 `npm run lint` 和单元测试，保证整体逻辑健壮与代码优雅。
 - **opt**: [2026-08-14] 精简 HAR 导入过滤逻辑：移除主观臆断的静态资源扩展名正则过滤（`STATIC_RESOURCE_PATTERN`），仅保留基础 HTTP/HTTPS 协议与有效 URL 校验；将 Header 过滤改造为前缀匹配（如 `sec-`、`if-`、`access-control-` 等），大幅精简硬编码常量并防止枚举遗漏。
 - **fix**: [2026-08-14] 修复 H2 数据库中因 BIT(BOOLEAN) 与数值 1 直接比较报错 `Values of types "BOOLEAN" and "INTEGER" are not comparable` 的语法问题：置顶排序 SQL 调整为 `case when top_flag = true then 0 else 1 end`，完美兼容 H2 与 MySQL。
 - **opt**: [2026-08-14] 优化 HAR 文件导入细节：移除抓包实际响应耗时作为 Mock 接口默认 delay 的逻辑（保持 0 延时即时响应）；将未包含自定义注释的请求名称（`requestName`）置空，避免在左侧请求列表中重复展示两遍相同的 URL Path。

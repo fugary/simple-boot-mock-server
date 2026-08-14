@@ -35,9 +35,29 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PostmanImporterImpl implements MockGroupImporter {
 
+    public static final String POSTMAN_TYPE = "postman";
+
     @Override
-    public boolean isSupport(String type) {
-        return "postman".equals(type);
+    public String getType() {
+        return POSTMAN_TYPE;
+    }
+
+
+    @Override
+    public boolean match(String data) {
+        if (StringUtils.isBlank(data)) {
+            return false;
+        }
+        String trimmed = data.trim();
+        if (trimmed.startsWith("{")) {
+            if (trimmed.contains("schema.getpostman.com") || trimmed.contains("_postman_id")) {
+                return true;
+            }
+            if (trimmed.contains("\"info\"") && trimmed.contains("\"item\"")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

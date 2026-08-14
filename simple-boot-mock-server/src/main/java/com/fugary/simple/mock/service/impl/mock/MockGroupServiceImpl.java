@@ -543,7 +543,17 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                 MockGroupImporter importer = MockGroupImporter.findImporter(mockGroupImporters, importVo.getType());
                 ExportMockVo currentVo;
                 if (importer == null || (currentVo = importer.doImport(fileData)) == null) {
-                    return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_2003);
+                    MockGroupImporter detected = MockGroupImporter.detectImporter(mockGroupImporters, fileData);
+                    String currentTypeName = MockGroupImporter.getTypeName(mockGroupImporters, importVo.getType());
+                    if (detected != null && !detected.isSupport(importVo.getType())) {
+                        String detectedTypeName = detected.getTypeName();
+                        String msg = SimpleResultUtils.getErrorMsg("simple.error.code.2003.mismatch",
+                                new Object[]{currentTypeName, detectedTypeName});
+                        return SimpleResultUtils.createError(MockErrorConstants.CODE_2003, msg);
+                    }
+                    String msg = SimpleResultUtils.getErrorMsg("simple.error.code.2003.invalid",
+                            new Object[]{currentTypeName});
+                    return SimpleResultUtils.createError(MockErrorConstants.CODE_2003, msg);
                 } else {
                     SimpleMockUtils.addMockVo(mockVo, currentVo);
                 }

@@ -2,6 +2,7 @@ package com.fugary.simple.mock.imports;
 
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.web.vo.export.ExportMockVo;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,9 +13,23 @@ import org.springframework.stereotype.Component;
 @Component
 public class SimpleMockGroupImporterImpl implements MockGroupImporter {
 
+    public static final String SIMPLE_TYPE = "simple";
+
     @Override
-    public boolean isSupport(String type) {
-        return "simple".equals(type);
+    public String getType() {
+        return SIMPLE_TYPE;
+    }
+
+    @Override
+    public boolean match(String data) {
+        if (StringUtils.isBlank(data)) {
+            return false;
+        }
+        String trimmed = data.trim();
+        if (trimmed.startsWith("{") && trimmed.contains("\"groups\"")) {
+            return trimmed.contains("\"groupName\"") || trimmed.contains("\"groupPath\"") || trimmed.contains("\"requests\"");
+        }
+        return false;
     }
 
     @Override

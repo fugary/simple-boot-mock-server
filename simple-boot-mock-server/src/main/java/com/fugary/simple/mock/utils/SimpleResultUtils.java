@@ -158,25 +158,40 @@ public class SimpleResultUtils {
     }
 
     public static String getErrorMsg(Integer code, Locale locale) {
-        String messageKey = "simple.error.code." + code;
-        if (messageSource != null) {
-            String message = messageSource.getMessage(messageKey, null, null, locale);
-            if (message != null) {
-                return message;
-            }
-            message = messageSource.getMessage(messageKey, null, null, Locale.CHINA);
-            if (message != null) {
-                return message;
-            }
-            message = messageSource.getMessage(messageKey, null, null, Locale.US);
-            if (message != null) {
-                return message;
-            }
-        }
-        return messageKey;
+        return getErrorMsg("simple.error.code." + code, null, locale);
     }
 
     public static String getErrorMsg(Integer code) {
         return getErrorMsg(code, LocaleContextHolder.getLocale());
+    }
+
+    public static String getErrorMsg(String messageKey, Object[] args, Locale locale) {
+        return getMessage(messageKey, args, messageKey, locale);
+    }
+
+    public static String getErrorMsg(String messageKey, Object[] args) {
+        return getErrorMsg(messageKey, args, LocaleContextHolder.getLocale());
+    }
+
+    public static String getMessage(String messageKey, Object[] args, String defaultMessage) {
+        return getMessage(messageKey, args, defaultMessage, LocaleContextHolder.getLocale());
+    }
+
+    public static String getMessage(String messageKey, Object[] args, String defaultMessage, Locale locale) {
+        if (messageSource != null) {
+            String message = messageSource.getMessage(messageKey, args, null, locale);
+            if (message != null) {
+                return message;
+            }
+            message = messageSource.getMessage(messageKey, args, null, Locale.CHINA);
+            if (message != null) {
+                return message;
+            }
+            message = messageSource.getMessage(messageKey, args, null, Locale.US);
+            if (message != null) {
+                return message;
+            }
+        }
+        return defaultMessage != null ? defaultMessage : messageKey;
     }
 }

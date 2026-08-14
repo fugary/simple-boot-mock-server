@@ -413,7 +413,7 @@ public class MockGroupController {
             }
             return mockGroupService.importGroups(importGroupsResult.getResultData(), importVo);
         }
-        return SimpleResultUtils.createSimpleResult(importGroupsResult.getCode(), 0);
+        return SimpleResultUtils.createError(importGroupsResult.getCode(), importGroupsResult.getMessage());
     }
 
     @PostMapping("/checkExport")

@@ -88,8 +88,21 @@ public class HarImporterImpl implements MockGroupImporter {
     }
 
     @Override
-    public boolean isSupport(String type) {
-        return HAR_TYPE.equalsIgnoreCase(type);
+    public String getType() {
+        return HAR_TYPE;
+    }
+
+
+    @Override
+    public boolean match(String data) {
+        if (StringUtils.isBlank(data)) {
+            return false;
+        }
+        String trimmed = data.trim();
+        if (trimmed.startsWith("{") && trimmed.contains("\"log\"")) {
+            return trimmed.contains("\"entries\"") || trimmed.contains("\"version\"");
+        }
+        return false;
     }
 
     @Override

@@ -26,9 +26,24 @@ import java.util.stream.Collectors;
 @Component
 public class FastMockImporterImpl implements MockGroupImporter {
 
+    public static final String FAST_MOCK_TYPE = "fastmock";
+
     @Override
-    public boolean isSupport(String type) {
-        return "fastmock".equals(type);
+    public String getType() {
+        return FAST_MOCK_TYPE;
+    }
+
+
+    @Override
+    public boolean match(String data) {
+        if (StringUtils.isBlank(data)) {
+            return false;
+        }
+        String trimmed = data.trim();
+        if (trimmed.startsWith("[")) {
+            return trimmed.contains("\"mockRule\"") || trimmed.contains("\"folderId\"") || trimmed.contains("\"url\"");
+        }
+        return false;
     }
 
     @Override
