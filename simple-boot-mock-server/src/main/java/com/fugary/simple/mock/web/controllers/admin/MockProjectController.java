@@ -169,7 +169,7 @@ public class MockProjectController {
         userSortBuilder.append(" else 1 end");
         
         queryWrapper.orderByAsc(sortBuilder.toString())
-                .orderByDesc("top_flag")
+                .orderByAsc(MockConstants.TOP_FLAG_SORT)
                 .orderByAsc(userSortBuilder.toString())
                 .orderByDesc("id");
     }

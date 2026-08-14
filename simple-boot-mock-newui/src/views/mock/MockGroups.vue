@@ -1237,7 +1237,7 @@ const { nameDynamicOption, valueDynamicOption } = getProxyUrlOptions()
       :user-options="userOptions"
       :default-project="searchParam.projectCode"
       :project-options="writableProjectOptions"
-      @import-success="loadMockGroups()"
+      @import-success="loadMockGroups(1)"
       @update-projects="reloadProjectsAndRefreshOptions"
       @changed-user="changedUser"
     />
