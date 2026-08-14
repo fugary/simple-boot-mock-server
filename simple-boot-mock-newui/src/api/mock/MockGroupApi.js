@@ -57,6 +57,9 @@ export const IMPORT_TYPES = [{
 }, {
   value: 'fastmock',
   labelKey: 'mock.label.importTypeFastMock'
+}, {
+  value: 'har',
+  labelKey: 'mock.label.importTypeHar'
 }]
 
 export const uploadFiles = (files, params = {}, config = {}) => {

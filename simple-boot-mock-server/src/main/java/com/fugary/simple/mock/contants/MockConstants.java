@@ -112,4 +112,9 @@ public class MockConstants {
      * 可删除(能够删除分组、请求、数据等)
      */
     public static final String AUTHORITY_DELETABLE = "deletable";
+
+    /**
+     * 统一置顶排序 SQL 表达式（兼容 MySQL 和 H2，避免 NULL 值排在末尾）
+     */
+    public static final String TOP_FLAG_SORT = "case when top_flag = true then 0 else 1 end";
 }

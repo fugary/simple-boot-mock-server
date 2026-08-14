@@ -72,6 +72,8 @@ import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_REQUES
 public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup>
         implements MockGroupService, InitializingBean {
 
+    private static final Set<String> SINGLE_GROUP_SUPPORTED_TYPES = Set.of("swagger", "postman", "har");
+
     @Autowired
     private MockRequestService mockRequestService;
 
@@ -559,7 +561,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             if (!strategyResult.isSuccess()) {
                 return strategyResult;
             }
-            if (Set.of("swagger", "postman").contains(importVo.getType())
+            if (SINGLE_GROUP_SUPPORTED_TYPES.contains(importVo.getType())
                     && BooleanUtils.isTrue(importVo.getSingleGroup())
                     && CollectionUtils.isNotEmpty(mockVo.getGroups())) {
                 ExportGroupVo groupVo = mockVo.getGroups().get(0);

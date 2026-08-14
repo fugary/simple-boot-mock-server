@@ -4,6 +4,14 @@
 
 ## 2026年
 ### 2026-08
+- **opt**: [2026-08-14] 精简 HAR 导入过滤逻辑：移除主观臆断的静态资源扩展名正则过滤（`STATIC_RESOURCE_PATTERN`），仅保留基础 HTTP/HTTPS 协议与有效 URL 校验；将 Header 过滤改造为前缀匹配（如 `sec-`、`if-`、`access-control-` 等），大幅精简硬编码常量并防止枚举遗漏。
+- **fix**: [2026-08-14] 修复 H2 数据库中因 BIT(BOOLEAN) 与数值 1 直接比较报错 `Values of types "BOOLEAN" and "INTEGER" are not comparable` 的语法问题：置顶排序 SQL 调整为 `case when top_flag = true then 0 else 1 end`，完美兼容 H2 与 MySQL。
+- **opt**: [2026-08-14] 优化 HAR 文件导入细节：移除抓包实际响应耗时作为 Mock 接口默认 delay 的逻辑（保持 0 延时即时响应）；将未包含自定义注释的请求名称（`requestName`）置空，避免在左侧请求列表中重复展示两遍相同的 URL Path。
+- **fix**: [2026-08-14] 修复 Mock 分组与项目置顶排序中因 `top_flag` 字段可能为 `NULL` 导致新创建/导入数据被排在最后一页的 Bug：使用 `CASE WHEN (top_flag = true) THEN 0 ELSE 1 END` 强健排序，实体默认初始化 `topFlag = false`，并通过 Flyway 补丁脚本 `V2_0_53` 修复历史数据。
+- **opt**: [2026-08-14] 优化 Mock 分组导入交互：导入成功后自动将列表分页重置定位到第 1 页 (`loadMockGroups(1)`)，便于用户即时查看最新导入的数据记录。
+- **fix**: [2026-08-14] 修复 HAR 导入时因响应头过多导致数据库 `headers` 列超长报错的问题：强化响应头过滤（过滤 CORS、CSP、STS 等浏览器安全与缓存策略头），并增加 `MAX_SAFE_HEADERS_LENGTH` 安全截断防护。
+- **ui**: [2026-08-14] 优化导入弹窗的“数据来源”控件：将分段单选框 (`segmented`) 调整为下拉选择框 (`select`)，解决选项过多时排版溢出与换行问题。
+- **feat**: [2026-08-14] 新增支持 HAR (HTTP Archive 1.2) 抓包文件一键导入：基于 `har-reader` 解析浏览器（Chrome DevTools）及抓包工具导出的 HAR 文件，智能过滤静态资源，支持多分组（按 Host 聚合）与合并单分组模式，自动解析 Path、Method、Query、Headers、RequestBody（支持 JSON/Form 等）以及 Base64 编码的响应数据。
 - **opt**: [2026-08-14] 优化 Mock 项目与分组列表的“我的数据”Switch显示与默认行为：针对非管理员用户默认开启“我的数据”筛选以聚焦个人工作台；优化路由锁定具体项目时的联动，隐藏开关并忽略 `onlyMine` 过滤参数，避免误过滤共享项目下的分组。
 - **ui**: [2026-08-13] 在 Mock 项目与 Mock 分组的新增/编辑弹窗的“状态”行增加“置顶” (`topFlag`) 开关；为“公开项目”补全“是/否”文字标识，并将三项开关比例调整为 4 : 3 : 3，彻底解决了弹窗内部开关间距不匀及显示更多选项时的重叠挤压问题。
 - **opt**: [2026-08-13] 优化分组修改历史记录与对比视图：在历史列表与版本对比窗口中同步补齐“置顶” (`topFlag`) 状态及激活场景的展示，并优化历史记录列排版。

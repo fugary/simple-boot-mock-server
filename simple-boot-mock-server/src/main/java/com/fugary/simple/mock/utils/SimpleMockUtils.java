@@ -137,6 +137,17 @@ public class SimpleMockUtils {
                 historyBase.setVersion(null);
                 historyBase.setModifyFrom(null);
             }
+            if (target instanceof MockGroup) {
+                MockGroup group = (MockGroup) target;
+                if (group.getTopFlag() == null) {
+                    group.setTopFlag(false);
+                }
+            } else if (target instanceof MockProject) {
+                MockProject project = (MockProject) target;
+                if (project.getTopFlag() == null) {
+                    project.setTopFlag(false);
+                }
+            }
         }
         return target;
     }

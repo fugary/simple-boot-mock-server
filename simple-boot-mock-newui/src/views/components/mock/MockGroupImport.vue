@@ -99,11 +99,11 @@ const formOptions = computed(() => {
   }, {
     labelKey: 'mock.label.source',
     prop: 'type',
-    type: 'segmented',
+    type: 'select',
+    children: IMPORT_TYPES.filter(option => option.enabled !== false)
+      .map(option => ({ ...option, label: $i18nBundle(option.labelKey) })),
     attrs: {
-      clearable: false,
-      options: IMPORT_TYPES.filter(option => option.enabled !== false)
-        .map(option => ({ ...option, label: $i18nBundle(option.labelKey) }))
+      clearable: false
     }
   }, {
     labelKey: 'mock.label.duplicateStrategy',
@@ -119,7 +119,7 @@ const formOptions = computed(() => {
     prop: 'singleGroup',
     style: getStyleGrow(4),
     type: 'switch',
-    enabled: ['swagger', 'postman'].includes(importModel.value.type),
+    enabled: ['swagger', 'postman', 'har'].includes(importModel.value.type),
     tooltip: $i18nBundle('mock.msg.combineSingleGroup'),
     attrs: {
       activeValue: true,
@@ -129,7 +129,7 @@ const formOptions = computed(() => {
     }
   }, {
     labelKey: 'mock.label.groupName',
-    enabled: ['swagger', 'postman'].includes(importModel.value.type) && importModel.value.singleGroup,
+    enabled: ['swagger', 'postman', 'har'].includes(importModel.value.type) && importModel.value.singleGroup,
     prop: 'groupName',
     style: getStyleGrow(6)
   }, {
