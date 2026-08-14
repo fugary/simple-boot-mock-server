@@ -61,4 +61,14 @@ class SimpleMockUtilsTest {
 
         assertNull(SimpleMockUtils.calcValidProxyUrlInfo(group, null));
     }
+
+    @Test
+    void formatFileSizeShouldFormatCorrectly() {
+        assertEquals("0B", SimpleMockUtils.formatFileSize(0));
+        assertEquals("500B", SimpleMockUtils.formatFileSize(500));
+        assertEquals("1KB", SimpleMockUtils.formatFileSize(1024));
+        assertEquals("1.50KB", SimpleMockUtils.formatFileSize(1536));
+        assertEquals("10MB", SimpleMockUtils.formatFileSize(10 * 1024 * 1024));
+        assertEquals("21.86MB", SimpleMockUtils.formatFileSize(22923828));
+    }
 }

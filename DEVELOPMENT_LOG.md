@@ -4,6 +4,11 @@
 
 ## 2026年
 ### 2026-08
+- **opt**: [2026-08-14] 优化大文件上传校验与超限提示体验：
+  - 前端增加文件大小即时校验拦截：在文件选择（`onFileListUpdate`）及导入提交（`doImportGroups`）阶段通过 `file.size` 进行秒级拦截，当单文件超出 10MB 限制时自动从列表中剔除超限文件并友好提示文件名称与实际大小（如 `文件【xxx.har (21.86 MB)】超过最大限制（最大10 MB）`），避免大文件无效上传及网络带宽浪费；
+  - 前端新增易读文件大小格式化函数 `formatFileSize`（支持 B/KB/MB/GB/TB 转换），导入窗口中的提示文案联动动态显示单文件大小上限与数量限制；
+  - 后端 `GlobalExceptionHandler` 增加对 `MaxUploadSizeExceededException` 与 `MultipartException` 的专门捕获与处理，新增错误码 `CODE_2005` 并支持中英文国际化消息（`上传文件大小超过限制（最大{0}）`），动态格式化限制大小，杜绝向前端直接暴露底层 Java 异常堆栈信息；
+  - 编写并完善前后端代码质量校验：通过 ESLint 校验，新增 `GlobalExceptionHandlerTest` 与 `SimpleMockUtilsTest` 单元测试并通过全量测试。
 - **feat**: [2026-08-14] 实现数据导入格式提前验证与智能类型识别：
   - 前端增加轻量文件内容指纹嗅探（`detectImportFileType`），支持 64KB 切片秒级识别 Simple Mock、Swagger/OpenAPI (JSON/YAML)、Postman、HAR、FastMock 5 种数据格式；
   - 导入弹窗交互升级：上传文件时自动匹配切换对应格式并给出微提示，若用户手动选择的格式与文件内容冲突，展示醒目警告并提供“一键切换”按钮，点击确定时提供纠错二次确认拦截，彻底杜绝手误选错类型；

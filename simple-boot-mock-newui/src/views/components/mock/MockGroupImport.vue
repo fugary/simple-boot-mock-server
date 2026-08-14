@@ -1,11 +1,11 @@
 <script setup lang="jsx">
 import { ref, computed, watch } from 'vue'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
-import { $coreAlert, $coreConfirm, $coreError, getStyleGrow, isAdminUser } from '@/utils'
+import { $coreAlert, $coreConfirm, $coreError, formatFileSize, getStyleGrow, isAdminUser } from '@/utils'
 import { defineFormOptions } from '@/components/utils'
 import { ElButton } from 'element-plus'
 import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, detectImportFileType, uploadFiles } from '@/api/mock/MockGroupApi'
-import { MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
+import { DEFAULT_MAX_IMPORT_FILE_SIZE, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import MockProjectApi from '@/api/mock/MockProjectApi'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
@@ -75,9 +75,25 @@ const getFormatLabel = (type) => {
 }
 
 const onFileListUpdate = async (files) => {
-  importFiles.value = files
-  if (files?.length) {
-    const firstFile = files[0]?.raw || files[0]
+  const validFiles = []
+  const oversizedFiles = []
+  for (const file of files || []) {
+    const rawFile = file.raw || file
+    if (rawFile?.size && rawFile.size > DEFAULT_MAX_IMPORT_FILE_SIZE) {
+      oversizedFiles.push(file)
+    } else {
+      validFiles.push(file)
+    }
+  }
+  if (oversizedFiles.length > 0) {
+    const detail = oversizedFiles
+      .map(f => `${f.name} (${formatFileSize(f.size || f.raw?.size)})`)
+      .join(', ')
+    $coreError($i18nBundle('mock.msg.importFileSizeExceed', [detail, formatFileSize(DEFAULT_MAX_IMPORT_FILE_SIZE)]))
+  }
+  importFiles.value = validFiles
+  if (validFiles.length) {
+    const firstFile = validFiles[0]?.raw || validFiles[0]
     const detected = await detectImportFileType(firstFile)
     detectedType.value = detected
     if (detected && !userChangedTypeManually.value) {
@@ -90,6 +106,7 @@ const onFileListUpdate = async (files) => {
 
 const formOptions = computed(() => {
   const fileLimits = 3
+  const maxFileSizeStr = formatFileSize(DEFAULT_MAX_IMPORT_FILE_SIZE)
   return defineFormOptions([{
     labelKey: 'common.label.user',
     prop: 'userName',
@@ -184,7 +201,7 @@ const formOptions = computed(() => {
       trigger () {
         return <>
           <ElButton type="primary">{$i18nBundle('mock.label.selectFile')}</ElButton>
-          <span className="margin-left2">{$i18nBundle('mock.msg.importFileLimit', [fileLimits])}</span>
+          <span className="margin-left2">{$i18nBundle('mock.msg.importFileLimit', [maxFileSizeStr, fileLimits])}</span>
         </>
       }
     }
@@ -211,6 +228,17 @@ const executeUpload = () => {
 const doImportGroups = () => {
   if (!importFiles.value?.length) {
     $coreError($i18nBundle('mock.msg.importFileNoFile'))
+    return false
+  }
+  const oversizedFile = importFiles.value.find(file => {
+    const raw = file.raw || file
+    return raw?.size && raw.size > DEFAULT_MAX_IMPORT_FILE_SIZE
+  })
+  if (oversizedFile) {
+    $coreError($i18nBundle('mock.msg.importFileSizeExceed', [
+      `${oversizedFile.name} (${formatFileSize(oversizedFile.size || oversizedFile.raw?.size)})`,
+      formatFileSize(DEFAULT_MAX_IMPORT_FILE_SIZE)
+    ]))
     return false
   }
   if (detectedType.value && detectedType.value !== importModel.value.type) {

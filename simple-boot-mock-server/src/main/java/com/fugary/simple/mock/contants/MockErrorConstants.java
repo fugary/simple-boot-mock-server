@@ -46,4 +46,8 @@ public class MockErrorConstants {
      * 导入的分组路径已存在
      */
     public static final int CODE_2004 = 2004;
+    /**
+     * 上传文件大小超过限制
+     */
+    public static final int CODE_2005 = 2005;
 }

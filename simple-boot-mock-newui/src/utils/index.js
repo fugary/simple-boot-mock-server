@@ -549,6 +549,22 @@ export const formatDateSmart = (val) => {
   return formatDate(val, format)
 }
 
+/**
+ * 格式化文件大小为易读字符串 (B, KB, MB, GB, TB)
+ * @param {number} bytes 字节数
+ * @param {number} precision 保留小数位数，默认2
+ * @returns {string}
+ */
+export const formatFileSize = (bytes, precision = 2) => {
+  if (!bytes || bytes <= 0 || isNaN(bytes)) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const k = 1024
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), units.length - 1)
+  const val = bytes / Math.pow(k, i)
+  const formatted = val % 1 === 0 ? val.toString() : val.toFixed(precision)
+  return `${formatted} ${units[i]}`
+}
+
 export default {
   install (app) {
     router = app.config.globalProperties.$router
@@ -562,6 +578,7 @@ export default {
       $number,
       $currency,
       $currencyShort,
+      $formatFileSize: formatFileSize,
       $coreShowLoading,
       $coreHideLoading,
       $coreAlert,

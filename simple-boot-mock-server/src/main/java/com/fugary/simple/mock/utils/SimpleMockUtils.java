@@ -743,4 +743,26 @@ public class SimpleMockUtils {
         }
         return value.as(Object.class);
     }
+
+    /**
+     * 格式化文件大小
+     *
+     * @param size 字节大小
+     * @return 格式化后的大小（如 10MB, 21.86MB）
+     */
+    public static String formatFileSize(long size) {
+        if (size <= 0) {
+            return "0B";
+        }
+        final String[] units = new String[]{"B", "KB", "MB", "GB", "TB"};
+        int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
+        if (digitGroups >= units.length) {
+            digitGroups = units.length - 1;
+        }
+        double value = size / Math.pow(1024, digitGroups);
+        if (value == (long) value) {
+            return String.format("%d%s", (long) value, units[digitGroups]);
+        }
+        return String.format(Locale.ROOT, "%.2f%s", value, units[digitGroups]);
+    }
 }

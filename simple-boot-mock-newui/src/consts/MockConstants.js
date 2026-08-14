@@ -219,3 +219,5 @@ export const LANGUAGE_LIST = [
 export const LANGUAGE_LIST1 = LANGUAGE_LIST.flatMap(item =>
   item.includes('-') ? [item, item.replace('-', '_')] : [item]
 )
+
+export const DEFAULT_MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024 // 10MB
