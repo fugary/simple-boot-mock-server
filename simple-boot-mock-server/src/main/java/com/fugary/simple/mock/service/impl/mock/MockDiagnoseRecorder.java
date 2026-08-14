@@ -103,7 +103,8 @@ public class MockDiagnoseRecorder {
 
     public void delayResolved(Pair<Integer, String> delayInfo, Long actualDelayMs,
             MockGroup group, MockRequest request, MockData data) {
-        if (!isEnabled() || delayInfo == null || delayInfo.getLeft() == null) {
+        if (!isEnabled() || delayInfo == null || delayInfo.getLeft() == null
+                || (delayInfo.getLeft() <= 0 && (actualDelayMs == null || actualDelayMs <= 0))) {
             return;
         }
         String delaySource = delayInfo.getRight();

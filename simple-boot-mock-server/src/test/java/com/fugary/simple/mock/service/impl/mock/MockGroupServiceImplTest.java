@@ -401,6 +401,22 @@ class MockGroupServiceImplTest {
         assertEquals(request.getId(), ((Map<?, ?>) delayStep.getDetails().get(KEY_REQUEST)).get(KEY_REQUEST_ID));
     }
 
+    @Test
+    void delayResolvedShouldNotRecordWhenDelayZeroOrNegative() {
+        MockGroup mockGroup = createGroup("demo", null);
+        MockRequest request = createRequest(43, mockGroup.getId(), "/users/{id}", null);
+        MockData data = createData(403, mockGroup.getId(), request.getId(), "{\"ok\":true}");
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+
+        MockDiagnoseRecorder.of(diagnose).delayResolved(
+                Pair.of(0, GROUP_REQUEST), 0L, mockGroup, request, data);
+        assertTrue(diagnose.getSteps().stream().noneMatch(step -> CODE_DELAY_RESOLVED.equals(step.getCode())));
+
+        MockDiagnoseRecorder.of(diagnose).delayResolved(
+                Pair.of(-10, GROUP_REQUEST), 0L, mockGroup, request, data);
+        assertTrue(diagnose.getSteps().stream().noneMatch(step -> CODE_DELAY_RESOLVED.equals(step.getCode())));
+    }
+
     private MockHttpServletRequest buildRequest(String servletPath) {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod("GET");

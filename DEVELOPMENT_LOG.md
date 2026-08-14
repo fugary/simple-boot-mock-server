@@ -4,6 +4,10 @@
 
 ## 2026年
 ### 2026-08
+- **opt**: [2026-08-14] 优化 Mock 诊断流程中的延迟记录逻辑：
+  - 在 `MockDiagnoseRecorder.delayResolved` 中增加过滤条件，当配置延迟与实际等待时间均 $\le 0$（未配置延迟或 `delay=0` 且未产生实际等待）时，跳过记录 `CODE_DELAY_RESOLVED` 诊断步骤；
+  - 避免导入含有 `delay: 0` 的数据在调用时在诊断流程图里显示多余的“应用延迟”空步骤，使诊断链路更简洁清晰；
+  - 增加对应单元测试用例并通过测试验证。
 - **fix**: [2026-08-14] 修复 FastMock 函数解析与参数解构异常：
   - 接管 Mock.js 核心分发器 `Mock.Handler.function`，在函数执行时动态注入当前请求入参 `{ _req, request, Mock }`，并保持 `this` 上下文指向父级对象，完美兼容 Mock.js 原生规则与 FastMock 解构语法；
   - 优化 `MockGroupServiceImpl` 在 `responseFormat == "javascript"` 下对 JSON 格式对象模板的处理，统一进入 `mock` 解析流程，自动包裹 `Mock.mock()` 且保留大 JSON 正则快筛性能；
