@@ -3,6 +3,8 @@ package com.fugary.simple.mock.contants;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * Created on 2020/5/4 9:19 .<br>
  *
@@ -10,6 +12,12 @@ import lombok.NoArgsConstructor;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MockConstants {
+
+    /**
+     * 支持导入的文件扩展名列表
+     */
+    public static final List<String> SUPPORTED_IMPORT_EXTENSIONS = List.of(".json", ".yaml", ".yml", ".har");
+
 
     public static final String MOCK_SCHEMA_BODY_TYPE_CONTENT = "CONTENT";
 

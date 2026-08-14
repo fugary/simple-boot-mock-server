@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Test;
 import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_GROUP;
 import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SimpleMockUtilsTest {
 
@@ -70,5 +72,22 @@ class SimpleMockUtilsTest {
         assertEquals("1.50KB", SimpleMockUtils.formatFileSize(1536));
         assertEquals("10MB", SimpleMockUtils.formatFileSize(10 * 1024 * 1024));
         assertEquals("21.86MB", SimpleMockUtils.formatFileSize(22923828));
+    }
+
+    @Test
+    void isSupportedImportFileShouldValidateCorrectly() {
+        assertTrue(SimpleMockUtils.isSupportedImportFile("mock-data.json"));
+        assertTrue(SimpleMockUtils.isSupportedImportFile("openapi.yaml"));
+        assertTrue(SimpleMockUtils.isSupportedImportFile("swagger.YML"));
+        assertTrue(SimpleMockUtils.isSupportedImportFile("network.har"));
+        assertTrue(SimpleMockUtils.isSupportedImportFile("test.JSON"));
+
+        assertFalse(SimpleMockUtils.isSupportedImportFile("data.xlsx"));
+        assertFalse(SimpleMockUtils.isSupportedImportFile("report.doc"));
+        assertFalse(SimpleMockUtils.isSupportedImportFile("image.png"));
+        assertFalse(SimpleMockUtils.isSupportedImportFile("archive.zip"));
+        assertFalse(SimpleMockUtils.isSupportedImportFile("script.sh"));
+        assertFalse(SimpleMockUtils.isSupportedImportFile(""));
+        assertFalse(SimpleMockUtils.isSupportedImportFile(null));
     }
 }

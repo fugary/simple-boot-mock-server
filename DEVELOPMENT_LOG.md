@@ -4,6 +4,11 @@
 
 ## 2026年
 ### 2026-08
+- **opt**: [2026-08-14] 限制 Mock 数据导入文件类型与完善格式白名单校验：
+  - 前端增加原生文件选择类型过滤：为 `el-upload` 配置 `accept=".json,.yaml,.yml,.har"` 属性，默认仅允许用户在操作系统文件选择器中选取合法格式文件；
+  - 前端增加文件扩展名白名单双重即时校验：在 `onFileListUpdate` 和 `doImportGroups` 阶段对选中文件进行后缀名校验（`.json`, `.yaml`, `.yml`, `.har`），若发现不支持的格式（如 `.xlsx` 等）立即拦截并剔除，弹出国际化友好提示，并在上传按钮旁明确提示支持的文件类型；
+  - 后端增加文件扩展名安全校验与防御：在 `MockGroupServiceImpl.toImportGroups` 中调用 `SimpleMockUtils.isSupportedImportFile` 对上传文件进行扩展名校验，遇到非法后缀提前拦截并返回多语言国际化错误消息（`simple.error.code.2003.unsupported`），避免对二进制等非文本文件进行无效的内容读取与解析；
+  - 完善单元测试与代码质量：在 `SimpleMockUtilsTest` 中增加 `isSupportedImportFile` 覆盖率测试用例，并通过 ESLint 与全量 Maven 单元测试。
 - **opt**: [2026-08-14] 优化大文件上传校验与超限提示体验：
   - 前端增加文件大小即时校验拦截：在文件选择（`onFileListUpdate`）及导入提交（`doImportGroups`）阶段通过 `file.size` 进行秒级拦截，当单文件超出 10MB 限制时自动从列表中剔除超限文件并友好提示文件名称与实际大小（如 `文件【xxx.har (21.86 MB)】超过最大限制（最大10 MB）`），避免大文件无效上传及网络带宽浪费；
   - 前端新增易读文件大小格式化函数 `formatFileSize`（支持 B/KB/MB/GB/TB 转换），导入窗口中的提示文案联动动态显示单文件大小上限与数量限制；

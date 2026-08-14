@@ -221,3 +221,7 @@ export const LANGUAGE_LIST1 = LANGUAGE_LIST.flatMap(item =>
 )
 
 export const DEFAULT_MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
+export const SUPPORTED_IMPORT_FILE_EXTS = ['.json', '.yaml', '.yml', '.har']
+
+export const SUPPORTED_IMPORT_FILE_ACCEPT = SUPPORTED_IMPORT_FILE_EXTS.join(',')

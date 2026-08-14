@@ -539,6 +539,13 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
         try {
             ExportMockVo mockVo = new ExportMockVo();
             for (MultipartFile file : files) {
+                String originalFilename = file.getOriginalFilename();
+                if (!SimpleMockUtils.isSupportedImportFile(originalFilename)) {
+                    String supportedExts = String.join(", ", MockConstants.SUPPORTED_IMPORT_EXTENSIONS);
+                    String msg = SimpleResultUtils.getErrorMsg("simple.error.code.2003.unsupported",
+                            new Object[]{originalFilename, supportedExts});
+                    return SimpleResultUtils.createError(MockErrorConstants.CODE_2003, msg);
+                }
                 String fileData = StreamUtils.copyToString(file.getInputStream(), StandardCharsets.UTF_8);
                 MockGroupImporter importer = MockGroupImporter.findImporter(mockGroupImporters, importVo.getType());
                 ExportMockVo currentVo;

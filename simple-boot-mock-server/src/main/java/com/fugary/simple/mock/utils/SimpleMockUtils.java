@@ -457,6 +457,25 @@ public class SimpleMockUtils {
     }
 
     /**
+     * 校验文件名是否为支持的导入格式
+     *
+     * @param fileName
+     * @return
+     */
+    public static boolean isSupportedImportFile(String fileName) {
+        if (StringUtils.isBlank(fileName)) {
+            return false;
+        }
+        String lower = fileName.toLowerCase();
+        for (String ext : MockConstants.SUPPORTED_IMPORT_EXTENSIONS) {
+            if (lower.endsWith(ext)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * 处理参数解析为String，并且特殊处理密码混淆
      * @param argsList
      * @return

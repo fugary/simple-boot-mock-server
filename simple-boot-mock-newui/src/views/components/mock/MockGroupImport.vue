@@ -5,7 +5,7 @@ import { $coreAlert, $coreConfirm, $coreError, formatFileSize, getStyleGrow, isA
 import { defineFormOptions } from '@/components/utils'
 import { ElButton } from 'element-plus'
 import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, detectImportFileType, uploadFiles } from '@/api/mock/MockGroupApi'
-import { DEFAULT_MAX_IMPORT_FILE_SIZE, MOCK_DEFAULT_PROJECT } from '@/consts/MockConstants'
+import { DEFAULT_MAX_IMPORT_FILE_SIZE, MOCK_DEFAULT_PROJECT, SUPPORTED_IMPORT_FILE_ACCEPT, SUPPORTED_IMPORT_FILE_EXTS } from '@/consts/MockConstants'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import MockProjectApi from '@/api/mock/MockProjectApi'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
@@ -74,20 +74,36 @@ const getFormatLabel = (type) => {
   return item ? $i18nBundle(item.labelKey) : type
 }
 
+const getFileName = (file) => file?.name || file?.raw?.name || ''
+const isSupportedFile = (file) => {
+  const lowerName = getFileName(file).toLowerCase()
+  return SUPPORTED_IMPORT_FILE_EXTS.some(ext => lowerName.endsWith(ext))
+}
+const isOversizedFile = (file) => {
+  const raw = file?.raw || file
+  return raw?.size && raw.size > DEFAULT_MAX_IMPORT_FILE_SIZE
+}
+
 const onFileListUpdate = async (files) => {
   const validFiles = []
   const oversizedFiles = []
+  const invalidExtFiles = []
   for (const file of files || []) {
-    const rawFile = file.raw || file
-    if (rawFile?.size && rawFile.size > DEFAULT_MAX_IMPORT_FILE_SIZE) {
+    if (!isSupportedFile(file)) {
+      invalidExtFiles.push(file)
+    } else if (isOversizedFile(file)) {
       oversizedFiles.push(file)
     } else {
       validFiles.push(file)
     }
   }
+  if (invalidExtFiles.length > 0) {
+    const detail = invalidExtFiles.map(getFileName).join(', ')
+    $coreError($i18nBundle('mock.msg.importFileTypeInvalid', [detail, SUPPORTED_IMPORT_FILE_EXTS.join(', ')]))
+  }
   if (oversizedFiles.length > 0) {
     const detail = oversizedFiles
-      .map(f => `${f.name} (${formatFileSize(f.size || f.raw?.size)})`)
+      .map(f => `${getFileName(f)} (${formatFileSize(f.size || f.raw?.size)})`)
       .join(', ')
     $coreError($i18nBundle('mock.msg.importFileSizeExceed', [detail, formatFileSize(DEFAULT_MAX_IMPORT_FILE_SIZE)]))
   }
@@ -107,6 +123,7 @@ const onFileListUpdate = async (files) => {
 const formOptions = computed(() => {
   const fileLimits = 3
   const maxFileSizeStr = formatFileSize(DEFAULT_MAX_IMPORT_FILE_SIZE)
+  const supportedExtsStr = SUPPORTED_IMPORT_FILE_EXTS.join('/')
   return defineFormOptions([{
     labelKey: 'common.label.user',
     prop: 'userName',
@@ -187,6 +204,7 @@ const formOptions = computed(() => {
     type: 'upload',
     attrs: {
       style: 'width: 100%',
+      accept: SUPPORTED_IMPORT_FILE_ACCEPT,
       fileList: importFiles.value,
       'onUpdate:fileList': onFileListUpdate,
       multiple: true,
@@ -201,7 +219,7 @@ const formOptions = computed(() => {
       trigger () {
         return <>
           <ElButton type="primary">{$i18nBundle('mock.label.selectFile')}</ElButton>
-          <span className="margin-left2">{$i18nBundle('mock.msg.importFileLimit', [maxFileSizeStr, fileLimits])}</span>
+          <span className="margin-left2">{$i18nBundle('mock.msg.importFileLimit', [supportedExtsStr, maxFileSizeStr, fileLimits])}</span>
         </>
       }
     }
@@ -230,13 +248,18 @@ const doImportGroups = () => {
     $coreError($i18nBundle('mock.msg.importFileNoFile'))
     return false
   }
-  const oversizedFile = importFiles.value.find(file => {
-    const raw = file.raw || file
-    return raw?.size && raw.size > DEFAULT_MAX_IMPORT_FILE_SIZE
-  })
+  const invalidExtFile = importFiles.value.find(file => !isSupportedFile(file))
+  if (invalidExtFile) {
+    $coreError($i18nBundle('mock.msg.importFileTypeInvalid', [
+      getFileName(invalidExtFile),
+      SUPPORTED_IMPORT_FILE_EXTS.join(', ')
+    ]))
+    return false
+  }
+  const oversizedFile = importFiles.value.find(file => isOversizedFile(file))
   if (oversizedFile) {
     $coreError($i18nBundle('mock.msg.importFileSizeExceed', [
-      `${oversizedFile.name} (${formatFileSize(oversizedFile.size || oversizedFile.raw?.size)})`,
+      `${getFileName(oversizedFile)} (${formatFileSize(oversizedFile.size || oversizedFile.raw?.size)})`,
       formatFileSize(DEFAULT_MAX_IMPORT_FILE_SIZE)
     ]))
     return false
