@@ -146,7 +146,7 @@ const props = defineProps({
 })
 const route = useRoute()
 const { search, getById, deleteById, saveOrUpdate } = MockGroupApi
-const defaultSearchParam = { page: useDefaultPage(), userName: useCurrentUserName(), projectId: null, onlyMine: false }
+const defaultSearchParam = { page: useDefaultPage(), userName: useCurrentUserName(), projectId: null, onlyMine: !isAdminUser() && !props.publicFlag }
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: defaultSearchParam,
@@ -154,20 +154,23 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
 })
 const mockProject = ref()
 const scenarioMap = ref({})
-const loadMockGroups = (pageNumber, saveConfig) => searchMethod(pageNumber, {}, saveConfig)
-  .then(data => {
-    mockProject.value = data.infos?.mockProject
-    scenarioMap.value = data.infos?.scenarioMap || {}
-    const countMap = data.infos?.countMap || {}
-    const historyCountMap = data.infos?.historyCountMap || {}
-    const accessDateMap = data.infos?.accessDateMap || {}
-    tableData.value.forEach(group => {
-      group.requestCount = countMap[group.id] || 0
-      group.historyCount = historyCountMap[group.id] || 0
-      group.lastAccessDate = accessDateMap[group.groupPath]
+const loadMockGroups = (pageNumber, saveConfig) => {
+  const extraParams = routeProjectLocked.value ? { onlyMine: undefined } : {}
+  return searchMethod(pageNumber, extraParams, saveConfig)
+    .then(data => {
+      mockProject.value = data.infos?.mockProject
+      scenarioMap.value = data.infos?.scenarioMap || {}
+      const countMap = data.infos?.countMap || {}
+      const historyCountMap = data.infos?.historyCountMap || {}
+      const accessDateMap = data.infos?.accessDateMap || {}
+      tableData.value.forEach(group => {
+        group.requestCount = countMap[group.id] || 0
+        group.historyCount = historyCountMap[group.id] || 0
+        group.lastAccessDate = accessDateMap[group.groupPath]
+      })
+      return data
     })
-    return data
-  })
+}
 
 const toGroupLogs = (mockGroupPath) => $goto({
   name: 'MockLogs',
@@ -248,7 +251,7 @@ const writableProjectOptions = computed(() => {
   return filterProjectOptionsByAuthority(projects.value, projectOptions.value, checkProjectWritable)
 })
 const sharedProjectOptions = ref([])
-const showOnlyMineFilter = computed(() => !isAdminUser() && !props.publicFlag && sharedProjectOptions.value.length > 0)
+const showOnlyMineFilter = computed(() => !isAdminUser() && !props.publicFlag && !routeProjectLocked.value && sharedProjectOptions.value.length > 0)
 const refreshSharedProjectOptions = (result = []) => {
   sharedProjectOptions.value = (result || []).filter(project => {
     return !isDefaultProject(project?.projectCode) && project?.userName && project.userName !== useCurrentUserName()

@@ -36,7 +36,7 @@ const route = useRoute()
 const { search, deleteById, saveOrUpdate } = MockProjectApi
 
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
-  defaultParam: { page: useDefaultPage(50), publicFlag: props.publicFlag, onlyMine: false },
+  defaultParam: { page: useDefaultPage(50), publicFlag: props.publicFlag, onlyMine: !isAdminUser() && !props.publicFlag },
   searchMethod: search
 })
 const sharedProjectOptions = ref([])
