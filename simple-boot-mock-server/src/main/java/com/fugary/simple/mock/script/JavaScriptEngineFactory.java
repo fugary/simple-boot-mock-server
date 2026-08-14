@@ -47,15 +47,21 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
 
     private static final String SIMPLE_MOCK_CONTENT;
 
+    private static final String FAST_MOCK_PATH = "classpath*:js/fastmock.js";
+
+    private static final String FAST_MOCK_CONTENT;
+
     static {
         ResourcePatternResolver patternResolver = new PathMatchingResourcePatternResolver();
         try {
             Resource mockJs = patternResolver.getResources(MOCK_JS_PATH)[0];
             Resource dayJs = patternResolver.getResources(DAY_JS_PATH)[0];
             Resource simpleMock = patternResolver.getResources(SIMPLE_MOCK_PATH)[0];
+            Resource fastMock = patternResolver.getResources(FAST_MOCK_PATH)[0];
             MOCK_JS_CONTENT = StreamUtils.copyToString(mockJs.getInputStream(), StandardCharsets.UTF_8);
             DAY_JS_CONTENT = StreamUtils.copyToString(dayJs.getInputStream(), StandardCharsets.UTF_8);
             SIMPLE_MOCK_CONTENT = StreamUtils.copyToString(simpleMock.getInputStream(), StandardCharsets.UTF_8);
+            FAST_MOCK_CONTENT = StreamUtils.copyToString(fastMock.getInputStream(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -94,10 +100,12 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
         try {
             Bindings bindings = scriptEngine.createBindings();
             scriptEngine.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
+            scriptEngine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
             JsHelper jsHelper = new JsHelper();
             bindings.put("JsHelper", jsHelper);
             scriptEngine.eval(MOCK_JS_CONTENT, bindings);
             scriptEngine.eval(DAY_JS_CONTENT, bindings);
+            scriptEngine.eval(FAST_MOCK_CONTENT, bindings);
             scriptEngine.eval(jsHelper.getInitStr(), bindings);
             bindings.put("fetch", scriptWithFetchProvider.getFetchFunction((Context) MethodUtils.invokeMethod(bindings, "getContext")));
             bindings.put("__requireCache__", ProxyObject.fromMap(new HashMap<>()));

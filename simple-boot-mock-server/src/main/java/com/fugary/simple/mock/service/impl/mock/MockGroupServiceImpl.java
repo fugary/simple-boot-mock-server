@@ -449,7 +449,7 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
             responseBody = MockJsUtils.processResponseBody(responseBody, requestVo,
                     paramKey -> scriptEngineProvider
                             .evalStr("mockStringify(" + MockJsUtils.getJsExpression(paramKey) + ")"));
-            if ("javascript".equals(mockData.getResponseFormat())) {
+            if ("javascript".equals(mockData.getResponseFormat()) && !MockJsUtils.isJson(responseBody)) {
                 responseBody = scriptEngineProvider
                         .evalStr("mockStringify(" + MockJsUtils.getJsExpression(responseBody) + ")");
             } else {

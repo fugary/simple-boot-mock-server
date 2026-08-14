@@ -3,6 +3,7 @@ package com.fugary.simple.mock.script;
 import com.fugary.simple.mock.push.ScriptWithFetchProvider;
 import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.MockJsUtils;
+import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
@@ -94,6 +95,117 @@ class JavaScriptEngineProviderImplTest {
 
         assertEquals("ok", result);
         assertTrue(consoleSteps(diagnose).isEmpty());
+    }
+
+    @Test
+    void testFastMockFunction() {
+        JavaScriptEngineProviderImpl realProvider = new JavaScriptEngineProviderImpl();
+        realProvider.setScriptWithFetchProvider(createFetchProvider());
+
+        HttpRequestVo requestVo = new HttpRequestVo();
+        requestVo.getParameters().put("id", "1");
+        MockJsUtils.setCurrentRequestVo(requestVo);
+        try {
+            String template = "{\n" +
+                    "  \"success\": true,\n" +
+                    "  \"message\": \"Success\",\n" +
+                    "  \"resultData\": function({_req}){\n" +
+                    "    var menuList = [\n" +
+                    "            {\n" +
+                    "                \"id\": 1,\n" +
+                    "                \"iconCls\": \"setting\",\n" +
+                    "                \"nameCn\": \"系统管理\",\n" +
+                    "                \"nameEn\": \"System\"\n" +
+                    "            },\n" +
+                    "            {\n" +
+                    "                \"id\": 11,\n" +
+                    "                \"parentId\": 1,\n" +
+                    "                \"iconCls\": \"user\",\n" +
+                    "                \"nameCn\": \"用户管理\",\n" +
+                    "                \"nameEn\": \"Users\",\n" +
+                    "                \"menuUrl\": \"/admin/users\"\n" +
+                    "            }\n" +
+                    "        ];\n" +
+                    "  return {\n" +
+                    "    menu: menuList.filter(menu=>menu.id==_req.params.id)[0]\n" +
+                    "  };\n" +
+                    "}\n" +
+                    "}";
+            String result = realProvider.mock(template);
+            assertTrue(result.contains("\"nameCn\":\"系统管理\""));
+            assertTrue(result.contains("\"nameEn\":\"System\""));
+            assertTrue(result.contains("\"success\":true"));
+        } finally {
+            MockJsUtils.removeCurrentRequestVo();
+        }
+    }
+
+    @Test
+    void testMockStringifyWithFastMockFunction() {
+        JavaScriptEngineProviderImpl realProvider = new JavaScriptEngineProviderImpl();
+        realProvider.setScriptWithFetchProvider(createFetchProvider());
+
+        HttpRequestVo requestVo = new HttpRequestVo();
+        requestVo.getParameters().put("id", "1");
+        MockJsUtils.setCurrentRequestVo(requestVo);
+        try {
+            String template = "{\n" +
+                    "  \"debugReq\": function({_req}) {\n" +
+                    "    return {\n" +
+                    "      params: _req.params,\n" +
+                    "      query: _req.query,\n" +
+                    "      body: _req.body\n" +
+                    "    };\n" +
+                    "  }\n" +
+                    "}";
+            String resultMock = realProvider.mock(template);
+            assertTrue(resultMock.contains("\"id\":\"1\""), resultMock);
+
+            String resultEval = realProvider.evalStr("mockStringify(Mock.mock(" + template + "))");
+            assertTrue(resultEval.contains("\"id\":\"1\""), resultEval);
+        } finally {
+            MockJsUtils.removeCurrentRequestVo();
+        }
+    }
+
+    @Test
+    void testMockJsPlaceholdersAndRules() {
+        JavaScriptEngineProviderImpl realProvider = new JavaScriptEngineProviderImpl();
+        realProvider.setScriptWithFetchProvider(createFetchProvider());
+
+        String template = "{\n" +
+                "  \"name\": \"@cname\",\n" +
+                "  \"age|18-60\": 1,\n" +
+                "  \"city\": \"@city\",\n" +
+                "  \"list|3\": [{\n" +
+                "    \"id|+1\": 100\n" +
+                "  }],\n" +
+                "  \"computed\": function() {\n" +
+                "    return this.city + '-test';\n" +
+                "  }\n" +
+                "}";
+        String result = realProvider.mock(template);
+        assertTrue(result.contains("\"list\":["));
+        assertTrue(result.contains("-test"));
+    }
+
+    @Test
+    void testFastMockWithArrowFunctionAndMethodShorthand() {
+        JavaScriptEngineProviderImpl realProvider = new JavaScriptEngineProviderImpl();
+        realProvider.setScriptWithFetchProvider(createFetchProvider());
+
+        HttpRequestVo requestVo = new HttpRequestVo();
+        requestVo.getParameters().put("name", "Alice");
+        MockJsUtils.setCurrentRequestVo(requestVo);
+        try {
+            String arrowTemplate = "{\n" +
+                    "  \"user\": ({_req}) => ({ name: _req.params.name })\n" +
+                    "}";
+            String result = realProvider.mock(arrowTemplate);
+            assertTrue(result.contains("\"name\":\"Alice\""));
+        } finally {
+            MockJsUtils.removeCurrentRequestVo();
+        }
     }
 
     private List<MockDiagnoseVo.Step> consoleSteps(MockDiagnoseVo diagnose) {

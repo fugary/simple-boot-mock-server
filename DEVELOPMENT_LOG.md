@@ -4,6 +4,10 @@
 
 ## 2026年
 ### 2026-08
+- **fix**: [2026-08-14] 修复 FastMock 函数解析与参数解构异常：
+  - 接管 Mock.js 核心分发器 `Mock.Handler.function`，在函数执行时动态注入当前请求入参 `{ _req, request, Mock }`，并保持 `this` 上下文指向父级对象，完美兼容 Mock.js 原生规则与 FastMock 解构语法；
+  - 优化 `MockGroupServiceImpl` 在 `responseFormat == "javascript"` 下对 JSON 格式对象模板的处理，统一进入 `mock` 解析流程，自动包裹 `Mock.mock()` 且保留大 JSON 正则快筛性能；
+  - 消除每次请求重复 eval `fastmock.js` 引发的 Polyglot 跨上下文拦截异常（`unexpected interop primitive`），在引擎初始化时统一加载。
 - **opt**: [2026-08-14] 限制 Mock 数据导入文件类型与完善格式白名单校验：
   - 前端增加原生文件选择类型过滤：为 `el-upload` 配置 `accept=".json,.yaml,.yml,.har"` 属性，默认仅允许用户在操作系统文件选择器中选取合法格式文件；
   - 前端增加文件扩展名白名单双重即时校验：在 `onFileListUpdate` 和 `doImportGroups` 阶段对选中文件进行后缀名校验（`.json`, `.yaml`, `.yml`, `.har`），若发现不支持的格式（如 `.xlsx` 等）立即拦截并剔除，弹出国际化友好提示，并在上传按钮旁明确提示支持的文件类型；

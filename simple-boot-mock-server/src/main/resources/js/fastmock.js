@@ -1,33 +1,16 @@
-(function (Mock, request) {
-    const processMockParam = mockData => {
-        if (typeof mockData === 'object') {
+;(function (globalThis) {
+    if (globalThis.Mock && globalThis.Mock.Handler) {
+        globalThis.Mock.Handler.function = function (options) {
+            const req = typeof request !== 'undefined' ? request : (globalThis.request || {});
             const argObj = {
-                _req: request, // fastMock
-                request: request,
-                Mock: Mock
-            }
-            for (const argsKey in mockData) {
-                const dataVal = mockData[argsKey]
-                if (typeof dataVal === 'function') {
-                    mockData[argsKey] = function () {
-                        const result = dataVal.call(this, argObj)
-                        if (typeof result === 'object') {
-                            processMockParam(result);
-                        }
-                        return result
-                    }
-                } else if (typeof dataVal === 'object') {
-                    processMockParam(dataVal)
-                }
-            }
-        }
+                _req: req, // fastMock
+                request: req,
+                Mock: globalThis.Mock
+            };
+            const context = options && options.context && options.context.currentContext ? options.context.currentContext : this;
+            return options.template.call(context, argObj);
+        };
+        globalThis.Random = globalThis.Mock.Random;
     }
-    if (!Mock.__oriMock) {
-        Mock.__oriMock = Mock.mock
-    }
-    Mock.mock = function (mockData, ...args) {
-        processMockParam(mockData)
-        return Mock.__oriMock(mockData, ...args)
-    };
-    globalThis.Random = Mock.Random;
-})(Mock, request)
+}(globalThis));
+

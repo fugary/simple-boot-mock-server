@@ -17,16 +17,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.graalvm.polyglot.proxy.ProxyArray;
 import org.graalvm.polyglot.proxy.ProxyObject;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.util.StreamUtils;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import javax.script.SimpleScriptContext;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -46,24 +40,12 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
 
     private GenericObjectPool<ScriptEngine> scriptEnginePool;
 
-    private static final String FAST_MOCK_JS_PATH = "js/fastmock.js";
-
-    private static final String FAST_MOCK_JS_CONTENT;
-
     private ScriptWithFetchProvider scriptWithFetchProvider;
 
     private boolean fetchEnabled;
 
-    private static final Pattern MOCK_PATTERN = Pattern.compile("\"[\\w\\-]+\\|[^\"]+\"\\s*:|:\\s*\"[^\"]*@[^\"]+\"|:\\s*function\\s*\\(");
+    private static final Pattern MOCK_PATTERN = Pattern.compile("\"[\\w\\-]+\\|[^\"]+\"\\s*:|:\\s*\"[^\"]*@[^\"]+\"|:\\s*function\\s*\\(|=>");
 
-    static {
-        Resource fastMockJs = new ClassPathResource(FAST_MOCK_JS_PATH);
-        try {
-            FAST_MOCK_JS_CONTENT = StreamUtils.copyToString(fastMockJs.getInputStream(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     private boolean isMockJSFragment(String template) {
         return template.contains("Mock.mock(");
@@ -137,15 +119,15 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
      */
     protected ScriptContext getScriptContext(ScriptEngine scriptEngine) throws ScriptException {
         HttpRequestVo requestVo = MockJsUtils.getHttpRequestVo();
-        ScriptContext scriptContext = new SimpleScriptContext();
-        scriptContext.setBindings(scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
+        ScriptContext scriptContext = scriptEngine.getContext();
         if (MockDiagnoseContext.isScriptConsoleEnabled()) {
             ScriptConsoleBridge.install(scriptEngine, scriptContext);
         }
         if (requestVo != null) {
             scriptContext.setAttribute("request", processValue(requestVo), ScriptContext.ENGINE_SCOPE);
+        } else {
+            scriptContext.removeAttribute("request", ScriptContext.ENGINE_SCOPE);
         }
-        scriptEngine.eval(FAST_MOCK_JS_CONTENT, scriptContext);
         HttpResponseVo responseVo = MockJsUtils.getCurrentResponseVo();
         if (responseVo != null) {
             scriptContext.setAttribute("response", processValue(responseVo), ScriptContext.ENGINE_SCOPE);
