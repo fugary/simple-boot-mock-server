@@ -141,7 +141,6 @@
         <dependency>
             <groupId>de.sstoehr</groupId>
             <artifactId>har-reader</artifactId>
-            <version>2.2.1</version>
         </dependency>
     </dependencies>
 

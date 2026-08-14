@@ -33,6 +33,7 @@
         <hutool.version>5.8.37</hutool.version>
         <bouncycastle.version>1.79</bouncycastle.version>
         <postman4j-models.version>0.0.5-alpha</postman4j-models.version>
+        <har-reader.version>2.2.1</har-reader.version>
     </properties>
 
     <dependencyManagement>
@@ -103,6 +104,11 @@
                 <groupId>dev.jora.postman4j</groupId>
                 <artifactId>postman4j-models</artifactId>
                 <version>${postman4j-models.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.sstoehr</groupId>
+                <artifactId>har-reader</artifactId>
+                <version>${har-reader.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -105,7 +105,7 @@ public class MockRequestController {
             queryWrapper.notExists(!queryVo.getHasData(),
                     "select 1 from t_mock_data where t_mock_data.request_id=t_mock_request.id");
         }
-        queryWrapper.orderByAsc("request_path", "method");
+        queryWrapper.orderByDesc("top_flag").orderByAsc("request_path", "method");
         Page<MockRequest> pageResult = mockRequestService.page(page, queryWrapper);
         Future<Map<Integer, Long>> countMapFuture = null;
         if (CollectionUtils.isNotEmpty(pageResult.getRecords())) {

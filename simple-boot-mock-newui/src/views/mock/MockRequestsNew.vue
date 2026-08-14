@@ -860,4 +860,15 @@ const toShowHistoryWindow = (current) => {
   font-size: inherit;
   vertical-align: baseline;
 }
+
+:deep(.mock-request-top-icon-unpinned) {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+:deep(.el-table__row:hover .mock-request-top-icon-unpinned) {
+  visibility: visible;
+  opacity: 1;
+}
 </style>

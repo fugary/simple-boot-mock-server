@@ -123,6 +123,12 @@ const changeStatus = (status) => {
 const confirmResumeMock = () => $coreConfirm($i18nKey('common.msg.commonConfirm', 'mock.label.resumeMock'))
   .then(() => emit('saveMockRequest', { ...requestItem.value, disableMock: false }))
 
+const toggleTop = () => {
+  if (props.writable) {
+    emit('saveMockRequest', { ...requestItem.value, topFlag: !requestItem.value?.topFlag })
+  }
+}
+
 const requestProxyUrl = computed(() => {
   let proxyUrl = calcProxyUrl(requestItem.value.proxyUrl) || calcProxyUrl(props.groupItem.proxyUrl)
   if (proxyUrl) { // 去掉末尾的斜杠
@@ -203,6 +209,33 @@ const requestProxyUrl = computed(() => {
             icon="DoDisturbFilled"
           />
         </el-text>
+        <el-link
+          v-if="writable"
+          v-common-tooltip="$t(requestItem.topFlag ? 'mock.label.unpinFromTop' : 'mock.label.pinToTop')"
+          :type="requestItem.topFlag ? 'warning' : 'info'"
+          :underline="false"
+          :class="['margin-left1', requestItem.topFlag ? '' : 'mock-request-top-icon-unpinned']"
+          @click.stop="toggleTop"
+        >
+          <common-icon
+            :icon="requestItem.topFlag ? 'StarFilled' : 'Star'"
+            :size="18"
+          />
+        </el-link>
+        <el-link
+          v-else-if="requestItem.topFlag"
+          v-common-tooltip="$t('mock.label.pinToTop')"
+          type="warning"
+          :underline="false"
+          class="margin-left1"
+          style="cursor: default;"
+          @click.stop
+        >
+          <common-icon
+            icon="StarFilled"
+            :size="18"
+          />
+        </el-link>
       </el-col>
       <el-col
         :span="10"
