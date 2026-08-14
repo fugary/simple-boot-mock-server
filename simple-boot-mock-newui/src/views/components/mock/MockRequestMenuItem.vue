@@ -65,6 +65,14 @@ const buttons = computed(() => {
 
 const moreButtons = computed(() => {
   return defineTableButtons([{
+    labelKey: requestItem.value?.topFlag ? 'mock.label.unpinFromTop' : 'mock.label.pinToTop',
+    icon: requestItem.value?.topFlag ? 'StarFilled' : 'Star',
+    type: requestItem.value?.topFlag ? 'warning' : 'default',
+    enabled: props.writable,
+    click: () => {
+      toggleTop()
+    }
+  }, {
     labelKey: 'common.label.edit',
     icon: 'Edit',
     type: 'primary',
@@ -210,26 +218,13 @@ const requestProxyUrl = computed(() => {
           />
         </el-text>
         <el-link
-          v-if="writable"
-          v-common-tooltip="$t(requestItem.topFlag ? 'mock.label.unpinFromTop' : 'mock.label.pinToTop')"
-          :type="requestItem.topFlag ? 'warning' : 'info'"
-          :underline="false"
-          :class="['margin-left1', requestItem.topFlag ? '' : 'mock-request-top-icon-unpinned']"
-          @click.stop="toggleTop"
-        >
-          <common-icon
-            :icon="requestItem.topFlag ? 'StarFilled' : 'Star'"
-            :size="18"
-          />
-        </el-link>
-        <el-link
-          v-else-if="requestItem.topFlag"
-          v-common-tooltip="$t('mock.label.pinToTop')"
+          v-if="requestItem.topFlag"
+          v-common-tooltip="$t(writable ? 'mock.label.unpinFromTop' : 'mock.label.pinToTop')"
           type="warning"
           :underline="false"
           class="margin-left1"
-          style="cursor: default;"
-          @click.stop
+          :style="writable ? '' : 'cursor: default;'"
+          @click.stop="writable && toggleTop()"
         >
           <common-icon
             icon="StarFilled"
