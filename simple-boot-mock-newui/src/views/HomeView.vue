@@ -4,7 +4,7 @@ import MainContent from '@/layout/MainContent.vue'
 import GlobalSettings from '@/views/components/global/GlobalSettings.vue'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 import { GlobalLayoutMode } from '@/consts/GlobalConstants'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
 import { useMenuConfigStore } from '@/stores/MenuConfigStore'
 import { useTabModeScrollSaver } from '@/route/RouteUtils'
 
@@ -14,14 +14,29 @@ const showLeftMenu = computed(() => {
 })
 const leftMenuAsideRef = ref(null)
 
-const splitDisabled = ref(globalConfigStore.isCollapseLeft)
-const splitCollapsed = ref(globalConfigStore.isCollapseLeft)
+// 控制 split 是否启用：收起时立即禁用 split；展开时先执行 CSS 展开动画，300ms 动画完成后再启用 split
+const isSplitDisabled = ref(globalConfigStore.isCollapseLeft)
+let expandTimer = null
 
-watch(() => globalConfigStore.isCollapseLeft, (newVal) => {
-  splitCollapsed.value = newVal
-  setTimeout(() => {
-    splitDisabled.value = newVal
-  }, 300)
+watch(() => globalConfigStore.isCollapseLeft, (collapsed) => {
+  if (expandTimer) {
+    clearTimeout(expandTimer)
+    expandTimer = null
+  }
+  if (collapsed) {
+    isSplitDisabled.value = true
+  } else {
+    isSplitDisabled.value = true
+    expandTimer = setTimeout(() => {
+      isSplitDisabled.value = false
+    }, 300)
+  }
+}, { immediate: true })
+
+onUnmounted(() => {
+  if (expandTimer) {
+    clearTimeout(expandTimer)
+  }
 })
 
 const handleDragEnd = () => {
@@ -41,8 +56,8 @@ useMenuConfigStore().loadBusinessMenus()
   <el-container class="index-container">
     <common-split
       v-if="showLeftMenu"
-      :disabled="splitDisabled"
-      :class="{ 'collapsed-split': splitCollapsed }"
+      :disabled="isSplitDisabled"
+      :class="{ 'collapsed-split': globalConfigStore.isCollapseLeft }"
       :sizes="[20, 80]"
       :min-size="[60, 500]"
       :max-size="[500, Infinity]"
