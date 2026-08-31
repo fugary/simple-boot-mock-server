@@ -53,6 +53,16 @@ $http.interceptors.request.use(/** @param config {ServiceRequestConfig} */ confi
 const networkErrorFun = debounce(() => ElMessage.error($i18nBundle('common.msg.networkError')), 300)
 const networkTimeoutFun = debounce(() => ElMessage.error($i18nBundle('common.msg.networkTimeout')), 300)
 
+const handle401Redirect = debounce(() => {
+  $coreHideLoading(true)
+  useLoginConfigStore().logout()
+  $goto('/login')
+}, 200)
+
+const auth401ErrorFun = debounce((message) => {
+  ElMessage.error(message || $i18nBundle('common.msg.sessionExpired') || '登录会话已过期，请重新登录')
+}, 300)
+
 $http.interceptors.response.use(response => {
   if (hasLoading(response.config)) {
     $coreHideLoading()
@@ -73,13 +83,26 @@ $http.interceptors.response.use(response => {
     networkErrorFun()
   } else if (error.code === 'ECONNABORTED' && error.message.indexOf('timeout') > -1) {
     networkTimeoutFun()
-  } else if (error.response?.status === 401 && !error.response?.config.isLogin) {
-    // 跳转登录页面
-    $goto('/login')
-  } else {
-    ElMessage.error(error.message)
   }
-  return error.response
+  const is401 = error.response?.status === 401
+  const isLoginReq = !!error.config?.isLogin
+  const resData = error.response?.data
+  const message = resData?.message || error.message || '系统异常，请稍后再试'
+
+  if (is401 && !isLoginReq) {
+    auth401ErrorFun(resData?.message)
+    handle401Redirect()
+  } else if (showErrorMessage(error.config)) {
+    ElMessage.error(message)
+  }
+
+  if (error.response) {
+    error.response.data = error.response.data || {}
+    error.response.data.success = false
+    error.response.data.message = message
+    return error.response
+  }
+  return Promise.reject(error)
 })
 
 /**

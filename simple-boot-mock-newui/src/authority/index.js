@@ -17,7 +17,7 @@ NProgress.configure({ showSpinner: false, trickleSpeed: 500 })
  */
 const checkRouteLoading = route => route?.meta?.loading ?? GLOBAL_ROUTE_LOADING
 
-const startRouteLoading = (route) => {
+export const startRouteLoading = (route) => {
   if (checkRouteLoading(route)) {
     NProgress.start()
     if (GLOBAL_ROUTE_NEW_LOADING) {
@@ -25,17 +25,16 @@ const startRouteLoading = (route) => {
     }
   }
 }
-const endRouteLoading = (route) => {
-  if (checkRouteLoading(route)) {
-    NProgress.done()
-    if (GLOBAL_ROUTE_NEW_LOADING) {
-      $coreHideLoading()
-    }
+
+export const endRouteLoading = (route, force = false) => {
+  NProgress.done()
+  if (GLOBAL_ROUTE_NEW_LOADING) {
+    $coreHideLoading(force)
   }
 }
 
 /**
- * 检查路有权限
+ * 检查路由权限
  * @param  to {RouteRecordSingleViewWithChildren} 目的地路由
  * @param from 出事路由
  * @returns {{name: string}|boolean}
@@ -50,7 +49,7 @@ export const checkRouteAuthority = async (to) => {
     // check权限
     return true
   }
-  endRouteLoading(to)
+  endRouteLoading(to, true)
   return { name: 'Login' }
 }
 
@@ -61,7 +60,8 @@ const processRouteSavedParam = (to, from) => {
 }
 
 export const processRouteLoading = (to, from) => {
-  endRouteLoading(to)
+  const isLoginRoute = to.name === 'Login' || to.path === '/login'
+  endRouteLoading(to, isLoginRoute)
   if (to.query?.language && Object.values(GlobalLocales).includes(to.query.language)) {
     $changeLocale(to.query?.language)
   }

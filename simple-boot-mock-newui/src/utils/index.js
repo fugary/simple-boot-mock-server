@@ -288,6 +288,7 @@ export const useReload = () => {
 }
 
 export const $logout = () => {
+  $coreHideLoading(true)
   useLoginConfigStore().logout()
   Promise.resolve().then(() => {
     $goto('/login')
@@ -297,7 +298,7 @@ const globalLoadingConfig = {
   delay: LOADING_DELAY,
   globalLoading: null,
   delayLoadingId: null,
-  loadingCount: 0
+  count: 0
 }
 /**
  * loading窗口
@@ -309,9 +310,13 @@ export const $coreShowLoading = (message, config) => {
     config = message
     message = config.message
   }
-  globalLoadingConfig.loadingCount += 1
-  if (globalLoadingConfig.loadingCount > 1) {
+  globalLoadingConfig.count += 1
+  if (globalLoadingConfig.count > 1) {
     return
+  }
+  if (globalLoadingConfig.delayLoadingId) {
+    clearTimeout(globalLoadingConfig.delayLoadingId)
+    globalLoadingConfig.delayLoadingId = null
   }
   const openLoading = () => ElLoading.service(Object.assign({
     lock: true,
@@ -320,10 +325,9 @@ export const $coreShowLoading = (message, config) => {
   }))
   const delay = config?.delay ?? globalLoadingConfig.delay
   if (delay >= 0) {
-    globalLoadingConfig.delayLoadingId && clearTimeout(globalLoadingConfig.delayLoadingId)
     globalLoadingConfig.delayLoadingId = setTimeout(() => {
       globalLoadingConfig.delayLoadingId = null
-      if (globalLoadingConfig.loadingCount > 0 && !globalLoadingConfig.globalLoading) {
+      if (globalLoadingConfig.count > 0 && !globalLoadingConfig.globalLoading) {
         globalLoadingConfig.globalLoading = openLoading()
       }
     }, delay)
@@ -332,18 +336,22 @@ export const $coreShowLoading = (message, config) => {
   }
 }
 
-export const $coreHideLoading = () => {
-  if (globalLoadingConfig.loadingCount > 0) {
-    globalLoadingConfig.loadingCount -= 1
+export const $coreHideLoading = (force = false) => {
+  if (force) {
+    globalLoadingConfig.count = 0
+  } else if (globalLoadingConfig.count > 0) {
+    globalLoadingConfig.count -= 1
   }
-  if (globalLoadingConfig.loadingCount > 0) {
-    return
+  if (globalLoadingConfig.count === 0) {
+    if (globalLoadingConfig.delayLoadingId) {
+      clearTimeout(globalLoadingConfig.delayLoadingId)
+      globalLoadingConfig.delayLoadingId = null
+    }
+    if (globalLoadingConfig.globalLoading) {
+      globalLoadingConfig.globalLoading.close()
+      globalLoadingConfig.globalLoading = null
+    }
   }
-  globalLoadingConfig.loadingCount = 0
-  globalLoadingConfig.delayLoadingId && clearTimeout(globalLoadingConfig.delayLoadingId)
-  globalLoadingConfig.delayLoadingId = null
-  globalLoadingConfig.globalLoading?.close()
-  globalLoadingConfig.globalLoading = null
 }
 
 export const $coreAlert = (message, title = $i18nBundle('common.label.reminder'), options = undefined) => {
