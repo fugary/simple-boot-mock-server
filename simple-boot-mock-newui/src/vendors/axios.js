@@ -60,7 +60,7 @@ const handle401Redirect = debounce(() => {
 }, 200)
 
 const auth401ErrorFun = debounce((message) => {
-  ElMessage.error(message || $i18nBundle('common.msg.sessionExpired') || '登录会话已过期，请重新登录')
+  ElMessage.error(message || $i18nBundle('common.msg.sessionExpired') || '认证失败或登录状态已失效，请重新登录')
 }, 300)
 
 $http.interceptors.response.use(response => {
