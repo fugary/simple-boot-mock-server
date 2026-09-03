@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useDark, useMediaQuery } from '@vueuse/core'
 import { GlobalLayoutMode, GlobalLocales, LoadSaveParamMode } from '@/consts/GlobalConstants'
@@ -14,14 +14,20 @@ export const useGlobalConfigStore = defineStore('globalConfig', () => {
       storageKey: `__${systemKey}__vueuse-color-scheme`
     })
     : ref(false)
-  const isCollapseLeft = ref(false)
+  const isSmallScreen = useMediaQuery('(max-width: 1200px)')
+  const isCollapseLeft = ref(isSmallScreen.value && AUTO_LAYOUT_ENABLED)
   const isShowSettings = ref(false)
   const isShowBreadcrumb = ref(true)
   const showMenuIcon = ref(true)
-  const isLargeScreen = useMediaQuery('(min-width: 1440px)')
-  const layoutMode = !isLargeScreen.value && AUTO_LAYOUT_ENABLED ? ref(GlobalLayoutMode.TOP) : ref(GlobalLayoutMode.LEFT)
+  const layoutMode = ref(GlobalLayoutMode.LEFT)
   const loadSaveParamMode = ref(LoadSaveParamMode.ALL)
   const monacoTheme = computed(() => isDarkTheme.value ? 'vs-dark' : 'vs')
+
+  if (AUTO_LAYOUT_ENABLED) {
+    watch(isSmallScreen, (small) => {
+      isCollapseLeft.value = small
+    })
+  }
   return {
     currentLocale,
     isDarkTheme,
