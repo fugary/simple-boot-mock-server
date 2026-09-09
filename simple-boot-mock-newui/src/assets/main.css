@@ -913,24 +913,53 @@ html.dark {
 }
 
 /* Theme transition animation */
+:root {
+    --theme-x: 50%;
+    --theme-y: 50%;
+    --theme-r: 1500px;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
     animation: none;
     mix-blend-mode: normal;
 }
 
+/* 切换浅色（变白）：新视图在顶层，从点击位置展开 */
 ::view-transition-old(root) {
     z-index: 1;
 }
 
 ::view-transition-new(root) {
-    z-index: 9999;
+    z-index: 2147483646;
+    animation: switch-to-light 400ms ease-in-out forwards;
 }
 
+/* 切换深色（变黑）：旧视图在顶层，向点击位置收缩 */
 .dark::view-transition-old(root) {
-    z-index: 9999;
+    z-index: 2147483646;
+    animation: switch-to-dark 400ms ease-in-out forwards;
 }
 
 .dark::view-transition-new(root) {
     z-index: 1;
+    animation: none;
+}
+
+@keyframes switch-to-light {
+    from {
+        clip-path: circle(0px at var(--theme-x) var(--theme-y));
+    }
+    to {
+        clip-path: circle(var(--theme-r) at var(--theme-x) var(--theme-y));
+    }
+}
+
+@keyframes switch-to-dark {
+    from {
+        clip-path: circle(var(--theme-r) at var(--theme-x) var(--theme-y));
+    }
+    to {
+        clip-path: circle(0px at var(--theme-x) var(--theme-y));
+    }
 }

@@ -109,35 +109,23 @@ const handleThemeChange = (globalConfigStore, event) => {
     return
   }
 
-  const x = event?.clientX ?? window.event?.clientX ?? window.innerWidth / 2
-  const y = event?.clientY ?? window.event?.clientY ?? window.innerHeight / 2
+  const mouseEvent = event && typeof event.clientX === 'number' ? event : window.event
+  const targetEl = mouseEvent?.target || document.querySelector('.icon-moon, .icon-sunny')?.closest('.el-menu-item, button, .el-dropdown-link')
+  const rect = targetEl?.getBoundingClientRect?.()
+  const x = mouseEvent?.clientX ?? (rect ? Math.round(rect.left + rect.width / 2) : window.innerWidth - 80)
+  const y = mouseEvent?.clientY ?? (rect ? Math.round(rect.top + rect.height / 2) : 30)
   const endRadius = Math.hypot(
     Math.max(x, window.innerWidth - x),
     Math.max(y, window.innerHeight - y)
   )
 
-  const transition = document.startViewTransition(async () => {
-    globalConfigStore.changeTheme(!isDark)
-    // Wait for Vue to update the DOM
-    await nextTick()
-  })
+  document.documentElement.style.setProperty('--theme-x', `${x}px`)
+  document.documentElement.style.setProperty('--theme-y', `${y}px`)
+  document.documentElement.style.setProperty('--theme-r', `${endRadius}px`)
 
-  transition.ready.then(() => {
-    const clipPath = [
-      `circle(0px at ${x}px ${y}px)`,
-      `circle(${endRadius}px at ${x}px ${y}px)`
-    ]
-    document.documentElement.animate(
-      {
-        clipPath: isDark ? clipPath : clipPath.reverse()
-      },
-      {
-        duration: 400,
-        easing: 'ease-in',
-        fill: 'forwards',
-        pseudoElement: isDark ? '::view-transition-new(root)' : '::view-transition-old(root)'
-      }
-    )
+  document.startViewTransition(async () => {
+    globalConfigStore.changeTheme(!isDark)
+    await nextTick()
   })
 }
 
