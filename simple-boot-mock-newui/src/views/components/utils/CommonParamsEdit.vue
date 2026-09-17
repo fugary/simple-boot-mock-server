@@ -316,12 +316,31 @@ const hasMetaConfig = item => {
   return !!item.meta?.valueSuggestions?.length
 }
 
+const resolveDynamicOption = (item, customDynamicOption, ...args) => {
+  let opt = {}
+  if (isFunction(item?.dynamicOption)) {
+    opt = item.dynamicOption(item, ...args) || {}
+  }
+  if (isFunction(customDynamicOption)) {
+    opt = { ...opt, ...customDynamicOption(item, ...args) }
+  }
+  if (item?.enabled === false) {
+    opt = {
+      ...opt,
+      required: false,
+      rules: (opt.rules || []).filter(r => !r.required)
+    }
+  }
+  return opt
+}
+
 const getValueOption = (param, paramValueSuggestions, nvSpan) => {
+  const isEnabled = param.enabled !== false
   const valueType = normalizeParamValueType(param)
   const option = {
     labelKey: 'common.label.value',
     prop: props.valueKey,
-    required: props.nameReadOnly || props.valueRequired || param.valueRequired,
+    required: isEnabled && (props.nameReadOnly || props.valueRequired || param.valueRequired),
     colSpan: props.valueSpan || nvSpan,
     enabled: !isFileParam(param)
   }
@@ -370,14 +389,7 @@ const getValueOption = (param, paramValueSuggestions, nvSpan) => {
           default: ({ item }) => formatValueSuggestion(item)
         }
       : undefined,
-    dynamicOption: (item, ...args) => {
-      if (isFunction(item.dynamicOption)) {
-        return item.dynamicOption(item, ...args)
-      }
-      if (isFunction(props.valueDynamicOption)) {
-        return props.valueDynamicOption(item, ...args)
-      }
-    }
+    dynamicOption: (item, ...args) => resolveDynamicOption(item, props.valueDynamicOption, ...args)
   }
 }
 
@@ -390,6 +402,7 @@ const paramsOptions = computed(() => {
   const nameSuggestions = calcSuggestions('name')
   const valueSuggestions = calcSuggestions('value')
   return params.value.map((param) => {
+    const isEnabled = param.enabled !== false
     const nvSpan = 8
     const paramValueSuggestions = concatValueSuggestions(
       param.meta?.valueSuggestions,
@@ -417,7 +430,7 @@ const paramsOptions = computed(() => {
     }, {
       labelKey: 'common.label.name',
       prop: props.nameKey,
-      required: props.nameReadOnly || props.nameRequired || param.nameRequired || param.valueRequired,
+      required: isEnabled && (props.nameReadOnly || props.nameRequired || param.nameRequired || param.valueRequired),
       disabled: props.nameReadOnly,
       colSpan: props.nameSpan || nvSpan,
       type: nameSuggestions ? 'autocomplete' : 'input',
@@ -425,14 +438,7 @@ const paramsOptions = computed(() => {
         fetchSuggestions: nameSuggestions,
         triggerOnFocus: false
       },
-      dynamicOption: (item, ...args) => {
-        if (isFunction(item.dynamicOption)) {
-          return item.dynamicOption(item, ...args)
-        }
-        if (isFunction(props.nameDynamicOption)) {
-          return props.nameDynamicOption(item, ...args)
-        }
-      }
+      dynamicOption: (item, ...args) => resolveDynamicOption(item, props.nameDynamicOption, ...args)
     }, {
       labelWidth: '1px',
       prop: 'meta.type',
@@ -544,7 +550,7 @@ useTabFocus(sortableRef)
                     <pre class="object-param-preview-text">{{ item[props.valueKey] }}</pre>
                   </el-scrollbar>
                 </template>
-                <div style="display: flex; align-items: center; height: 32px;">
+                <div class="object-param-btn-wrap">
                   <el-button
                     type="primary"
                     link
@@ -760,5 +766,11 @@ useTabFocus(sortableRef)
   white-space: pre-wrap;
   word-break: break-all;
   font-size: 12px;
+}
+
+.object-param-btn-wrap {
+  display: flex;
+  align-items: center;
+  height: 32px;
 }
 </style>

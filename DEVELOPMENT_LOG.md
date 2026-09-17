@@ -5,9 +5,11 @@
 ### 2026-09
 - **feat**: [2026-09-17] 支持请求参数为对象（JavaBean / DTO）的解析、编辑与扁平化测试：
   - 前端参数类型扩展与国际化收敛：在参数类型中新增“对象 (object)”类型（国际化词条归集收敛至 `mock_*.js`，保持 `common_*` 零污染）；通过 `objectFlag` 仅在 Query 参数中开放（避免 Headers/Path 等无意义显示）；值单元格提供“编辑对象参数”按钮与悬浮 JSON 预览提示；
-  - 独立对象参数编辑弹窗：新增 `MockParamObjectEditor.vue` 弹窗组件，深度统一项目 Monaco Editor 主题（响应 `useGlobalConfigStore().monacoTheme`，完美适配亮色/暗黑主题且避免全局主题错乱），提供 JSON 高亮编辑、格式化校验、一键复制、查看引用 Schema，并支持根据 Schema 动态生成样例数据；
+  - 完善参数禁用时免必填校验：参考 `simple-api-doc-ui` 优化 `CommonParamsEdit.vue` 与 `MockDataApi.js`，当参数未勾选启用（`enabled === false`）时，自动豁免名称与值的必填验证，动态清除必填规则与红框报错；
+  - 独立对象参数编辑弹窗：新增 `MockParamObjectEditor.vue` 弹窗组件，深度统一项目 Monaco Editor 主题（响应 `useGlobalConfigStore().monacoTheme`，完美适配亮色/暗黑主题且避免全局主题错乱），提供 JSON 高亮编辑、格式化校验、一键复制；修复查看引用 Schema 为空的问题；复用已有 `generateSchemaSample` 与 `common.label.generateData` 国际化词条一键生成假数据；
   - 参数平铺化与全链路复用：封装 `extractQueryParams` 通用函数，在请求测试发送、顶部 URL 实时拼接、cURL 命令复制及匹配规则预览中，自动将对象参数解析并平铺展开为标准 Query 键值对（`?page=1&size=10`），不侵入后端，保持纯前端高效交互；
-  - Swagger/OpenAPI 导入体验优化：自动识别 Schema 中带 `$ref` 或 `type: object` 的 query 参数，赋予对象类型并自动递归解析生成默认 JSON 样例填充，消除导入后初始报错红框。
+  - Swagger/OpenAPI 导入体验优化：自动识别 Schema 中带 `$ref` 或 `type: object` 的 query 参数，赋予对象类型并自动递归解析生成默认 JSON 样例填充，消除导入后初始报错红框；
+  - 代码精简与审查优化（/code-review-optimize）：提炼 `CommonParamsEdit.vue` 中动态选项解析公共函数 `resolveDynamicOption`，消除重复逻辑并收敛内联样式；优化 `MockParamObjectEditor.vue` 假数据生成与取消异常拦截，增强空安全防御；严格通过 ESLint 规范校验（0 errors）。
 - **opt**: [2026-09-01] 优化认证失败提示信息体验：1. 针对服务端重启导致 JWT Token 密钥更新而触发的 401 未认证状态，直接优化后端 `messages_zh_CN.properties` 与 `messages_en_US.properties` 中的默认 `401` 提示文案为 `认证失败或登录状态已失效，请重新登录`；2. 移除前端 axios 中针对默认提示硬编码校验的冗余判断，直接复用底层响应消息，兼顾前后端国际化一致性；3. 在前端多语言包 `common_cn.js` 与 `common_en.js` 中新增 `common.msg.sessionExpired` 词条作为兜底提示，提升整体产品体验。
 
 ## 2026年
