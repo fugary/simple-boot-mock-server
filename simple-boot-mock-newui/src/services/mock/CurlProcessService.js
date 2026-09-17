@@ -1,7 +1,7 @@
 import { getMockUrl } from '@/api/mock/MockRequestApi'
 import { calcRequestBody, preProcessParams } from '@/api/mock/MockDataApi'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
-import { addRequestParamsToResult, processEvnParams } from '@/services/mock/MockCommonService'
+import { processEvnParams, extractQueryParams } from '@/services/mock/MockCommonService'
 import { AUTH_TYPE, FORM_DATA, FORM_URL_ENCODED, LANG_TO_CONTENT_TYPES } from '@/consts/MockConstants'
 import { isArray, isObject, isString } from 'lodash-es'
 
@@ -144,10 +144,7 @@ const formatCurlBody = data => {
 }
 
 const calcEnabledParams = (paramTargetVal, params = []) => {
-  return preProcessParams(params).reduce((results, item) => {
-    addRequestParamsToResult(results, item.name, processEvnParams(paramTargetVal.groupConfig, item.value, true))
-    return results
-  }, {})
+  return extractQueryParams(params, paramTargetVal?.groupConfig)
 }
 
 const appendQueryParams = (url, params) => {

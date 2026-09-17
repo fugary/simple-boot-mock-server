@@ -82,11 +82,17 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  objectFlag: {
+    type: Boolean,
+    default: false
+  },
   singleEnable: {
     type: Boolean,
     default: false
   }
 })
+
+const emit = defineEmits(['editObjectParam'])
 
 const params = defineModel('modelValue', {
   type: Array,
@@ -97,6 +103,7 @@ const VALUE_TYPE_INPUT = 'input'
 const VALUE_TYPE_NUMBER = 'number'
 const VALUE_TYPE_DATE = 'date'
 const VALUE_TYPE_DATETIME = 'datetime'
+const VALUE_TYPE_OBJECT = 'object'
 const VALUE_TYPE_FILE = 'file'
 const LEGACY_VALUE_TYPE_INPUT = 'text'
 const VALUE_TYPE_OPTIONS = [{
@@ -111,6 +118,9 @@ const VALUE_TYPE_OPTIONS = [{
 }, {
   value: VALUE_TYPE_DATETIME,
   labelKey: 'common.label.dateTime'
+}, {
+  value: VALUE_TYPE_OBJECT,
+  labelKey: 'mock.label.object'
 }, {
   value: VALUE_TYPE_FILE,
   labelKey: 'common.label.file'
@@ -137,6 +147,8 @@ const normalizeParamValueType = (param) => {
 const isFileParam = param => normalizeParamValueType(param) === VALUE_TYPE_FILE
 
 const isInputParam = param => normalizeParamValueType(param) === VALUE_TYPE_INPUT
+
+const isObjectParam = param => props.objectFlag && (normalizeParamValueType(param) === VALUE_TYPE_OBJECT || param.isObject)
 
 const isNumberParam = param => normalizeParamValueType(param) === VALUE_TYPE_NUMBER
 
@@ -227,7 +239,11 @@ const valueSuggestionsModel = ref({
 const currentValueSuggestionsParam = ref()
 
 const valueTypeOptions = computed(() => {
-  return VALUE_TYPE_OPTIONS.filter(option => props.fileFlag || option.value !== VALUE_TYPE_FILE)
+  return VALUE_TYPE_OPTIONS.filter(option => {
+    if (!props.fileFlag && option.value === VALUE_TYPE_FILE) return false
+    if (!props.objectFlag && option.value === VALUE_TYPE_OBJECT) return false
+    return true
+  })
 })
 
 const normalizeValueSuggestion = (item) => {
@@ -308,6 +324,12 @@ const getValueOption = (param, paramValueSuggestions, nvSpan) => {
     required: props.nameReadOnly || props.valueRequired || param.valueRequired,
     colSpan: props.valueSpan || nvSpan,
     enabled: !isFileParam(param)
+  }
+  if (isObjectParam(param)) {
+    return {
+      ...option,
+      type: 'input'
+    }
   }
   if (isDateParam(param)) {
     const valueFormat = getDateValueFormat(valueType)
@@ -426,7 +448,18 @@ const paramsOptions = computed(() => {
       enabled: props.showValueConfig && valueTypeOptions.value.length > 1,
       colSpan: 3,
       change (value) {
-        param[props.valueKey] = value === VALUE_TYPE_FILE ? [] : (value === VALUE_TYPE_NUMBER ? undefined : '')
+        if (value === VALUE_TYPE_FILE) {
+          param[props.valueKey] = []
+        } else if (value === VALUE_TYPE_NUMBER) {
+          param[props.valueKey] = undefined
+        } else if (value === VALUE_TYPE_OBJECT) {
+          param.isObject = true
+          if (!param[props.valueKey]) {
+            param[props.valueKey] = ''
+          }
+        } else {
+          param[props.valueKey] = ''
+        }
       }
     }, getValueOption(param, isInputParam(param) ? paramValueSuggestions : undefined, nvSpan), {
       labelKey: 'common.label.files',
@@ -493,6 +526,38 @@ useTabFocus(sortableRef)
                 icon="DragIndicatorFilled"
                 style="cursor: move;"
               />
+            </template>
+            <template
+              v-if="isObjectParam(item) && option.prop === props.valueKey"
+              #default
+            >
+              <el-tooltip
+                :disabled="!item[props.valueKey]"
+                placement="top"
+                :show-after="300"
+              >
+                <template #content>
+                  <el-scrollbar
+                    max-height="250px"
+                    class="object-param-preview-scroll"
+                  >
+                    <pre class="object-param-preview-text">{{ item[props.valueKey] }}</pre>
+                  </el-scrollbar>
+                </template>
+                <div style="display: flex; align-items: center; height: 32px;">
+                  <el-button
+                    type="primary"
+                    link
+                    @click="emit('editObjectParam', item)"
+                  >
+                    <common-icon
+                      icon="Edit"
+                      class="margin-right1"
+                    />
+                    {{ $t('mock.label.editObjectParam') }}
+                  </el-button>
+                </div>
+              </el-tooltip>
             </template>
           </common-form-control>
         </el-col>
@@ -683,5 +748,17 @@ useTabFocus(sortableRef)
 .value-suggestions-header {
   color: var(--el-text-color-secondary);
   font-size: 13px;
+}
+
+.object-param-preview-scroll {
+  max-width: 480px;
+}
+
+.object-param-preview-text {
+  margin: 0;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 12px;
 }
 </style>

@@ -16,7 +16,7 @@ import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { calcContentLanguage, MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
 import { cloneDeep, isArray, pickBy, isString } from 'lodash-es'
-import { addRequestParamsToResult, calcPreviewHeaders, processEvnParams, calcProxyUrl } from '@/services/mock/MockCommonService'
+import { calcPreviewHeaders, processEvnParams, calcProxyUrl, extractQueryParams } from '@/services/mock/MockCommonService'
 import { $coreConfirm, toGetParams } from '@/utils'
 import { useInjectDataLoading } from '@/hooks/CommonHooks'
 
@@ -89,10 +89,7 @@ const doPreviewRequest = async ({ realDebug = false } = {}) => {
         .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), pathValue)
     }
   })
-  const params = preProcessParams(paramTarget.value?.requestParams).reduce((results, item) => {
-    addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value, true))
-    return results
-  }, {})
+  const params = extractQueryParams(paramTarget.value?.requestParams, paramTarget.value.groupConfig)
   const { data, hasBody } = calcRequestBody(paramTarget)
   const headers = Object.assign(hasBody ? { 'content-type': paramTarget.value?.requestContentType } : {},
     preProcessParams(paramTarget.value?.headerParams).reduce((results, item) => {

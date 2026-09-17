@@ -16,7 +16,7 @@ import {
   MOCK_DATA_PATH_PARAMS_HEADER,
   MOCK_DATA_USER_HEADER
 } from '@/consts/MockConstants'
-import { addRequestParamsToResult, processEvnParams } from '@/services/mock/MockCommonService'
+import { processEvnParams, extractQueryParams } from '@/services/mock/MockCommonService'
 import { toGetParams } from '@/utils'
 import { ElMessage } from 'element-plus'
 import { isString } from 'lodash-es'
@@ -51,10 +51,7 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData, isEditable = true)
 }
 
 const doDataPreview = () => {
-  const params = preProcessParams(paramTarget.value?.requestParams).reduce((results, item) => {
-    addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value, true))
-    return results
-  }, {})
+  const params = extractQueryParams(paramTarget.value?.requestParams, paramTarget.value.groupConfig)
   const { data, hasBody } = calcRequestBody(paramTarget)
   const headers = Object.assign(hasBody ? { 'content-type': paramTarget.value?.contentType } : {},
     preProcessParams(paramTarget.value?.headerParams).reduce((results, item) => {

@@ -1,6 +1,7 @@
 <script setup>
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
+import MockParamObjectEditor from '@/views/components/mock/form/MockParamObjectEditor.vue'
 import { computed, ref, watch } from 'vue'
 import { checkParamsFilled } from '@/api/mock/MockRequestApi'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
@@ -31,6 +32,8 @@ import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
 import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
 import { buildCurlCommand, CURL_SHELL, extendCurlParams, isGetMethod } from '@/services/mock/CurlProcessService'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
+
+const globalConfigStore = useGlobalConfigStore()
 
 const props = defineProps({
   requestPath: {
@@ -222,6 +225,11 @@ const handleCurlCommand = (command) => {
   commandMap[command]?.()
 }
 
+const paramObjectEditorRef = ref()
+const handleEditObjectParam = (item) => {
+  paramObjectEditorRef.value?.open(item)
+}
+
 </script>
 
 <template>
@@ -315,6 +323,8 @@ const handleCurlCommand = (command) => {
         v-model="paramTarget.requestParams"
         form-prop="requestParams"
         :value-suggestions="envSuggestions"
+        :object-flag="true"
+        @edit-object-param="handleEditObjectParam"
       />
     </el-tab-pane>
     <el-tab-pane name="headerParamsTab">
@@ -430,7 +440,7 @@ const handleCurlCommand = (command) => {
           :height="codeHeight"
           :options="monacoEditorOptions"
           class="common-resize-vertical"
-          :theme="useGlobalConfigStore().monacoTheme"
+          :theme="globalConfigStore.monacoTheme"
           @mount="editorRef=$event"
         />
       </el-container>
@@ -455,6 +465,11 @@ const handleCurlCommand = (command) => {
       />
     </el-tab-pane>
   </el-tabs>
+  <mock-param-object-editor
+    ref="paramObjectEditorRef"
+    :schema-spec="props.schemaSpec"
+    :monaco-theme="globalConfigStore.monacoTheme"
+  />
 </template>
 
 <style scoped>

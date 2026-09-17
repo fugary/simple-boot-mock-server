@@ -1,4 +1,4 @@
-import { $coreConfirm, getSingleSelectOptions, includesAnyIgnoreCase } from '@/utils'
+import { $coreConfirm, getSingleSelectOptions, includesAnyIgnoreCase, toFlatKeyValue } from '@/utils'
 import { $i18nKey, $i18nBundle } from '@/messages'
 import { sample } from 'openapi-sampler'
 import { XMLBuilder } from 'fast-xml-parser'
@@ -165,6 +165,50 @@ export const processEvnParams = (groupConfig, dataValue, encode) => {
     dataValue = encodeURIComponent(dataValue)
   }
   return dataValue
+}
+
+/**
+ * 提取并平铺请求参数（支持对象参数解析与平铺为 Query 参数）
+ * @param {Array} requestParams
+ * @param {Object|string} groupConfig
+ * @returns {Object}
+ */
+export const extractQueryParams = (requestParams, groupConfig) => {
+  const params = (requestParams || []).filter(param => param.enabled !== false && !!param.name)
+  return params.reduce((results, item) => {
+    let parsedVal = item.value
+    const isObjectParam = item.meta?.type === 'object' || item.isObject
+    if (isObjectParam && isString(item.value)) {
+      try {
+        const rawJson = processEvnParams(groupConfig, item.value, false)
+        parsedVal = JSON.parse(rawJson)
+      } catch {
+        // user may be typing invalid json
+      }
+    }
+    if (isObjectParam && isObject(parsedVal) && !isArray(parsedVal)) {
+      const flatObj = toFlatKeyValue(parsedVal)
+      for (const [k, v] of Object.entries(flatObj)) {
+        if (v !== undefined && v !== null && v !== '') {
+          if (isArray(v)) {
+            v.forEach(val => {
+              if (val !== undefined && val !== null && val !== '') {
+                addRequestParamsToResult(results, k, processEvnParams(groupConfig, val, true))
+              }
+            })
+          } else {
+            addRequestParamsToResult(results, k, processEvnParams(groupConfig, v, true))
+          }
+        }
+      }
+    } else {
+      const val = processEvnParams(groupConfig, item.value, true)
+      if (isString(val) ? val.trim() : (val !== undefined && val !== null)) {
+        addRequestParamsToResult(results, item.name, val)
+      }
+    }
+    return results
+  }, {})
 }
 
 export const useContentTypeOption = (config = {}) => {

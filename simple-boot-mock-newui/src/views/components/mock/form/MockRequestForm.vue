@@ -6,7 +6,7 @@ import MockRequestFormReq from '@/views/components/mock/form/MockRequestFormReq.
 import MockRequestFormMatchPattern from '@/views/components/mock/form/MockRequestFormMatchPattern.vue'
 import { addParamsToURL, calcAffixOffset } from '@/utils'
 import { useDisableAffix } from '@/hooks/useDisableAffix'
-import { addRequestParamsToResult, processEvnParams } from '@/services/mock/MockCommonService'
+import { processEvnParams, extractQueryParams } from '@/services/mock/MockCommonService'
 
 const props = defineProps({
   responseTarget: {
@@ -59,9 +59,7 @@ const buildFullUrl = (basePath, includeQuery = true) => {
       .replace(new RegExp(`\\{${pathParam.name}\\}`, 'g'), processEvnParams(paramTarget.value.groupConfig, pathParam.value, true))
   })
   if (includeQuery && paramTarget.value?.method?.toLowerCase() === 'get') {
-    const calcReqParams = paramTarget.value?.requestParams?.filter(requestParam => !!requestParam.name && requestParam.enabled).reduce((results, item) => {
-      return addRequestParamsToResult(results, item.name, processEvnParams(paramTarget.value.groupConfig, item.value, true))
-    }, {})
+    const calcReqParams = extractQueryParams(paramTarget.value?.requestParams, paramTarget.value.groupConfig)
     fullPath = addParamsToURL(fullPath, calcReqParams)
   }
   return fullPath

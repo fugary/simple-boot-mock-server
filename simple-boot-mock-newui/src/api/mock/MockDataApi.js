@@ -14,7 +14,8 @@ import {
   MOCK_PROXY_URL_HEADER,
   NONE
 } from '@/consts/MockConstants'
-import { isMediaContentType, processEvnParams, calcProxyUrl } from '@/services/mock/MockCommonService'
+import { isMediaContentType, processEvnParams, calcProxyUrl, resolveSchemaRefs } from '@/services/mock/MockCommonService'
+import { sample } from 'openapi-sampler'
 
 const MOCK_DATA_URL = '/admin/data'
 
@@ -64,6 +65,7 @@ const VALUE_TYPE_INPUT = 'input'
 const VALUE_TYPE_NUMBER = 'number'
 const VALUE_TYPE_DATE = 'date'
 const VALUE_TYPE_DATETIME = 'datetime'
+const VALUE_TYPE_OBJECT = 'object'
 
 export const generateJWT = function (data, config) {
   return $http(Object.assign({
@@ -388,6 +390,31 @@ export const calcParamTarget = (groupItem, requestItem, previewData, schemasConf
   return target
 }
 
+export const isObjectSchema = (schema) => {
+  return !!schema && schema.type !== 'array' && (schema.type === 'object' || isObject(schema.properties) || !!schema.$ref)
+}
+
+export const schemaToSampleObject = (schema, spec) => {
+  if (!schema) return {}
+  try {
+    const sampleObj = sample(schema, undefined, spec)
+    if (isObject(sampleObj) && !isArray(sampleObj)) {
+      return sampleObj
+    }
+  } catch (e) {
+    console.warn('sample schema error', e)
+  }
+  if (schema.properties) {
+    const res = {}
+    Object.keys(schema.properties).forEach(key => {
+      const prop = schema.properties[key]
+      res[key] = prop?.default ?? (prop?.example ?? '')
+    })
+    return res
+  }
+  return {}
+}
+
 /**
  * 请求参数Schema计算
  * @param schemasConf
@@ -400,10 +427,13 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
     const paramSchemas = JSON.parse(schemaContent)
     if (isArray(paramSchemas)) {
       return paramSchemas.filter(filter).map(param => {
-        const schema = param.schema || {}
+        const rawSchema = param.schema || {}
+        const componentSpec = schemasConf?.componentSpec
+        const schema = resolveSchemaRefs(rawSchema, componentSpec) || rawSchema
         const array = schema.type === 'array'
         const itemSchema = array ? schema.items : schema
-        const valueSuggestions = schema.enum || itemSchema?.enum || []
+        const isObj = param.in === 'query' && isObjectSchema(itemSchema)
+        const valueSuggestions = isObj ? [] : (schema.enum || itemSchema?.enum || [])
         let slots = null
         if (!valueSuggestions.length && isObject(param.examples)) {
           Object.values(param.examples).forEach(item => valueSuggestions.push(item))
@@ -413,14 +443,25 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
             }
           }
         }
+        let defaultValue = schema.default ?? ''
+        if (isObj) {
+          if (isObject(defaultValue)) {
+            defaultValue = JSON.stringify(defaultValue, null, 2)
+          } else if (!defaultValue) {
+            const sampleObj = schemaToSampleObject(itemSchema, componentSpec)
+            defaultValue = Object.keys(sampleObj).length ? JSON.stringify(sampleObj, null, 2) : ''
+          }
+        }
         return {
           name: param.name,
-          value: schema.default ?? '',
+          value: defaultValue,
           enabled: true,
           array,
+          isObject: isObj,
+          schema: itemSchema,
           valueRequired: param.required,
           meta: {
-            type: calcSchemaValueType(itemSchema, valueSuggestions)
+            type: isObj ? VALUE_TYPE_OBJECT : calcSchemaValueType(itemSchema, valueSuggestions)
           },
           valueSuggestions,
           dynamicOption: () => ({
@@ -448,6 +489,9 @@ const formatSchemaValueSuggestion = (item) => {
 }
 
 const calcSchemaValueType = (schema, valueSuggestions) => {
+  if (isObjectSchema(schema)) {
+    return VALUE_TYPE_OBJECT
+  }
   if (valueSuggestions?.length) {
     return VALUE_TYPE_INPUT
   }
@@ -471,6 +515,8 @@ export const copyParamsDynamicOption = (params, savedParams) => {
       const foundParam = params.find(param => param.name === savedParam.name)
       if (foundParam) {
         savedParam.dynamicOption = foundParam.dynamicOption
+        savedParam.schema = foundParam.schema
+        savedParam.isObject = foundParam.isObject
         savedParam.meta = { ...foundParam.meta, ...savedParam.meta }
       }
     })
