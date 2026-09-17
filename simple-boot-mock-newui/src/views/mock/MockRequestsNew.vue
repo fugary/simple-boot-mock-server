@@ -702,11 +702,13 @@ const toShowHistoryWindow = (current) => {
     <el-container v-if="loadSuccess">
       <div class="form-edit-width-100">
         <common-split
-          :min-size="150"
+          :min-size="[0, 200]"
           :max-size="[500, Infinity]"
+          :collapsible="true"
+          :trigger-top="50"
         >
           <template #split-0>
-            <div class="padding-right2">
+            <div class="request-table-wrapper padding-right2">
               <common-table
                 :key="batchMode"
                 ref="requestTableRef"
@@ -856,6 +858,12 @@ const toShowHistoryWindow = (current) => {
 </template>
 
 <style scoped>
+.request-table-wrapper {
+  min-width: 280px;
+  width: 100%;
+  height: 100%;
+}
+
 .active-scenario-link {
   font-size: inherit;
   vertical-align: baseline;
