@@ -702,7 +702,7 @@ const toShowHistoryWindow = (current) => {
     <el-container v-if="loadSuccess">
       <div class="form-edit-width-100">
         <common-split
-          :min-size="[0, 200]"
+          :min-size="[0, 150]"
           :max-size="[500, Infinity]"
           :collapsible="true"
           :trigger-top="50"
@@ -859,7 +859,7 @@ const toShowHistoryWindow = (current) => {
 
 <style scoped>
 .request-table-wrapper {
-  min-width: 280px;
+  min-width: 160px;
   width: 100%;
   height: 100%;
 }
