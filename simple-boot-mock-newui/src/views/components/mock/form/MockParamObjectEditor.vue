@@ -1,9 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { defineMonacoOptions, $formatDocument } from '@/vendors/monaco-editor'
-import { showSchemaCodeWindow } from '@/services/mock/MockCommonService'
+import { showSchemaCodeWindow, generateSchemaSample } from '@/services/mock/MockCommonService'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { sample } from 'openapi-sampler'
 import { isArray, isObject, isString } from 'lodash-es'
 import { ElMessage } from 'element-plus'
 import { $i18nBundle, $i18nKey } from '@/messages'
@@ -73,17 +72,23 @@ const viewSchema = () => {
   showSchemaCodeWindow(schema, props.schemaSpec)
 }
 
-const genSample = () => {
+const genSample = async () => {
   const schema = currentParam.value?.schema
   if (!schema) return
   try {
-    const sampleData = sample(schema, undefined, props.schemaSpec)
-    if (sampleData !== undefined) {
-      editorContent.value = JSON.stringify(sampleData, null, 2)
+    const res = await generateSchemaSample(schema, 'json', props.schemaSpec)
+    if (res) {
+      try {
+        editorContent.value = JSON.stringify(JSON.parse(res), null, 2)
+      } catch {
+        editorContent.value = res
+      }
       setTimeout(() => formatDoc())
     }
   } catch (e) {
-    console.warn('generate sample error', e)
+    if (e !== 'cancel' && e !== 'close') {
+      console.warn('generate sample error', e)
+    }
   }
 }
 
@@ -228,7 +233,7 @@ defineExpose({
           </el-dropdown>
           <el-link
             v-if="hasSchema"
-            v-common-tooltip="$t('common.label.generateRequestData')"
+            v-common-tooltip="$t('common.label.generateData')"
             type="primary"
             underline="never"
             class="margin-left3"

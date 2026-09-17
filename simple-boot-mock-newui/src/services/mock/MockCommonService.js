@@ -433,20 +433,22 @@ export const resolveSchemaRefs = (schema, componentsSpec, visited = new Set()) =
 
 export const showSchemaCodeWindow = (schemaBody, componentsSpec) => {
   const show = (content, expanded) => {
-    showCodeWindow(content, {
-      buttons: expanded || !isString(content) || !content.includes('$ref')
+    const strContent = isString(content) ? content : JSON.stringify(content ?? {}, null, 2)
+    showCodeWindow(strContent, {
+      language: 'json',
+      buttons: expanded || !strContent.includes('$ref')
         ? []
         : [{
             label: $i18nKey('common.label.commonExpand', 'Ref'),
             type: 'primary',
             click: () => {
               try {
-                const parsed = JSON.parse(content)
+                const parsed = JSON.parse(strContent)
                 const resolvedObj = resolveSchemaRefs(parsed, componentsSpec)
                 show(JSON.stringify(resolvedObj, null, 2), true)
               } catch (e) {
                 console.error('JSON解析失败', e)
-                show(content, true)
+                show(strContent, true)
               }
             }
           }]

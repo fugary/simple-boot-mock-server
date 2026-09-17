@@ -464,9 +464,9 @@ export const calcSchemaParameters = (schemasConf, filter = item => item.in === '
             type: isObj ? VALUE_TYPE_OBJECT : calcSchemaValueType(itemSchema, valueSuggestions)
           },
           valueSuggestions,
-          dynamicOption: () => ({
+          dynamicOption: (item) => ({
             placeholder: param?.description || param.name,
-            required: param.required,
+            required: (item?.enabled !== false) && param.required,
             slots
           })
         }

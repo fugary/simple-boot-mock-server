@@ -44,8 +44,12 @@ let codeRef = null
  */
 const showCodeWindow = (code, config = {}) => {
   if (isObject(code) && !isRef(code)) {
-    config = code
-    code = config.content
+    if (code.content !== undefined) {
+      config = code
+      code = config.content
+    } else {
+      code = JSON.stringify(code, null, 2)
+    }
   }
   codeText.value = code
   if (isRef(code)) {
