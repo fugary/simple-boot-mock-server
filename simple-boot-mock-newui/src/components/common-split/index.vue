@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, useAttrs, shallowRef, computed } from 'vue'
+import { onMounted, onBeforeUnmount, ref, useAttrs, shallowRef, computed, watch, nextTick } from 'vue'
 import Split from 'split.js'
 
 /**
@@ -44,19 +44,39 @@ const props = defineProps({
   triggerTop: {
     type: [Number, String],
     default: 50
+  },
+  lazy: {
+    type: Boolean,
+    default: true
   }
 })
 
-const emit = defineEmits(['update:sizes', 'collapse', 'drag-start', 'drag-end'])
+const emit = defineEmits(['update:sizes', 'collapse', 'drag-start', 'drag-end', 'drag'])
 
 const itemRefs = ref([])
 const isDragging = ref(false)
 const isCollapsing = ref(false)
 const firstGutterEl = shallowRef(null)
+const ghostGutterPos = ref(0)
+
+const ghostGutterStyle = computed(() => {
+  if (props.direction === 'vertical') {
+    return {
+      top: `calc(${ghostGutterPos.value}% - 2px)`
+    }
+  }
+  return {
+    left: `calc(${ghostGutterPos.value}% - 2px)`
+  }
+})
+
+const COLLAPSE_THRESHOLD = 5
+const MIN_NORMAL_SIZE = 10
 
 const canCollapse = computed(() => props.collapsible && props.direction === 'horizontal')
-const isCollapsed = ref(props.sizes?.[0] <= 3)
-const savedSize = ref(props.sizes?.[0] > 3 ? props.sizes[0] : 25)
+const isCollapsed = ref(props.sizes?.[0] <= COLLAPSE_THRESHOLD)
+const defaultSize = computed(() => (props.sizes?.[0] >= MIN_NORMAL_SIZE ? props.sizes[0] : 25))
+const savedSize = ref(props.sizes?.[0] >= MIN_NORMAL_SIZE ? props.sizes[0] : 25)
 
 const computedMinSize = computed(() => {
   if (!canCollapse.value) return props.minSize
@@ -92,7 +112,7 @@ const toggleCollapse = (collapse) => {
   }, 220)
 
   if (shouldCollapse) {
-    if (currentSizes[0] > 3) {
+    if (currentSizes[0] >= MIN_NORMAL_SIZE) {
       savedSize.value = currentSizes[0]
     }
     const newSizes = calcProportionalSizes(currentSizes, 0)
@@ -101,7 +121,7 @@ const toggleCollapse = (collapse) => {
     emit('collapse', true)
     emit('update:sizes', newSizes)
   } else {
-    const targetSize = savedSize.value > 3 ? savedSize.value : 25
+    const targetSize = (savedSize.value && savedSize.value >= MIN_NORMAL_SIZE) ? savedSize.value : defaultSize.value
     const newSizes = calcProportionalSizes(currentSizes, targetSize)
     isCollapsed.value = false
     splitInstance.value?.setSizes(newSizes)
@@ -113,12 +133,16 @@ const toggleCollapse = (collapse) => {
 const attrs = useAttrs()
 const splitInstance = shallowRef()
 
-const newSplitInstance = () => {
+const destroySplitInstance = () => {
   if (splitInstance.value) {
     firstGutterEl.value = null
     splitInstance.value.destroy()
     splitInstance.value = null
   }
+}
+
+const newSplitInstance = () => {
+  destroySplitInstance()
 
   if (props.disabled) return
 
@@ -133,6 +157,17 @@ const newSplitInstance = () => {
     gutterSize: 5,
     direction: props.direction,
     ...attrs,
+    elementStyle: (dimension, size, gutSize) => {
+      if (props.lazy && isDragging.value) {
+        return {}
+      }
+      if (size === undefined) {
+        return { [dimension]: '' }
+      }
+      return {
+        [dimension]: `calc(${size}% - ${gutSize}px)`
+      }
+    },
     gutter: (index, direction) => {
       const gutter = document.createElement('div')
       gutter.className = `gutter gutter-${direction}`
@@ -150,10 +185,25 @@ const newSplitInstance = () => {
     onDragStart: (sizes) => {
       isDragging.value = true
       isCollapsing.value = false
+      if (canCollapse.value && sizes?.[0] >= MIN_NORMAL_SIZE) {
+        savedSize.value = sizes[0]
+      }
+      if (props.lazy && sizes?.[0] !== undefined) {
+        ghostGutterPos.value = sizes[0]
+      }
       if (attrs.onDragStart) {
         attrs.onDragStart(sizes)
       }
       emit('drag-start', sizes)
+    },
+    onDrag: (sizes) => {
+      if (props.lazy && sizes?.[0] !== undefined) {
+        ghostGutterPos.value = sizes[0]
+      }
+      if (attrs.onDrag) {
+        attrs.onDrag(sizes)
+      }
+      emit('drag', sizes)
     },
     onDragEnd: (sizes) => {
       isDragging.value = false
@@ -162,20 +212,30 @@ const newSplitInstance = () => {
         container.querySelectorAll('.gutter.is-active').forEach(el => el.classList.remove('is-active'))
       }
 
+      let finalSizes = sizes
       if (canCollapse.value && sizes?.[0] !== undefined) {
-        if (sizes[0] <= 3) {
+        if (sizes[0] <= COLLAPSE_THRESHOLD) {
           isCollapsed.value = true
+          finalSizes = calcProportionalSizes(sizes, 0)
+          emit('collapse', true)
         } else {
           isCollapsed.value = false
-          savedSize.value = sizes[0]
+          if (sizes[0] >= MIN_NORMAL_SIZE) {
+            savedSize.value = sizes[0]
+          }
+          emit('collapse', false)
         }
       }
 
-      if (attrs.onDragEnd) {
-        attrs.onDragEnd(sizes)
+      if (props.lazy || (canCollapse.value && sizes?.[0] <= COLLAPSE_THRESHOLD)) {
+        splitInstance.value?.setSizes(finalSizes)
       }
-      emit('drag-end', sizes)
-      emit('update:sizes', sizes)
+
+      if (attrs.onDragEnd) {
+        attrs.onDragEnd(finalSizes)
+      }
+      emit('drag-end', finalSizes)
+      emit('update:sizes', finalSizes)
     }
   }
 
@@ -192,6 +252,20 @@ const newSplitInstance = () => {
 
 onMounted(() => {
   newSplitInstance()
+})
+
+watch(() => props.disabled, (disabled) => {
+  if (!disabled) {
+    nextTick(() => {
+      newSplitInstance()
+    })
+  } else {
+    destroySplitInstance()
+  }
+}, { flush: 'post' })
+
+onBeforeUnmount(() => {
+  destroySplitInstance()
 })
 
 const elementSizes = computed(() => {
@@ -223,6 +297,12 @@ defineExpose({
     >
       <slot :name="`split-${index}`" />
     </div>
+    <div
+      v-if="lazy && isDragging"
+      class="split-ghost-gutter"
+      :class="`split-ghost-gutter-${direction}`"
+      :style="ghostGutterStyle"
+    />
     <teleport
       v-if="canCollapse && firstGutterEl"
       :to="firstGutterEl"
@@ -253,6 +333,7 @@ defineExpose({
 .common-split {
   height: 100%;
   width: 100%;
+  position: relative;
 }
 .split-pane {
   overflow: hidden;
@@ -276,7 +357,7 @@ defineExpose({
   width: auto !important;
 }
 :deep(.gutter) {
-  background-color: #eee;
+  background-color: var(--el-border-color-light, #eee);
   background-repeat: no-repeat;
   background-position: 50%;
   position: relative;
@@ -286,6 +367,28 @@ defineExpose({
 /* Highlight when dragging (controlled by JS state) */
 :deep(.gutter.is-active) {
   background-color: #409eff !important;
+}
+
+.split-ghost-gutter {
+  position: absolute;
+  z-index: 30;
+  pointer-events: none;
+  background-color: var(--el-color-primary, #409eff);
+  opacity: 0.85;
+  box-shadow: 0 0 6px rgba(64, 158, 255, 0.6);
+  transition: none !important;
+}
+
+.split-ghost-gutter-horizontal {
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+.split-ghost-gutter-vertical {
+  left: 0;
+  right: 0;
+  height: 4px;
 }
 
 :deep(.split-collapse-trigger) {
