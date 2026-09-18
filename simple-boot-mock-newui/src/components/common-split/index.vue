@@ -133,10 +133,10 @@ const toggleCollapse = (collapse) => {
 const attrs = useAttrs()
 const splitInstance = shallowRef()
 
-const destroySplitInstance = () => {
+const destroySplitInstance = (preserveStyles = false) => {
   if (splitInstance.value) {
     firstGutterEl.value = null
-    splitInstance.value.destroy()
+    splitInstance.value.destroy(preserveStyles)
     splitInstance.value = null
   }
 }
@@ -265,7 +265,7 @@ watch(() => props.disabled, (disabled) => {
 }, { flush: 'post' })
 
 onBeforeUnmount(() => {
-  destroySplitInstance()
+  destroySplitInstance(true)
 })
 
 const elementSizes = computed(() => {

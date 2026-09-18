@@ -9,7 +9,8 @@ import MockDataApi, {
   copyMockData,
   searchHistories, loadHistoryDiff, recoverFromHistory
 } from '@/api/mock/MockDataApi'
-import { useInjectDataLoading, useTableAndSearchForm } from '@/hooks/CommonHooks'
+import { useInjectDataLoading, useTableAndSearchForm, useContextMenu } from '@/hooks/CommonHooks'
+import MockMoreDropdownMenu from '@/views/components/mock/MockMoreDropdownMenu.vue'
 import CommonIcon from '@/components/common-icon/index.vue'
 import CommonFormControl from '@/components/common-form-control/index.vue'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
@@ -60,6 +61,17 @@ const selectDataId = defineModel('selectDataId', {
 })
 const selectedRows = ref([])
 const batchMode = ref(false)
+
+const {
+  showContextMenu,
+  contextMenuRef,
+  contextMenuHandlers,
+  contextMenuItem,
+  contextMenuDropdownRef,
+  handleContextMenuVisibleChange,
+  handleRequestContextMenu
+} = useContextMenu()
+
 const toDataLogs = (dataId) => $goto({
   name: 'MockLogs',
   query: {
@@ -165,7 +177,7 @@ const columns = computed(() => {
   }, {
     headerSlot: 'buttonHeader',
     slot: 'buttons',
-    minWidth: '200px',
+    minWidth: '130px',
     attrs: {
       fixed: 'right'
     }
@@ -203,7 +215,8 @@ watch(requestItem, () => {
   searchParam.value.requestId = requestItem.value?.id
   loadMockData()
 })
-const buttons = computed(() => defineTableButtons([{
+
+const mainButtons = computed(() => defineTableButtons([{
   labelKey: 'common.label.edit',
   type: 'primary',
   icon: 'Edit',
@@ -221,37 +234,8 @@ const buttons = computed(() => defineTableButtons([{
       .then(() => copyMockData(item.id))
       .then(() => loadMockData())
   }
-}, {
-  labelKey: 'mock.label.modifyHistory',
-  type: 'info',
-  icon: 'AccessTimeFilled',
-  buttonIf (item) {
-    return !!item.historyCount
-  },
-  click: item => {
-    toShowHistoryWindow(item)
-  }
-}, {
-  labelKey: 'mock.label.setDefault',
-  type: 'primary',
-  icon: 'Flag',
-  buttonIf (item) {
-    return !item.defaultFlag && !item.matchPattern && props.writable
-  },
-  click: item => {
-    changeDefaultFlag(item, 1)
-  }
-}, {
-  labelKey: 'common.label.delete',
-  type: 'danger',
-  icon: 'DeleteFilled',
-  enabled: props.deletable,
-  click: item => {
-    $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
-      .then(() => MockDataApi.deleteById(item.id, { loading: true }))
-      .then(() => loadMockData())
-  }
 }]))
+
 const changeDefaultFlag = (item, defaultFlag) => {
   const message = defaultFlag
     ? $i18nBundle('mock.msg.configSetDefault')
@@ -554,6 +538,67 @@ const toShowHistoryWindow = (current) => {
     onUpdateHistory: () => loadMockData()
   })
 }
+const moreButtons = computed(() => defineTableButtons([{
+  labelKey: 'mock.label.setDefault',
+  type: 'primary',
+  icon: 'Flag',
+  buttonIf (item) {
+    return !item.defaultFlag && !item.matchPattern && props.writable
+  },
+  click: item => {
+    changeDefaultFlag(item, 1)
+  }
+}, {
+  labelKey: 'mock.label.matchPattern',
+  type: 'success',
+  icon: 'FactCheckFilled',
+  buttonIf (item) {
+    return !!item.matchPattern
+  },
+  click: item => {
+    toTestMatchPattern(props.groupItem, requestItem.value, item, props.writable)
+      .then(() => loadMockData())
+  }
+}, {
+  labelKey: 'mock.label.modifyHistory',
+  type: 'info',
+  icon: 'AccessTimeFilled',
+  buttonIf (item) {
+    return !!item.historyCount
+  },
+  click: item => {
+    toShowHistoryWindow(item)
+  }
+}, {
+  labelKey: 'mock.label.logManagement',
+  type: 'info',
+  icon: 'DocumentCopy',
+  click: item => {
+    toDataLogs(item.id)
+  }
+}, {
+  labelKey: 'common.label.delete',
+  type: 'danger',
+  icon: 'DeleteFilled',
+  enabled: props.deletable,
+  click: item => {
+    $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
+      .then(() => MockDataApi.deleteById(item.id, { loading: true }))
+      .then(() => loadMockData())
+  }
+}]))
+
+const contextMenuButtons = computed(() => defineTableButtons([
+  ...mainButtons.value,
+  ...moreButtons.value
+]))
+
+const handleRowContextMenu = (row, column, event) => {
+  event?.preventDefault?.()
+  event?.stopPropagation?.()
+  handleRequestContextMenu(event, row, contextMenuButtons.value)
+}
+
 const pageAttrs = {
   layout: 'prev, pager, next',
   background: true,
@@ -577,6 +622,7 @@ const pageAttrs = {
       @current-page-change="loadMockData()"
       @page-size-change="loadMockData()"
       @row-dblclick="newOrEdit($event.id)"
+      @row-contextmenu="handleRowContextMenu"
     >
       <template #buttonHeader>
         {{ $t('common.label.operation') }}
@@ -627,21 +673,43 @@ const pageAttrs = {
         </template>
       </template>
       <template #buttons="{item}">
-        <template v-for="(button, index) in buttons">
-          <el-button
-            v-if="button.enabled!==false&&(!button.buttonIf||button.buttonIf(item))"
-            :key="index"
-            v-common-tooltip="button.label || $t(button.labelKey)"
-            :type="button.type"
-            :size="button.size||'small'"
-            :disabled="button.disabled"
-            :round="button.round"
-            :circle="button.circle??true"
-            @click="button.click?.(item)"
+        <div class="table-buttons-nowrap">
+          <template
+            v-for="button in mainButtons"
+            :key="button.labelKey"
           >
-            <common-icon :icon="button.icon" />
-          </el-button>
-        </template>
+            <el-button
+              v-if="button.enabled!==false&&(!button.buttonIf||button.buttonIf(item))"
+              v-common-tooltip="button.label || $t(button.labelKey)"
+              :type="button.type"
+              :size="button.size||'small'"
+              :disabled="button.disabled"
+              :round="button.round"
+              :circle="button.circle??true"
+              @click="button.click?.(item)"
+            >
+              <common-icon :icon="button.icon" />
+            </el-button>
+          </template>
+          <el-dropdown
+            placement="bottom-end"
+            class="margin-left1"
+            @visible-change="val => val && (showContextMenu = false)"
+          >
+            <el-button
+              size="small"
+              circle
+            >
+              <common-icon icon="MoreFilled" />
+            </el-button>
+            <template #dropdown>
+              <mock-more-dropdown-menu
+                :buttons="moreButtons"
+                :item="item"
+              />
+            </template>
+          </el-dropdown>
+        </div>
       </template>
     </common-table>
     <simple-edit-window
@@ -710,9 +778,30 @@ const pageAttrs = {
       class="margin-top2"
       affix-enabled
     />
+    <el-dropdown
+      v-if="showContextMenu"
+      ref="contextMenuDropdownRef"
+      trigger="contextmenu"
+      virtual-triggering
+      :virtual-ref="contextMenuRef"
+      @visible-change="handleContextMenuVisibleChange"
+    >
+      <template #dropdown>
+        <mock-more-dropdown-menu
+          :buttons="contextMenuHandlers"
+          :item="contextMenuItem"
+        />
+      </template>
+    </el-dropdown>
   </el-container>
 </template>
 
 <style scoped>
-
+.table-buttons-nowrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
 </style>
