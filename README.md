@@ -70,6 +70,14 @@
 15. 除了H2数据库，增加MySQL数据库支持
 16. 支持通过内置函数，实现解密请求或加密响应
 
+## GitHub Actions 发布
+
+在 GitHub 的 **Actions → Build and Release → Run workflow** 中选择 `master`，在 `tag_name` 输入正式版本号（如 `2.14.8` 或 `v2.14.8`）即可发布，无需提前修改版本文件或创建 tag。
+
+工作流会同步父子 Maven POM、前端 `package.json` 和 `package-lock.json` 的版本，校验并构建。构建成功后，自动提交版本变更并创建 `v版本号` tag，然后发布 ZIP 安装包和 Docker 镜像。自动提交需要仓库规则允许 `GITHUB_TOKEN` 写入 `master` 和 tag；Docker Hub 使用已有的 `DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN` secrets。
+
+仍支持推送 `v*` tag 触发构建，构建时自动使用 tag 中的版本号。仅支持 `主版本.次版本.修订号` 格式的正式版本；旧版本不会覆盖 GitHub Release 和 Docker 的 `latest`。手动发布时不覆盖已有 tag，失败后请使用原运行的 **Re-run all jobs** 重试。若构建期间 `master` 有新提交，自动提交会被拒绝，请重新运行工作流。
+
 ## 运行
 
 可以使用`java -jar`，也可以使用快捷的bat或者sh文件运行

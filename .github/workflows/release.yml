@@ -7,15 +7,22 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Tag name for the release (e.g., v2.11.1)'
+        description: '发布版本（如 2.14.8 或 v2.14.8，从 master 运行）'
         required: true
-        default: 'v'
+        type: string
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout code
@@ -23,24 +30,59 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Prepare release
+        id: release
+        env:
+          INPUT_VERSION: ${{ inputs.tag_name }}
+        run: |
+          VERSION="${INPUT_VERSION:-$GITHUB_REF_NAME}"
+          VERSION="${VERSION#v}"
+          VERSION_PATTERN='(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)'
+          if [[ ! "$VERSION" =~ ^${VERSION_PATTERN}$ ]]; then
+            echo "::error::Use a stable version such as 2.14.8 or v2.14.8."
+            exit 1
+          fi
+          TAG="v$VERSION"
+          CREATE_TAG=false
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            if [[ "$GITHUB_REF" != refs/heads/master ]]; then
+              echo "::error::Run a new release from master."
+              exit 1
+            fi
+            if git show-ref --verify --quiet "refs/tags/$TAG"; then
+              TAG_SHA=$(git rev-parse "$TAG^{commit}")
+              # Resume only the tag created by this workflow run, including when no version commit was needed.
+              if [[ "$GITHUB_RUN_ATTEMPT" -le 1 ]] ||
+                  ! git for-each-ref --format='%(contents)' "refs/tags/$TAG" | grep -Fxq "Release-Run: $GITHUB_RUN_ID" ||
+                  [[ "$TAG_SHA" != "$GITHUB_SHA" && "$(git rev-parse "$TAG_SHA^")" != "$GITHUB_SHA" ]]; then
+                echo "::error::Tag $TAG already exists. To retry, rerun its original workflow."
+                exit 1
+              fi
+              git checkout --detach "$TAG_SHA"
+            else
+              git fetch origin refs/heads/master:refs/remotes/origin/master
+              if [[ "$(git rev-parse origin/master)" != "$GITHUB_SHA" ]]; then
+                echo "::error::master has changed. Start a new workflow run."
+                exit 1
+              fi
+              CREATE_TAG=true
+            fi
+          elif [[ "$GITHUB_REF" != "refs/tags/$TAG" ||
+                  "$(git rev-parse "$TAG^{commit}")" != "$(git rev-parse HEAD)" ]]; then
+            echo "::error::The release tag does not match this run's source."
+            exit 1
+          fi
+          LATEST_TAG=$({ git tag --list; printf '%s\n' "$TAG"; } |
+            grep -E "^v${VERSION_PATTERN}$" | sort -V | tail -n 1)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "create_tag=$CREATE_TAG" >> "$GITHUB_OUTPUT"
+          echo "is_latest=$([[ "$TAG" == "$LATEST_TAG" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-
-      - name: Build Frontend
-        working-directory: simple-boot-mock-newui
-        run: |
-          npm install -g vite
-          npm install --legacy-peer-deps --no-audit --no-fund
-          echo "Current directory: $(pwd)"
-          ls -F
-          npm run build
-
-      - name: Copy Frontend to Backend
-        run: |
-          mkdir -p simple-boot-mock-server/src/main/resources/static/
-          cp -r simple-boot-mock-newui/dist/* simple-boot-mock-server/src/main/resources/static/
+          node-version: '22'
 
       - name: Set up JDK 11
         uses: actions/setup-java@v4
@@ -49,27 +91,100 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Update version files
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          mvn -B versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+          npm --prefix simple-boot-mock-newui version "$VERSION" --no-git-tag-version --allow-same-version --ignore-scripts
+
+      - name: Check version consistency
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
+          versions = {
+              'pom.xml': ET.parse('pom.xml').findtext('m:version', namespaces=ns),
+              'simple-boot-mock-server/pom.xml': ET.parse('simple-boot-mock-server/pom.xml').findtext('m:parent/m:version', namespaces=ns),
+          }
+          for name in ('package.json', 'package-lock.json'):
+              path = Path('simple-boot-mock-newui') / name
+              data = json.loads(path.read_text(encoding='utf-8'))
+              versions[str(path)] = data.get('version')
+              if name == 'package-lock.json':
+                  versions[f'{path} packages[""]'] = data.get('packages', {}).get('', {}).get('version')
+          for path, version in versions.items():
+              if version != os.environ['VERSION']:
+                  raise SystemExit(f'{path}: expected {os.environ["VERSION"]}, found {version}')
+          print(f'All version files match {os.environ["VERSION"]}.')
+          PY
+
+      - name: Build Frontend
+        working-directory: simple-boot-mock-newui
+        run: |
+          npm ci --legacy-peer-deps --no-audit --no-fund
+          npm run build
+
+      - name: Copy Frontend to Backend
+        run: |
+          mkdir -p simple-boot-mock-server/src/main/resources/static/
+          cp -r simple-boot-mock-newui/dist/* simple-boot-mock-server/src/main/resources/static/
+
       - name: Build Backend with Maven
         run: mvn clean install -Dmaven.test.skip=true -Pproduction
 
       - name: Find Release Artifact
         id: find_artifact
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
         run: |
-          ARTIFACT_PATH=$(find simple-boot-mock-server/target -name "simple-boot-mock-server-*-assembly.zip" | head -n 1)
-          echo "artifact_path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
-          echo "Found artifact: $ARTIFACT_PATH"
+          ARTIFACT_PATH="simple-boot-mock-server/target/simple-boot-mock-server-$VERSION-assembly.zip"
+          test -s "$ARTIFACT_PATH"
+          echo "artifact_path=$ARTIFACT_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Commit version and push tag
+        if: steps.release.outputs.create_tag == 'true'
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pom.xml simple-boot-mock-server/pom.xml simple-boot-mock-newui/package.json simple-boot-mock-newui/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "version: 发布 $VERSION" -m "Release-Run: $GITHUB_RUN_ID"
+          fi
+          git tag -a "$TAG" -m "发布 $VERSION" -m "Release-Run: $GITHUB_RUN_ID"
+          # Reject concurrent branch changes; push the branch and tag together.
+          git push --atomic origin HEAD:refs/heads/master "refs/tags/$TAG"
+
+      - name: Check published tag matches build
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          REMOTE_TAG_OID=$(git ls-remote --exit-code origin "refs/tags/$TAG" | cut -f1)
+          if [[ "$REMOTE_TAG_OID" != "$(git rev-parse "refs/tags/$TAG")" ||
+                "$(git rev-parse "$TAG^{commit}")" != "$(git rev-parse HEAD)" ]]; then
+            echo "::error::The tag changed during the build. Refusing to publish mismatched artifacts."
+            exit 1
+          fi
 
       - name: Generate Changelog
         id: changelog
-        shell: bash
+        env:
+          CURRENT_TAG: ${{ steps.release.outputs.tag }}
         run: |
-          git fetch --tags --force
-          CURRENT_TAG=${{ github.event.inputs.tag_name || github.ref_name }}
-          PREVIOUS_TAG=$(git tag --sort=-v:refname | grep -A 1 "^${CURRENT_TAG}$" | tail -n 1)
+          PREVIOUS_TAG=$(git describe --tags --match 'v[0-9]*' --abbrev=0 "$CURRENT_TAG^" 2>/dev/null || true)
           REPO_URL="https://github.com/fugary/simple-boot-mock-server"
           
-          if [ -z "$PREVIOUS_TAG" ] || [ "$PREVIOUS_TAG" == "$CURRENT_TAG" ]; then
-            REVISION_RANGE="-n 20"
+          if [ -z "$PREVIOUS_TAG" ]; then
+            REVISION_RANGE="$CURRENT_TAG"
           else
             REVISION_RANGE="$PREVIOUS_TAG..$CURRENT_TAG"
           fi
@@ -77,16 +192,14 @@ jobs:
           # Function to get and filter logs
           get_logs() {
             local pattern=$1
-            local exclude_pattern="github-actions\[bot\]"
             local exclude_msgs="(version:|docs: add github release automation workflow|mvn versions:set|Updating simple-boot-mock-newui version)"
             
-            git log --reverse $REVISION_RANGE --pretty=format:"%an|%s|%H" | \
-            grep -v "$exclude_pattern" | \
-            grep -vE "^[^|]+\|$exclude_msgs" | \
+            git log --reverse "$REVISION_RANGE" --pretty=tformat:"%an|%s|%H" | \
+            awk -F'|' -v pattern="^$exclude_msgs" '$1 != "github-actions[bot]" && $2 !~ pattern' | \
             while IFS='|' read -r author subject hash; do
                 # Filter out commits that only modify .github/ or release.yml
-                local files=$(git diff-tree --no-commit-id --name-only -r "$hash")
-                local non_ignored_count=$(echo "$files" | grep -vE "^(\.github/|release\.yml)" | wc -l)
+                local files=$(git diff-tree --root --no-commit-id --name-only -r "$hash")
+                local non_ignored_count=$(echo "$files" | awk '! /^(\.github\/|release\.yml|$)/ {count++} END {print count+0}')
                 if [ "$non_ignored_count" -gt 0 ]; then
                     if [ "$pattern" == "other" ]; then
                         if [[ ! "$subject" =~ ^(feat|fix|bug|opt|dep|test): ]]; then
@@ -127,7 +240,7 @@ jobs:
           format_list "📦 Dependencies" "$DEPS"
           format_list "📝 Other Changes" "$OTHERS"
           
-          if [ -n "$PREVIOUS_TAG" ] && [ "$PREVIOUS_TAG" != "$CURRENT_TAG" ]; then
+          if [ -n "$PREVIOUS_TAG" ]; then
             echo "**Full Changelog**: $REPO_URL/compare/$PREVIOUS_TAG...$CURRENT_TAG" >> changelog.txt
           fi
           
@@ -141,8 +254,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.find_artifact.outputs.artifact_path }}
-          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          tag_name: ${{ steps.release.outputs.tag }}
           body: ${{ steps.changelog.outputs.body }}
+          fail_on_unmatched_files: true
+          make_latest: ${{ steps.release.outputs.is_latest }}
           generate_release_notes: false
           draft: false
           prerelease: false
@@ -169,7 +284,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/simple-boot-mock-server:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/simple-boot-mock-server:${{ github.event.inputs.tag_name || github.ref_name }}
+            ${{ steps.release.outputs.is_latest == 'true' && format('{0}/simple-boot-mock-server:latest', secrets.DOCKERHUB_USERNAME) || '' }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/simple-boot-mock-server:${{ steps.release.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
