@@ -229,7 +229,7 @@ const formatResult = computed(() => {
 
 const tooltips = computed(() => {
   if (calcOption.value.tooltips?.length) {
-    return calcOption.value.tooltips
+    return calcOption.value.tooltips.filter(tooltip => tooltip.enabled !== false)
   } else if (calcOption.value.tooltip || calcOption.value.tooltipFunc) {
     return [calcOption.value]
   }
@@ -267,7 +267,8 @@ const tooltips = computed(() => {
       <el-tooltip
         v-for="(tooltipOption, index) in tooltips"
         :key="index"
-        class="box-item common-el-tooltip"
+        class="box-item"
+        popper-class="common-el-tooltip"
         effect="dark"
         :disabled="!tooltipOption.tooltip"
         :content="tooltipOption.tooltip"

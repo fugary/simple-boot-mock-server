@@ -61,7 +61,8 @@ const tooltipFunc = ($event) => {
     {{ label }}
     <el-tooltip
       v-if="option.tooltip||option.tooltipFunc"
-      class="box-item common-el-tooltip"
+      class="box-item"
+      popper-class="common-el-tooltip"
       effect="dark"
       :disabled="!option.tooltip"
       :content="option.tooltip"
