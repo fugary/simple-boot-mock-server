@@ -93,6 +93,8 @@ const showMenuIcon = computed(() => {
   </el-sub-menu>
   <el-menu-item
     v-else-if="isDropdown"
+    :index="`dropdown_${index}`"
+    :route="router.currentRoute.value.fullPath"
     :class="menuCls"
     :disabled="menuItem.disabled"
     @click="menuItem.click&&menuItem.click($event, menuItem)"
@@ -131,9 +133,9 @@ const showMenuIcon = computed(() => {
     v-open-new-window="menuItem.index"
     :class="menuCls"
     :disabled="menuItem.disabled"
-    :route="menuItem.route"
+    :route="menuItem.index == null ? router.currentRoute.value.fullPath : menuItem.route"
     v-bind="menuItem.attrs"
-    :index="menuItem.index"
+    :index="menuItem.index ?? `action_${index}`"
     @click="menuItem.click&&menuItem.click($event,menuItem)"
   >
     <common-icon

@@ -296,7 +296,7 @@ const tableProjectItems = computed(() => {
             {!defaultProject && checkProjectEdit(project)
               ? <ElLink
                   type={project.topFlag ? 'warning' : 'info'}
-                  underline={false}
+                  underline="never"
                   class={['margin-left1', project.topFlag ? '' : 'project-card__top-icon-unpinned']}
                   v-common-tooltip={$i18nBundle(project.topFlag ? 'mock.label.unpinFromTop' : 'mock.label.pinToTop')}
                   onClick={($event) => toggleProjectTop(project, $event)}
@@ -304,7 +304,7 @@ const tableProjectItems = computed(() => {
                   <CommonIcon icon={project.topFlag ? 'StarFilled' : 'Star'} size={18} />
                 </ElLink>
               : (!defaultProject && project.topFlag
-                  ? <ElLink type="warning" underline={false} class="margin-left1" v-common-tooltip={$i18nBundle('mock.label.pinToTop')} style="cursor: default;">
+                  ? <ElLink type="warning" underline="never" class="margin-left1" v-common-tooltip={$i18nBundle('mock.label.pinToTop')} style="cursor: default;">
                       <CommonIcon icon="StarFilled" size={18} />
                     </ElLink>
                   : '')}

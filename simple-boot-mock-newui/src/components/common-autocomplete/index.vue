@@ -119,11 +119,11 @@ const lastAutocompleteLabel = ref(props.defaultLabel)
 /**
  * @type {PaginationProps}
  */
-const pageAttrs = { layout: 'total, prev, pager, next', small: true, background: true }
+const pageAttrs = { layout: 'total, prev, pager, next', size: 'small', background: true }
 /**
  * @type {PaginationProps}
  */
-const selectPageAttrs = { layout: 'prev, pager, next', small: true, background: true }
+const selectPageAttrs = { layout: 'prev, pager, next', size: 'small', background: true }
 // 自动完成数据
 const dataList = ref([])
 // 选项表数据

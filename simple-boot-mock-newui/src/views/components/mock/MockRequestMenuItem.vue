@@ -67,7 +67,7 @@ const moreButtons = computed(() => {
   return defineTableButtons([{
     labelKey: requestItem.value?.topFlag ? 'mock.label.unpinFromTop' : 'mock.label.pinToTop',
     icon: requestItem.value?.topFlag ? 'StarFilled' : 'Star',
-    type: requestItem.value?.topFlag ? 'warning' : 'default',
+    type: requestItem.value?.topFlag ? 'warning' : '',
     enabled: props.writable,
     click: () => {
       toggleTop()
@@ -221,7 +221,7 @@ const requestProxyUrl = computed(() => {
           v-if="requestItem.topFlag"
           v-common-tooltip="$t(writable ? 'mock.label.unpinFromTop' : 'mock.label.pinToTop')"
           type="warning"
-          :underline="false"
+          underline="never"
           class="margin-left1"
           :style="writable ? '' : 'cursor: default;'"
           @click.stop="writable && toggleTop()"

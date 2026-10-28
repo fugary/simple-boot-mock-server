@@ -368,7 +368,7 @@ const columns = computed(() => {
         if (projectUserName && projectUserName !== useCurrentUserName()) {
           projectInfo = <>
             <ElLink type="info"
-                    underline={true}
+                    underline="hover"
                     class="mock-group-project-link"
                     onClick={($event) => fillProjectSearch(data, $event)}
                     onDblclick={($event) => $event?.stopPropagation()}>{$i18nBundle('mock.label.defaultProject')}</ElLink>
@@ -379,7 +379,7 @@ const columns = computed(() => {
       } else if (data.projectCode) {
         const projectName = groupProject?.projectName || data.projectCode
         const projectNameNode = <ElLink type={disabledProject ? 'danger' : 'info'}
-                                        underline={true}
+                                        underline="hover"
                                         class="mock-group-project-link"
                                         onClick={($event) => fillProjectSearch(data, $event)}
                                         onDblclick={($event) => $event?.stopPropagation()}>{projectName}</ElLink>
@@ -419,7 +419,7 @@ const columns = computed(() => {
           v-common-tooltip={$i18nKey('common.label.commonView', 'mock.label.logManagement')}
           class="margin-left1"
           type="primary"
-          underline={false}
+          underline="never"
           onClick={() => toGroupLogs(data.groupPath)}
         >
           <CommonIcon size={18} icon="FindInPageOutlined"/>
@@ -480,7 +480,7 @@ const columns = computed(() => {
         {groupWritable(data)
           ? <ElLink
               type={data.topFlag ? 'warning' : 'info'}
-              underline={false}
+              underline="never"
               class={['margin-left1', data.topFlag ? '' : 'mock-group-top-icon-unpinned']}
               v-common-tooltip={$i18nBundle(data.topFlag ? 'mock.label.unpinFromTop' : 'mock.label.pinToTop')}
               onClick={() => toggleGroupTop(data)}
@@ -488,7 +488,7 @@ const columns = computed(() => {
               <CommonIcon icon={data.topFlag ? 'StarFilled' : 'Star'} size={18} />
             </ElLink>
           : (data.topFlag
-              ? <ElLink type="warning" underline={false} class="margin-left1" v-common-tooltip={$i18nBundle('mock.label.pinToTop')} style="cursor: default;">
+              ? <ElLink type="warning" underline="never" class="margin-left1" v-common-tooltip={$i18nBundle('mock.label.pinToTop')} style="cursor: default;">
                   <CommonIcon icon="StarFilled" size={18} />
                 </ElLink>
               : '')}
@@ -965,7 +965,7 @@ const historyColumns = computed(() => {
         <DelFlagTag modelValue={data.status} />
         {disableMockStr}
         {data.topFlag
-          ? <ElLink type="warning" underline={false} class="margin-left1" v-common-tooltip={$i18nBundle('mock.label.pinToTop')} style="cursor: default;">
+          ? <ElLink type="warning" underline="never" class="margin-left1" v-common-tooltip={$i18nBundle('mock.label.pinToTop')} style="cursor: default;">
               <CommonIcon icon="StarFilled" size={18} />
             </ElLink>
           : ''}

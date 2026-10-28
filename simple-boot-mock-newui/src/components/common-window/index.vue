@@ -183,7 +183,7 @@ if (props.showFullscreen && props.dblclickToFullscreen) {
   <el-dialog
     v-model="showDialog"
     class="common-window"
-    :header="header||title"
+    :title="header||title"
     :before-close="calcBeforeClose"
     :width="width"
     :draggable="draggable"
