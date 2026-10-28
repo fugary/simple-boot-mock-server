@@ -302,7 +302,18 @@ const editFormOptions = computed(() => {
   const roundRobinKeyOption = useMockMonacoFieldOption(currentRequest, {
     labelKey: 'mock.label.roundRobinKeyExpression',
     prop: 'roundRobinKeyExpression',
-    showTips: false
+    showTips: false,
+    onTest: () => {
+      const request = currentRequest.value
+      return toTestMatchPattern(groupItem.value, request, null, projectWritable.value, {
+        expression: request.roundRobinKeyExpression || '',
+        booleanResult: false,
+        labelKey: 'mock.label.roundRobinKeyExpression',
+        saveLabel: $i18nBundle('mock.label.applyExpression'),
+        emptyMessage: $i18nBundle('mock.msg.roundRobinSharedProgress'),
+        onSave: value => { request.roundRobinKeyExpression = value }
+      })
+    }
   })
   roundRobinKeyOption.tooltips.push({ tooltip: $i18nBundle('mock.msg.roundRobinKeyExpressionTips') })
   const options = [{
@@ -353,7 +364,17 @@ const editFormOptions = computed(() => {
   { ...useFormDisableMock(), style: pairedFieldStyle },
   { ...useFormDelay(), style: pairedFieldStyle },
   { ...useContentTypeOption({ clearable: true }), style: pairedFieldStyle },
-  useMockMonacoFieldOption(currentRequest, { tipKey: 'matchPattern' }),
+  useMockMonacoFieldOption(currentRequest, {
+    tipKey: 'matchPattern',
+    onTest: () => {
+      const request = currentRequest.value
+      return toTestMatchPattern(groupItem.value, request, null, projectWritable.value, {
+        expression: request.matchPattern || '',
+        saveLabel: $i18nBundle('mock.label.applyExpression'),
+        onSave: value => { request.matchPattern = value }
+      })
+    }
+  }),
   {
     labelKey: 'mock.label.loadBalanceType',
     prop: 'loadBalancer',

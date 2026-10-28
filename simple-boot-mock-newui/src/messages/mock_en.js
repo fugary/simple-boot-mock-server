@@ -349,6 +349,11 @@ mock.msg.authParamNameTooltip = 'Default value is: {0}, cannot be empty'
 mock.msg.authPrefixTooltip = 'Default value is: {0}, can be empty'
 mock.msg.requestTest = 'Test Request'
 mock.msg.matchPatternTest = 'Test Match Pattern'
+mock.msg.expressionTest = 'Test Expression'
+mock.msg.expressionRequired = 'Please enter an expression'
+mock.msg.roundRobinSharedProgress = 'No grouping expression; use the shared endpoint counter'
+mock.label.expressionResult = 'Expression Result'
+mock.label.applyExpression = 'Apply to Current Form'
 mock.msg.requestNameTooltip = 'Simple interface name, not required.'
 mock.msg.requestIntro = `request.body — The body content object (only JSON)<br>
                         request.bodyStr — The body content string<br>

@@ -9,6 +9,10 @@ import { isBoolean } from 'lodash-es'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const props = defineProps({
+  expressionOptions: {
+    type: Object,
+    default: () => ({})
+  },
   responseTarget: {
     type: Object,
     default: null
@@ -26,7 +30,7 @@ languageRef.value = 'javascript'
 
 const matchPatternOptions = computed(() => {
   return defineFormOptions([{
-    labelKey: 'mock.label.matchPattern',
+    labelKey: props.expressionOptions.labelKey || 'mock.label.matchPattern',
     type: 'vue-monaco-editor',
     prop: 'matchPattern',
     tooltips: [{
@@ -34,7 +38,7 @@ const matchPatternOptions = computed(() => {
       tooltipIcon: 'EditPen',
       tooltipFunc: () => showCodeWindow(paramTarget.value?.matchPattern, {
         language: 'javascript',
-        title: $i18nKey('common.label.commonEdit', 'mock.label.matchPattern'),
+        title: $i18nKey('common.label.commonEdit', props.expressionOptions.labelKey || 'mock.label.matchPattern'),
         readOnly: false,
         change: (value, lang) => {
           paramTarget.value.matchPattern = value
@@ -43,9 +47,9 @@ const matchPatternOptions = computed(() => {
       })
     }, {
       tooltip: $i18nBundle('mock.label.clickToShowDetails'),
+      enabled: props.expressionOptions.booleanResult !== false,
       tooltipFunc: () => showMockTips('matchPattern')
     }],
-    required: true,
     attrs: {
       class: 'common-resize-vertical',
       defaultValue: paramTarget.value.matchPattern,
@@ -61,13 +65,20 @@ const matchPatternOptions = computed(() => {
       options: monacoEditorOptions
     }
   }, {
-    labelKey: 'mock.label.matchResult',
+    labelKey: props.expressionOptions.booleanResult === false ? 'mock.label.expressionResult' : 'mock.label.matchResult',
     type: 'common-form-label',
     formatter () {
       if (props.responseTarget && props.responseTarget.data) {
         const data = JSON.parse(props.responseTarget.data)
         if (data.success) {
           const resultData = data.resultData
+          if (props.expressionOptions.booleanResult === false) {
+            const resultType = resultData === null ? 'null' : Array.isArray(resultData) ? 'array' : typeof resultData
+            return <>
+              <ElTag type="info">{resultType}</ElTag>
+              <ElText class="margin-left1" style="white-space: pre-wrap; overflow-wrap: anywhere;">{JSON.stringify(resultData, null, 2) ?? String(resultData)}</ElText>
+            </>
+          }
           const isBool = isBoolean(resultData)
           return <>
             <ElTag type={resultData ? 'success' : 'danger'}>{String(!!resultData)}</ElTag>

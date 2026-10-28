@@ -4,7 +4,7 @@ import { showCodeWindow, showMockTips } from '@/utils/DynamicUtils'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 export const useMockMonacoFieldOption = (modelRef, config) => {
-  const { labelKey, prop, showTips, tipKey } = Object.assign({
+  const { labelKey, prop, showTips, tipKey, onTest } = Object.assign({
     labelKey: 'mock.label.matchPattern',
     prop: 'matchPattern',
     language: 'javascript',
@@ -30,6 +30,11 @@ export const useMockMonacoFieldOption = (modelRef, config) => {
           languageRef.value = lang
         }
       })
+    }, {
+      tooltip: $i18nBundle('mock.msg.expressionTest'),
+      tooltipIcon: 'VideoPlay',
+      tooltipFunc: onTest,
+      enabled: !!onTest
     }, {
       tooltip: $i18nBundle('mock.label.clickToShowDetails'),
       tooltipFunc: () => showMockTips(tipKey),

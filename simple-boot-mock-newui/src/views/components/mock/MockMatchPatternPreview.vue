@@ -28,29 +28,36 @@ const paramTarget = ref()
 const responseTarget = ref()
 const schemasConf = ref({})
 const editable = ref(true)
+const expressionOptions = ref({})
 
 let saveResolve
-const toTestMatchPattern = (mockGroup, mockRequest, viewData, isEditable = true) => {
+const toTestMatchPattern = (mockGroup, mockRequest, viewData, isEditable = true, options = {}) => {
+  expressionOptions.value = options
+  responseTarget.value = undefined
   groupItem.value = mockGroup
   currentItem.value = viewData || mockRequest // 当前预览的是request还是data
   showWindow.value = true
   paramTarget.value = calcParamTarget(groupItem.value, mockRequest, viewData, schemasConf.value)
   paramTarget.value.requestPath = '/mock/checkMatchPattern'
   editable.value = isEditable
-  const matchPattern = currentItem.value?.matchPattern
-  if (matchPattern) {
-    paramTarget.value.matchPattern = matchPattern
+  paramTarget.value.matchPattern = options.expression ?? currentItem.value?.matchPattern ?? ''
+  if (mockRequest.id) {
+    loadSchemas({
+      requestId: mockRequest.id,
+      dataId: viewData?.id
+    }).then(schemasData => {
+      schemasConf.value = schemasData
+    })
   }
-  loadSchemas({
-    requestId: mockRequest.id,
-    dataId: viewData?.id
-  }).then(schemasData => {
-    schemasConf.value = schemasData
-  })
   return new Promise(resolve => (saveResolve = resolve))
 }
 
 const doDataPreview = () => {
+  if (!paramTarget.value.matchPattern?.trim()) {
+    responseTarget.value = undefined
+    ElMessage.info(expressionOptions.value.emptyMessage || $i18nBundle('mock.msg.expressionRequired'))
+    return
+  }
   const params = extractQueryParams(paramTarget.value?.requestParams, paramTarget.value.groupConfig)
   const { data, hasBody } = calcRequestBody(paramTarget)
   const headers = Object.assign(hasBody ? { 'content-type': paramTarget.value?.contentType } : {},
@@ -81,7 +88,8 @@ const doDataPreview = () => {
     params[MOCK_DATA_PATH_PARAMS_HEADER] = encodeURIComponent(JSON.stringify(pathParams))
   }
   if (paramTarget.value.matchPattern) {
-    params[MOCK_DATA_MATCH_PATTERN_HEADER] = encodeURIComponent(paramTarget.value.matchPattern)
+    const expression = paramTarget.value.matchPattern
+    params[MOCK_DATA_MATCH_PATTERN_HEADER] = encodeURIComponent(expressionOptions.value.booleanResult === false ? `(${expression}\n)` : expression)
   }
   previewRequest({
     url: paramTarget.value.requestPath,
@@ -100,7 +108,13 @@ const calcResponse = async (response) => {
   }
 }
 
-const saveMatchPattern = () => {
+const saveMatchPattern = async () => {
+  if (expressionOptions.value.onSave) {
+    await expressionOptions.value.onSave(paramTarget.value?.matchPattern)
+    showWindow.value = false
+    saveResolve?.(paramTarget.value?.matchPattern)
+    return
+  }
   currentItem.value.matchPattern = paramTarget.value?.matchPattern
   if (currentItem.value.requestId) {
     MockDataApi.saveOrUpdate(currentItem.value, { loading: true, timeout: 60000 }).then(() => {
@@ -128,7 +142,7 @@ defineExpose({
   <common-window
     v-model="showWindow"
     width="1100px"
-    :ok-label="$t('mock.label.savePattern')"
+    :ok-label="expressionOptions.saveLabel || $t('mock.label.savePattern')"
     :cancel-label="$t('common.label.close')"
     show-fullscreen
     :ok-click="saveMatchPattern"
@@ -138,7 +152,7 @@ defineExpose({
   >
     <template #header>
       <span class="el-dialog__title">
-        {{ $t('mock.msg.matchPatternTest') }}
+        {{ $t('mock.msg.expressionTest') }}
       </span>
     </template>
     <el-container class="flex-column">
@@ -147,6 +161,7 @@ defineExpose({
         :request-path="paramTarget.requestPath"
         :response-target="responseTarget"
         match-pattern-mode
+        :expression-options="expressionOptions"
         :schemas="schemasConf.schemas"
         :schema-spec="schemasConf.componentSpec"
         :editable="editable"

@@ -29,6 +29,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  expressionOptions: {
+    type: Object,
+    default: () => ({})
+  },
   mockResponseEditable: {
     type: Boolean,
     default: false
@@ -174,6 +178,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
               <mock-request-form-match-pattern
                 v-model="paramTarget"
                 :response-target="responseTarget"
+                :expression-options="expressionOptions"
               />
             </el-col>
             <el-col
@@ -193,7 +198,7 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
                 style="margin-top: -15px;"
                 @click="emit('saveMatchPattern')"
               >
-                {{ $t('mock.label.savePattern') }}
+                {{ expressionOptions.saveLabel || $t('mock.label.savePattern') }}
               </el-button>
             </el-col>
           </el-row>

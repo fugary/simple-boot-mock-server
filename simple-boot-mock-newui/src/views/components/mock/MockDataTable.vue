@@ -379,7 +379,17 @@ const editFormOptions = computed(() => {
       options: monacoEditorOptions
     }
   },
-  useMockMonacoFieldOption(currentDataItem, { tipKey: 'matchPattern' }), {
+  useMockMonacoFieldOption(currentDataItem, {
+    tipKey: 'matchPattern',
+    onTest: () => {
+      const data = currentDataItem.value
+      return toTestMatchPattern(props.groupItem, requestItem.value, data, props.writable, {
+        expression: data.matchPattern || '',
+        saveLabel: $i18nBundle('mock.label.applyExpression'),
+        onSave: value => { data.matchPattern = value }
+      })
+    }
+  }), {
     labelKey: 'mock.label.responseHeaders',
     slot: 'headerParams',
     prop: 'headerParams'
