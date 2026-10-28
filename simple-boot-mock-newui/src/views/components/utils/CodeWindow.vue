@@ -44,7 +44,7 @@ let codeRef = null
  */
 const showCodeWindow = (code, config = {}) => {
   if (isObject(code) && !isRef(code)) {
-    if (code.content !== undefined) {
+    if (code.content !== undefined || code.diffEditor === true) {
       config = code
       code = config.content
     } else {
