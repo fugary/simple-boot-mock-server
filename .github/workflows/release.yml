@@ -10,6 +10,11 @@ on:
         description: '发布版本（如 2.14.8 或 v2.14.8，从 master 运行）'
         required: true
         type: string
+      overwrite_existing:
+        description: '覆盖已有版本（使用当前 master 重新构建，仅限最新正式版本）'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: release
@@ -34,6 +39,7 @@ jobs:
         id: release
         env:
           INPUT_VERSION: ${{ inputs.tag_name }}
+          OVERWRITE_EXISTING: ${{ inputs.overwrite_existing || false }}
         run: |
           VERSION="${INPUT_VERSION:-$GITHUB_REF_NAME}"
           VERSION="${VERSION#v}"
@@ -43,13 +49,54 @@ jobs:
             exit 1
           fi
           TAG="v$VERSION"
+          LATEST_TAG=$({ git tag --list; printf '%s\n' "$TAG"; } |
+            grep -E "^v${VERSION_PATTERN}$" |
+            sort -V | tail -n 1)
           CREATE_TAG=false
-          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
-            if [[ "$GITHUB_REF" != refs/heads/master ]]; then
-              echo "::error::Run a new release from master."
+          REPLACE_TAG=false
+          EXPECTED_TAG_OID=''
+          PREVIOUS_COMMIT=''
+          REPUBLISHED_AT=''
+          require_current_master() {
+            git fetch origin refs/heads/master:refs/remotes/origin/master
+            if [[ "$(git rev-parse origin/master)" != "$GITHUB_SHA" ]]; then
+              echo "::error::master has changed. Start a new workflow run from master."
               exit 1
             fi
-            if git show-ref --verify --quiet "refs/tags/$TAG"; then
+          }
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            if [[ "$GITHUB_REF" != refs/heads/master ]]; then
+              echo "::error::Run a new release from the master branch."
+              exit 1
+            fi
+            if [[ "$OVERWRITE_EXISTING" == true ]]; then
+              if ! git show-ref --verify --quiet "refs/tags/$TAG" || [[ "$TAG" != "$LATEST_TAG" ]]; then
+                echo "::error::Only the latest existing stable version can be overwritten."
+                exit 1
+              fi
+              EXPECTED_TAG_OID=$(git rev-parse "refs/tags/$TAG")
+              TAG_SHA=$(git rev-parse "$TAG^{commit}")
+              TAG_MESSAGE=$(git for-each-ref --format='%(contents)' "refs/tags/$TAG")
+              if [[ "$GITHUB_RUN_ATTEMPT" -gt 1 && "$TAG_SHA" == "$GITHUB_SHA" ]] &&
+                  grep -Fxq "Release-Run: $GITHUB_RUN_ID" <<< "$TAG_MESSAGE"; then
+                # The previous attempt moved the tag; keep its source and audit metadata.
+                PREVIOUS_COMMIT=$(sed -n 's/^Previous-Commit: //p' <<< "$TAG_MESSAGE")
+                REPUBLISHED_AT=$(sed -n 's/^Republished-At: //p' <<< "$TAG_MESSAGE")
+                if [[ ! "$PREVIOUS_COMMIT" =~ ^[0-9a-f]{40,64}$ ||
+                      ! "$REPUBLISHED_AT" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]]; then
+                  echo "::error::The existing tag has invalid republish metadata."
+                  exit 1
+                fi
+              else
+                require_current_master
+                PREVIOUS_COMMIT="$TAG_SHA"
+                REPLACE_TAG=true
+              fi
+              if ! git merge-base --is-ancestor "$PREVIOUS_COMMIT" "$GITHUB_SHA"; then
+                echo "::error::The existing release must be an ancestor of the selected master commit."
+                exit 1
+              fi
+            elif git show-ref --verify --quiet "refs/tags/$TAG"; then
               TAG_SHA=$(git rev-parse "$TAG^{commit}")
               # Resume only the tag created by this workflow run, including when no version commit was needed.
               if [[ "$GITHUB_RUN_ATTEMPT" -le 1 ]] ||
@@ -60,24 +107,54 @@ jobs:
               fi
               git checkout --detach "$TAG_SHA"
             else
-              git fetch origin refs/heads/master:refs/remotes/origin/master
-              if [[ "$(git rev-parse origin/master)" != "$GITHUB_SHA" ]]; then
-                echo "::error::master has changed. Start a new workflow run."
-                exit 1
-              fi
+              # Do not publish from a stale dispatch if master advanced while queued.
+              require_current_master
               CREATE_TAG=true
             fi
-          elif [[ "$GITHUB_REF" != "refs/tags/$TAG" ||
-                  "$(git rev-parse "$TAG^{commit}")" != "$(git rev-parse HEAD)" ]]; then
-            echo "::error::The release tag does not match this run's source."
+          elif [[ "$GITHUB_REF" != "refs/tags/$TAG" ]]; then
+            echo "::error::Release tags must use the format v2.14.8."
             exit 1
           fi
-          LATEST_TAG=$({ git tag --list; printf '%s\n' "$TAG"; } |
-            grep -E "^v${VERSION_PATTERN}$" | sort -V | tail -n 1)
+          if [[ "$CREATE_TAG" == false && "$REPLACE_TAG" == false &&
+                "$(git rev-parse "$TAG^{commit}")" != "$(git rev-parse HEAD)" ]]; then
+            echo "::error::The tag no longer points to this run's source. Start a new workflow run."
+            exit 1
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "create_tag=$CREATE_TAG" >> "$GITHUB_OUTPUT"
+          echo "replace_tag=$REPLACE_TAG" >> "$GITHUB_OUTPUT"
+          echo "expected_tag_oid=$EXPECTED_TAG_OID" >> "$GITHUB_OUTPUT"
+          echo "previous_commit=$PREVIOUS_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "republished_at=$REPUBLISHED_AT" >> "$GITHUB_OUTPUT"
+          # Retrying an older release must not move latest backwards.
           echo "is_latest=$([[ "$TAG" == "$LATEST_TAG" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Check release can be overwritten
+        if: inputs.overwrite_existing == true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from urllib.error import HTTPError
+          from urllib.request import Request, urlopen
+
+          url = f'{os.environ["GITHUB_API_URL"]}/repos/{os.environ["GITHUB_REPOSITORY"]}/releases/tags/{os.environ["TAG"]}'
+          request = Request(url, headers={
+              'Authorization': f'Bearer {os.environ["GH_TOKEN"]}',
+              'Accept': 'application/vnd.github+json',
+          })
+          try:
+              with urlopen(request, timeout=30) as response:
+                  if json.load(response).get('immutable', False):
+                      raise SystemExit('This release is immutable and cannot be overwritten. Publish a new version instead.')
+          except HTTPError as error:
+              if error.code != 404:
+                  raise
+          PY
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -92,6 +169,7 @@ jobs:
           cache: 'maven'
 
       - name: Update version files
+        if: inputs.overwrite_existing != true
         env:
           VERSION: ${{ steps.release.outputs.version }}
         run: |
@@ -148,14 +226,18 @@ jobs:
           test -s "$ARTIFACT_PATH"
           echo "artifact_path=$ARTIFACT_PATH" >> "$GITHUB_OUTPUT"
 
+      - name: Configure Git identity
+        if: steps.release.outputs.create_tag == 'true' || steps.release.outputs.replace_tag == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
       - name: Commit version and push tag
         if: steps.release.outputs.create_tag == 'true'
         env:
           VERSION: ${{ steps.release.outputs.version }}
           TAG: ${{ steps.release.outputs.tag }}
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add pom.xml simple-boot-mock-server/pom.xml simple-boot-mock-newui/package.json simple-boot-mock-newui/package-lock.json
           if ! git diff --cached --quiet; then
             git commit -m "version: 发布 $VERSION" -m "Release-Run: $GITHUB_RUN_ID"
@@ -163,6 +245,44 @@ jobs:
           git tag -a "$TAG" -m "发布 $VERSION" -m "Release-Run: $GITHUB_RUN_ID"
           # Reject concurrent branch changes; push the branch and tag together.
           git push --atomic origin HEAD:refs/heads/master "refs/tags/$TAG"
+
+      - name: Replace existing release tag
+        id: republish
+        if: inputs.overwrite_existing == true
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          REPLACE_TAG: ${{ steps.release.outputs.replace_tag }}
+          EXPECTED_TAG_OID: ${{ steps.release.outputs.expected_tag_oid }}
+          PREVIOUS_COMMIT: ${{ steps.release.outputs.previous_commit }}
+          REPUBLISHED_AT: ${{ steps.release.outputs.republished_at }}
+        run: |
+          LATEST_REMOTE_TAG=$(git ls-remote --tags --refs origin |
+            cut -f2 | sed 's@^refs/tags/@@' |
+            grep -E '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' | sort -V | tail -n1)
+          if [[ "$TAG" != "$LATEST_REMOTE_TAG" ]]; then
+            echo "::error::A newer release tag exists. Only the latest stable version can be overwritten."
+            exit 1
+          fi
+          REMOTE_TAG_OID=$(git ls-remote --exit-code origin "refs/tags/$TAG" | cut -f1)
+          if [[ "$REMOTE_TAG_OID" != "$EXPECTED_TAG_OID" ]]; then
+            echo "::error::The remote tag has changed. Start a new workflow run."
+            exit 1
+          fi
+          if [[ "$REPLACE_TAG" == true ]]; then
+            REMOTE_MASTER=$(git ls-remote --exit-code origin refs/heads/master | cut -f1)
+            if [[ "$REMOTE_MASTER" != "$GITHUB_SHA" ]]; then
+              echo "::error::master changed during the build. Start a new workflow run from master."
+              exit 1
+            fi
+            REPUBLISHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            git tag -f -a "$TAG" -m "重新发布 $TAG" \
+              -m "Release-Run: $GITHUB_RUN_ID" \
+              -m "Previous-Commit: $PREVIOUS_COMMIT" \
+              -m "Republished-At: $REPUBLISHED_AT"
+            # Replace only the tag observed at preparation time; never force-push master.
+            git push --force-with-lease="refs/tags/$TAG:$EXPECTED_TAG_OID" origin "refs/tags/$TAG"
+          fi
+          echo "republished_at=$REPUBLISHED_AT" >> "$GITHUB_OUTPUT"
 
       - name: Check published tag matches build
         env:
@@ -257,6 +377,7 @@ jobs:
           tag_name: ${{ steps.release.outputs.tag }}
           body: ${{ steps.changelog.outputs.body }}
           fail_on_unmatched_files: true
+          overwrite_files: true
           make_latest: ${{ steps.release.outputs.is_latest }}
           generate_release_notes: false
           draft: false

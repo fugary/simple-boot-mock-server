@@ -76,7 +76,17 @@
 
 工作流会同步父子 Maven POM、前端 `package.json` 和 `package-lock.json` 的版本，校验并构建。构建成功后，自动提交版本变更并创建 `v版本号` tag，然后发布 ZIP 安装包和 Docker 镜像。自动提交需要仓库规则允许 `GITHUB_TOKEN` 写入 `master` 和 tag；Docker Hub 使用已有的 `DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN` secrets。
 
-仍支持推送 `v*` tag 触发构建，构建时自动使用 tag 中的版本号。仅支持 `主版本.次版本.修订号` 格式的正式版本；旧版本不会覆盖 GitHub Release 和 Docker 的 `latest`。手动发布时不覆盖已有 tag，失败后请使用原运行的 **Re-run all jobs** 重试。若构建期间 `master` 有新提交，自动提交会被拒绝，请重新运行工作流。
+仍支持推送 `v*` tag 触发构建，构建时自动使用 tag 中的版本号。仅支持 `主版本.次版本.修订号` 格式的正式版本；旧版本不会覆盖 GitHub Release 和 Docker 的 `latest`。未勾选覆盖选项时，手动发布不覆盖已有 tag，失败后请使用原运行的 **Re-run all jobs** 重试。若构建期间 `master` 有新提交，自动提交会被拒绝，请重新运行工作流。
+
+### 同版本覆盖发布
+
+小修复提交到 `master` 后，保持前后端版本号不变，在 `tag_name` 输入已有版本并勾选 **覆盖已有版本**（默认关闭）。仅允许覆盖最新正式版本，版本文件必须与输入一致；构建成功后更新原 tag，替换同名安装包和版本镜像。
+
+Release 正文继续使用原有分类和过滤规则，包含原版本已有记录及新增修复，不显示“同版本重新发布”等额外段落。标签注释保留运行标识、原提交和重新发布时间，结合标签指向及 Actions 日志追溯构建。
+
+需要仓库规则允许 Actions 更新目标标签；不可变 Release 无法覆盖。工作流检查分支变更、标签冲突、历史回退和新版本标签，按预期旧标签对象更新，绝不强制推送分支。更新标签后失败可重跑原任务，复用原构建提交和追溯信息。Git、Release、Docker 无法跨服务原子更新；已有安装和容器需重新下载或拉取镜像，本地旧标签也需刷新。
+
+本地发布流程回归验证（Python 3.10+、PyYAML、Git Bash）：`python .github/scripts/test-release.py`。测试使用临时本地仓库和模拟 API，不执行线上发布。
 
 ## 运行
 
@@ -97,4 +107,3 @@ Docker地址： https://hub.docker.com/r/fugary/simple-boot-mock-server
 运行参考文档：
 
 [https://fugary.com/?p=626](https://fugary.com/?p=630)
-
