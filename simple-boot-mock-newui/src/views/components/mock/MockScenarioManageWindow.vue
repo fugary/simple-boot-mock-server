@@ -38,7 +38,7 @@ const show = defineModel('show', {
 })
 
 const { tableData: scenarios, loading, searchParam: scenarioQuery, searchMethod } = useTableAndSearchForm({
-  defaultParam: { keyword: '', status: '', page: useDefaultPage() },
+  defaultParam: { keyword: '', page: useDefaultPage() },
   saveParam: false,
   searchMethod: MockScenarioApi.search
 })
@@ -66,7 +66,7 @@ const loadScenarios = async (pageNumber) => {
 }
 
 const resetSearch = () => {
-  Object.assign(scenarioQuery.value, { keyword: '', status: '' })
+  Object.assign(scenarioQuery.value, { keyword: '', status: null })
   return loadScenarios(1)
 }
 
