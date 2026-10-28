@@ -160,6 +160,9 @@ const searchFormOptions = computed(() => {
       labelKey: 'mock.label.scenario',
       prop: 'scenarioCode',
       type: 'select',
+      attrs: {
+        filterable: true
+      },
       children: [{
         value: '',
         label: $i18nBundle('mock.label.defaultScenario')

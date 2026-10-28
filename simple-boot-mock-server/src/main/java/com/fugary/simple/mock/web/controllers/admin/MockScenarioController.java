@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.web.controllers.admin;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
@@ -59,10 +60,19 @@ public class MockScenarioController {
                 && !mockProjectService.hasGroupAuthority(group, MockConstants.AUTHORITY_READABLE)) {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
-        return SimpleResultUtils.createSimpleResult(mockScenarioService.list(Wrappers.<MockScenario>query()
+        String keyword = StringUtils.trimToEmpty(queryVo.getKeyword());
+        QueryWrapper<MockScenario> queryWrapper = Wrappers.<MockScenario>query()
                 .eq("group_id", queryVo.getGroupId())
                 .eq(queryVo.getStatus() != null, "status", queryVo.getStatus())
-                .orderByAsc("id")));
+                .and(StringUtils.isNotBlank(keyword), wrapper -> wrapper.like("scenario_name", keyword)
+                        .or().like("description", keyword))
+                .orderByAsc("id");
+        if (queryVo.getPage() != null) {
+            return SimpleResultUtils.createSimpleResult(mockScenarioService.page(
+                    SimpleResultUtils.<MockScenario>toPage(queryVo), queryWrapper));
+        }
+        // 场景切换、复制来源等下拉选项保留不分页查询。
+        return SimpleResultUtils.createSimpleResult(mockScenarioService.list(queryWrapper));
     }
 
     @PostMapping
