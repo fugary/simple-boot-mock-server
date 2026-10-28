@@ -129,6 +129,10 @@ public final class MockDiagnoseConstants {
 
     public static final String CODE_DEFAULT_DATA_SELECTED = "default_data_selected";
 
+    public static final String CODE_ROUND_ROBIN_KEY_RESOLVED = "round_robin_key_resolved";
+
+    public static final String CODE_ROUND_ROBIN_KEY_FALLBACK = "round_robin_key_fallback";
+
     public static final String CODE_MOCK_PROCESS = "mock_process";
 
     public static final String CODE_POST_PROCESSOR_START = "post_processor_start";
@@ -192,6 +196,20 @@ public final class MockDiagnoseConstants {
     public static final String KEY_GROUP_PATH = "groupPath";
 
     public static final String KEY_MATCH_PATTERN = "matchPattern";
+
+    public static final String KEY_ROUND_ROBIN_KEY_EXPRESSION = "roundRobinKeyExpression";
+
+    public static final String KEY_ROUND_ROBIN_KEY = "roundRobinKey";
+
+    public static final String KEY_ROUND_ROBIN_COUNTER_KEY = "roundRobinCounterKey";
+
+    public static final String KEY_ROUND_ROBIN_FALLBACK_REASON = "roundRobinFallbackReason";
+
+    public static final String ROUND_ROBIN_EMPTY_KEY = "round_robin_empty_key";
+
+    public static final String ROUND_ROBIN_INVALID_KEY = "round_robin_invalid_key";
+
+    public static final String ROUND_ROBIN_EXPRESSION_ERROR = "round_robin_expression_error";
 
     public static final String KEY_MESSAGE = "message";
 

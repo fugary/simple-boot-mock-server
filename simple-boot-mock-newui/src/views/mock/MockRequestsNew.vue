@@ -37,7 +37,7 @@ import {
   getRequestHistoryViewOptions,
   showCompareWindowNew
 } from '@/services/mock/NewMockDiffService'
-import { MOCK_LOAD_BALANCE_OPTIONS } from '@/consts/MockConstants'
+import { MOCK_LOAD_BALANCE_OPTIONS, MOCK_LOAD_BALANCE_TYPE } from '@/consts/MockConstants'
 import { calcUrl, pasteCurl2Request } from '@/services/mock/CurlProcessService'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import { set } from 'lodash-es'
@@ -264,7 +264,7 @@ const newRequestItem = () => ({
 })
 const showEditWindow = ref(false)
 const showMore = ref(false)
-const hiddenKeys = ['delay', 'contentType', 'matchPattern', 'loadBalancer', 'postProcessor', 'description']
+const hiddenKeys = ['delay', 'contentType', 'matchPattern', 'loadBalancer', 'roundRobinKeyExpression', 'postProcessor', 'description']
 const currentRequest = ref(newRequestItem())
 const selectRequest = ref()
 const newOrEdit = async id => {
@@ -298,9 +298,16 @@ const onSelectRequest = request => {
   }
 }
 const editFormOptions = computed(() => {
+  const pairedFieldStyle = { flexGrow: 1, minWidth: 'min(100%, 360px)' }
+  const roundRobinKeyOption = useMockMonacoFieldOption(currentRequest, {
+    labelKey: 'mock.label.roundRobinKeyExpression',
+    prop: 'roundRobinKeyExpression',
+    showTips: false
+  })
+  roundRobinKeyOption.tooltips.push({ tooltip: $i18nBundle('mock.msg.roundRobinKeyExpressionTips') })
   const options = [{
     labelKey: 'mock.label.requestPath',
-    style: getStyleGrow(3.5),
+    style: { flexGrow: 0, minWidth: 'min(100%, 280px)' },
     prop: 'method',
     required: true,
     type: 'select',
@@ -313,7 +320,7 @@ const editFormOptions = computed(() => {
     prop: 'requestPath',
     labelWidth: '10px',
     showLabel: false,
-    style: getStyleGrow(6.5),
+    style: { flexGrow: 1, minWidth: 'min(100%, 300px)' },
     required: true,
     trim: true,
     placeholder: `${$i18nKey('common.msg.commonInput', 'mock.label.requestPath')}, ${$i18nConcat($i18nBundle('common.label.paste'), 'CURL')}`,
@@ -342,10 +349,10 @@ const editFormOptions = computed(() => {
         return !currentRequest.value?.proxyUrl || /^https?:\/\/.+/.test(currentRequest.value?.proxyUrl)
       }
     }]
-  }, { ...useFormStatus(), style: getStyleGrow(4) },
-  { ...useFormDisableMock(), style: getStyleGrow(6) },
-  { ...useFormDelay(), style: getStyleGrow(4) },
-  { ...useContentTypeOption({ clearable: true }), style: getStyleGrow(6) },
+  }, { ...useFormStatus(), style: pairedFieldStyle },
+  { ...useFormDisableMock(), style: pairedFieldStyle },
+  { ...useFormDelay(), style: pairedFieldStyle },
+  { ...useContentTypeOption({ clearable: true }), style: pairedFieldStyle },
   useMockMonacoFieldOption(currentRequest, { tipKey: 'matchPattern' }),
   {
     labelKey: 'mock.label.loadBalanceType',
@@ -354,6 +361,7 @@ const editFormOptions = computed(() => {
     children: MOCK_LOAD_BALANCE_OPTIONS,
     tooltip: $i18nBundle('mock.msg.loadBalanceTips')
   },
+  roundRobinKeyOption,
   useMockMonacoFieldOption(currentRequest, {
     labelKey: 'mock.label.postProcessor',
     prop: 'postProcessor',
@@ -382,6 +390,7 @@ const editFormOptions = computed(() => {
   }
   const formOptions = defineFormOptions(options)
   const filteredOptions = formOptions.filter(option => {
+    if (option.prop === 'roundRobinKeyExpression' && currentRequest.value.loadBalancer !== MOCK_LOAD_BALANCE_TYPE.ROUND_ROBIN) return false
     if (!option.prop || !hiddenKeys.includes(option.prop)) return true
     return showMore.value
   })
@@ -807,11 +816,11 @@ const toShowHistoryWindow = (current) => {
     <simple-edit-window
       v-model="currentRequest"
       v-model:show-edit-window="showEditWindow"
-      width="800px"
+      width="900px"
       :form-options="editFormOptions"
       :name="$t('mock.label.mockRequests')"
       :save-current-item="saveMockRequest"
-      label-width="160px"
+      label-width="180px"
       inline-auto-mode
       :editable="projectWritable"
     >

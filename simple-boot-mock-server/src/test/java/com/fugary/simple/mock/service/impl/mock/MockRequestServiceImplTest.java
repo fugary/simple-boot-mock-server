@@ -77,6 +77,7 @@ class MockRequestServiceImplTest {
     @Test
     void copyMockRequestShouldKeepNameWhenCopyingToAnotherScenario() {
         MockRequest source = createRequest(1, 10, "online", "User Detail");
+        source.setRoundRobinKeyExpression("request.params.id");
         doReturn(source).when(mockRequestService).getById(anyInt());
 
         boolean result = mockRequestService.copyMockRequest(1, null, "offline");
@@ -87,6 +88,7 @@ class MockRequestServiceImplTest {
         assertTrue(result);
         assertEquals("offline", saved.getScenarioCode());
         assertEquals("User Detail", saved.getRequestName());
+        assertEquals("request.params.id", saved.getRoundRobinKeyExpression());
     }
 
     @Test

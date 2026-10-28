@@ -329,6 +329,18 @@ public class MockDiagnoseRecorder {
                 KEY_DATA, dataInfo(data, dataSelection));
     }
 
+    void roundRobinKeyResolved(MockRequest request, String expression, Object key, String counterKey,
+            String fallbackReason, String message) {
+        step(GROUP_DATA, STAGE_DATA_DEFAULT, fallbackReason == null ? STATUS_SUCCESS : STATUS_WARNING,
+                fallbackReason == null ? CODE_ROUND_ROBIN_KEY_RESOLVED : CODE_ROUND_ROBIN_KEY_FALLBACK,
+                KEY_REQUEST_ID, request.getId(),
+                KEY_ROUND_ROBIN_KEY_EXPRESSION, expression,
+                KEY_ROUND_ROBIN_KEY, key,
+                KEY_ROUND_ROBIN_COUNTER_KEY, counterKey,
+                KEY_ROUND_ROBIN_FALLBACK_REASON, fallbackReason,
+                KEY_MESSAGE, message);
+    }
+
     public void mockProcess() {
         if (!isEnabled()) {
             return;

@@ -58,6 +58,9 @@ const detailPriorityKeys = [
   'requestId',
   'dataId',
   'matchPattern',
+  'roundRobinKeyExpression',
+  'roundRobinKey',
+  'roundRobinFallbackReason',
   'message',
   'durationMs'
 ]
@@ -131,6 +134,8 @@ const stepTagType = status => statusTagTypes[status] || statusTagTypes.info
 const stepStatus = status => stepStatusMap[status] || stepStatusMap.info
 const formatDuration = value => value === undefined || value === null || value === '' ? '' : `${value} ms`
 const getInfoId = value => value?.id ?? value?.groupId ?? value?.requestId ?? value?.dataId ?? value?.scenarioId
+const strategyCandidates = computed(() => (props.steps.find(step => step.code === 'data_candidates_loaded')?.details?.candidates || [])
+  .filter(data => data.enabled && !data.matchPattern?.trim()))
 const getInfoName = value => value?.name || value?.groupName || value?.requestName || value?.dataName || value?.scenarioName
 const getInfoKey = value => value?.key || value?.groupPath || value?.requestPath || value?.scenarioCode
 const formatInfoObject = (key, value) => {
@@ -150,6 +155,7 @@ const formatDetailValue = (key, value) => {
   if (value === undefined || value === null || value === '') return ''
   if (key === 'durationMs' || key === 'actualDelayMs' || key === 'configuredDelayMs') return formatDuration(value)
   if (key === 'delaySource' || key === 'proxySource') return getDiagnoseDetailLabel(value)
+  if (key === 'roundRobinFallbackReason') return getDiagnoseDetailLabel(value)
   if (key === 'dataSelection') return getDiagnoseDataSelectionLabel(value)
   if (Array.isArray(value)) return `${value.length}`
   if (typeof value === 'boolean') return $i18nBundle(value ? 'common.label.yes' : 'common.label.no')
@@ -158,6 +164,7 @@ const formatDetailValue = (key, value) => {
 }
 const shouldShowDetail = (details, key, value) => {
   if (key === 'forceRequest' && value !== true) return false
+  if (key === 'requestId' && details.data?.dataSelection) return false
   if (key === 'requestId' && details.request && getInfoId(details.request) === value) return false
   if (key === 'dataId' && details.data && getInfoId(details.data) === value) return false
   if (key === 'groupPath' && details.group && !getInfoName(details.group) && getInfoKey(details.group) === value) {
@@ -183,7 +190,12 @@ const toDetailChip = (key, value, step) => {
 const toDetailItemChips = (key, value, step) => {
   const chips = [toDetailChip(key, value, step)]
   if (key === 'data' && value?.dataSelection) {
-    chips.push(toDetailChip('dataSelection', value.dataSelection, step))
+    const selection = toDetailChip('dataSelection', value.dataSelection, step)
+    const index = strategyCandidates.value.findIndex(data => getInfoId(data) === getInfoId(value))
+    if (index >= 0) {
+      selection.value = selection.copyText = `${selection.value} (${index + 1} / ${strategyCandidates.value.length})`
+    }
+    chips.push(selection)
   }
   return chips
 }
@@ -227,7 +239,23 @@ const toFlowStep = (step, index) => {
     chips: toDetailChips(step)
   }
 }
-const flowSteps = computed(() => (props.steps || []).map(toFlowStep))
+const flowSteps = computed(() => (props.steps || []).reduce((steps, step) => {
+  const previous = steps[steps.length - 1]
+  if (step.code === 'default_data_selected' && ['round_robin_key_resolved', 'round_robin_key_fallback'].includes(previous?.code)) {
+    steps.pop()
+    step = {
+      ...step,
+      status: previous.status,
+      details: {
+        ...previous.details,
+        ...step.details,
+        durationMs: (previous.details?.durationMs || 0) + (step.details?.durationMs || 0)
+      }
+    }
+  }
+  steps.push(step)
+  return steps
+}, []).map(toFlowStep))
 const useGroupedFlow = computed(() => flowSteps.value.every(step => step.stageGroup))
 const getStageGroup = step => diagnoseStageGroupMap[step.stageGroup] || otherStageGroup
 const getGroupStatus = steps => {

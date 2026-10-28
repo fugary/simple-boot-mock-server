@@ -26,6 +26,7 @@ export const getRequestHistoryViewOptions = (request, history) => {
     { labelKey: 'common.label.delay', prop: 'delay' },
     { labelKey: 'mock.label.matchPattern', prop: 'matchPattern' },
     { labelKey: 'mock.label.loadBalanceType', prop: () => request.loadBalancer ? getLoadBalancerLabel(request) : '' },
+    { labelKey: 'mock.label.roundRobinKeyExpression', prop: 'roundRobinKeyExpression' },
     { labelKey: 'mock.label.requestName', prop: 'requestName' },
     { labelKey: 'mock.label.postProcessor', prop: 'postProcessor' },
     { labelKey: 'common.label.description', prop: 'description' },

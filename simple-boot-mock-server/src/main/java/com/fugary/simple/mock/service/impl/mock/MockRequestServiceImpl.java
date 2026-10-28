@@ -10,6 +10,8 @@ import com.fugary.simple.mock.entity.mock.MockSchema;
 import com.fugary.simple.mock.mapper.mock.MockRequestMapper;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.mock.MockSchemaService;
+import com.fugary.simple.mock.utils.JsonUtils;
+import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.service.mock.MockDataService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
@@ -32,6 +34,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.ROUND_ROBIN_EMPTY_KEY;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.ROUND_ROBIN_EXPRESSION_ERROR;
+import static com.fugary.simple.mock.contants.MockDiagnoseConstants.ROUND_ROBIN_INVALID_KEY;
 
 /**
  * Created on 2020/5/3 22:37 .<br>
@@ -228,7 +233,7 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
             case MockConstants.MOCK_REQUEST_LOAD_BALANCE_RANDOM:
                 return random(mockDataList);
             case MockConstants.MOCK_REQUEST_LOAD_BALANCE_ROUND_ROBIN:
-                return roundRobin(String.valueOf(mockRequest.getId()), mockDataList);
+                return roundRobin(calcRoundRobinKey(mockRequest), mockDataList);
             default:
                 return firstOrDefault(mockDataList);
         }
@@ -247,6 +252,43 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
 
     private MockData random(List<MockData> list) {
         return list.get(ThreadLocalRandom.current().nextInt(list.size()));
+    }
+
+    private String calcRoundRobinKey(MockRequest mockRequest) {
+        String requestKey = String.valueOf(mockRequest.getId());
+        String expression = mockRequest.getRoundRobinKeyExpression();
+        if (StringUtils.isBlank(expression)) {
+            return requestKey;
+        }
+        Object result = null;
+        String counterKey = requestKey;
+        String fallbackReason = null;
+        String message = null;
+        try {
+            result = scriptEngineProvider.eval("(" + expression + "\n)");
+            boolean validString = result instanceof String && StringUtils.isNotBlank((String) result);
+            boolean validNumber = result instanceof Number && Double.isFinite(((Number) result).doubleValue());
+            if (validString || validNumber) {
+                counterKey = requestKey + ":" + JsonUtils.toJson(result);
+            } else if (result instanceof SimpleResult) {
+                SimpleResult<?> error = (SimpleResult<?>) result;
+                fallbackReason = ROUND_ROBIN_EXPRESSION_ERROR;
+                message = Objects.toString(error.getResultData(), error.getMessage());
+            } else {
+                fallbackReason = result == null || result instanceof String
+                        ? ROUND_ROBIN_EMPTY_KEY : ROUND_ROBIN_INVALID_KEY;
+            }
+        } catch (RuntimeException e) {
+            fallbackReason = ROUND_ROBIN_EXPRESSION_ERROR;
+            message = e.getMessage();
+        }
+        if (fallbackReason != null) {
+            log.warn("轮询分组表达式回退请求计数，requestId={}, reason={}, message={}",
+                    mockRequest.getId(), fallbackReason, message);
+        }
+        MockDiagnoseRecorder.of(MockDiagnoseContext.get()).roundRobinKeyResolved(mockRequest,
+                expression, fallbackReason == null ? result : null, counterKey, fallbackReason, message);
+        return counterKey;
     }
 
     private MockData roundRobin(String mockKey, List<MockData> list) {
