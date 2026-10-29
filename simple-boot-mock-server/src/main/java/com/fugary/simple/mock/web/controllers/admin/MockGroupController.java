@@ -7,18 +7,17 @@ import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.*;
 import com.fugary.simple.mock.service.mock.MockGroupService;
+import com.fugary.simple.mock.service.mock.MockGroupExportService;
 import com.fugary.simple.mock.service.mock.MockLogService;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.service.mock.MockRequestService;
 import com.fugary.simple.mock.service.mock.MockScenarioService;
 import com.fugary.simple.mock.utils.AsyncUtils;
-import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.export.ExportGroupVo;
-import com.fugary.simple.mock.web.vo.export.ExportMockVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupExportParamVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupImportParamVo;
 import com.fugary.simple.mock.web.vo.query.MockGroupQueryVo;
@@ -29,7 +28,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -38,10 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -63,6 +58,9 @@ public class MockGroupController {
 
     @Autowired
     private MockGroupService mockGroupService;
+
+    @Autowired
+    private MockGroupExportService mockGroupExportService;
 
     @Autowired
     private MockProjectService mockProjectService;
@@ -438,20 +436,12 @@ public class MockGroupController {
     public void export(@ModelAttribute MockGroupExportParamVo queryVo, HttpServletResponse response)
             throws IOException {
         List<MockGroup> groups = loadExportGroups(queryVo);
-        List<ExportGroupVo> groupVoList = mockGroupService.loadExportGroups(groups);
-        ExportMockVo mockVo = new ExportMockVo();
-        mockVo.setGroups(groupVoList);
-        String json = JsonUtils.toJson(mockVo);
         String fileName = "mock-groups-"
                 + DateFormatUtils.format(System.currentTimeMillis(), MockConstants.OUTPUT_FILE_NAME) + ".json";
         response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
         response.addHeader("Content-Disposition", "attachment; filename="
                 + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
-        try (InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-                OutputStream outputStream = response.getOutputStream()) {
-            IOUtils.copy(inputStream, outputStream);
-            response.getOutputStream().flush();
-        }
+        mockGroupExportService.writeGroups(groups, response.getOutputStream());
     }
 
     @PostMapping("/histories/{id}")
