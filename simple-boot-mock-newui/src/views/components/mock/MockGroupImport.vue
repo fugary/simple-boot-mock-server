@@ -4,8 +4,8 @@ import { useLoginConfigStore } from '@/stores/LoginConfigStore'
 import { $coreAlert, $coreConfirm, $coreError, formatFileSize, getStyleGrow, isAdminUser } from '@/utils'
 import { defineFormOptions } from '@/components/utils'
 import { ElButton } from 'element-plus'
-import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, detectImportFileType, uploadFiles } from '@/api/mock/MockGroupApi'
-import { DEFAULT_MAX_IMPORT_FILE_SIZE, MOCK_DEFAULT_PROJECT, SUPPORTED_IMPORT_FILE_ACCEPT, SUPPORTED_IMPORT_FILE_EXTS } from '@/consts/MockConstants'
+import { IMPORT_DUPLICATE_STRATEGY, IMPORT_TYPES, detectImportFileType, loadImportConfig, uploadFiles } from '@/api/mock/MockGroupApi'
+import { DEFAULT_MAX_IMPORT_FILE_SIZE, DEFAULT_MAX_IMPORT_REQUEST_SIZE, MOCK_DEFAULT_PROJECT, SUPPORTED_IMPORT_FILE_ACCEPT, SUPPORTED_IMPORT_FILE_EXTS } from '@/consts/MockConstants'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import MockProjectApi from '@/api/mock/MockProjectApi'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
@@ -43,6 +43,19 @@ const importModel = ref({
   duplicateStrategy: IMPORT_DUPLICATE_STRATEGY[0].value,
   singleGroup: true // 调整为默认为单个组
 })
+const maxFileSize = ref(DEFAULT_MAX_IMPORT_FILE_SIZE)
+const maxRequestSize = ref(DEFAULT_MAX_IMPORT_REQUEST_SIZE)
+let configPromise
+const refreshImportConfig = () => {
+  configPromise = loadImportConfig().then(data => {
+    if (data.success) {
+      maxFileSize.value = data.resultData.maxFileSize
+      maxRequestSize.value = data.resultData.maxRequestSize
+    }
+  }).catch(() => {}) // 旧服务端保持默认值，最终由服务端校验
+  return configPromise
+}
+const formatLimit = size => size < 0 ? $i18nBundle('mock.label.importUnlimited') : formatFileSize(size)
 const detectedType = ref(null)
 const userChangedTypeManually = ref(false)
 
@@ -56,6 +69,9 @@ watch(() => props.defaultProjectId, (val) => {
   importModel.value.projectId = val
 })
 watch(showWindow, (val) => {
+  if (val) {
+    refreshImportConfig()
+  }
   if (val && !importFiles.value?.length) {
     detectedType.value = null
     userChangedTypeManually.value = false
@@ -63,6 +79,9 @@ watch(showWindow, (val) => {
 })
 
 const importFiles = ref([])
+if (showWindow.value) {
+  refreshImportConfig()
+}
 const calcUserOptions = computed(() => props.userOptions)
 const { showEditWindow: showEditProjectWindow, currentProject, newOrEditProject, editFormOptions: editProjectFormOptions } = useProjectEditHook(importModel, calcUserOptions)
 const saveProjectItem = (item) => {
@@ -81,10 +100,11 @@ const isSupportedFile = (file) => {
 }
 const isOversizedFile = (file) => {
   const raw = file?.raw || file
-  return raw?.size && raw.size > DEFAULT_MAX_IMPORT_FILE_SIZE
+  return maxFileSize.value >= 0 && raw?.size > maxFileSize.value
 }
 
 const onFileListUpdate = async (files) => {
+  await (configPromise || refreshImportConfig())
   const validFiles = []
   const oversizedFiles = []
   const invalidExtFiles = []
@@ -105,7 +125,7 @@ const onFileListUpdate = async (files) => {
     const detail = oversizedFiles
       .map(f => `${getFileName(f)} (${formatFileSize(f.size || f.raw?.size)})`)
       .join(', ')
-    $coreError($i18nBundle('mock.msg.importFileSizeExceed', [detail, formatFileSize(DEFAULT_MAX_IMPORT_FILE_SIZE)]))
+    $coreError($i18nBundle('mock.msg.importFileSizeExceed', [detail, formatLimit(maxFileSize.value)]))
   }
   importFiles.value = validFiles
   if (validFiles.length) {
@@ -122,7 +142,7 @@ const onFileListUpdate = async (files) => {
 
 const formOptions = computed(() => {
   const fileLimits = 3
-  const maxFileSizeStr = formatFileSize(DEFAULT_MAX_IMPORT_FILE_SIZE)
+  const maxFileSizeStr = formatLimit(maxFileSize.value)
   const supportedExtsStr = SUPPORTED_IMPORT_FILE_EXTS.join('/')
   return defineFormOptions([{
     labelKey: 'common.label.user',
@@ -219,7 +239,7 @@ const formOptions = computed(() => {
       trigger () {
         return <>
           <ElButton type="primary">{$i18nBundle('mock.label.selectFile')}</ElButton>
-          <span className="margin-left2">{$i18nBundle('mock.msg.importFileLimit', [supportedExtsStr, maxFileSizeStr, fileLimits])}</span>
+          <span className="margin-left2">{$i18nBundle('mock.msg.importFileLimit', [supportedExtsStr, maxFileSizeStr, fileLimits, formatLimit(maxRequestSize.value)])}</span>
         </>
       }
     }
@@ -243,7 +263,8 @@ const executeUpload = () => {
   })
 }
 
-const doImportGroups = () => {
+const validateAndImportGroups = async () => {
+  await (configPromise || refreshImportConfig())
   if (!importFiles.value?.length) {
     $coreError($i18nBundle('mock.msg.importFileNoFile'))
     return false
@@ -260,8 +281,13 @@ const doImportGroups = () => {
   if (oversizedFile) {
     $coreError($i18nBundle('mock.msg.importFileSizeExceed', [
       `${getFileName(oversizedFile)} (${formatFileSize(oversizedFile.size || oversizedFile.raw?.size)})`,
-      formatFileSize(DEFAULT_MAX_IMPORT_FILE_SIZE)
+      formatLimit(maxFileSize.value)
     ]))
+    return false
+  }
+  const totalSize = importFiles.value.reduce((total, file) => total + (file.raw?.size ?? file.size ?? 0), 0)
+  if (maxRequestSize.value >= 0 && totalSize >= maxRequestSize.value) {
+    $coreError($i18nBundle('mock.msg.importRequestSizeExceed', [formatLimit(maxRequestSize.value)]))
     return false
   }
   if (detectedType.value && detectedType.value !== importModel.value.type) {
@@ -284,6 +310,12 @@ const doImportGroups = () => {
     return false
   }
   return executeUpload()
+}
+
+// common-window 使用同步返回值决定是否关闭，成功上传后再主动关闭。
+const doImportGroups = () => {
+  validateAndImportGroups()
+  return false
 }
 
 </script>

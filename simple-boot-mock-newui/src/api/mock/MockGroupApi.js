@@ -131,6 +131,8 @@ export const detectImportFileType = async (fileOrText) => {
   return null
 }
 
+export const loadImportConfig = () => $http({ url: '/admin/importConfig', method: 'get', loading: false }).then(response => response.data)
+
 export const uploadFiles = (files, params = {}, config = {}) => {
   const formData = new FormData()
   files = isArray(files) ? files : [files]
@@ -140,7 +142,7 @@ export const uploadFiles = (files, params = {}, config = {}) => {
     params[key] && formData.append(key, params[key])
   }
   return $httpPost(`${MOCK_GROUP_URL}/import`,
-    formData, Object.assign({ headers: { 'Content-Type': 'multipart/form-data' }, loading: true }, config))
+    formData, Object.assign({ headers: { 'Content-Type': 'multipart/form-data' }, loading: true, timeout: 0 }, config))
 }
 
 export const copyMockGroup = (data, config) => {

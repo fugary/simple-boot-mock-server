@@ -1,7 +1,7 @@
 server:
   port: 9086
   tomcat:
-    max-swallow-size: 20MB
+    max-swallow-size: ${MOCK_MAX_SWALLOW_SIZE:512MB}
 spring:
   application:
     name: simple-boot-mock-server
@@ -46,6 +46,9 @@ logging: # 日志相关配置
 # 自定义database信息
 simple:
   mock:
+    # 字节数；请求总量包含 multipart 边界和表单字段，-1 表示不限
+    max-upload-size: ${MOCK_MAX_UPLOAD_SIZE:536870912}
+    max-upload-file-size: ${MOCK_MAX_UPLOAD_FILE_SIZE:268435456}
     jwt-password: ${MOCK_JWT_PASSWORD:}
     jwt-expire: ${MOCK_JWT_EXPIRE:7}
     mock-log-enabled: ${MOCK_LOG_ENABLED:true}

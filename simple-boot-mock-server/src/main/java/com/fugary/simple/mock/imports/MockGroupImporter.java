@@ -4,6 +4,10 @@ import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.export.ExportMockVo;
 
 import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import org.springframework.util.StreamUtils;
 
 /**
  * 导入工具接口，方便后续处理其他格式导入
@@ -29,6 +33,11 @@ public interface MockGroupImporter {
      * @return
      */
     ExportMockVo doImport(String data);
+
+    /** 从上传流导入；调用方负责关闭流，文本导入器保持兼容。 */
+    default ExportMockVo doImportStream(InputStream input) throws IOException {
+        return doImport(StreamUtils.copyToString(input, StandardCharsets.UTF_8));
+    }
 
     /**
      * 获取导入器类型

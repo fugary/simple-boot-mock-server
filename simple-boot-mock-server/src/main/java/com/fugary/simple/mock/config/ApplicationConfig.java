@@ -47,7 +47,9 @@ public class ApplicationConfig implements WebMvcConfigurer {
     @Bean
     public CommonsMultipartResolver multipartResolver() {
         CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver();
-        multipartResolver.setMaxUploadSize(simpleMockConfigProperties.getMaxUploadSize()); // 文件大小限制
+        multipartResolver.setMaxUploadSize(simpleMockConfigProperties.getMaxUploadSize()); // 整个 multipart 请求上限
+        multipartResolver.setMaxUploadSizePerFile(simpleMockConfigProperties.getMaxUploadFileSize());
+        multipartResolver.setMaxInMemorySize(64 * 1024); // 大文件落临时磁盘，避免驻留上传堆内存
         multipartResolver.setDefaultEncoding(StandardCharsets.UTF_8.name());
         return multipartResolver;
     }

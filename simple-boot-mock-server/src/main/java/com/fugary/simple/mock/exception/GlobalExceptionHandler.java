@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
         if (maxSize <= 0 && simpleMockConfigProperties != null) {
             maxSize = simpleMockConfigProperties.getMaxUploadSize();
         }
-        String maxSizeStr = maxSize > 0 ? SimpleMockUtils.formatFileSize(maxSize) : "10MB";
+        String maxSizeStr = maxSize > 0 ? SimpleMockUtils.formatFileSize(maxSize) : SimpleMockUtils.formatFileSize(SimpleMockConfigProperties.DEFAULT_MAX_UPLOAD_SIZE);
         String message = SimpleResultUtils.getErrorMsg("simple.error.code." + MockErrorConstants.CODE_2005, new Object[]{maxSizeStr});
         return SimpleResultUtils.createError(MockErrorConstants.CODE_2005, message);
     }

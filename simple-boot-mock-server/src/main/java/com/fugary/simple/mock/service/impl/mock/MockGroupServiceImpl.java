@@ -48,6 +48,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -546,10 +547,18 @@ public class MockGroupServiceImpl extends ServiceImpl<MockGroupMapper, MockGroup
                             new Object[]{originalFilename, supportedExts});
                     return SimpleResultUtils.createError(MockErrorConstants.CODE_2003, msg);
                 }
-                String fileData = StreamUtils.copyToString(file.getInputStream(), StandardCharsets.UTF_8);
                 MockGroupImporter importer = MockGroupImporter.findImporter(mockGroupImporters, importVo.getType());
-                ExportMockVo currentVo;
-                if (importer == null || (currentVo = importer.doImport(fileData)) == null) {
+                ExportMockVo currentVo = null;
+                if (importer != null) {
+                    try (InputStream input = file.getInputStream()) {
+                        currentVo = importer.doImportStream(input);
+                    }
+                }
+                if (currentVo == null) {
+                    String fileData;
+                    try (InputStream input = file.getInputStream()) {
+                        fileData = StreamUtils.copyToString(input, StandardCharsets.UTF_8);
+                    }
                     MockGroupImporter detected = MockGroupImporter.detectImporter(mockGroupImporters, fileData);
                     String currentTypeName = MockGroupImporter.getTypeName(mockGroupImporters, importVo.getType());
                     if (detected != null && !detected.isSupport(importVo.getType())) {

@@ -220,7 +220,9 @@ export const LANGUAGE_LIST1 = LANGUAGE_LIST.flatMap(item =>
   item.includes('-') ? [item, item.replace('-', '_')] : [item]
 )
 
-export const DEFAULT_MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+export const DEFAULT_MAX_IMPORT_FILE_SIZE = 256 * 1024 * 1024 // 256MB
+
+export const DEFAULT_MAX_IMPORT_REQUEST_SIZE = 512 * 1024 * 1024 // 512MB
 
 export const SUPPORTED_IMPORT_FILE_EXTS = ['.json', '.yaml', '.yml', '.har']
 

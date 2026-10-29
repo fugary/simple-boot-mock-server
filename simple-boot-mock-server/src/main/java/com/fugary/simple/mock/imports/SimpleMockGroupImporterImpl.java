@@ -4,6 +4,9 @@ import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.web.vo.export.ExportMockVo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import java.io.InputStream;
+import java.io.IOException;
 
 /**
  * Create date 2024/7/12<br>
@@ -30,6 +33,16 @@ public class SimpleMockGroupImporterImpl implements MockGroupImporter {
             return trimmed.contains("\"groupName\"") || trimmed.contains("\"groupPath\"") || trimmed.contains("\"requests\"");
         }
         return false;
+    }
+
+    @Override
+    public ExportMockVo doImportStream(InputStream input) throws IOException {
+        try {
+            ExportMockVo result = JsonUtils.getMapper().readValue(input, ExportMockVo.class);
+            return result != null && result.getGroups() != null ? result : null;
+        } catch (JsonProcessingException e) {
+            return null; // 交由服务层保留原有格式诊断
+        }
     }
 
     @Override

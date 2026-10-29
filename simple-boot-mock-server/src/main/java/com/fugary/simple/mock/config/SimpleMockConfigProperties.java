@@ -29,7 +29,12 @@ public class SimpleMockConfigProperties {
     /**
      * 上传大小
      */
-    private long maxUploadSize = 10 * 1024 * 1024;
+    public static final long DEFAULT_MAX_UPLOAD_SIZE = 512L * 1024 * 1024;
+
+    private long maxUploadSize = DEFAULT_MAX_UPLOAD_SIZE;
+
+    /** 单个上传文件上限，单位字节；-1 表示不限。 */
+    private long maxUploadFileSize = 256L * 1024 * 1024;
 
     private boolean mockLogEnabled = true;
 
