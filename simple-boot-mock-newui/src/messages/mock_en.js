@@ -351,9 +351,8 @@ mock.msg.requestTest = 'Test Request'
 mock.msg.matchPatternTest = 'Test Match Pattern'
 mock.msg.expressionTest = 'Test Expression'
 mock.msg.expressionRequired = 'Please enter an expression'
-mock.msg.roundRobinSharedProgress = 'No grouping expression; use the shared endpoint counter'
 mock.label.expressionResult = 'Expression Result'
-mock.label.applyExpression = 'Apply to Current Form'
+mock.label.applyExpression = 'Apply to Form'
 mock.msg.requestNameTooltip = 'Simple interface name, not required.'
 mock.msg.requestIntro = `request.body — The body content object (only JSON)<br>
                         request.bodyStr — The body content string<br>

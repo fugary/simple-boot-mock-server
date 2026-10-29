@@ -55,7 +55,7 @@ const toTestMatchPattern = (mockGroup, mockRequest, viewData, isEditable = true,
 const doDataPreview = () => {
   if (!paramTarget.value.matchPattern?.trim()) {
     responseTarget.value = undefined
-    ElMessage.info(expressionOptions.value.emptyMessage || $i18nBundle('mock.msg.expressionRequired'))
+    ElMessage.warning($i18nBundle('mock.msg.expressionRequired'))
     return
   }
   const params = extractQueryParams(paramTarget.value?.requestParams, paramTarget.value.groupConfig)

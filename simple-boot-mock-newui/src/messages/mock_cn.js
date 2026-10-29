@@ -351,9 +351,8 @@ mock.msg.requestTest = '请求测试'
 mock.msg.matchPatternTest = '匹配规则测试'
 mock.msg.expressionTest = '表达式测试'
 mock.msg.expressionRequired = '请输入表达式'
-mock.msg.roundRobinSharedProgress = '未设置分组表达式，使用接口共用轮询进度'
 mock.label.expressionResult = '计算结果'
-mock.label.applyExpression = '应用到当前表单'
+mock.label.applyExpression = '应用到表单'
 mock.msg.requestNameTooltip = '简单接口名称，可不填写'
 mock.msg.requestIntro = `request.body——body内容对象<br>
                         request.bodyStr——body内容字符串<br>

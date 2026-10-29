@@ -310,7 +310,6 @@ const editFormOptions = computed(() => {
         booleanResult: false,
         labelKey: 'mock.label.roundRobinKeyExpression',
         saveLabel: $i18nBundle('mock.label.applyExpression'),
-        emptyMessage: $i18nBundle('mock.msg.roundRobinSharedProgress'),
         onSave: value => { request.roundRobinKeyExpression = value }
       })
     }
