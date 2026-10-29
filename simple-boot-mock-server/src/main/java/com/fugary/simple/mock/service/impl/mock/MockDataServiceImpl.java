@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created on 2020/5/3 22:37 .<br>
@@ -33,15 +34,18 @@ public class MockDataServiceImpl extends ServiceImpl<MockDataMapper, MockData> i
     @Override
     public boolean markMockDataDefault(MockData mockData) {
         MockData existMockData = getById(mockData.getId());
-        boolean result = false;
-        if (existMockData != null && existMockData.getRequestId().equals(mockData.getRequestId())) {
-            existMockData.setDefaultFlag(SimpleMockUtils.getDefaultFlag(mockData.getDefaultFlag()));
-            if (mockData.getVersion() != null) {
-                existMockData.setVersion(mockData.getVersion());
-            }
-            return this.saveOrUpdate(existMockData);
+        if (existMockData == null || !Objects.equals(existMockData.getRequestId(), mockData.getRequestId())
+                || (mockData.getVersion() != null && !Objects.equals(existMockData.getVersion(), mockData.getVersion()))) {
+            return false;
         }
-        return result;
+        int defaultFlag = SimpleMockUtils.getDefaultFlag(mockData.getDefaultFlag());
+        if (Objects.equals(existMockData.getDefaultFlag(), defaultFlag)) {
+            return true;
+        }
+        // 同一事务内 getById 会复用缓存对象，不能直接修改，否则保存时会误判为没有变化。
+        MockData updated = SimpleMockUtils.copy(existMockData, MockData.class);
+        updated.setDefaultFlag(defaultFlag);
+        return this.saveOrUpdate(updated);
     }
 
     /**

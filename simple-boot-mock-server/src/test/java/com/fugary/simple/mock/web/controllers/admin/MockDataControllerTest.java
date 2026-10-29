@@ -10,9 +10,11 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.fugary.simple.mock.entity.mock.MockData;
+import com.fugary.simple.mock.config.GlobalTransactionConfig;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.mapper.mock.MockDataMapper;
 import com.fugary.simple.mock.service.impl.mock.MockDataServiceImpl;
+import com.fugary.simple.mock.service.impl.mock.MockRequestServiceImpl;
 import com.fugary.simple.mock.service.mock.MockProjectService;
 import com.fugary.simple.mock.web.vo.query.MockDataQueryVo;
 import com.fugary.simple.mock.web.vo.query.MockHistoryVo;
@@ -21,13 +23,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.ibatis.datasource.unpooled.UnpooledDataSource;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.sql.Statement;
 import java.util.UUID;
@@ -44,6 +51,7 @@ class MockDataControllerTest {
     private SqlSession session;
     private MockDataServiceImpl service;
     private MockDataController controller;
+    private TransactionTemplate transactionTemplate;
     private Integer id;
     private final String largeBody = "响应数据".repeat(250000);
 
@@ -53,8 +61,7 @@ class MockDataControllerTest {
                 "jdbc:h2:mem:data-" + UUID.randomUUID() + ";MODE=MySQL", "sa", "");
         MybatisConfiguration configuration = new MybatisConfiguration();
         configuration.setLogImpl(org.apache.ibatis.logging.nologging.NoLoggingImpl.class);
-        configuration.setLocalCacheScope(org.apache.ibatis.session.LocalCacheScope.STATEMENT);
-        configuration.setEnvironment(new Environment("test", new JdbcTransactionFactory(), dataSource));
+        configuration.setEnvironment(new Environment("test", new SpringManagedTransactionFactory(), dataSource));
         GlobalConfigUtils.setGlobalConfig(configuration, new GlobalConfig().setDbConfig(new GlobalConfig.DbConfig()
                 .setTablePrefix("t_").setUpdateStrategy(FieldStrategy.ALWAYS)));
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
@@ -62,7 +69,8 @@ class MockDataControllerTest {
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.H2));
         configuration.addInterceptor(interceptor);
         configuration.addMapper(MockDataMapper.class);
-        session = new MybatisSqlSessionFactoryBuilder().build(configuration).openSession(true);
+        SqlSessionFactory sessionFactory = new MybatisSqlSessionFactoryBuilder().build(configuration);
+        session = sessionFactory.openSession(true);
         try (Statement statement = session.getConnection().createStatement()) {
             statement.execute("CREATE TABLE t_mock_data (id INT AUTO_INCREMENT PRIMARY KEY, group_id INT, "
                     + "request_id INT, data_name VARCHAR, status_code INT, default_flag INT, content_type VARCHAR, "
@@ -71,13 +79,23 @@ class MockDataControllerTest {
                     + "data_version INT, modify_from INT, creator VARCHAR, create_date TIMESTAMP, modifier VARCHAR, "
                     + "modify_date TIMESTAMP, status INT)");
         }
-        service = new MockDataServiceImpl();
-        ReflectionTestUtils.setField(service, "baseMapper", session.getMapper(MockDataMapper.class));
+        MockDataServiceImpl target = new MockDataServiceImpl();
+        ReflectionTestUtils.setField(target, "baseMapper", new SqlSessionTemplate(sessionFactory).getMapper(MockDataMapper.class));
+        // 使用应用的事务配置和默认 SESSION 缓存，覆盖事务内重复查询同一条数据的情况。
+        GlobalTransactionConfig transactionConfig = new GlobalTransactionConfig();
+        DataSourceTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
+        transactionTemplate = new TransactionTemplate(transactionManager);
+        ReflectionTestUtils.setField(transactionConfig, "transactionManager", transactionManager);
+        ProxyFactory proxyFactory = new ProxyFactory(target);
+        proxyFactory.setProxyTargetClass(true);
+        proxyFactory.addAdvisor(transactionConfig.txAdviceAdvisor());
+        service = (MockDataServiceImpl) proxyFactory.getProxy();
         controller = new MockDataController();
         ReflectionTestUtils.setField(controller, "mockDataService", service);
         ReflectionTestUtils.setField(controller, "objectMapper", new ObjectMapper());
         MockProjectService projectService = mock(MockProjectService.class);
         when(projectService.hasDataAuthority(any(MockData.class), anyString())).thenReturn(true);
+        when(projectService.hasDataAuthority(anyInt(), anyString())).thenReturn(true);
         ReflectionTestUtils.setField(controller, "mockProjectService", projectService);
         MockData data = new MockData();
         data.setRequestId(1);
@@ -265,12 +283,101 @@ class MockDataControllerTest {
         MockData submitted = objectMapper.readValue(objectMapper.writeValueAsString(summary), MockData.class);
         assertNull(submitted.getResponseBodyPreview(), "Preview is a read-only response field");
         submitted.setDefaultFlag(1);
-        assertTrue(service.markMockDataDefault(submitted));
+        assertTrue(controller.markDefault(submitted).isSuccess());
         assertEquals(largeBody, service.getById(id).getResponseBody());
         assertEquals(1, service.getById(id).getDefaultFlag());
         MockData detail = controller.get(id, true).getResultData();
         detail.setMatchPattern("request.params.id === '123'");
         assertTrue(service.newSaveOrUpdate(detail).isSuccess());
         assertEquals(largeBody, service.getById(id).getResponseBody());
+    }
+
+    @Test
+    void switchingAndCancellingDefaultPreserveBodiesAndHistory() {
+        MockData second = new MockData();
+        second.setRequestId(1);
+        second.setResponseBody("second-" + largeBody);
+        assertTrue(service.newSaveOrUpdate(second).isSuccess());
+
+        MockData unrelated = new MockData();
+        unrelated.setRequestId(2);
+        unrelated.setDefaultFlag(1);
+        assertTrue(service.newSaveOrUpdate(unrelated).isSuccess());
+
+        MockData change = new MockData();
+        change.setId(id);
+        change.setRequestId(1);
+        change.setVersion(service.getById(id).getVersion());
+        change.setDefaultFlag(1);
+        change.setResponseBody("must not overwrite the stored body");
+        assertTrue(controller.markDefault(change).isSuccess());
+        assertEquals(1, service.getById(id).getDefaultFlag());
+
+        change.setId(second.getId());
+        change.setVersion(second.getVersion());
+        assertTrue(controller.markDefault(change).isSuccess());
+        assertEquals(0, service.getById(id).getDefaultFlag());
+        assertEquals(1, service.getById(second.getId()).getDefaultFlag());
+
+        change.setVersion(service.getById(second.getId()).getVersion());
+        long count = service.count();
+        assertTrue(controller.markDefault(change).isSuccess(), "Setting the current default again is a successful no-op");
+        assertEquals(count, service.count());
+        assertEquals(change.getVersion(), service.getById(second.getId()).getVersion());
+        change.setDefaultFlag(0);
+        assertTrue(controller.markDefault(change).isSuccess());
+        assertEquals(0, service.getById(second.getId()).getDefaultFlag());
+        assertEquals(1, service.getById(unrelated.getId()).getDefaultFlag());
+        assertEquals(largeBody, service.getById(id).getResponseBody());
+        assertEquals("second-" + largeBody, service.getById(second.getId()).getResponseBody());
+
+        List<MockData> histories = service.list().stream().filter(data -> data.getModifyFrom() != null)
+                .collect(java.util.stream.Collectors.toList());
+        assertEquals(4, histories.size());
+        for (MockData history : histories) {
+            assertEquals(id.equals(history.getModifyFrom()) ? largeBody : "second-" + largeBody, history.getResponseBody());
+        }
+        assertTrue(histories.stream().anyMatch(data -> id.equals(data.getModifyFrom()) && data.getDefaultFlag() == null));
+        assertTrue(histories.stream().anyMatch(data -> id.equals(data.getModifyFrom()) && Integer.valueOf(1).equals(data.getDefaultFlag())));
+    }
+
+    @Test
+    void markingDefaultRejectsStaleVersionOrWrongRequestWithoutCreatingHistory() throws Exception {
+        MockData change = new MockData();
+        change.setId(id);
+        change.setRequestId(1);
+        change.setVersion(service.getById(id).getVersion());
+        change.setDefaultFlag(1);
+        assertTrue(controller.patch(id, Map.of("dataName", "updated")).isSuccess());
+        long count = service.count();
+        assertFalse(controller.markDefault(change).isSuccess());
+        change.setVersion(service.getById(id).getVersion());
+        change.setRequestId(999);
+        assertFalse(controller.markDefault(change).isSuccess());
+        assertEquals(count, service.count());
+        assertNull(service.getById(id).getDefaultFlag());
+        assertEquals(largeBody, service.getById(id).getResponseBody());
+        assertEquals("updated", service.getById(id).getDataName());
+
+        change.setRequestId(1);
+        change.setVersion(null);
+        assertTrue(controller.markDefault(change).isSuccess(), "Legacy requests without version remain supported");
+        assertEquals(1, service.getById(id).getDefaultFlag());
+    }
+
+    @Test
+    void savingRequestParametersWithinTransactionPreservesBodyAndHistory() {
+        MockRequestServiceImpl requestService = new MockRequestServiceImpl();
+        ReflectionTestUtils.setField(requestService, "mockDataService", service);
+        MockData change = new MockData();
+        change.setId(id);
+        change.setMockParams("{}");
+        transactionTemplate.executeWithoutResult(transaction -> assertTrue(requestService.saveMockParams(change)));
+        assertEquals("{}", service.getById(id).getMockParams());
+        assertEquals(largeBody, service.getById(id).getResponseBody());
+        MockData history = service.list().stream().filter(data -> id.equals(data.getModifyFrom()))
+                .findFirst().orElseThrow();
+        assertNull(history.getMockParams());
+        assertEquals(largeBody, history.getResponseBody());
     }
 }
