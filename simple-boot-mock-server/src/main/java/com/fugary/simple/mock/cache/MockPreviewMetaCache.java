@@ -2,12 +2,12 @@ package com.fugary.simple.mock.cache;
 
 import com.fugary.simple.mock.entity.mock.MockLog;
 import com.fugary.simple.mock.web.vo.result.MockPreviewMetaVo;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
+import java.util.Objects;
 
 /**
  * Caches preview diagnose meta before the async log event is persisted.
@@ -17,17 +17,14 @@ import java.time.Duration;
 @Component
 public class MockPreviewMetaCache {
 
-    private static final int MAX_CACHE_SIZE = 10000;
+    private final Cache cache;
 
-    private static final Duration EXPIRE_AFTER_WRITE = Duration.ofMinutes(10);
-
-    private final Cache<String, MockPreviewMetaVo> cache = Caffeine.newBuilder()
-            .maximumSize(MAX_CACHE_SIZE)
-            .expireAfterWrite(EXPIRE_AFTER_WRITE)
-            .build();
+    public MockPreviewMetaCache(CacheManager cacheManager) {
+        this.cache = Objects.requireNonNull(cacheManager.getCache(MockCacheNames.PREVIEW_META));
+    }
 
     public MockPreviewMetaVo get(String diagnoseId) {
-        return StringUtils.isBlank(diagnoseId) ? null : cache.getIfPresent(diagnoseId);
+        return StringUtils.isBlank(diagnoseId) ? null : cache.get(diagnoseId, MockPreviewMetaVo.class);
     }
 
     public MockPreviewMetaVo put(MockLog mockLog) {

@@ -2,6 +2,7 @@ package com.fugary.simple.mock.service.impl.mock;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fugary.simple.mock.cache.MockCacheNames;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.MockData;
@@ -22,13 +23,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -47,8 +48,8 @@ import static com.fugary.simple.mock.contants.MockDiagnoseConstants.ROUND_ROBIN_
 @Service
 public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockRequest> implements MockRequestService {
 
-    // 每组 mock request 独立轮询
-    private static final Map<String, AtomicInteger> RR_COUNTER = new ConcurrentHashMap<>();
+    @Autowired
+    private CacheManager cacheManager;
 
     @Autowired
     private MockDataService mockDataService;
@@ -292,7 +293,8 @@ public class MockRequestServiceImpl extends ServiceImpl<MockRequestMapper, MockR
     }
 
     private MockData roundRobin(String mockKey, List<MockData> list) {
-        AtomicInteger index = RR_COUNTER.computeIfAbsent(mockKey, k -> new AtomicInteger(0));
+        AtomicInteger index = Objects.requireNonNull(cacheManager.getCache(MockCacheNames.ROUND_ROBIN))
+                .get(mockKey, AtomicInteger::new);
         int i = Math.abs(index.getAndIncrement());
         return list.get(i % list.size());
     }

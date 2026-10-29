@@ -1,8 +1,12 @@
 package com.fugary.simple.mock.config;
 
+import com.fugary.simple.mock.cache.MockCacheNames;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Created on 2020/5/5 20:43 .<br>
@@ -37,6 +41,19 @@ public class SimpleMockConfigProperties {
     private boolean fetchEnabled = true;
 
     private PoolProperties pool = new PoolProperties();
+
+    private CacheProperties cache = new CacheProperties();
+
+    @Getter
+    @Setter
+    public static class CacheProperties {
+        private Map<String, String> specs = new LinkedHashMap<>();
+
+        public CacheProperties() {
+            specs.put(MockCacheNames.PREVIEW_META, "maximumSize=10000,expireAfterWrite=10m");
+            specs.put(MockCacheNames.ROUND_ROBIN, "maximumSize=10000,expireAfterAccess=30m");
+        }
+    }
 
     @Getter
     @Setter

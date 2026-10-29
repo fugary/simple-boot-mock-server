@@ -1,6 +1,9 @@
 package com.fugary.simple.mock.service.impl.mock;
 
 import com.fugary.simple.mock.contants.MockConstants;
+import com.fugary.simple.mock.cache.MockCacheNames;
+import com.fugary.simple.mock.config.MockCacheConfig;
+import com.fugary.simple.mock.config.SimpleMockConfigProperties;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.push.DefaultScriptWithFetchProviderImpl;
@@ -59,6 +62,8 @@ class MockRequestRoundRobinTest {
         provider = new JavaScriptEngineProviderImpl();
         provider.setScriptWithFetchProvider(new DefaultScriptWithFetchProviderImpl());
         service = new MockRequestServiceImpl();
+        ReflectionTestUtils.setField(service, "cacheManager",
+                new MockCacheConfig().cacheManager(new SimpleMockConfigProperties()));
         ReflectionTestUtils.setField(service, "scriptEngineProvider", provider);
         request = new MockRequest();
         request.setId(REQUEST_IDS.incrementAndGet());
@@ -184,5 +189,15 @@ class MockRequestRoundRobinTest {
     private MockData next(Object id) {
         requestVo.setBody(Map.of("id", id));
         return service.findMockData(request, responses);
+    }
+
+    @Test
+    void shouldRestartAfterCounterExpires() {
+        SimpleMockConfigProperties properties = new SimpleMockConfigProperties();
+        properties.getCache().getSpecs().put(MockCacheNames.ROUND_ROBIN,
+                "maximumSize=10000,expireAfterAccess=0s");
+        ReflectionTestUtils.setField(service, "cacheManager", new MockCacheConfig().cacheManager(properties));
+        assertSame(responses.get(0), next("A"));
+        assertSame(responses.get(0), next("A"));
     }
 }
