@@ -45,12 +45,12 @@ const buttons = computed(() => {
       emit('toTestMockRequest', item, props.groupItem)
     }
   }, {
-    labelKey: 'mock.msg.matchPatternTest',
-    icon: 'FactCheckFilled',
-    type: 'success',
-    enabled: !!requestItem.value?.matchPattern,
+    labelKey: requestItem.value?.matchPattern ? 'mock.msg.editRequestWithMatchPattern' : 'mock.msg.editRequest',
+    icon: 'Edit',
+    type: requestItem.value?.matchPattern ? 'success' : 'primary',
+    enabled: props.writable,
     click: (item) => {
-      emit('toTestMatchPattern', item, props.groupItem)
+      emit('toEditMockRequest', item, props.groupItem)
     }
   }, {
     label: $i18nBundle('common.label.commonDelay', [requestItem.value?.delay]),
