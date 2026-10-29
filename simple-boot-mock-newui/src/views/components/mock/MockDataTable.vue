@@ -145,14 +145,14 @@ const columns = computed(() => {
       const showStr = limitStr(data.matchPattern, 60)
       return <ViewDataLink data={showStr} icon="RuleFilled" style="word-break: break-all;"
                              tooltip={$i18nKey('common.label.commonConfig', 'mock.label.matchPattern')}
-                             onViewDataDetails={() => toTestMatchPattern(props.groupItem, requestItem.value, data, props.writable)
-                               .then(() => loadMockData())}/>
+                              onViewDataDetails={() => editMatchPattern(data)
+                                .then(() => loadMockData())}/>
     }
   }, {
     minWidth: '100px',
     formatter (data) {
       return <DelFlagTag v-model={data.status} clickToToggle={props.writable}
-                         onToggleValue={(status) => saveMockData({ ...data, status })}/>
+                         onToggleValue={(status) => saveMockData({ id: data.id, version: data.version, status })}/>
     },
     headerFormatter () {
       const statusOption = useSearchStatus({
@@ -167,7 +167,7 @@ const columns = computed(() => {
     property: 'responseBody',
     minWidth: '220px',
     formatter (data) {
-      const showStr = limitStr(data.responseBody, 60)
+      const showStr = limitStr(data.responseBodyPreview ?? data.responseBody, 60)
       const status = data?.statusCode || 200
       const isRedirect = status >= 300 && status < 400 // redirect
       return <ViewDataLink data={showStr} style="word-break: break-all;"
@@ -184,7 +184,7 @@ const columns = computed(() => {
   }])
 })
 const { searchParam, tableData, loading, searchMethod: searchMockData } = useTableAndSearchForm({
-  defaultParam: { requestId: requestItem.value.id, page: useDefaultPage(5) },
+  defaultParam: { requestId: requestItem.value.id, page: useDefaultPage(5), summary: true },
   searchMethod: MockDataApi.search,
   saveParam: false
 })
@@ -241,7 +241,7 @@ const changeDefaultFlag = (item, defaultFlag) => {
     ? $i18nBundle('mock.msg.configSetDefault')
     : $i18nKey('common.msg.commonConfirm', $i18nConcat($i18nBundle('common.label.cancel'), $i18nBundle('mock.label.default')))
   return $coreConfirm(message)
-    .then(() => markDefault({ ...item, defaultFlag }))
+    .then(() => markDefault({ id: item.id, requestId: item.requestId, version: item.version, defaultFlag }))
     .then(() => loadMockData())
 }
 const cancelDefaultByIcon = (item, event) => {
@@ -258,6 +258,7 @@ const showEditWindow = ref(false)
 const showMore = ref(false)
 const hiddenKeys = ['matchPattern', 'headerParams', 'postProcessor', 'description']
 const currentDataItem = ref()
+let originalResponseBody
 const selectDataItem = ref()
 const newDataItem = () => ({
   requestId: requestItem.value.id,
@@ -272,12 +273,14 @@ const newOrEdit = async id => {
   if (id) {
     await MockDataApi.getById(id).then(data => {
       data.resultData && (currentDataItem.value = data.resultData)
+      originalResponseBody = currentDataItem.value?.responseBody
       contentRef.value = currentDataItem.value?.responseBody
       languageRef.value = currentDataItem.value?.responseFormat || languageRef.value
       currentDataItem.value.headerParams = JSON.parse(currentDataItem.value.headers || '[]')
     })
   } else {
     currentDataItem.value = newDataItem()
+    originalResponseBody = undefined
   }
   showEditWindow.value = true
   // Auto-expand if any hidden field has a value
@@ -418,24 +421,44 @@ const editFormOptions = computed(() => {
 
 const saveMockData = (data) => {
   const dataItem = { ...data }
+  // 控件清空可能返回 undefined；仅转换已提交字段，避免 PATCH 将清空误认为未修改。
+  Object.keys(dataItem).forEach(key => {
+    if (dataItem[key] === undefined) dataItem[key] = null
+  })
+  if (dataItem.id && dataItem.responseBody === originalResponseBody) {
+    delete dataItem.responseBody
+  }
   if (dataItem.headerParams) {
     dataItem.headers = JSON.stringify(dataItem.headerParams)
     delete dataItem.headerParams
   }
-  return MockDataApi.saveOrUpdate(dataItem, { loading: true, timeout: 60000 })
+  const config = { loading: true, timeout: 60000 }
+  const saving = dataItem.id ? MockDataApi.patch(dataItem.id, dataItem, config) : MockDataApi.saveOrUpdate(dataItem, config)
+  return saving
     .then((data) => {
-      if (data.success && data.resultData && selectDataId.value !== data.resultData.id) {
-        onSelectDataItem(data.resultData)
+      if (data.success && data.resultData) {
+        selectDataId.value = data.resultData.id
+        return loadMockData().then(() => data)
       }
-      loadMockData()
       return data
     })
 }
 
 const dataResponseEditRef = ref()
 
-const toEditDataResponse = (mockData) => {
-  dataResponseEditRef.value?.toEditDataResponse(mockData)
+const toEditDataResponse = async (mockData) => {
+  const data = await MockDataApi.getById(mockData.id, { loading: true })
+  if (data.success && data.resultData) {
+    originalResponseBody = data.resultData.responseBody
+    dataResponseEditRef.value?.toEditDataResponse(data.resultData)
+  }
+}
+
+const editMatchPattern = async (item) => {
+  const data = await MockDataApi.getById(item.id, { loading: true, params: { includeResponseBody: false } })
+  if (data.success && data.resultData) {
+    return toTestMatchPattern(props.groupItem, requestItem.value, data.resultData, props.writable)
+  }
 }
 
 const saveDataResponse = (mockData) => {
@@ -462,7 +485,8 @@ const onSelectDataItem = (dataItem) => {
         selectDataId.value = dataItem.id
         return loadMockData()
       }
-      Object.assign(selectDataItem.value, dataItem)
+      const { responseBody, ...summary } = dataItem
+      Object.assign(selectDataItem.value, summary, { responseBodyPreview: responseBody?.slice(0, 61) })
     }, props.writable)
   }
 }
@@ -492,7 +516,7 @@ const toShowHistoryWindow = (current) => {
       property: 'responseBody',
       minWidth: '200px',
       formatter (data) {
-        return limitStr(data.responseBody, 60)
+        return limitStr(data.responseBodyPreview ?? data.responseBody, 60)
       }
     }, {
       labelKey: 'common.label.modifyDate',
@@ -523,7 +547,7 @@ const toShowHistoryWindow = (current) => {
       property: 'contentType',
       minWidth: '150px'
     }]),
-    searchFunc: (param, config) => searchHistories(current.id, param, config),
+    searchFunc: (param, config) => searchHistories(current.id, { ...param, summary: true }, config),
     compareFunc: async (modified, target, previous) => {
       let original = modified
       if (previous) {
@@ -536,7 +560,12 @@ const toShowHistoryWindow = (current) => {
           modified.current = !modified.modifyFrom
         })
       } else {
-        modified = target
+        const details = await Promise.all([MockDataApi.getById(original.id), MockDataApi.getById(target.id)])
+        if (details.some(data => !data.success || !data.resultData)) return
+        original = details[0].resultData
+        original.current = !original.modifyFrom
+        modified = details[1].resultData
+        modified.current = !modified.modifyFrom
       }
       showCompareWindowNew({
         modified,
@@ -566,7 +595,7 @@ const moreButtons = computed(() => defineTableButtons([{
     return !!item.matchPattern
   },
   click: item => {
-    toTestMatchPattern(props.groupItem, requestItem.value, item, props.writable)
+    editMatchPattern(item)
       .then(() => loadMockData())
   }
 }, {

@@ -578,4 +578,11 @@ export const calcParamTargetByUrl = (calcRequestUrl) => {
     })
 }
 
-export default useResourceApi(MOCK_DATA_URL)
+export default useResourceApi(MOCK_DATA_URL, {
+  patch: (id, data, config) => $http({
+    ...config,
+    url: `${MOCK_DATA_URL}/${id}`,
+    method: 'patch',
+    data
+  }).then(response => response.data)
+})

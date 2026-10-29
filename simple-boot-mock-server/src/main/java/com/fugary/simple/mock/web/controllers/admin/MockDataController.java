@@ -4,9 +4,12 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.contants.MockErrorConstants;
 import com.fugary.simple.mock.entity.mock.CountData;
@@ -32,6 +35,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -46,6 +51,16 @@ import static com.fugary.simple.mock.contants.MockConstants.DB_MODIFY_FROM_KEY;
 @RestController
 @RequestMapping("/admin/data")
 public class MockDataController {
+
+    private static final int RESPONSE_PREVIEW_LENGTH = 61;
+
+    private static final Set<String> PATCH_PROTECTED_FIELDS = Set.of(
+            MockData.Fields.groupId, MockData.Fields.requestId, MockData.Fields.modifyFrom,
+            MockConstants.CREATOR_KEY, MockConstants.CREATE_DATE_KEY,
+            MockConstants.MODIFIER_KEY, MockConstants.MODIFY_DATE_KEY);
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private MockDataService mockDataService;
@@ -68,6 +83,10 @@ public class MockDataController {
             queryWrapper.between("status_code", statusCode, statusCode + 99);
         }
         queryWrapper.orderByAsc("status_code", "create_date");
+        if (queryVo.isSummary()) {
+            // 在数据库端截取预览，避免将大响应体加载到列表中。
+            selectMetadata(queryWrapper, true);
+        }
         Page<MockData> pageResult = mockDataService.page(page, queryWrapper);
         Map<Integer, Long> historyMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(pageResult.getRecords())) {
@@ -89,10 +108,15 @@ public class MockDataController {
 
     @PostMapping("/histories/{id}")
     public SimpleResult<List<MockData>> histories(@RequestBody MockDataQueryVo queryVo, @PathVariable Integer id) {
-        MockData currentData = mockDataService.getById(id);
+        QueryWrapper<MockData> currentQuery = Wrappers.<MockData>query().eq("id", id);
         Page<MockData> page = SimpleResultUtils.toPage(queryVo);
         QueryWrapper<MockData> queryWrapper = Wrappers.<MockData>query()
                 .eq(DB_MODIFY_FROM_KEY, id);
+        if (queryVo.isSummary()) {
+            selectMetadata(currentQuery, true);
+            selectMetadata(queryWrapper, true);
+        }
+        MockData currentData = mockDataService.getOne(currentQuery);
         queryWrapper.orderByDesc("data_version");
         return SimpleResultUtils.createSimpleResult(mockDataService.page(page, queryWrapper))
                 .addInfo("current", currentData);
@@ -138,8 +162,26 @@ public class MockDataController {
     }
 
     @GetMapping("/{id}")
-    public SimpleResult<MockData> get(@PathVariable("id") Integer id) {
-        return SimpleResultUtils.createSimpleResult(mockDataService.getById(id));
+    public SimpleResult<MockData> get(@PathVariable("id") Integer id,
+                                    @RequestParam(defaultValue = "true") boolean includeResponseBody) {
+        if (includeResponseBody) {
+            return SimpleResultUtils.createSimpleResult(mockDataService.getById(id));
+        }
+        return SimpleResultUtils.createSimpleResult(mockDataService.getOne(selectMetadata(Wrappers.<MockData>query(), false)
+                .eq("id", id)));
+    }
+
+    private QueryWrapper<MockData> selectMetadata(QueryWrapper<MockData> query, boolean preview) {
+        query.select(MockData.class, field -> !MockData.Fields.responseBody.equals(field.getProperty()));
+        if (preview) {
+            String bodyColumn = TableInfoHelper.getTableInfo(MockData.class).getFieldList().stream()
+                    .filter(field -> MockData.Fields.responseBody.equals(field.getProperty()))
+                    .findFirst().orElseThrow().getColumn();
+            // SQL 标准语法，MySQL、H2、PostgreSQL 均支持字符截取。
+            query.select(query.getSqlSelect() + ", SUBSTRING(" + bodyColumn + " FROM 1 FOR "
+                    + RESPONSE_PREVIEW_LENGTH + ") AS " + MockData.Fields.responseBodyPreview);
+        }
+        return query;
     }
 
     @DeleteMapping("/{id}")
@@ -174,6 +216,36 @@ public class MockDataController {
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
         }
         return mockDataService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(data));
+    }
+
+    /** 局部更新：缺失字段保持原值，显式 null 仍表示清空。 */
+    @PatchMapping("/{id}")
+    public SimpleResult<MockData> patch(@PathVariable Integer id, @RequestBody Map<String, Object> changes)
+            throws JsonMappingException {
+        MockData data = mockDataService.getById(id);
+        if (data == null) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_404);
+        }
+        if (!mockProjectService.hasDataAuthority(data, MockConstants.AUTHORITY_WRITABLE)) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_403);
+        }
+        // 映射字段列表不含主键及非持久化字段，再排除归属与审计字段。
+        Set<String> editableFields = TableInfoHelper.getTableInfo(MockData.class).getFieldList().stream()
+                .map(field -> field.getProperty())
+                .filter(property -> !PATCH_PROTECTED_FIELDS.contains(property))
+                .collect(Collectors.toSet());
+        Map<String, Object> updates = new HashMap<>(changes);
+        updates.keySet().retainAll(editableFields); // 保留显式 null，缺失字段不参与合并。
+        Integer version = data.getVersion();
+        objectMapper.updateValue(data, updates);
+        if (!Objects.equals(version, data.getVersion())) {
+            return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_1);
+        }
+        SimpleResult<MockData> result = mockDataService.newSaveOrUpdate(SimpleMockUtils.addAuditInfo(data));
+        if (result.getResultData() != null) {
+            result.getResultData().setResponseBody(null);
+        }
+        return result;
     }
 
     @PostMapping("/copyMockData/{dataId}")

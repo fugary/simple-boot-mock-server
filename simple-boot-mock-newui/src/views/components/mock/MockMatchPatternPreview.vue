@@ -117,7 +117,13 @@ const saveMatchPattern = async () => {
   }
   currentItem.value.matchPattern = paramTarget.value?.matchPattern
   if (currentItem.value.requestId) {
-    MockDataApi.saveOrUpdate(currentItem.value, { loading: true, timeout: 60000 }).then(() => {
+    MockDataApi.patch(currentItem.value.id, {
+      matchPattern: currentItem.value.matchPattern,
+      version: currentItem.value.version
+    }, {
+      loading: true,
+      timeout: 60000
+    }).then(() => {
       showWindow.value = false
       saveResolve?.(currentItem.value)
       ElMessage.success($i18nBundle('common.msg.saveSuccess'))
