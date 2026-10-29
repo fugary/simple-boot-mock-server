@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { $i18nBundle, $i18nMsg } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
@@ -319,6 +319,15 @@ Mock.mock({
 const calcHeight = (text) => {
   return text.split('\n').length * 20 + 'px'
 }
+
+const exampleHeights = ref({})
+const fitExampleHeight = (editor, key) => {
+  const updateHeight = () => {
+    exampleHeights.value[key] = `${editor.getContentHeight()}px`
+  }
+  editor.onDidContentSizeChange(updateHeight)
+  updateHeight()
+}
 </script>
 
 <template>
@@ -406,7 +415,8 @@ const calcHeight = (text) => {
             :options="monacoEditorOptions"
             class="common-resize-vertical"
             :theme="useGlobalConfigStore().monacoTheme"
-            :height="calcHeight(example.content)"
+            :height="exampleHeights[`${groupIndex}-${index}`] || calcHeight(example.content)"
+            @mount="editor => fitExampleHeight(editor, `${groupIndex}-${index}`)"
           />
         </template>
       </el-tab-pane>
