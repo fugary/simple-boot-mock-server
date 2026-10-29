@@ -41,10 +41,10 @@ const diffOptions = {
 const diffEditorRef = shallowRef()
 const handleMount = diffEditor => (diffEditorRef.value = diffEditor)
 
-const calcHistoryContent = (doc, history) => {
-  const options = props.historyOptionsMethod(doc, history).filter(item => item.enabled !== false)
+const calcHistoryContent = (doc) => {
+  const options = props.historyOptionsMethod(doc).filter(item => item.enabled !== false)
   return options.map(option => {
-    const propValue = isFunction(option.prop) ? option.prop(doc, history) : doc[option.prop]
+    const propValue = isFunction(option.prop) ? option.prop(doc) : doc[option.prop]
     return `[${option.labelKey ? $i18nBundle(option.labelKey) : option.label}]
 ${propValue ?? ''}`
   }).join('\n\n')
@@ -52,7 +52,7 @@ ${propValue ?? ''}`
 
 const fieldConfig = computed(() => {
   return {
-    originalContent: calcHistoryContent(props.original, true),
+    originalContent: calcHistoryContent(props.original),
     modifiedContent: calcHistoryContent(props.modified)
   }
 })

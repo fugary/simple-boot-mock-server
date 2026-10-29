@@ -10,13 +10,15 @@ export const getLoadBalancerLabel = (request) => {
   return labelKey ? $i18nBundle(labelKey) : loadBalancer
 }
 
-export const getRequestHistoryViewOptions = (request, history) => {
+export const getRequestHistoryViewOptions = (request) => {
   return [
     { labelKey: 'mock.label.requestPath', prop: 'requestPath' },
     { labelKey: 'mock.label.version', prop: () => `${request.version ?? ''}${request.current ? ` <${$i18nBundle('mock.label.current')}>` : ''}` },
-    { labelKey: 'common.label.modifyDate', prop: () => formatDate(request[history ? 'createDate' : 'modifyDate']) },
-    { labelKey: 'common.label.modifier', prop: () => request[history ? 'creator' : 'modifier'] },
+    { labelKey: 'common.label.modifyDate', prop: () => formatDate(request.modifyDate ?? request.createDate) },
+    { labelKey: 'common.label.modifier', prop: () => request.modifier || request.creator },
     { labelKey: 'mock.label.method', prop: 'method' },
+    { label: 'Content Type', prop: 'contentType' },
+    { labelKey: 'mock.label.scenario', prop: 'scenarioCode' },
     { labelKey: 'mock.label.proxyUrl', prop: 'proxyUrl' },
     { labelKey: 'common.label.status', prop: () => [$i18nBundle('common.label.statusDisabled'), $i18nBundle('common.label.statusEnabled')][request.status] },
     {
@@ -24,6 +26,7 @@ export const getRequestHistoryViewOptions = (request, history) => {
       prop: () => request.disableMock !== undefined ? $i18nBundle(request.disableMock ? 'common.label.yes' : 'common.label.no') : ''
     },
     { labelKey: 'common.label.delay', prop: 'delay' },
+    { labelKey: 'mock.label.pinToTop', prop: () => request.topFlag !== undefined ? $i18nBundle(request.topFlag ? 'common.label.yes' : 'common.label.no') : '' },
     { labelKey: 'mock.label.matchPattern', prop: 'matchPattern' },
     { labelKey: 'mock.label.loadBalanceType', prop: () => request.loadBalancer ? getLoadBalancerLabel(request) : '' },
     { labelKey: 'mock.label.roundRobinKeyExpression', prop: 'roundRobinKeyExpression' },
@@ -34,12 +37,12 @@ export const getRequestHistoryViewOptions = (request, history) => {
   ]
 }
 
-export const getDataHistoryViewOptions = (data, history) => {
+export const getDataHistoryViewOptions = (data) => {
   return [
     { labelKey: 'mock.label.statusCode', prop: 'statusCode' },
     { labelKey: 'mock.label.version', prop: () => `${data.version ?? ''}${data.current ? ` <${$i18nBundle('mock.label.current')}>` : ''}` },
-    { labelKey: 'common.label.modifyDate', prop: () => formatDate(data[history ? 'createDate' : 'modifyDate']) },
-    { labelKey: 'common.label.modifier', prop: () => data[history ? 'creator' : 'modifier'] },
+    { labelKey: 'common.label.modifyDate', prop: () => formatDate(data.modifyDate ?? data.createDate) },
+    { labelKey: 'common.label.modifier', prop: () => data.modifier || data.creator },
     { labelKey: 'mock.label.responseName', prop: 'dataName' },
     { labelKey: 'common.label.status', prop: () => [$i18nBundle('common.label.statusDisabled'), $i18nBundle('common.label.statusEnabled')][data.status] },
     {
@@ -59,17 +62,17 @@ export const getDataHistoryViewOptions = (data, history) => {
   ]
 }
 
-export const calcHistoryContent = (historyOptionsMethod, doc, history) => {
-  const options = historyOptionsMethod(doc, history).filter(item => item.enabled !== false)
+export const calcHistoryContent = (historyOptionsMethod, doc) => {
+  const options = historyOptionsMethod(doc).filter(item => item.enabled !== false)
   return options.map(option => {
-    const propValue = isFunction(option.prop) ? option.prop(doc, history) : doc[option.prop]
+    const propValue = isFunction(option.prop) ? option.prop(doc) : doc[option.prop]
     return `[${option.labelKey ? $i18nBundle(option.labelKey) : option.label}]
 ${propValue ?? ''}`
   }).join('\n\n')
 }
 
 export const showCompareWindowNew = ({ original, modified, historyOptionsMethod, ...config }) => {
-  const originalContent = calcHistoryContent(historyOptionsMethod, original, true)
+  const originalContent = calcHistoryContent(historyOptionsMethod, original)
   const modifiedContent = calcHistoryContent(historyOptionsMethod, modified)
   return showCodeWindow({
     title: $i18nBundle('mock.label.compare'),

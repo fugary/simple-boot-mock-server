@@ -70,7 +70,7 @@ const calcActiveScenarioName = (group) => {
 }
 
 // Add getGroupHistoryViewOptions
-const getGroupHistoryViewOptions = (group, history) => {
+const getGroupHistoryViewOptions = (group) => {
   return [{
     labelKey: 'mock.label.groupName',
     prop: 'groupName'
@@ -86,10 +86,10 @@ const getGroupHistoryViewOptions = (group, history) => {
     prop: () => `${group.version ?? ''}${group.current ? ` <${$i18nBundle('mock.label.current')}>` : ''}`
   }, {
     labelKey: 'common.label.modifyDate',
-    prop: () => formatDate(group[history ? 'createDate' : 'modifyDate'])
+    prop: () => formatDate(group.modifyDate ?? group.createDate)
   }, {
     labelKey: 'common.label.modifier',
-    prop: () => group[history ? 'creator' : 'modifier']
+    prop: () => group.modifier || group.creator
   }, {
     labelKey: 'mock.label.proxyUrl',
     prop: () => calcProxyUrl(group.proxyUrl)
