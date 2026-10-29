@@ -286,7 +286,6 @@ const formOptions = computed(() => {
         :buttons="buttons"
         buttons-slot="buttons"
         :buttons-column-attrs="{ width: '180px' }"
-        max-height="55vh"
         row-key="id"
         @page-size-change="loadScenarios(1)"
         @current-page-change="loadScenarios()"
