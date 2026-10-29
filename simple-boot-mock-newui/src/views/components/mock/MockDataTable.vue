@@ -486,7 +486,10 @@ const onSelectDataItem = (dataItem) => {
         return loadMockData()
       }
       const { responseBody, ...summary } = dataItem
-      Object.assign(selectDataItem.value, summary, { responseBodyPreview: responseBody?.slice(0, 61) })
+      Object.assign(selectDataItem.value, summary)
+      if (responseBody !== undefined) {
+        selectDataItem.value.responseBodyPreview = responseBody?.slice(0, 61)
+      }
     }, props.writable)
   }
 }
@@ -813,7 +816,6 @@ const pageAttrs = {
     />
     <mock-request-preview
       ref="mockPreviewRef"
-      :mock-response-editable="writable"
       class="margin-top2"
       affix-enabled
     />

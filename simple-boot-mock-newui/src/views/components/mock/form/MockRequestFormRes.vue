@@ -1,28 +1,20 @@
 <script setup>
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import { computed, watch, ref, reactive, nextTick, useTemplateRef, onBeforeUnmount, toRaw } from 'vue'
+import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
+import { computed, watch, ref, reactive, nextTick, useTemplateRef, onBeforeUnmount } from 'vue'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
-import { showDiagnoseWindow, showJsonDataWindow, showMockTips } from '@/utils/DynamicUtils'
+import { showDiagnoseWindow, showJsonDataWindow } from '@/utils/DynamicUtils'
 import { $i18nKey, $i18nBundle } from '@/messages'
 import {
-  generateSampleCheckResults,
-  generateSchemaSample,
   isHtmlContentType,
   isJson,
   isXml,
   isMediaContentType,
-  statusCodeTagType,
-  useContentTypeOption,
-  showSchemaCodeWindow
+  statusCodeTagType
 } from '@/services/mock/MockCommonService'
-import MockGenerateSample from '@/views/components/mock/form/MockGenerateSample.vue'
 import { isString } from 'lodash-es'
 import { $coreConfirm, $coreError } from '@/utils'
-import MockDataExample from '@/views/components/mock/form/MockDataExample.vue'
-import { calcContentLanguage, calcContentType, getMockConfirmConfig, isStreamContentType } from '@/consts/MockConstants'
-import NewWindowEditLink from '@/views/components/utils/NewWindowEditLink.vue'
-import MockDictionaryPopover from '@/views/components/mock/form/MockDictionaryPopover.vue'
-import { generateMockTemplateFromData } from '@/vendors/mockjs/MockDataTransformer'
+import { calcContentLanguage, getMockConfirmConfig, isStreamContentType } from '@/consts/MockConstants'
 import { downloadByLink } from '@/api/mock/MockGroupApi'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
@@ -31,29 +23,9 @@ const props = defineProps({
     type: Object,
     default: undefined
   },
-  mockResponseEditable: {
-    type: Boolean,
-    default: false
-  },
   editable: {
     type: Boolean,
     default: false
-  },
-  schemaType: {
-    type: String,
-    default: 'json'
-  },
-  schemaBody: {
-    type: String,
-    default: ''
-  },
-  schemaSpec: {
-    type: Object,
-    default: undefined
-  },
-  examples: {
-    type: Array,
-    default: () => []
   }
 })
 
@@ -61,7 +33,7 @@ const paramTarget = defineModel('modelValue', {
   type: Object,
   default: true
 })
-const currentTabName = ref(props.responseTarget ? 'responseData' : 'mockResponseBody')
+const currentTabName = ref('responseData')
 
 const {
   contentRef, languageRef, editorRef, monacoEditorOptions,
@@ -97,12 +69,9 @@ const downloadResponse = (url) => {
   const urlSegments = props.responseTarget?.requestInfo?.url?.split('/') || []
   downloadByLink(url, urlSegments[urlSegments.length - 1])
 }
-const isTransformed = ref(false)
-const originalMockDataStr = ref('')
 
 watch(() => props.responseTarget, async (responseTarget) => {
-  isTransformed.value = false
-  currentTabName.value = responseTarget ? 'responseData' : 'mockResponseBody'
+  currentTabName.value = 'responseData'
   const oriContentType = responseTarget?.responseHeaders?.find(header => header.name?.toLowerCase() === 'content-type')?.value
   const contentType = isMediaContentType(oriContentType) || isStreamContentType(oriContentType) || isHtmlContentType(oriContentType) ? oriContentType : undefined
   clearMediaItems()
@@ -177,93 +146,9 @@ const diagnoseInfo = computed(() => props.responseTarget?.diagnoseInfo)
 const openDiagnoseDialog = () => showDiagnoseWindow(diagnoseInfo.value)
 const requestMismatchInfo = computed(() => props.responseTarget?.requestMismatchInfo)
 
-const {
-  contentRef: contentRef2, languageRef: languageRef2, editorRef: editorRef2, monacoEditorOptions: monacoEditorOptions2,
-  languageModel: languageModel2, languageSelectOption: languageSelectOption2, formatDocument: formatDocument2, checkEditorLang
-} = useMonacoEditorOptions({ readOnly: false, language: paramTarget.value.responseFormat })
-
-watch(languageRef2, language => {
-  paramTarget.value.responseFormat = language
-})
-
-contentRef2.value = paramTarget.value?.responseBody
-
 const codeHeight = '300px'
+const emit = defineEmits(['saveMockParams', 'saveProxyResponseData'])
 
-const emit = defineEmits(['saveMockResponseBody', 'saveProxyResponseData', 'sendMockRequest'])
-
-const generateSample = async (schema) => {
-  contentRef2.value = await generateSchemaSample(schema.schema, schema.type, props.schemaSpec)
-  setTimeout(() => checkEditorLang())
-}
-const selectExample = (example) => {
-  contentRef2.value = isString(example.value) ? example.value : JSON.stringify(example.value)
-  setTimeout(() => checkEditorLang())
-}
-
-const contentTypeOption = useContentTypeOption('contentType')
-const langOption = {
-  ...languageSelectOption2.value,
-  change (language) {
-    if (paramTarget.value) {
-      paramTarget.value.responseFormat = language
-      paramTarget.value.contentType = calcContentType(language, paramTarget.value?.responseBody, paramTarget.value.contentType)
-    }
-  }
-}
-watch(contentRef2, val => {
-  paramTarget.value.responseBody = val
-})
-
-const insertMockVariable = (val) => {
-  if (editorRef2.value) {
-    const editor = toRaw(editorRef2.value)
-    const selection = editor.getSelection()
-    if (selection) {
-      editor.executeEdits('mock-dict', [{
-        range: selection,
-        text: val,
-        forceMoveMarkers: true
-      }])
-    } else {
-      const position = editor.getPosition() || { lineNumber: 1, column: 1 }
-      editor.executeEdits('mock-dict', [{
-        range: {
-          startLineNumber: position.lineNumber,
-          startColumn: position.column,
-          endLineNumber: position.lineNumber,
-          endColumn: position.column
-        },
-        text: val,
-        forceMoveMarkers: true
-      }])
-    }
-    editor.focus()
-  }
-}
-
-const transformToMock = () => {
-  if (isTransformed.value) {
-    contentRef2.value = originalMockDataStr.value
-    isTransformed.value = false
-    setTimeout(() => {
-      formatDocument2()
-    }, 100)
-  } else if (contentRef2.value) {
-    originalMockDataStr.value = contentRef2.value
-    contentRef2.value = generateMockTemplateFromData(contentRef2.value)
-    isTransformed.value = true
-    setTimeout(() => {
-      formatDocument2()
-    }, 100)
-  }
-}
-
-const supportedGenerates = computed(() => generateSampleCheckResults(props.schemaBody, props.schemaSpec, props.schemaType))
-const redirectMockResponse = computed(() => {
-  const status = paramTarget.value?.responseStatusCode || 200
-  return status >= 300 && status < 400
-})
 const jsonResponseData = computed(() => isJson(props.responseTarget?.data) || isXml(props.responseTarget?.data))
 const toShowJsonDataWindow = () => {
   paramTarget.value.tableConfig = paramTarget.value.tableConfig || {}
@@ -272,7 +157,7 @@ const toShowJsonDataWindow = () => {
     tableConfig: paramTarget.value.tableConfig,
     'onUpdate:tableConfig': (value) => {
       paramTarget.value.tableConfig = value
-      emit('saveMockResponseBody', paramTarget.value)
+      emit('saveMockParams', paramTarget.value)
     }
   })
 }
@@ -327,20 +212,7 @@ const toShowJsonDataWindow = () => {
         #add-icon
       >
         <div
-          v-if="currentTabName==='mockResponseBody'"
-          style="display: flex; margin-top: -10px;"
-        >
-          <el-button
-            type="primary"
-            size="small"
-            class="margin-left2"
-            @click="$emit('sendMockRequest', paramTarget)"
-          >
-            {{ $t('mock.label.sendRequest') }}
-          </el-button>
-        </div>
-        <div
-          v-else-if="responseTarget"
+          v-if="responseTarget"
           style="display: flex; margin-top: -7px;"
         >
           <el-link
@@ -586,150 +458,6 @@ const toShowJsonDataWindow = () => {
             {{ info.value }}
           </el-descriptions-item>
         </el-descriptions>
-      </el-tab-pane>
-      <el-tab-pane
-        v-if="mockResponseEditable"
-        name="mockResponseBody"
-      >
-        <template #label>
-          <el-badge
-            type="primary"
-            :hidden="!paramTarget.responseBody?.length"
-            is-dot
-          >
-            {{ $t(redirectMockResponse?'mock.label.redirectUrl':'mock.label.mockResponseBody') }}
-          </el-badge>
-          <el-link
-            v-common-tooltip="$t('mock.label.clickToShowDetails')"
-            underline="never"
-            type="primary"
-            class="margin-left1"
-            @click="showMockTips"
-          >
-            <common-icon icon="QuestionFilled" />
-          </el-link>
-        </template>
-        <el-container class="flex-column">
-          <el-row v-if="!redirectMockResponse">
-            <el-col :span="12">
-              <common-form-control
-                :model="paramTarget"
-                :option="contentTypeOption"
-              />
-            </el-col>
-            <el-col
-              :span="12"
-              class="padding-left2"
-            >
-              <common-form-control
-                :model="paramTarget"
-                :option="contentTypeOption.charsetOption"
-              />
-            </el-col>
-          </el-row>
-          <common-form-control
-            :model="languageModel2"
-            :option="langOption"
-            @change="languageRef2=$event"
-          >
-            <template #childAfter>
-              <mock-url-copy-link
-                :content="contentRef2"
-                :tooltip="$i18nKey('common.label.commonCopy', 'mock.label.mockResponseBody')"
-              />
-              <new-window-edit-link
-                v-model="contentRef2"
-                class="margin-left3"
-                full-editor
-              />
-              <el-link
-                v-common-tooltip="$i18nKey('common.label.commonFormat', 'mock.label.mockResponseBody')"
-                type="primary"
-                underline="never"
-                class="margin-left3"
-                @click="formatDocument2"
-              >
-                <common-icon
-                  :size="18"
-                  icon="FormatIndentIncreaseFilled"
-                />
-              </el-link>
-              <el-link
-                v-common-tooltip="$t('mock.msg.saveMockResponse')"
-                type="primary"
-                underline="never"
-                class="margin-left3"
-                @click="emit('saveMockResponseBody', paramTarget)"
-              >
-                <common-icon
-                  :size="18"
-                  icon="SaveOutlined"
-                />
-              </el-link>
-              <el-link
-                v-if="schemaBody"
-                v-common-tooltip="$i18nKey('common.label.commonView', 'common.label.schema')"
-                type="primary"
-                underline="never"
-                class="margin-left3"
-                @click="showSchemaCodeWindow(schemaBody, schemaSpec)"
-              >
-                <common-icon
-                  :size="18"
-                  icon="ContentPasteSearchFilled"
-                />
-              </el-link>
-              <template v-if="supportedGenerates?.length">
-                <mock-generate-sample
-                  v-if="supportedGenerates.length>1"
-                  :schemas="supportedGenerates"
-                  :title="$t('common.label.generateData')"
-                  @generate-sample="generateSample($event)"
-                />
-                <el-link
-                  v-if="supportedGenerates.length===1"
-                  v-common-tooltip="$t('common.label.generateData')"
-                  type="primary"
-                  underline="never"
-                  class="margin-left3"
-                  @click="generateSample(supportedGenerates[0])"
-                >
-                  <common-icon
-                    :size="18"
-                    :icon="`custom-icon-${supportedGenerates[0]?.type}`"
-                  />
-                </el-link>
-              </template>
-              <mock-data-example
-                v-if="examples.length"
-                :examples="examples"
-                @select-example="selectExample"
-              />
-              <mock-dictionary-popover @select="insertMockVariable" />
-              <el-link
-                v-common-tooltip="isTransformed ? $t('mock.label.restoreOriginal') : $t('mock.label.toMockTemplate')"
-                :type="isTransformed ? 'warning' : 'primary'"
-                underline="never"
-                class="margin-left3"
-                @click="transformToMock"
-              >
-                <common-icon
-                  :size="18"
-                  icon="AutoAwesomeFilled"
-                />
-              </el-link>
-            </template>
-          </common-form-control>
-          <vue-monaco-editor
-            v-model:value="contentRef2"
-            class="common-resize-vertical"
-            :language="languageRef2"
-            :height="codeHeight"
-            :options="monacoEditorOptions2"
-            :theme="useGlobalConfigStore().monacoTheme"
-            @mount="editorRef2=$event"
-          />
-        </el-container>
       </el-tab-pane>
     </el-tabs>
   </el-container>

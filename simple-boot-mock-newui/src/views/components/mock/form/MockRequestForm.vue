@@ -33,10 +33,6 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   },
-  mockResponseEditable: {
-    type: Boolean,
-    default: false
-  },
   editable: {
     type: Boolean,
     default: false
@@ -73,12 +69,11 @@ const requestUrl = computed(() => buildFullUrl(props.requestPath))
 const requestBaseUrl = computed(() => buildFullUrl(props.requestPath, false))
 const proxyRequestUrl = computed(() => buildFullUrl(props.proxyRequestPath))
 
-const emit = defineEmits(['sendRequest', 'saveMockResponseBody', 'saveProxyResponseData', 'saveMatchPattern', 'resetRequestForm'])
+const emit = defineEmits(['sendRequest', 'saveMockParams', 'saveProxyResponseData', 'saveMatchPattern', 'resetRequestForm'])
 const formRef = ref()
 const sendRequest = (form) => {
   form.validate(valid => {
     if (valid) {
-      console.log('===============================发送请求', valid, paramTarget.value)
       emit('sendRequest', paramTarget.value)
     }
   })
@@ -94,10 +89,6 @@ const requestExamples = computed(() => {
   return examples ? JSON.parse(examples) : []
 })
 
-const responseExamples = computed(() => {
-  const examples = schema.value?.responseExamples
-  return examples ? JSON.parse(examples) : []
-})
 const sendButtonOffset = computed(() => calcAffixOffset(0))
 const { disableAffix, AffixToggleButton } = useDisableAffix()
 </script>
@@ -217,18 +208,12 @@ const { disableAffix, AffixToggleButton } = useDisableAffix()
       </template>
     </common-form>
     <mock-request-form-res
-      v-if="responseTarget||mockResponseEditable"
+      v-if="responseTarget"
       v-model="paramTarget"
-      :mock-response-editable="mockResponseEditable"
       :editable="editable"
       :response-target="responseTarget"
-      :schema-type="schema?.responseMediaType"
-      :schema-body="schema?.responseBodySchema"
-      :schema-spec="schemaSpec"
-      :examples="responseExamples"
-      @save-mock-response-body="emit('saveMockResponseBody', $event)"
+      @save-mock-params="emit('saveMockParams', $event)"
       @save-proxy-response-data="emit('saveProxyResponseData', $event)"
-      @send-mock-request="sendRequest(formRef?.form)"
     />
   </el-container>
 </template>

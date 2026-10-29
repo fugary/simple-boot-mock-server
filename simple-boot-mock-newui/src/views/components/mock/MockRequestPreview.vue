@@ -15,7 +15,7 @@ import { ElMessage } from 'element-plus'
 import { $i18nBundle } from '@/messages'
 import { AUTH_OPTION_CONFIG } from '@/services/mock/MockAuthorizationService'
 import { calcContentLanguage, MOCK_DATA_ID_HEADER, MOCK_REQUEST_ID_HEADER } from '@/consts/MockConstants'
-import { cloneDeep, isArray, pickBy, isString } from 'lodash-es'
+import { cloneDeep, isArray, pickBy, isString, omit } from 'lodash-es'
 import { calcPreviewHeaders, processEvnParams, calcProxyUrl, extractQueryParams } from '@/services/mock/MockCommonService'
 import { $coreConfirm, toGetParams } from '@/utils'
 import { useInjectDataLoading } from '@/hooks/CommonHooks'
@@ -36,12 +36,13 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback, isEd
   groupItem.value = mockGroup
   requestItem.value = mockRequest
   previewData.value = viewData
+  clearParamsAndResponse()
   schemasConf.value = await loadSchemas({
     requestId: mockRequest.id,
     dataId: viewData?.id
   })
   if (viewData?.id) {
-    const viewDataPromise = MockDataApi.getById(viewData.id)
+    const viewDataPromise = MockDataApi.getById(viewData.id, { params: { includeResponseBody: false } })
     const requestViewData = await viewDataPromise
     previewData.value = requestViewData.resultData
   } else {
@@ -50,7 +51,6 @@ const toPreviewRequest = async (mockGroup, mockRequest, viewData, callback, isEd
     requestItem.value = requestData.resultData
   }
   saveCallback = callback
-  clearParamsAndResponse()
   return nextTick(() => {
     paramTarget.value = calcParamTarget(groupItem.value, requestItem.value, previewData.value, schemasConf.value)
     endLoading()
@@ -80,7 +80,7 @@ const proxyRequestPath = computed(() => {
 })
 
 const doPreviewRequest = async ({ realDebug = false } = {}) => {
-  console.log('========================paramTarget1', paramTarget.value)
+  const currentParams = paramTarget.value
   let requestUrl = requestPath.value
   paramTarget.value?.pathParams?.forEach(pathParam => {
     const pathValue = processEvnParams(paramTarget.value.groupConfig, pathParam.value, true)
@@ -112,7 +112,8 @@ const doPreviewRequest = async ({ realDebug = false } = {}) => {
   if (!realDebug) {
     requestItem.value?.id && (headers[MOCK_REQUEST_ID_HEADER] = requestItem.value?.id)
     previewData.value?.id && (headers[MOCK_DATA_ID_HEADER] = previewData.value?.id)
-    await doSaveMockResponseBody()// mock请求数据保存
+    await doSaveMockParams()
+    if (paramTarget.value !== currentParams) return
   }
   const authContent = paramTarget.value.authContent
   if (authContent) {
@@ -182,7 +183,6 @@ const calcResponse = async (response) => {
       responseTarget.value = { ...target }
     }
   }
-  console.log('===============================responseTarget', responseTarget.value)
 }
 
 const calcMockParams = () => {
@@ -198,58 +198,25 @@ const calcMockParams = () => {
   })
 }
 
-const doSaveMockResponseBody = () => {
-  if (editable.value) {
-    if (previewData.value?.id) {
-      if (previewData.value && checkDataChange()) {
-        return MockDataApi.saveOrUpdate(previewData.value, { loading: true, timeout: 60000 })
-          .then((data) => {
-            if (data.success && data.resultData) {
-              ElMessage.success($i18nBundle('common.msg.saveSuccess'))
-              previewData.value = data.resultData
-              return saveCallback?.(data.resultData)
-            }
-          }, error => {
-            console.log('saveError', error)
-            return error
-          })
+const doSaveMockParams = async () => {
+  if (!editable.value || !paramTarget.value) return
+  const target = previewData.value?.id ? previewData.value : requestItem.value
+  const callback = saveCallback
+  const mockParams = JSON.stringify(calcMockParams())
+  if (mockParams === target.mockParams) return
+  const data = previewData.value?.id
+    ? await MockDataApi.patch(target.id, { mockParams, version: target.version }, { loading: true, timeout: 60000 })
+    : await saveMockParams({ requestId: target.id, mockParams }, { loading: false })
+  if (data.success) {
+    target.mockParams = mockParams
+    if (data.resultData) {
+      const metadata = omit(data.resultData, ['responseBody', 'responseBodyPreview'])
+      Object.assign(target, metadata)
+      if (target === previewData.value || target === requestItem.value) {
+        await callback?.(metadata)
       }
-    } else if (paramTarget.value && checkMockParamsChange(requestItem)) {
-      const requestId = requestItem.value?.id
-      const id = previewData.value?.id
-      return saveMockParams({
-        requestId,
-        id,
-        mockParams: requestItem.value.mockParams
-      }, { loading: false })
-        .then((data) => {
-          console.log('=========================data', data)
-          ElMessage.success($i18nBundle('common.msg.saveSuccess'))
-          return saveCallback?.(data.resultData)
-        })
     }
-  }
-}
-
-const checkDataChange = () => {
-  let changed = false;
-  ['responseBody', 'responseFormat', 'contentType', 'defaultCharset'].forEach(key => {
-    if ((paramTarget.value[key] || '') !== (previewData.value[key] || '')) {
-      previewData.value[key] = paramTarget.value[key]
-      changed = true
-    }
-  })
-  if (checkMockParamsChange(previewData)) {
-    changed = true
-  }
-  return changed
-}
-
-const checkMockParamsChange = (item) => {
-  const paramTargetStr = JSON.stringify(calcMockParams())
-  if (paramTargetStr !== item.value.mockParams) {
-    item.value.mockParams = paramTargetStr
-    return true
+    ElMessage.success($i18nBundle('common.msg.saveSuccess'))
   }
 }
 
@@ -296,13 +263,19 @@ const doSaveProxyResponseData = async (response = responseTarget.value) => {
   if (!editable.value || response?.mockHitInfo?.returnType !== 'proxy') {
     return
   }
+  const request = requestItem.value
+  const params = paramTarget.value
+  const callback = saveCallback
+  const isCurrentPreview = () => requestItem.value === request && paramTarget.value === params
   try {
     await $coreConfirm($i18nBundle('mock.msg.saveProxyResponseConfirm'))
   } catch {
     return
   }
+  if (!isCurrentPreview()) return
   const { contentType, defaultCharset } = parseContentType(response)
   const responseBody = await toResponseBody(response.data, contentType)
+  if (!isCurrentPreview()) return
   const dataName = `${requestItem.value?.requestName || requestItem.value?.requestPath || 'Proxy'} - ${$i18nBundle('mock.label.proxyReturn')}`
   const mockData = {
     groupId: groupItem.value?.id,
@@ -321,17 +294,12 @@ const doSaveProxyResponseData = async (response = responseTarget.value) => {
     .then(data => {
       if (data.success && data.resultData) {
         ElMessage.success($i18nBundle('common.msg.saveSuccess'))
-        previewData.value = data.resultData
-        requestItem.value.dataCount = (requestItem.value.dataCount || 0) + 1
         response.savedAsMockData = true
-        Object.assign(paramTarget.value, {
-          responseStatusCode: data.resultData.statusCode,
-          responseBody: data.resultData.responseBody,
-          responseFormat: data.resultData.responseFormat,
-          contentType: data.resultData.contentType,
-          defaultCharset: data.resultData.defaultCharset
-        })
-        return saveCallback?.(data.resultData, { created: true })
+        request.dataCount = (request.dataCount || 0) + 1
+        if (isCurrentPreview()) {
+          previewData.value = omit(data.resultData, ['responseBody', 'responseBodyPreview'])
+          return callback?.(data.resultData, { created: true })
+        }
       }
     })
 }
@@ -357,13 +325,12 @@ defineExpose({
       :request-path="requestPath"
       :proxy-request-path="proxyRequestPath"
       :response-target="responseTarget"
-      :mock-response-editable="!!previewData"
       :editable="editable"
       :schemas="schemasConf.schemas"
       :schema-spec="schemasConf.componentSpec"
       v-bind="$attrs"
       @send-request="doDataPreview"
-      @save-mock-response-body="doSaveMockResponseBody"
+      @save-mock-params="doSaveMockParams"
       @save-proxy-response-data="doSaveProxyResponseData"
       @reset-request-form="resetParamTarget"
     />
