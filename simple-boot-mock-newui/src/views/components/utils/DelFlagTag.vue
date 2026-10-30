@@ -75,10 +75,7 @@ const reversedValue = computed(() => {
 
 const emit = defineEmits(['toggleValue'])
 const tooltip = computed(() => {
-  let toValue = $i18nBundle('common.label.statusEnabled')
-  if (toValue === valueConf.value[modelValue.value]) {
-    toValue = $i18nBundle('common.label.statusDisabled')
-  }
+  const toValue = valueConf.value[reversedValue.value]
   return {
     disabled: !props.clickToToggle,
     content: $i18nKey('common.msg.clickTo', toValue)
@@ -108,7 +105,7 @@ const handleClick = () => {
       v-if="switchMode"
       v-model="modelValue"
       :disabled="!clickToToggle"
-      style="--el-switch-on-color: #67c23a; --el-switch-off-color: #f56c6c"
+      :style="{ '--el-switch-on-color': `var(--el-color-${typeConf[1]})`, '--el-switch-off-color': `var(--el-color-${typeConf[0]})` }"
       :active-value="Number(Object.keys(valueConf)[1])"
       :inactive-value="Number(Object.keys(valueConf)[0])"
       :before-change="handleClick"

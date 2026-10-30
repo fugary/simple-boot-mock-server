@@ -4,11 +4,22 @@ const fs = require('node:fs')
 const path = require('node:path')
 const assert = require('node:assert/strict')
 const { ref, computed, h, watch, effectScope, onScopeDispose } = require('vue')
+const { transformSync } = require('@babel/core')
+let jsxPlugin
 const root = path.resolve(__dirname, '..')
 const read = file => fs.readFileSync(path.join(root, 'src', file), 'utf8')
 const setup = (file, bindings, result) => {
-  const source = read(file).match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .*$/gm, '')
-  return new Function(...Object.keys(bindings), source + '\nreturn {' + result + '}')(...Object.values(bindings))
+  const script = read(file).match(/<script setup([^>]*)>([\s\S]*?)<\/script>/)
+  let source = script[2].replace(/^import .*$/gm, '')
+  if (script[1].includes('jsx')) {
+    source = transformSync(script[2], { configFile: false, babelrc: false, plugins: [jsxPlugin] }).code
+      .replace(/import \{([^}]+)\} from ['"]vue['"];/g, (_, imports) => {
+        const helpers = imports.split(',').filter(item => item.includes(' as _')).join(',').replace(/\s+as\s+/g, ': ')
+        return helpers ? `const {${helpers}} = require('vue')` : ''
+      })
+      .replace(/^import .*$/gm, '')
+  }
+  return new Function('require', ...Object.keys(bindings), source + '\nreturn {' + result + '}')(require, ...Object.values(bindings))
 }
 const providers = new Function(read('consts/AiConstants.js').replace('export const', 'const') + '; return AI_PROVIDERS')()
 const childTypeMapping = new Function('return ' + read('components/common-form-control/index.vue').match(/const childTypeMapping = (\{[\s\S]*?\n\})/)[1])()
@@ -21,7 +32,60 @@ const assertOptions = options => {
     assert.ok(children.every(child => inputType(child) === 'el-option'))
   }
 }
+async function checkDelFlagTag () {
+  const vue = require('vue')
+  const { compile } = require('@vue/compiler-dom')
+  const { renderToString } = require('@vue/server-renderer')
+  const file = 'views/components/utils/DelFlagTag.vue'
+  const template = read(file).match(/<template>([\s\S]*?)<\/template>/)[1]
+  const render = new Function('Vue', compile(template, { mode: 'function', prefixIdentifiers: true }).code)(vue)
+  for (const value of [0, 1, '0', '1']) {
+    for (const custom of [false, true]) {
+      const events = []
+      const confirmations = []
+      let cancel = false
+      const state = setup(file, {
+        computed,
+        defineProps: definitions => ({
+          ...Object.fromEntries(Object.entries(definitions).map(([key, option]) => [key, option.default])),
+          clickToToggle: true,
+          ...(custom ? { typeConfig: { 1: 'primary', 0: 'info' }, valueConfig: { 1: 'Set default', 0: 'Unset default' } } : {})
+        }),
+        defineModel: () => ref(value),
+        defineEmits: () => (...args) => { events.push(args) },
+        $i18nBundle: (key, args) => args?.[0] || key,
+        $i18nKey: (key, text) => text,
+        $coreConfirm: async text => { confirmations.push(text); if (cancel) throw new Error('cancel') }
+      }, 'props,modelValue,typeConf,valueConf,reversedValue,tooltip,handleClick')
+      const target = Number(value) === 1 ? '0' : '1'
+      const action = custom ? (target === '1' ? 'Set default' : 'Unset default') : `common.label.status${target === '1' ? 'Enabled' : 'Disabled'}`
+      assert.equal(state.tooltip.value.content, action)
+      await state.handleClick()
+      assert.deepEqual(events, [['toggleValue', target]])
+      assert.equal(confirmations[0], action)
+      assert.equal(state.modelValue.value, value)
+      cancel = true
+      await assert.rejects(state.handleClick(), /cancel/)
+      assert.equal(events.length, 1)
+      state.props.clickToToggle = false
+      await state.handleClick()
+      assert.equal(events.length, 1)
+      const app = vue.createSSRApp({ setup: () => ({ ...state, ...state.props }), render })
+      app.component('ElLink', (_, { slots }) => h('div', slots.default()))
+      app.component('ElTag', (_, { slots }) => h('span', slots.default()))
+      app.component('ElSwitch', (_, { attrs }) => h('input', { ...attrs, 'data-model': attrs.modelValue }))
+      app.directive('common-tooltip', {})
+      const html = await renderToString(app)
+      assert.ok(html.includes(`--el-switch-on-color:var(--el-color-${custom ? 'primary' : 'success'})`))
+      assert.ok(html.includes(`--el-switch-off-color:var(--el-color-${custom ? 'info' : 'danger'})`))
+      assert.ok(html.includes('disabled'))
+    }
+  }
+  console.log('DelFlagTag regression passed: default/custom colors, numeric/string values, confirmation, cancellation, read-only rendering')
+}
 async function main () {
+  jsxPlugin = (await import('@vue/babel-plugin-jsx')).default
+  await checkDelFlagTag()
   const route = { name: 'AiLogs', query: { configId: '7' } }
   let adapter
   let request
@@ -94,10 +158,17 @@ async function main () {
   const configPage = setup('views/admin/ai/AiConfigs.vue', {
     ...bindings,
     formatDate: value => value,
+    DelFlagTag: { name: 'DelFlagTag' },
     AiConfigApi: { getById: () => new Promise(resolve => edits.push(resolve)) },
     useSearchStatus: () => ({ type: 'select', children: [{ label: 'Enabled', value: 1 }, { label: 'Disabled', value: 0 }] }),
     useAiModels: () => ({ modelOption: ref({ type: 'select', children: [{ label: 'm', value: 'm' }] }) })
-  }, 'options,searchOptions,edit,item')
+  }, 'options,searchOptions,columns,edit,item')
+  for (const prop of ['status', 'isDefault']) {
+    const toggle = configPage.columns.value.find(column => column.prop === prop).formatter({ status: 1, isDefault: 0 })
+    assert.equal(toggle.type.name, 'DelFlagTag')
+    assert.equal(toggle.props.clickToToggle, true)
+    assert.equal(typeof toggle.props.onToggleValue, 'function')
+  }
   assertOptions(configPage.options.value)
   assertOptions(configPage.searchOptions.value)
   const editA = configPage.edit({ id: 1 })

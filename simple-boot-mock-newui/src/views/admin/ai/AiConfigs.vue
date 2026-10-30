@@ -1,5 +1,5 @@
-<script setup>
-import { computed, h, onMounted, ref } from 'vue'
+<script setup lang="jsx">
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { AiConfigApi } from '@/api/mock/AiApi'
@@ -8,6 +8,7 @@ import { $coreConfirm, formatDate } from '@/utils'
 import { useDefaultPage } from '@/config'
 import AiConfigTestWindow from './AiConfigTestWindow.vue'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
+import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import { ElTag } from 'element-plus'
 import { useAiModels } from '@/hooks/AiHooks'
 import { useSearchStatus } from '@/consts/GlobalConstants'
@@ -47,6 +48,18 @@ const save = async data => {
     throw new Error(res.message)
   }
   await searchMethod()
+}
+const toggling = ref(false)
+const toggleConfig = async (row, prop, value) => {
+  if (toggling.value) return
+  toggling.value = true
+  try {
+    await save({ ...row, [prop]: Number(value) })
+  } catch {
+    // Save errors are reported by the shared HTTP handler; keep the displayed value unchanged.
+  } finally {
+    toggling.value = false
+  }
 }
 const remove = async row => {
   await $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
@@ -94,13 +107,34 @@ const columns = computed(() => [
     attrs: { align: 'center' },
     formatter: row => {
       const provider = AI_PROVIDERS.find(item => item.value === row.provider)
-      return h(ElTag, { type: provider?.tagType || 'info' }, () => provider ? $i18nBundle(provider.labelKey) : row.provider)
+      return <ElTag type={provider?.tagType || 'info'}>{provider ? $i18nBundle(provider.labelKey) : row.provider}</ElTag>
     }
   },
   { labelKey: 'mock.label.aiModel', prop: 'defaultModel', minWidth: '180px', attrs: { showOverflowTooltip: true } },
   { labelKey: 'mock.label.aiBaseUrl', prop: 'baseUrl', minWidth: '220px', attrs: { showOverflowTooltip: true } },
-  { labelKey: 'common.label.statusEnable', width: '100px', attrs: { align: 'center' }, formatter: row => h(ElTag, { type: row.status === 1 ? 'success' : 'info' }, () => $i18nBundle(row.status === 1 ? 'common.label.statusEnable' : 'common.label.statusDisable')) },
-  { labelKey: 'mock.label.default', width: '100px', attrs: { align: 'center' }, formatter: row => h(ElTag, { type: row.isDefault === 1 ? 'primary' : 'info' }, () => $i18nBundle(row.isDefault === 1 ? 'common.label.yes' : 'common.label.no')) },
+  {
+    labelKey: 'common.label.status',
+    prop: 'status',
+    width: '100px',
+    attrs: { align: 'center' },
+    formatter: row => <DelFlagTag v-model={row.status}
+                                clickToToggle={!toggling.value}
+                                onToggleValue={value => toggleConfig(row, 'status', value)} />
+  },
+  {
+    labelKey: 'mock.label.setDefault',
+    prop: 'isDefault',
+    width: '100px',
+    attrs: { align: 'center' },
+    formatter: row => <DelFlagTag v-model={row.isDefault}
+                                clickToToggle={!toggling.value}
+                                typeConfig={{ 1: 'primary', 0: 'info' }}
+                                valueConfig={{
+                                  1: $i18nBundle('mock.label.setDefault'),
+                                  0: $i18nBundle('mock.label.cancelDefault')
+                                }}
+                                onToggleValue={value => toggleConfig(row, 'isDefault', value)} />
+  },
   { labelKey: 'common.label.createDate', prop: 'createDate', width: '170px', formatter: row => formatDate(row.createDate) }
 ])
 const buttons = computed(() => [
