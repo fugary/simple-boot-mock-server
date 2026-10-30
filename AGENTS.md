@@ -44,6 +44,7 @@ Simple Boot Mock Server 是一个基于 Spring Boot 开发的轻量级、高性�
 - `/config`: 外部配置文件目录。
 
 ## 5. 当前开发进度 (Current Status)
+- [x] 帮助页 AI 提问：使用当前用户已启用的默认 AI 配置，基于随版本发布的本地功能文档独立问答，复用统一使用日志。功能变更时同步维护 `simple-boot-mock-server/src/main/resources/ai/help.md`。
 - [x] 本地 AI 配置与统一使用日志：用户自行添加 OpenAI 兼容、Anthropic 和 Gemini 配置，支持加载或手填模型、临时切换测试模型及日志筛选、详情和删除，无需配置文件预置。
 - [x] MockTips 使用指南：补充请求诊断、轮询、Schema 示例、AI、导入及场景置顶说明，使用中英文资源词条。
 - [x] GitHub Actions 同版本覆盖发布：默认关闭，仅从 master 覆盖最新正式版本，构建前校验版本及不可变 Release，更新标签时检查分支、旧标签对象与最新版本；正文保持分类更新说明，标签保留追溯信息，支持原运行失败重试。

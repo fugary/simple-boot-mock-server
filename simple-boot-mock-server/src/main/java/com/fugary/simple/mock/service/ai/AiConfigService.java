@@ -8,6 +8,7 @@ import com.fugary.simple.mock.web.vo.AiConfigOption;
 import java.util.List;
 
 public interface AiConfigService extends IService<AiConfig> {
+    AiConfig getDefaultConfig();
     List<AiConfigOption> options();
     AiConfig resolveConnection(AiConfig config);
     AiConfig getOwned(Integer id);

@@ -68,6 +68,23 @@ class AiIntegrationTest {
     }
 
     @Test
+    void helpDefaultIsEnabledAndOwnedByCurrentUser() {
+        login("ai-help-alice");
+        assertNull(configService.getDefaultConfig());
+        AiConfig config = createConfig("Help model");
+        config.setIsDefault(1);
+        config.setStatus(1);
+        controller.save(config);
+        assertEquals(config.getId(), configService.getDefaultConfig().getId());
+        login("ai-help-bob");
+        assertNull(configService.getDefaultConfig());
+        login("ai-help-alice");
+        config.setStatus(0);
+        controller.save(config);
+        assertNull(configService.getDefaultConfig());
+    }
+
+    @Test
     void databaseQueriesEnforceIsolationAndPreserveHistory() {
         login("ai-test-alice");
         AiConfig alice = createConfig("Alice model");

@@ -7,3 +7,6 @@ export const testAiConfig = (id, data) => $httpPost('/admin/ai/configs/' + id + 
 export const loadAiModels = data => $httpPost('/admin/ai/configs/models', data, { timeout: 90000, showErrorMessage: false })
 
 export const loadAiConfigOptions = () => $httpGet('/admin/ai/configs/options')
+
+export const loadAiHelpStatus = () => $httpGet('/admin/ai/help', { showErrorMessage: false })
+export const askAiHelp = prompt => $httpPost('/admin/ai/help', { prompt }, { timeout: 90000, showErrorMessage: false })

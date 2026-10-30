@@ -151,6 +151,12 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
     }
 
     @Override
+    public AiConfig getDefaultConfig() {
+        return getOne(Wrappers.<AiConfig>query().eq("user_name", user())
+            .eq("is_default", 1).eq("status", 1));
+    }
+
+    @Override
     public List<AiConfigOption> options() {
         String owner = user();
         Map<Integer, AiConfigOption> options = new LinkedHashMap<>();

@@ -1,14 +1,34 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onActivated, onMounted, ref } from 'vue'
+import { loadAiHelpStatus } from '@/api/mock/AiApi'
 import { $i18nBundle, $i18nMsg } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
+import MockAiHelp from '@/views/components/mock/MockAiHelp.vue'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const currentTab = defineModel({
   type: String,
   default: 'basic'
 })
+
+const aiHelpAvailable = ref(false)
+let checkingAiHelp = false
+const refreshAiHelpStatus = async () => {
+  if (checkingAiHelp) return
+  checkingAiHelp = true
+  try {
+    const response = await loadAiHelpStatus()
+    aiHelpAvailable.value = response.success && response.resultData === true
+  } catch {
+    aiHelpAvailable.value = false
+  } finally {
+    checkingAiHelp = false
+    if (!aiHelpAvailable.value && currentTab.value === 'aiHelp') currentTab.value = 'guide'
+  }
+}
+onMounted(refreshAiHelpStatus)
+onActivated(refreshAiHelpStatus)
 
 const requestFields = [
   { field: 'request.body', desc: 'body内容对象', descEn: 'Body content object' },
@@ -361,6 +381,14 @@ const fitExampleHeight = (editor, key) => {
       v-model="currentTab"
       class="tip-tabs"
     >
+      <el-tab-pane
+        v-if="aiHelpAvailable"
+        :label="$t('mock.label.aiHelp')"
+        name="aiHelp"
+        lazy
+      >
+        <mock-ai-help />
+      </el-tab-pane>
       <el-tab-pane
         :label="$i18nBundle('mock.label.guideTitle')"
         name="guide"
