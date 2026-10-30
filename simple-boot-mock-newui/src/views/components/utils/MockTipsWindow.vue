@@ -30,7 +30,7 @@ const tipsHeight = computed(() => {
     :show-cancel="false"
     :ok-label="$t('common.label.close')"
     destroy-on-close
-    :title="`${$t('mock.label.requestObject')} & ${$t('mock.label.buildInFunctions')}`"
+    :title="$t('mock.label.guideWindowTitle')"
     append-to-body
     v-bind="$attrs"
   >

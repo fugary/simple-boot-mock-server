@@ -45,7 +45,6 @@ const internalFunctions = [
   { method: 'xml2Json(xmlStr)', desc: '将XML字符串转换成JSON格式', descEn: 'Convert an XML string into JSON format' },
   { method: 'json2Xml(jsonStr, rootName)', desc: '将JSON字符串转换成XML格式', descEn: 'Convert an JSON string into XML format' },
   { method: 'decodeHex(hex)', desc: '将十六进制字符串解码为普通字符串', descEn: 'Decode hexadecimal string to normal string' },
-  { method: 'decodeHex(hex)', desc: '将十六进制字符串解码为普通字符串', descEn: 'Decode hexadecimal string to normal string' },
   { method: 'encodeHex(data)', desc: '将普通字符串编码为十六进制格式', descEn: 'Encode normal string to hexadecimal format' },
   { method: 'md5Hex(data)', desc: '对数据进行 MD5 加密，输出十六进制格式', descEn: 'MD5 encrypt data, output hexadecimal format' },
   { method: 'md5Base64(data)', desc: '对数据进行 MD5 加密，输出 Base64 格式', descEn: 'MD5 encrypt data, output Base64 format' },
@@ -320,6 +319,29 @@ const calcHeight = (text) => {
   return text.split('\n').length * 20 + 'px'
 }
 
+const guideSections = computed(() => [{
+  title: $i18nBundle('mock.label.guideDiagnosticsTitle'),
+  text: $i18nBundle('mock.msg.guideDiagnosticsText')
+}, {
+  title: $i18nBundle('mock.label.guideRoundRobinTitle'),
+  text: $i18nBundle('mock.msg.guideRoundRobinText')
+}, {
+  title: $i18nBundle('mock.label.guideSchemaTitle'),
+  text: $i18nBundle('mock.msg.guideSchemaText')
+}, {
+  title: $i18nBundle('mock.label.guideAiTitle'),
+  text: $i18nBundle('mock.msg.guideAiText')
+}, {
+  title: $i18nBundle('mock.label.guideImportTitle'),
+  text: $i18nBundle('mock.msg.guideImportText')
+}, {
+  title: $i18nBundle('mock.label.guideScenarioTitle'),
+  text: $i18nBundle('mock.msg.guideScenarioText')
+}, {
+  title: $i18nBundle('mock.label.guideScriptsTitle'),
+  text: $i18nBundle('mock.msg.guideScriptsText')
+}])
+
 const exampleHeights = ref({})
 const fitExampleHeight = (editor, key) => {
   const updateHeight = () => {
@@ -339,6 +361,20 @@ const fitExampleHeight = (editor, key) => {
       v-model="currentTab"
       class="tip-tabs"
     >
+      <el-tab-pane
+        :label="$i18nBundle('mock.label.guideTitle')"
+        name="guide"
+        lazy
+      >
+        <section
+          v-for="section in guideSections"
+          :key="section.title"
+          class="guide-section"
+        >
+          <h3>{{ section.title }}</h3>
+          <p>{{ section.text }}</p>
+        </section>
+      </el-tab-pane>
       <el-tab-pane
         lazy
         :label="$t('mock.label.buildInObjects')"
@@ -425,5 +461,13 @@ const fitExampleHeight = (editor, key) => {
 </template>
 
 <style scoped>
-
+.guide-section {
+  padding: 0 12px 12px;
+  color: var(--el-text-color-primary);
+  line-height: 1.8;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.guide-section p {
+  color: var(--el-text-color-regular);
+}
 </style>
