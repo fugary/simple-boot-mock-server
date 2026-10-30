@@ -9,7 +9,7 @@ import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
 const currentTab = defineModel({
   type: String,
-  default: 'basic'
+  default: 'guide'
 })
 
 const aiHelpAvailable = ref(false)
@@ -339,28 +339,14 @@ const calcHeight = (text) => {
   return text.split('\n').length * 20 + 'px'
 }
 
-const guideSections = computed(() => [{
-  title: $i18nBundle('mock.label.guideDiagnosticsTitle'),
-  text: $i18nBundle('mock.msg.guideDiagnosticsText')
-}, {
-  title: $i18nBundle('mock.label.guideRoundRobinTitle'),
-  text: $i18nBundle('mock.msg.guideRoundRobinText')
-}, {
-  title: $i18nBundle('mock.label.guideSchemaTitle'),
-  text: $i18nBundle('mock.msg.guideSchemaText')
-}, {
-  title: $i18nBundle('mock.label.guideAiTitle'),
-  text: $i18nBundle('mock.msg.guideAiText')
-}, {
-  title: $i18nBundle('mock.label.guideImportTitle'),
-  text: $i18nBundle('mock.msg.guideImportText')
-}, {
-  title: $i18nBundle('mock.label.guideScenarioTitle'),
-  text: $i18nBundle('mock.msg.guideScenarioText')
-}, {
-  title: $i18nBundle('mock.label.guideScriptsTitle'),
-  text: $i18nBundle('mock.msg.guideScriptsText')
-}])
+const quickStartSteps = ['Group', 'Request', 'Response', 'Test']
+const quickStartResponse = `{
+  "code": 0,
+  "message": "ok",
+  "data": { "id": 1, "name": "Alice" }
+}`
+const commonGuideSections = ['Response', 'Proxy', 'Import', 'Diagnostics']
+const advancedGuideSections = ['Scenario', 'RoundRobin', 'Schema', 'Ai', 'Scripts']
 
 const exampleHeights = ref({})
 const fitExampleHeight = (editor, key) => {
@@ -394,14 +380,51 @@ const fitExampleHeight = (editor, key) => {
         name="guide"
         lazy
       >
-        <section
-          v-for="section in guideSections"
-          :key="section.title"
-          class="guide-section"
-        >
-          <h3>{{ section.title }}</h3>
-          <p>{{ section.text }}</p>
-        </section>
+        <div class="user-guide">
+          <section class="guide-section">
+            <h3>{{ $t('mock.label.guideQuickStartTitle') }}</h3>
+            <p>{{ $t('mock.msg.guideIntroText') }}</p>
+            <ol class="guide-steps">
+              <li
+                v-for="step in quickStartSteps"
+                :key="step"
+              >
+                {{ $t('mock.msg.guideStep' + step) }}
+              </li>
+            </ol>
+            <div class="guide-example-title">
+              {{ $t('mock.label.guideSampleTitle') }}
+              <mock-url-copy-link :content="quickStartResponse" />
+            </div>
+            <pre class="guide-example"><code>{{ quickStartResponse }}</code></pre>
+            <p>{{ $t('mock.msg.guideExpectedText') }}</p>
+          </section>
+          <section class="guide-section">
+            <h3>{{ $t('mock.label.guideCommonTitle') }}</h3>
+            <dl class="guide-topics">
+              <template
+                v-for="topic in commonGuideSections"
+                :key="topic"
+              >
+                <dt>{{ $t('mock.label.guide' + topic + 'Title') }}</dt>
+                <dd>{{ $t('mock.msg.guide' + topic + 'Text') }}</dd>
+              </template>
+            </dl>
+          </section>
+          <section class="guide-section">
+            <h3>{{ $t('mock.label.guideAdvancedTitle') }}</h3>
+            <el-collapse class="guide-advanced">
+              <el-collapse-item
+                v-for="topic in advancedGuideSections"
+                :key="topic"
+                :name="topic"
+                :title="$t('mock.label.guide' + topic + 'Title')"
+              >
+                <p>{{ $t('mock.msg.guide' + topic + 'Text') }}</p>
+              </el-collapse-item>
+            </el-collapse>
+          </section>
+        </div>
       </el-tab-pane>
       <el-tab-pane
         lazy
@@ -489,13 +512,104 @@ const fitExampleHeight = (editor, key) => {
 </template>
 
 <style scoped>
+.user-guide {
+  font-size: var(--el-font-size-base);
+  color: var(--el-text-color-regular);
+  line-height: 1.6;
+}
 .guide-section {
-  padding: 0 12px 12px;
-  color: var(--el-text-color-primary);
-  line-height: 1.8;
+  padding: 16px 0;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
+.guide-section:last-child {
+  border-bottom: 0;
+}
+.guide-section h3 {
+  margin: 0 0 12px;
+  font-size: var(--el-font-size-base);
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
 .guide-section p {
+  margin: 8px 0;
+}
+.guide-steps {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+.guide-steps li + li {
+  margin-top: 8px;
+}
+.guide-example-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.guide-example {
+  margin: 8px 0;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: inherit;
+  background: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--el-border-radius-base);
+}
+.guide-topics {
+  margin: 0;
+}
+.guide-topics dt {
+  margin-top: 12px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+}
+.guide-topics dd {
+  margin: 4px 0 0;
+}
+.user-guide :deep(.el-collapse-item__header),
+.user-guide :deep(.el-collapse-item__content) {
+  font-size: inherit;
+}
+.guide-advanced {
+  border: 0;
+}
+.guide-advanced :deep(.el-collapse-item) {
+  margin-bottom: 10px;
+  overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--el-border-radius-base);
+}
+.guide-advanced :deep(.el-collapse-item:last-child) {
+  margin-bottom: 0;
+}
+.guide-advanced :deep(.el-collapse-item__header) {
+  height: auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  line-height: 1.6;
+  text-align: left;
+  border-bottom: 0;
+  background: var(--el-fill-color-light);
+}
+.guide-advanced :deep(.el-collapse-item__header:hover),
+.guide-advanced :deep(.el-collapse-item__header.is-active) {
+  color: var(--el-color-primary);
+}
+.guide-advanced :deep(.el-collapse-item__arrow) {
+  order: -1;
+  flex-shrink: 0;
+  margin: 0 10px 0 0;
+}
+.guide-advanced :deep(.el-collapse-item__wrap) {
+  border-bottom: 0;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+.guide-advanced :deep(.el-collapse-item__content) {
+  padding: 12px 14px;
+  line-height: 1.7;
   color: var(--el-text-color-regular);
+}
+.guide-advanced :deep(.el-collapse-item__content p) {
+  margin: 0;
 }
 </style>
