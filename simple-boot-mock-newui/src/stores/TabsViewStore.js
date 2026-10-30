@@ -110,7 +110,8 @@ export const useTabsViewStore = defineStore('tabsView', () => {
           addCachedTab(tab, replaceTab)
         }
       } else {
-        historyTabs.value[idx].accessTime = Date.now()
+        // 同步最新路由参数，避免切回标签页时恢复已清空的筛选条件。
+        Object.assign(historyTabs.value[idx], tab, { accessTime: Date.now() })
       }
     }
   }
