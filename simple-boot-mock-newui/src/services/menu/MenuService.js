@@ -8,7 +8,7 @@
  * @property {string} menuUrl 链接地址
  * @property {[MenuDto]} children 子菜单
  */
-import { $i18nMsg } from '@/messages'
+import { $i18nMsg, $i18nBundle } from '@/messages'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 import { GlobalLocales } from '@/consts/GlobalConstants'
 import { useLoginConfigStore } from '@/stores/LoginConfigStore'
@@ -28,7 +28,7 @@ export const menu2TreeMenu = (menu) => {
    */
   const treeNode = {
     value: menu.id,
-    label: $i18nMsg(menu.nameCn, menu.nameEn)
+    label: menu.labelKey ? $i18nBundle(menu.labelKey) : $i18nMsg(menu.nameCn, menu.nameEn)
   }
   if (menu.children) {
     treeNode.children = menu.children.map(menu2TreeMenu)
@@ -47,7 +47,7 @@ export const menu2CommonMenu = (menu) => {
    */
   const menuItem = {
     icon: menu.iconCls,
-    label: $i18nMsg(menu.nameCn, menu.nameEn),
+    label: menu.labelKey ? $i18nBundle(menu.labelKey) : $i18nMsg(menu.nameCn, menu.nameEn),
     index: menu.menuUrl,
     click: menu.click
   }

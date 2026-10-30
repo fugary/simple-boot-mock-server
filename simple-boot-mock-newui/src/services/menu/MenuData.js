@@ -81,6 +81,20 @@ export const ALL_MENUS = [
     checkEnabled: isAdminUser
   },
   {
+    id: 55,
+    parentId: 5,
+    iconCls: 'Setting',
+    labelKey: 'mock.label.aiConfig',
+    menuUrl: '/admin/ai/configs'
+  },
+  {
+    id: 56,
+    parentId: 5,
+    iconCls: 'Document',
+    labelKey: 'mock.label.aiUsageLogs',
+    menuUrl: '/admin/ai/logs'
+  },
+  {
     id: 59,
     parentId: 5,
     iconCls: 'Coin',

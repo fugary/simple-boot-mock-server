@@ -44,7 +44,7 @@ Simple Boot Mock Server 是一个基于 Spring Boot 开发的轻量级、高性�
 - `/config`: 外部配置文件目录。
 
 ## 5. 当前开发进度 (Current Status)
-- [x] 本地 AI 配置与使用日志后端：提供手动配置、模型发现、调用测试和日志管理接口，支持用户隔离及 H2/MySQL 数据迁移。
+- [x] 本地 AI 配置与统一使用日志：用户自行添加 OpenAI 兼容、Anthropic 和 Gemini 配置，支持加载或手填模型、临时切换测试模型及日志筛选、详情和删除，无需配置文件预置。
 - [x] GitHub Actions 同版本覆盖发布：默认关闭，仅从 master 覆盖最新正式版本，构建前校验版本及不可变 Release，更新标签时检查分支、旧标签对象与最新版本；正文保持分类更新说明，标签保留追溯信息，支持原运行失败重试。
 - [x] 数据导入格式智能识别与提前验证：前端秒级指纹嗅探自动匹配类型、冲突警告与拦截防错，后端 Importer 特征匹配与精准错误诊断。
 - [x] 支持 HAR (HTTP Archive 1.2) 抓包文件一键导入 Mock 分组与请求。
@@ -70,3 +70,5 @@ Simple Boot Mock Server 是一个基于 Spring Boot 开发的轻量级、高性�
 3. **内置工具与文件检索**: 阅读、分析和检索代码与项目文件时，必须优先使用内置专有工具（如 `view_file`、`grep_search` 等），避免随意通过终端执行 `Get-Content`/`cat`/`type` 等 shell 命令读取文件。
 4. **进度记录**: 每次提交后及时同步更新 [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md)。
 5. **架构同步**: 发生重大功能变更时更新 [AGENTS.md](AGENTS.md)。
+
+6. **界面文案国际化**: 新增或修改的界面文案必须使用中英文资源文件 key，优先复用现有 key，不使用 `$i18nMsg` 内联中英文字面量。

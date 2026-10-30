@@ -1,6 +1,14 @@
 const BASE_PATH = '/admin'
 
 export default [{
+  path: '/admin/ai/configs',
+  name: 'AiConfigs',
+  component: () => import('@/views/admin/ai/AiConfigs.vue')
+}, {
+  path: '/admin/ai/logs',
+  name: 'AiLogs',
+  component: () => import('@/views/admin/ai/AiLogs.vue')
+}, {
   path: `${BASE_PATH}/users`,
   name: 'UsersBase',
   children: [{
