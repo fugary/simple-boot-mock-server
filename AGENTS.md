@@ -44,6 +44,7 @@ Simple Boot Mock Server 是一个基于 Spring Boot 开发的轻量级、高性�
 - `/config`: 外部配置文件目录。
 
 ## 5. 当前开发进度 (Current Status)
+- [x] 本地 AI 配置与使用日志后端：提供手动配置、模型发现、调用测试和日志管理接口，支持用户隔离及 H2/MySQL 数据迁移。
 - [x] GitHub Actions 同版本覆盖发布：默认关闭，仅从 master 覆盖最新正式版本，构建前校验版本及不可变 Release，更新标签时检查分支、旧标签对象与最新版本；正文保持分类更新说明，标签保留追溯信息，支持原运行失败重试。
 - [x] 数据导入格式智能识别与提前验证：前端秒级指纹嗅探自动匹配类型、冲突警告与拦截防错，后端 Importer 特征匹配与精准错误诊断。
 - [x] 支持 HAR (HTTP Archive 1.2) 抓包文件一键导入 Mock 分组与请求。
@@ -56,7 +57,7 @@ Simple Boot Mock Server 是一个基于 Spring Boot 开发的轻量级、高性�
 - [x] UI/UX 优化：菜单动画、响应式侧边栏等。
 
 ---
-*Last Updated: 2026-10-28*
+*Last Updated: 2026-10-30*
 
 ## 6. 项目规则 (Project Rules)
 为了保证项目的开发的一致性和质量，AI 代理在协作时需遵循项目内置的规则：
