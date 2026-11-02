@@ -8,7 +8,8 @@ import 'md-editor-v3/lib/preview.css'
 
 const props = defineProps({
   content: { type: String, default: '' },
-  maxHeight: { type: Number, default: 460 }
+  maxHeight: { type: Number, default: 460 },
+  loading: { type: Boolean, default: false }
 })
 const mode = ref('preview')
 const globalConfig = useGlobalConfigStore()
@@ -43,8 +44,19 @@ const previewContent = computed(() => isJson.value ? `\`\`\`json\n${props.conten
       />
       <slot name="actions" />
     </div>
+    <div
+      v-if="loading && !content"
+      class="ai-answer-loading"
+      role="status"
+    >
+      <common-icon
+        icon="Loading"
+        class="is-loading"
+      />
+      {{ $t('mock.msg.aiTestWaiting') }}
+    </div>
     <vue-monaco-editor
-      v-if="mode === 'source'"
+      v-else-if="mode === 'source'"
       :value="content"
       :language="isJson ? 'json' : 'markdown'"
       :height="sourceHeight"
@@ -67,7 +79,8 @@ const previewContent = computed(() => isJson.value ? `\`\`\`json\n${props.conten
 
 <style scoped>
 .ai-answer { width: 100%; min-width: 0; }
-.ai-answer-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.ai-answer-loading { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 120px; border-radius: var(--el-border-radius-base); background: var(--el-fill-color-light); color: var(--el-text-color-placeholder); }
+.ai-answer-toolbar { min-height: 32px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .ai-answer-toolbar :deep(.el-segmented) { margin-right: auto; }
 .ai-answer-preview {
   --md-bk-color: var(--el-fill-color-blank);

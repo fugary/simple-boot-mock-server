@@ -482,3 +482,6 @@ mock.msg.guideStepTest = 'Open the request test, send it and check the result. C
 mock.msg.guideExpectedText = 'The response should contain the sample code, message and data fields. Use the full Mock URL, not just /hello. If the result differs, follow Request diagnostics below.'
 mock.msg.guideResponseText = 'Add success and error responses under the same request and set the one you need as the default. Set a response delay in milliseconds to simulate a slow endpoint. Start with fixed responses, then see Basic examples for random data.'
 mock.msg.guideProxyText = 'Set the real backend proxy URL on the group and configure Mock responses only for endpoints you want to simulate. Other requests are forwarded to the proxy. Pause Mock to temporarily use the real endpoint, then resume it; without a proxy, paused Mock returns 404.'
+
+mock.label.aiConfigSelect = 'AI Configuration'
+mock.label.aiTestResult = 'Test Result'

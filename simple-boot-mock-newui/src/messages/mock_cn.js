@@ -482,3 +482,6 @@ mock.msg.guideStepTest = '打开请求测试并发送请求，检查返回结果
 mock.msg.guideExpectedText = '预期能收到示例中的 code、message 和 data。调用时使用完整 Mock 地址，不能只访问 /hello；若未返回预期内容，按下方“请求诊断”检查。'
 mock.msg.guideResponseText = '在同一个请求下添加成功、失败等响应，并将需要联调的一条设为默认响应。需要模拟慢接口时设置响应延迟（毫秒）。先用固定响应完成页面联调，再到“基本示例”查看随机数据写法。'
 mock.msg.guideProxyText = '在分组中填写真实后端的代理地址，只为需要模拟的接口配置 Mock。其他请求转发到代理地址。临时使用真实接口时可暂停 Mock，完成后恢复；未配置代理时，暂停 Mock 会返回 404。'
+
+mock.label.aiConfigSelect = 'AI接口配置'
+mock.label.aiTestResult = '测试结果'

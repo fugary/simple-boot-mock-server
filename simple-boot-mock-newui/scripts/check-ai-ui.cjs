@@ -241,9 +241,69 @@ async function main () {
   assert.equal(configPage.item.value.apiKey, '')
   const selectedConfig = page.options.value.find(option => option.prop === 'configId').children[0]
   assert.ok(selectedConfig.slots.default())
+  let mountTest
+  const configRequests = []
+  const testCalls = []
+  const switchable = setup('views/admin/ai/AiConfigTestWindow.vue', {
+    h,
+    AiConfigLabel: {},
+    ref,
+    computed,
+    watch,
+    onMounted: callback => { mountTest = callback },
+    onScopeDispose: () => {},
+    defineModel: () => ref(true),
+    defineProps: () => ({ config: {} }),
+    AI_PROVIDERS: providers,
+    useAiModels: () => ({ modelOption: ref({}) }),
+    $i18nBundle: key => key,
+    loadAiConfigOptions: async () => ({
+      success: true,
+      resultData: [
+        { id: 1, status: 0, isDefault: 1 },
+        { id: 2, status: 1 },
+        { id: 3, status: 1, isDefault: 1 },
+        { id: 4, status: 1, deleted: true }
+      ]
+    }),
+    AiConfigApi: { getById: id => new Promise(resolve => configRequests.push({ id, resolve })) },
+    testAiConfig: async (id, data) => { testCalls.push({ id, data }); return { success: true, resultData: { content: 'ok' } } }
+  }, 'configs,formData,formOptions,selectConfig,selectedConfig,executeTest,visible')
+  const mounted = mountTest()
+  await Promise.resolve()
+  assert.deepEqual(switchable.configs.value.map(config => config.id), [2, 3])
+  assert.equal(switchable.formData.value.configId, 3)
+  configRequests[0].resolve({ success: true, resultData: { id: 3, defaultModel: 'default-3' } })
+  await mounted
+  assert.equal(switchable.formData.value.model, 'default-3')
+  const configSelector = switchable.formOptions.value[0]
+  assert.equal(configSelector.slots.label().props.config.id, 3)
+  assert.equal(configSelector.children[0].slots.default().props.config.id, 2)
+  const pendingTest = switchable.executeTest()
+  assert.ok(switchable.formOptions.value.slice(0, 3).every(option => option.disabled))
+  await pendingTest
+  testCalls.length = 0
+  const oldSelection = switchable.selectConfig(2)
+  const newSelection = switchable.selectConfig(3)
+  configRequests[2].resolve({ success: true, resultData: { id: 3, defaultModel: 'new-3' } })
+  await newSelection
+  configRequests[1].resolve({ success: true, resultData: { id: 2, defaultModel: 'stale-2' } })
+  await oldSelection
+  assert.equal(switchable.formData.value.model, 'new-3')
+  switchable.formData.value.model = 'custom-model'
+  await switchable.executeTest()
+  assert.equal(testCalls[0].id, 3)
+  assert.equal(testCalls[0].data.model, 'custom-model')
+  assert.equal(switchable.selectedConfig.value.defaultModel, 'new-3')
+  const closingSelection = switchable.selectConfig(2)
+  switchable.visible.value = false
+  configRequests[3].resolve({ success: true, resultData: { id: 2, defaultModel: 'closed' } })
+  await closingSelection
+  assert.equal(switchable.formData.value.model, '')
   const validations = []
   let calls = 0
   const test = setup('views/admin/ai/AiConfigTestWindow.vue', {
+    onMounted: () => {},
     ref,
     computed,
     watch,
@@ -264,6 +324,7 @@ async function main () {
   const responses = []
   const signals = []
   const cancellation = setup('views/admin/ai/AiConfigTestWindow.vue', {
+    onMounted: () => {},
     ref,
     computed,
     watch,

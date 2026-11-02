@@ -69,7 +69,7 @@ const remove = async row => {
   }
 }
 const showTest = row => {
-  testItem.value = row
+  testItem.value = row || {}
   testVisible.value = true
 }
 
@@ -154,6 +154,12 @@ const buttons = computed(() => [
       @submit-form="searchMethod(1)"
     >
       <template #buttons>
+        <el-button
+          type="success"
+          @click="showTest()"
+        >
+          {{ $t('common.label.test') }}
+        </el-button>
         <el-button
           type="info"
           @click="edit()"

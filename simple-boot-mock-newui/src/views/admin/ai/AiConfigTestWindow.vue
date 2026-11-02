@@ -1,29 +1,96 @@
 <script setup>
-import { computed, onScopeDispose, ref, watch } from 'vue'
+import { computed, h, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { useAiModels } from '@/hooks/AiHooks'
 import { $i18nBundle } from '@/messages'
-import { testAiConfig } from '@/api/mock/AiApi'
+import { AiConfigApi, loadAiConfigOptions, testAiConfig } from '@/api/mock/AiApi'
+import { AI_PROVIDERS } from '@/consts/AiConstants'
 import AiAnswerViewer from '@/views/components/utils/AiAnswerViewer.vue'
-import AiConfigLabel from '@/views/components/utils/AiConfigLabel.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
-import AiResponseJsonAction from '@/views/components/utils/AiResponseJsonAction.vue'
+import AiConfigLabel from '@/views/components/utils/AiConfigLabel.vue'
 const visible = defineModel({ type: Boolean, default: false })
 const props = defineProps({
-  config: { type: Object, required: true }
+  config: { type: Object, default: () => ({}) }
 })
-const formData = ref({ configName: props.config.configName, model: props.config.defaultModel, prompt: $i18nBundle('mock.msg.aiDefaultPrompt'), result: '' })
-const { modelOption } = useAiModels(computed(() => props.config), formData, 'model')
+const formData = ref({ configId: props.config.id, model: props.config.defaultModel, prompt: $i18nBundle('mock.msg.aiDefaultPrompt'), result: '' })
+const configs = ref(props.config.id ? [props.config] : [])
+const selectedConfig = ref(props.config)
+const loadingConfig = ref(false)
+const { modelOption } = useAiModels(selectedConfig, formData, 'model')
+let configSequence = 0
+const selectConfig = async id => {
+  const sequence = ++configSequence
+  stopTest()
+  selectedConfig.value = configs.value.find(config => config.id === id) || {}
+  formData.value.model = ''
+  formData.value.result = ''
+  metrics.value = null
+  error.value = ''
+  stopped.value = false
+  loadingConfig.value = true
+  try {
+    const response = await AiConfigApi.getById(id)
+    if (sequence !== configSequence) return
+    if (response.success) {
+      selectedConfig.value = response.resultData
+      formData.value.model = response.resultData.defaultModel || ''
+    } else {
+      error.value = response.message || $i18nBundle('common.msg.unknownError')
+    }
+  } catch (err) {
+    if (sequence === configSequence) error.value = err?.message || $i18nBundle('common.msg.unknownError')
+  } finally {
+    if (sequence === configSequence) loadingConfig.value = false
+  }
+}
+onMounted(async () => {
+  if (props.config.id) return
+  loadingConfig.value = true
+  try {
+    const response = await loadAiConfigOptions()
+    if (!visible.value) return
+    if (!response.success) {
+      error.value = response.message || $i18nBundle('common.msg.unknownError')
+      return
+    }
+    configs.value = (response.resultData || []).filter(config => !config.deleted && config.status === 1)
+    const initial = configs.value.find(config => config.isDefault === 1) || configs.value[0]
+    if (initial) {
+      formData.value.configId = initial.id
+      await selectConfig(initial.id)
+    }
+  } catch (err) {
+    if (visible.value) error.value = err?.message || $i18nBundle('common.msg.unknownError')
+  } finally {
+    loadingConfig.value = false
+  }
+})
 const formOptions = computed(() => [{
-  labelKey: 'mock.label.aiConfigName',
-  prop: 'configName',
-  slot: 'configName'
-}, modelOption.value, {
+  labelKey: 'mock.label.aiConfigSelect',
+  prop: 'configId',
+  type: 'select',
+  required: true,
+  disabled: !!props.config.id || loadingConfig.value || testing.value,
+  attrs: { clearable: false, filterable: true, loading: loadingConfig.value },
+  slots: {
+    label: () => h(AiConfigLabel, { config: selectedConfig.value })
+  },
+  change: selectConfig,
+  children: configs.value.map(config => {
+    const provider = AI_PROVIDERS.find(provider => provider.value === config.provider)
+    return {
+      value: config.id,
+      label: [provider ? $i18nBundle(provider.labelKey) : '', config.configName, config.baseUrl, config.isDefault === 1 ? $i18nBundle('mock.label.default') : ''].filter(Boolean).join(' · '),
+      slots: { default: () => h(AiConfigLabel, { config }) }
+    }
+  })
+}, { ...modelOption.value, disabled: testing.value || loadingConfig.value }, {
   labelKey: 'mock.label.aiPrompt',
   prop: 'prompt',
   required: true,
-  attrs: { type: 'textarea', rows: 4, maxlength: 16000, showWordLimit: true }
+  disabled: testing.value || loadingConfig.value,
+  attrs: { type: 'textarea', rows: 3, maxlength: 16000, showWordLimit: true }
 }, {
-  labelKey: 'mock.label.aiResult',
+  labelKey: 'mock.label.aiTestResult',
   prop: 'result',
   slot: 'result'
 }])
@@ -46,15 +113,27 @@ const stopTest = () => {
   stopped.value = testing.value
   testing.value = false
 }
-watch(visible, value => { if (!value) stopTest() }, { flush: 'sync' })
+watch(visible, value => {
+  if (!value) {
+    configSequence++
+    stopTest()
+  }
+}, { flush: 'sync' })
 watch(() => props.config, () => {
   stopTest()
-  formData.value = { configName: props.config.configName, model: props.config.defaultModel, prompt: $i18nBundle('mock.msg.aiDefaultPrompt'), result: '' }
+  configSequence++
+  loadingConfig.value = false
+  selectedConfig.value = props.config
+  configs.value = props.config.id ? [props.config] : []
+  formData.value = { configId: props.config.id, model: props.config.defaultModel, prompt: $i18nBundle('mock.msg.aiDefaultPrompt'), result: '' }
   metrics.value = null
   error.value = ''
   stopped.value = false
 })
-onScopeDispose(stopTest)
+onScopeDispose(() => {
+  configSequence++
+  stopTest()
+})
 const executeTest = async () => {
   const current = ++generation
   controller = new AbortController()
@@ -64,7 +143,7 @@ const executeTest = async () => {
   metrics.value = null
   stopped.value = false
   try {
-    const response = await testAiConfig(props.config.id, { prompt: formData.value.prompt, model: formData.value.model }, controller.signal)
+    const response = await testAiConfig(selectedConfig.value.id, { prompt: formData.value.prompt, model: formData.value.model }, controller.signal)
     if (current !== generation) return
     if (response.success) {
       formData.value.result = response.resultData?.content || ''
@@ -83,7 +162,7 @@ const executeTest = async () => {
   }
 }
 const runTest = ({ form }) => {
-  if (!testing.value) {
+  if (!testing.value && !loadingConfig.value) {
     testing.value = true
     const current = generation
     formData.value.prompt = formData.value.prompt.trim()
@@ -103,8 +182,8 @@ const runTest = ({ form }) => {
 <template>
   <common-window
     v-model="visible"
-    :title="$t('mock.label.aiTest')"
-    width="min(900px, calc(100vw - 32px))"
+    :title="$t('common.label.test')"
+    width="min(800px, calc(100vw - 32px))"
     show-fullscreen
     :cancel-label="$t('common.label.close')"
     :ok-label="$t('mock.label.aiSendTest')"
@@ -120,17 +199,8 @@ const runTest = ({ form }) => {
         :model="formData"
         :show-buttons="false"
         :options="formOptions"
-        :disabled="testing"
         label-width="140px"
       >
-        <template #configName="{ option }">
-          <common-form-control
-            :model="formData"
-            :option="option"
-          >
-            <ai-config-label :config="config" />
-          </common-form-control>
-        </template>
         <template #result="{ option }">
           <common-form-control
             :model="formData"
@@ -144,12 +214,19 @@ const runTest = ({ form }) => {
               />
             </template>
             <ai-answer-viewer
-              v-if="formData.result"
+              v-if="formData.result || testing"
               :key="generation"
               :content="formData.result"
+              :loading="testing"
             >
               <template #actions>
-                <ai-response-json-action :response="metrics?.rawResponse" />
+                <el-button
+                  v-if="testing"
+                  size="small"
+                  @click="stopTest"
+                >
+                  {{ $t('mock.label.aiStopWaiting') }}
+                </el-button>
               </template>
             </ai-answer-viewer>
             <div
@@ -157,38 +234,26 @@ const runTest = ({ form }) => {
               class="ai-test-placeholder"
               role="status"
             >
-              <common-icon
-                v-if="testing"
-                icon="Loading"
-                class="is-loading"
-              />
               <el-text type="info">
-                {{ $t(testing ? 'mock.msg.aiTestWaiting' : 'mock.msg.aiTestResultPlaceholder') }}
+                {{ $t('mock.msg.aiTestResultPlaceholder') }}
               </el-text>
             </div>
+            <el-space
+              v-if="metricFields.length"
+              wrap
+              class="margin-top1"
+            >
+              <el-tag
+                v-for="[label, value] in metricFields"
+                :key="label"
+                size="small"
+              >
+                {{ $t(label) }}: {{ value }}
+              </el-tag>
+            </el-space>
           </common-form-control>
         </template>
       </common-form>
-      <el-button
-        v-if="testing"
-        class="ai-stop"
-        @click="stopTest"
-      >
-        {{ $t('mock.label.aiStopWaiting') }}
-      </el-button>
-      <el-space
-        v-if="metricFields.length"
-        wrap
-        class="margin-top1"
-      >
-        <el-tag
-          v-for="[label, value] in metricFields"
-          :key="label"
-          size="small"
-        >
-          {{ $t(label) }}: {{ value }}
-        </el-tag>
-      </el-space>
       <el-alert
         v-if="stopped"
         :title="$t('mock.msg.aiTestStopped')"
@@ -205,6 +270,5 @@ const runTest = ({ form }) => {
   </common-window>
 </template>
 <style scoped>
-.ai-stop { align-self: flex-start; margin-bottom: 12px; }
 .ai-test-placeholder { display: flex; align-items: center; gap: 8px; min-height: 120px; }
 </style>
