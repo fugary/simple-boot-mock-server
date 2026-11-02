@@ -448,7 +448,7 @@ body,
 }
 
 .common-autocomplete .el-tabs__nav-next,
-.el-tabs__nav-prev {
+.common-autocomplete .el-tabs__nav-prev {
     line-height: 30px;
 }
 
