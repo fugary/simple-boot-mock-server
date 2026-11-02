@@ -17,11 +17,11 @@ public class OpenAiChatProvider extends AbstractAiChatProvider {
     }
 
     @Override
-    public AiChatResponse chat(AiConfig config, AiChatRequest request) {
+    public AiChatResponse chat(AiConfig config, AiChatRequest request, AiStreamSession stream) {
         HttpHeaders headers = headers("Authorization", StringUtils.isBlank(config.getApiKey()) ? null : "Bearer " + config.getApiKey());
         Map<String, Object> body = Map.of("model", config.getDefaultModel(), "messages",
             List.of(Map.of("role", "user", "content", request.getPrompt())));
-        JsonNode data = post(url(config.getBaseUrl(), "/chat/completions"), headers, body);
+        JsonNode data = post(url(config.getBaseUrl(), "/chat/completions"), headers, body, stream);
         AiChatResponse response = response(data.path("choices").path(0).path("message").path("content").asText());
         JsonNode usage = data.path("usage");
         response.setPromptTokens(tokenCount(usage, "prompt_tokens"));

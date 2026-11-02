@@ -50,6 +50,46 @@ class AiServiceTest {
     }
 
     @Test
+    void cancellationKeepsPartialAnswerAndOwnerAfterRequestCloses() {
+        AiConfigService configs = mock(AiConfigService.class);
+        AiLogService logs = mock(AiLogService.class);
+        AiChatProvider provider = mock(AiChatProvider.class);
+        when(provider.getProvider()).thenReturn(AiProvider.OPENAI);
+        AiService service = new AiServiceImpl(configs, logs, List.of(provider));
+        AiConfig config = new AiConfig();
+        config.setProvider("openai");
+        config.setStatus(1);
+        config.setDefaultModel("model");
+        when(configs.getOwned(1)).thenReturn(config);
+        org.springframework.mock.web.MockHttpServletRequest servletRequest = new org.springframework.mock.web.MockHttpServletRequest();
+        com.fugary.simple.mock.entity.mock.MockUser user = new com.fugary.simple.mock.entity.mock.MockUser();
+        user.setUserName("stream-user");
+        servletRequest.setAttribute(com.fugary.simple.mock.contants.MockConstants.MOCK_USER_KEY, user);
+        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
+            new org.springframework.web.context.request.ServletRequestAttributes(servletRequest));
+        com.fugary.simple.mock.service.ai.provider.AiStreamSession stream =
+            new com.fugary.simple.mock.service.ai.provider.AiStreamSession(text -> {});
+        when(provider.chat(any(), any(), any())).thenAnswer(call -> {
+            stream.text("partial");
+            servletRequest.removeAttribute(com.fugary.simple.mock.contants.MockConstants.MOCK_USER_KEY);
+            stream.cancel();
+            stream.check();
+            return null;
+        });
+        try {
+            AiChatRequest request = new AiChatRequest();
+            request.setPrompt("hello");
+            assertThrows(java.util.concurrent.CancellationException.class, () -> service.test(1, request, stream));
+            ArgumentCaptor<AiLog> captured = ArgumentCaptor.forClass(AiLog.class);
+            verify(logs).recordForUser(captured.capture(), eq("stream-user"));
+            assertEquals("partial", captured.getValue().getResponseText());
+            assertEquals(0, captured.getValue().getStatus());
+        } finally {
+            org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+        }
+    }
+
+    @Test
     void accessDeniedBeforeProviderInvocation() {
         AiConfigService configs = mock(AiConfigService.class);
         AiLogService logs = mock(AiLogService.class);

@@ -8,7 +8,6 @@ import com.fugary.simple.mock.mapper.mock.AiLogMapper;
 import com.fugary.simple.mock.service.ai.AiLogService;
 import com.fugary.simple.mock.service.ai.AiException;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
-import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.query.AiLogQueryVo;
 import org.apache.commons.lang3.StringUtils;
@@ -58,9 +57,17 @@ public class AiLogServiceImpl extends ServiceImpl<AiLogMapper, AiLog> implements
 
     @Override
     public void record(AiLog log) {
+        recordForUser(log, user());
+    }
+
+    /** 使用调用开始时捕获的用户，连接关闭后不再读取已回收的 Servlet 请求。 */
+    @Override
+    public void recordForUser(AiLog log, String userName) {
+        if (StringUtils.isBlank(userName)) throw new AiException(401, "simple.error.code.401");
         log.setId(null);
-        log.setUserName(user());
-        SimpleMockUtils.addAuditInfo(log);
+        log.setUserName(userName);
+        log.setCreator(userName);
+        if (log.getCreateDate() == null) log.setCreateDate(new java.util.Date());
         save(log);
     }
 

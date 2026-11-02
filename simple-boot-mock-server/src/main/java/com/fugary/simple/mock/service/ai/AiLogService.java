@@ -10,4 +10,5 @@ public interface AiLogService extends IService<AiLog> {
     AiLog getOwned(Integer id);
     boolean deleteOwned(Integer id);
     void record(AiLog log);
+    void recordForUser(AiLog log, String userName);
 }

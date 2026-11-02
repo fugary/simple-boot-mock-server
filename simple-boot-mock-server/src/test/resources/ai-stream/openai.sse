@@ -1,0 +1,13 @@
+: heartbeat
+
+data: {"choices":[{"index":0,"delta":{"role":"assistant","content":"**你好😀**\n","reasoning_content":"private"}}]}
+
+data: {"choices":[{"index":0,"delta":{"content":"```json\n{\"ok\":true}\n```","tool_calls":[{"index":0,"id":"a","type":"function","function":{"name":"search_docs","arguments":"{\"key"}},{"index":1,"id":"b","type":"function","function":{"name":"get_doc","arguments":"{\"docId\":"}}]}}]}
+
+data: {"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"words\":\"退款\"}"},"extra_content":{"google":{"thought_signature":"sig"}}},{"index":1,"function":{"arguments":"42}"}}]},"finish_reason":"tool_calls"}]}
+
+data: {"choices":[],"usage":{"prompt_tokens":10,"completion_tokens":4,"total_tokens":14}}
+
+data: [DONE]
+
+

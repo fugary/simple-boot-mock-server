@@ -8,14 +8,19 @@ import com.fugary.simple.mock.service.ai.AiLogService;
 import com.fugary.simple.mock.service.ai.AiService;
 import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
 import com.fugary.simple.mock.service.ai.provider.AiChatResponse;
+import com.fugary.simple.mock.service.ai.provider.AiSseSupport;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.AiConfigOption;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.AiConfigQueryVo;
 import com.fugary.simple.mock.web.vo.query.AiLogQueryVo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin/ai")
@@ -23,6 +28,9 @@ public class AiController {
     private final AiConfigService configs;
     private final AiLogService logs;
     private final AiService ai;
+
+    @Autowired
+    private AiSseSupport sse;
 
     public AiController(AiConfigService configs, AiLogService logs, AiService ai) {
         this.configs = configs;
@@ -76,6 +84,17 @@ public class AiController {
     @PostMapping("/configs/{id}/test")
     public SimpleResult<AiChatResponse> test(@PathVariable Integer id, @RequestBody AiChatRequest request) {
         return SimpleResultUtils.createSimpleResult(ai.test(id, request));
+    }
+
+    @PostMapping(value = "/configs/{id}/test/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamTest(
+            @PathVariable Integer id, @RequestBody AiChatRequest request) {
+        configs.getOwned(id);
+        return sse.start((emitter, stream) -> {
+            AiChatResponse response = ai.test(id, request, stream);
+            AiSseSupport.send(emitter, "finish",
+                Map.of("status", "SUCCESS", "resultData", response));
+        });
     }
 
     @GetMapping("/configs/{id}/models")

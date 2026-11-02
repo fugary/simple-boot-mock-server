@@ -143,14 +143,19 @@ const executeTest = async () => {
   metrics.value = null
   stopped.value = false
   try {
-    const response = await testAiConfig(selectedConfig.value.id, { prompt: formData.value.prompt, model: formData.value.model }, controller.signal)
-    if (current !== generation) return
-    if (response.success) {
-      formData.value.result = response.resultData?.content || ''
-      metrics.value = response.resultData
-    } else {
-      error.value = response.message || $i18nBundle('common.msg.unknownError')
-    }
+    await testAiConfig(selectedConfig.value.id, { prompt: formData.value.prompt, model: formData.value.model }, {
+      onDelta: data => {
+        if (current === generation) formData.value.result += data.text || ''
+      },
+      onFinish: data => {
+        if (current !== generation) return
+        formData.value.result = data.resultData?.content || formData.value.result
+        metrics.value = data.resultData
+      },
+      onError: data => {
+        if (current === generation) error.value = data.message || $i18nBundle('common.msg.unknownError')
+      }
+    }, controller.signal)
   } catch (err) {
     if (current !== generation) return
     error.value = err?.data?.message || err?.response?.data?.message || err?.message || $i18nBundle('common.msg.unknownError')

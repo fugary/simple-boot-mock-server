@@ -3,21 +3,25 @@ package com.fugary.simple.mock.service.impl.ai;
 import com.fugary.simple.mock.entity.mock.AiConfig;
 import com.fugary.simple.mock.entity.mock.AiLog;
 import com.fugary.simple.mock.service.ai.AiConfigService;
-import com.fugary.simple.mock.service.ai.AiLogService;
-import com.fugary.simple.mock.service.ai.AiService;
-import com.fugary.simple.mock.service.ai.AiProvider;
 import com.fugary.simple.mock.service.ai.AiException;
+import com.fugary.simple.mock.service.ai.AiLogService;
+import com.fugary.simple.mock.service.ai.AiProvider;
+import com.fugary.simple.mock.service.ai.AiService;
 import com.fugary.simple.mock.service.ai.provider.AiChatProvider;
 import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
 import com.fugary.simple.mock.service.ai.provider.AiChatResponse;
+import com.fugary.simple.mock.service.ai.provider.AiStreamSession;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.utils.security.SecurityUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 /** Routes a single request and persists one success or failure record without caching. */
 @Service
@@ -38,6 +42,12 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public AiChatResponse test(Integer configId, AiChatRequest request) {
+        return test(configId, request, null);
+    }
+
+    @Override
+    public AiChatResponse test(Integer configId, AiChatRequest request,
+            AiStreamSession stream) {
         AiConfig config = new AiConfig();
         BeanUtils.copyProperties(configs.getOwned(configId), config);
         if (!config.isEnabled() || request == null || StringUtils.isBlank(request.getPrompt()) || request.getPrompt().length() > 16000) {
@@ -58,9 +68,10 @@ public class AiServiceImpl implements AiService {
         entry.setPrompt(request.getPrompt());
         entry.setCreateDate(new Date());
         entry.setStatus(0);
+        String owner = SecurityUtils.getLoginUserName();
         long start = System.nanoTime();
         try {
-            AiChatResponse response = provider.chat(config, request);
+            AiChatResponse response = stream == null ? provider.chat(config, request) : provider.chat(config, request, stream);
             response.setDurationMs((System.nanoTime() - start) / 1000000);
             entry.setResponseText(StringUtils.left(response.getContent(), 16000));
             entry.setPromptTokens(response.getPromptTokens());
@@ -68,6 +79,9 @@ public class AiServiceImpl implements AiService {
             entry.setTotalTokens(response.getTotalTokens());
             entry.setStatus(1);
             return response;
+        } catch (CancellationException e) {
+            entry.setErrorMessage(SimpleResultUtils.getErrorMsg("simple.ai.cancelled", null));
+            throw e;
         } catch (AiException e) {
             entry.setErrorMessage(SimpleResultUtils.getErrorMsg(e.getMessageKey(), e.getArguments()));
             throw e;
@@ -75,8 +89,10 @@ public class AiServiceImpl implements AiService {
             entry.setErrorMessage(SimpleResultUtils.getErrorMsg("simple.ai.requestFailed", null));
             throw new AiException(500, "simple.ai.requestFailed");
         } finally {
+            if (stream != null && entry.getStatus() != 1) entry.setResponseText(StringUtils.left(stream.getText(), 16000));
             entry.setDurationMs((System.nanoTime() - start) / 1000000);
-            logs.record(entry);
+            if (stream == null) logs.record(entry);
+            else logs.recordForUser(entry, owner);
         }
     }
 

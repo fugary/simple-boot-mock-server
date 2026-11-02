@@ -1,0 +1,5 @@
+data: {"candidates":[{"content":{"role":"model","parts":[{"text":"private","thought":true,"thoughtSignature":"reason-sig"},{"text":"**你好😀**\n"}]}}]}
+
+data: {"candidates":[{"content":{"role":"model","parts":[{"text":"```json\n{\"ok\":true}\n```"},{"functionCall":{"name":"search_docs","args":{"keywords":"退款"}},"thoughtSignature":"sig"},{"functionCall":{"id":"b","name":"get_doc","args":{"docId":42}}}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":10,"candidatesTokenCount":4,"totalTokenCount":14}}
+
+
