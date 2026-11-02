@@ -54,13 +54,11 @@ const internalFunctions = [
   { method: 'fetch(url, options)', desc: 'fetch支持，async/await异步函数支持', descEn: 'fetch support, async/await functions support' },
   {
     method: 'require(url, options)',
-    desc: '提供一个异步版的 CommonJS 风格 require 方法，用于动态加载第三方库。支持 module.exports 和 exports 形式的模块导出，不支持 ESM (export / import) 模块。返回 Promise，可用于异步获取远程或本地模块内容。',
-    descEn: 'Provides an asynchronous CommonJS-style require method for dynamically loading third-party libraries. Supports modules exported via module.exports and exports, but does not support ESM (export / import) modules. Returns a Promise that resolves to the loaded module’s exports.'
+    descKey: 'mock.msg.requireDescription'
   },
   {
     method: 'clearRequireCache',
-    desc: '清空 require 函数的缓存。默认情况下，require 函数会缓存已加载过的 URL 模块数据，避免重复加载。',
-    descEn: 'Clears the cache of the require function. By default, the require function caches loaded module data by URL to avoid redundant requests.'
+    descKey: 'mock.msg.clearRequireCacheDescription'
   },
   { method: 'xml2Json(xmlStr)', desc: '将XML字符串转换成JSON格式', descEn: 'Convert an XML string into JSON format' },
   { method: 'json2Xml(jsonStr, rootName)', desc: '将JSON字符串转换成XML格式', descEn: 'Convert an JSON string into XML format' },
@@ -87,6 +85,9 @@ const internalFunctions = [
   { method: 'decryptSM4(data, key, options)', desc: '使用 SM4 解密数据', descEn: 'Decrypt data using SM4' },
   { method: 'decryptRSA(data, key, options)', desc: '使用 RSA 解密数据', descEn: 'Decrypt data using RSA' }
 ]
+const internalFunctionRows = computed(() => internalFunctions.map(item => item.descKey
+  ? { ...item, desc: $i18nBundle(item.descKey, { options: '{ cache: false }' }), descEn: $i18nBundle(item.descKey, { options: '{ cache: false }' }) }
+  : item))
 
 const requestColumns = computed(() => {
   return [
@@ -547,7 +548,7 @@ const fitExampleHeight = (editor, key) => {
         name="buildIn"
       >
         <common-table
-          :data="internalFunctions"
+          :data="internalFunctionRows"
           :columns="functionColumns"
         />
       </el-tab-pane>

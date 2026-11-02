@@ -57,6 +57,8 @@ simple:
     cache:
       # 按名称配置独立的本地缓存；新增缓存也在这里注册，重启后生效。
       specs:
+        # require 源码缓存；过期或淘汰后，各引擎下次加载时同步更新模块。
+        require-source: ${MOCK_REQUIRE_SOURCE_CACHE_SPEC:maximumSize=1000,expireAfterWrite=5m}
         preview-meta: ${MOCK_PREVIEW_META_CACHE_SPEC:maximumSize=10000,expireAfterWrite=10m}
         # 过期或容量淘汰后，该分组重新从第一条响应开始轮询。
         round-robin: ${MOCK_ROUND_ROBIN_CACHE_SPEC:maximumSize=10000,expireAfterAccess=30m}

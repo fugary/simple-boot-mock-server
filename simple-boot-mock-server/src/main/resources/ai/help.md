@@ -83,7 +83,7 @@ response.statusCode 是状态码；response.headers 是响应头；response.body
   return await response.json();
 }())
 ```
-require(url, options) 是异步 CommonJS 风格模块加载，返回 Promise，使用 await require(...)。支持 module.exports 和 exports，不支持 ESM export/import。默认按 URL 缓存模块，帮助页列有 clearRequireCache 缓存清理函数。不要把完整 Node.js 运行环境或 npm 包自动安装能力视为本项目能力。
+require(url, options) 是异步 CommonJS 风格模块加载，返回 Promise，使用 await require(...)。支持 module.exports 和 exports，不支持 ESM export/import。默认按 URL 缓存源码，写入后 5 分钟过期（可配置），过期或淘汰后各引擎在下次 require 时重新加载模块。使用 await require(url, { cache: false }) 跳过两层缓存，本次结果不更新已有缓存。调用 clearRequireCache() 清空当前服务实例的共享源码缓存和当前引擎模块缓存，其他引擎下次 require 时同步失效。配置项为 simple.mock.cache.specs.require-source，环境变量 MOCK_REQUIRE_SOURCE_CACHE_SPEC，默认 maximumSize=1000,expireAfterWrite=5m，修改后重启生效。不同服务实例独立缓存。不要把完整 Node.js 运行环境或 npm 包自动安装能力视为本项目能力。
 
 ## 内置工具与加解密
 内置 Mock.mock、dayjs、xml2Json(xmlStr)、json2Xml(jsonStr, rootName)、encodeHex、decodeHex、btoa、atob。提供 md5Hex/md5Base64、sha1Hex/sha1Base64、sha256Hex/sha256Base64；encryptAES/decryptAES、encryptDES/decryptDES、encrypt3DES/decrypt3DES、encryptSM4/decryptSM4、encryptRSA/decryptRSA，以及 signRSA/verifyRSA。加密调用接受 data、key、options，具体算法选项须以本项目帮助示例和实现为准；本文未列出默认模式和填充，不应猜测。

@@ -24,6 +24,9 @@ class MockCacheConfigTest {
         assertEquals(10000, preview.policy().eviction().orElseThrow().getMaximum());
         assertEquals(10, preview.policy().expireAfterWrite().orElseThrow().getExpiresAfter(TimeUnit.MINUTES));
         assertEquals(30, roundRobin.policy().expireAfterAccess().orElseThrow().getExpiresAfter(TimeUnit.MINUTES));
+        Cache<?, ?> require = (Cache<?, ?>) manager.getCache(MockCacheNames.REQUIRE_SOURCE).getNativeCache();
+        assertEquals(5, require.policy().expireAfterWrite().orElseThrow().getExpiresAfter(TimeUnit.MINUTES));
+        assertEquals(1000, require.policy().eviction().orElseThrow().getMaximum());
         assertNull(manager.getCache("typo"));
         manager.getCache(MockCacheNames.PREVIEW_META).put("same-key", "preview");
         assertNull(manager.getCache(MockCacheNames.ROUND_ROBIN).get("same-key"));
@@ -39,6 +42,19 @@ class MockCacheConfigTest {
                 .getCache(MockCacheNames.ROUND_ROBIN).getNativeCache();
         assertEquals(20, cache.policy().eviction().orElseThrow().getMaximum());
         assertEquals(5, cache.policy().expireAfterAccess().orElseThrow().getExpiresAfter(TimeUnit.MINUTES));
+        assertTrue(properties.getCache().getSpecs().containsKey(MockCacheNames.PREVIEW_META));
+    }
+
+    @Test
+    void shouldOverrideRequireSpecAndRetainOtherDefaults() {
+        SimpleMockConfigProperties properties = new SimpleMockConfigProperties();
+        new Binder(new MapConfigurationPropertySource(Map.of(
+                "simple.mock.cache.specs.require-source", "maximumSize=20,expireAfterWrite=2m")))
+                .bind("simple.mock", Bindable.ofInstance(properties));
+        Cache<?, ?> cache = (Cache<?, ?>) new MockCacheConfig().cacheManager(properties)
+                .getCache(MockCacheNames.REQUIRE_SOURCE).getNativeCache();
+        assertEquals(20, cache.policy().eviction().orElseThrow().getMaximum());
+        assertEquals(2, cache.policy().expireAfterWrite().orElseThrow().getExpiresAfter(TimeUnit.MINUTES));
         assertTrue(properties.getCache().getSpecs().containsKey(MockCacheNames.PREVIEW_META));
     }
 

@@ -1,6 +1,7 @@
 package com.fugary.simple.mock.config.script;
 
 import com.fugary.simple.mock.config.SimpleMockConfigProperties;
+import com.fugary.simple.mock.cache.RequireSourceCache;
 import com.fugary.simple.mock.push.DefaultScriptWithFetchProviderImpl;
 import com.fugary.simple.mock.push.ScriptWithFetchProvider;
 import com.fugary.simple.mock.script.JavaScriptEngineFactory;
@@ -31,6 +32,9 @@ public class ScriptEngineConfig {
 
     @Autowired
     private SimpleMockConfigProperties simpleMockConfigProperties;
+
+    @Autowired
+    private RequireSourceCache requireSourceCache;
 
     @Bean
     public ScriptWithFetchProvider scriptWithFetchProvider() {
@@ -88,6 +92,7 @@ public class ScriptEngineConfig {
     @Bean
     public JavaScriptEngineFactory javaScriptEngineFactory() {
         JavaScriptEngineFactory javaScriptEngineFactory = new JavaScriptEngineFactory();
+        javaScriptEngineFactory.setRequireSourceCache(requireSourceCache);
         javaScriptEngineFactory.setScriptWithFetchProvider(scriptWithFetchProvider());
         return javaScriptEngineFactory;
     }

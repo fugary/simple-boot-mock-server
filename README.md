@@ -70,6 +70,26 @@
 15. 除了H2数据库，增加MySQL数据库支持
 16. 支持通过内置函数，实现解密请求或加密响应
 
+## require 模块缓存
+
+`await require(url)` 按 URL 缓存模块源码，复用 Caffeine，默认最多 1000 条、写入后 5 分钟过期。访问不会延长有效期；过期或容量淘汰后，下次调用重新获取源码，各 JavaScript 引擎的模块缓存也会同步失效并重新执行模块。模块导出对象仍由各引擎独立保存。
+
+可在外部 `config/application.yml` 中配置，修改后重启生效：
+
+```yaml
+simple:
+  mock:
+    cache:
+      specs:
+        require-source: maximumSize=1000,expireAfterWrite=5m
+```
+
+也可使用环境变量 `MOCK_REQUIRE_SOURCE_CACHE_SPEC`。例如 `maximumSize=1000,expireAfterWrite=1m` 将有效期改为 1 分钟。
+
+- `await require(url, { cache: false })` 跳过源码和模块两层缓存，本次加载不会更新或删除已有缓存。
+- `clearRequireCache()` 清空当前服务实例的共享源码缓存及当前引擎模块缓存；其他引擎在下次 `require` 时失效。多服务实例的缓存相互独立。
+- 缓存键仅为 URL，不区分请求头等选项；同一 URL 需要按请求选项返回不同脚本时，请使用 `cache: false`。
+
 ## GitHub Actions 发布
 
 在 GitHub 的 **Actions → Build and Release → Run workflow** 中选择 `master`，在 `tag_name` 输入正式版本号（如 `2.14.8` 或 `v2.14.8`）即可发布，无需提前修改版本文件或创建 tag。

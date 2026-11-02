@@ -64,34 +64,56 @@
             throw new Error("Unsupported require module specifier: " + url);
         }
         const { cache, ...fetchOptions } = options || {};
-        const cacheEnabled = cache !== false;
+        const sourceCache = globalThis.__requireSourceCache__;
+        const cacheEnabled = cache !== false && !!sourceCache;
         const requireCache = globalThis.__requireCache__ || {};
-        if (cacheEnabled && requireCache[url]) {
-            return Promise.resolve(requireCache[url]);
+        const generation = cacheEnabled ? sourceCache.generation() : null;
+        const source = cacheEnabled ? sourceCache.get(url) : null;
+        const cachedModule = requireCache[url];
+        if (source && cachedModule && cachedModule.version === source.version) {
+            return Promise.resolve(cachedModule.exports);
         }
-        return fetch(url, fetchOptions).then(res => {
+        if (cacheEnabled) {
+            delete requireCache[url];
+        }
+        const scriptPromise = source ? Promise.resolve(source.script) : fetch(url, fetchOptions).then(res => {
             if (!res.ok) {
                 throw new Error("Failed to load module: " + url + " (" + res.status + ")");
             }
             return res.text();
-        }).then(script => {
+        });
+        return scriptPromise.then(script => {
+            const entry = cacheEnabled ? (source || sourceCache.getOrPut(url, script, generation)) : null;
+            // 等待 fetch 期间可能已有同 URL 的加载完成，必须使用它发布的源码及版本。
+            const currentModule = requireCache[url];
+            if (entry && currentModule && currentModule.version === entry.version) {
+                return currentModule.exports;
+            }
             const module = {exports: {}};
             try {
-                const moduleWrapper = new Function("module", "exports", script);
+                const moduleWrapper = new Function("module", "exports", entry ? entry.script : script);
                 moduleWrapper(module, module.exports);
             } catch (e) {
+                if (entry) {
+                    sourceCache.invalidate(url, entry.version);
+                }
                 throw new Error("Error evaluating module: " + url + " → " + e.message);
             }
-            cacheEnabled && (requireCache[url] = module.exports);
+            if (entry) {
+                requireCache[url] = {version: entry.version, exports: module.exports};
+            }
             return module.exports;
         });
     };
 
     /**
-     * require缓存清空
+     * 清空共享源码缓存；其他引擎的模块在下次 require 时失效。
      */
     globalThis.clearRequireCache = function () {
-        const requireCache = globalThis.__requireCache__
+        if (globalThis.__requireSourceCache__) {
+            globalThis.__requireSourceCache__.clear();
+        }
+        const requireCache = globalThis.__requireCache__;
         if (requireCache) {
             Object.keys(requireCache).forEach(key => delete requireCache[key]);
         }

@@ -1,6 +1,7 @@
 package com.fugary.simple.mock.script;
 
 import com.fugary.simple.mock.push.ScriptWithFetchProvider;
+import com.fugary.simple.mock.cache.RequireSourceCache;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import lombok.Getter;
 import lombok.Setter;
@@ -73,6 +74,8 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
 
     private ScriptWithFetchProvider scriptWithFetchProvider;
 
+    private RequireSourceCache requireSourceCache;
+
     public JavaScriptEngineFactory() {
         this(new ScriptEngineManager());
     }
@@ -108,6 +111,7 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
             scriptEngine.eval(FAST_MOCK_CONTENT, bindings);
             scriptEngine.eval(jsHelper.getInitStr(), bindings);
             bindings.put("fetch", scriptWithFetchProvider.getFetchFunction((Context) MethodUtils.invokeMethod(bindings, "getContext")));
+            bindings.put("__requireSourceCache__", requireSourceCache);
             bindings.put("__requireCache__", ProxyObject.fromMap(new HashMap<>()));
             scriptEngine.eval(SIMPLE_MOCK_CONTENT, bindings);
         } catch (ScriptException e) {

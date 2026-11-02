@@ -56,6 +56,7 @@ public class SimpleMockConfigProperties {
 
         public CacheProperties() {
             specs.put(MockCacheNames.PREVIEW_META, "maximumSize=10000,expireAfterWrite=10m");
+            specs.put(MockCacheNames.REQUIRE_SOURCE, "maximumSize=1000,expireAfterWrite=5m");
             specs.put(MockCacheNames.ROUND_ROBIN, "maximumSize=10000,expireAfterAccess=30m");
         }
     }

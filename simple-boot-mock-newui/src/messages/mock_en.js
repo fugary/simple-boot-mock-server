@@ -519,3 +519,6 @@ mock.label.aiRequestJson = 'Request JSON'
 mock.msg.aiNoRawRequest = 'No raw request body saved'
 
 mock.label.aiNewConversation = 'New conversation'
+
+mock.msg.requireDescription = 'Asynchronously loads CommonJS modules using module.exports or exports; ESM is not supported. Source is cached by URL for 5 minutes after writing (configurable). After expiration or eviction, each engine reloads the module on its next require call. Use await require(url, {options}) to bypass both caches without updating existing entries. Administrators can configure simple.mock.cache.specs.require-source or MOCK_REQUIRE_SOURCE_CACHE_SPEC (default: maximumSize=1000,expireAfterWrite=5m); restart to apply.'
+mock.msg.clearRequireCacheDescription = 'Call clearRequireCache() to clear the shared source cache in this server instance and the current engine module cache. Other engines invalidate their modules on the next require call.'

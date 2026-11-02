@@ -519,3 +519,6 @@ mock.label.aiRequestJson = '请求 JSON'
 mock.msg.aiNoRawRequest = '未保存原始请求体'
 
 mock.label.aiNewConversation = '新对话'
+
+mock.msg.requireDescription = '异步加载 CommonJS 模块，支持 module.exports 和 exports，不支持 ESM。默认按 URL 缓存源码，写入后 5 分钟过期（可配置），过期或淘汰后各引擎在下次 require 时重新加载模块。使用 await require(url, {options}) 跳过两层缓存，本次结果不更新已有缓存。管理员可通过 simple.mock.cache.specs.require-source 或环境变量 MOCK_REQUIRE_SOURCE_CACHE_SPEC 配置，默认 maximumSize=1000,expireAfterWrite=5m，重启后生效。'
+mock.msg.clearRequireCacheDescription = '调用 clearRequireCache() 清空当前服务实例的共享源码缓存和当前引擎模块缓存；其他引擎在下次 require 时失效。'
