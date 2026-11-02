@@ -5,7 +5,9 @@ export const AiConfigApi = useResourceApi('/admin/ai/configs')
 export const AiLogApi = useResourceApi('/admin/ai/logs')
 export const testAiConfig = (id, data, callbacks, signal) => streamAiRequest('/admin/ai/configs/' + id + '/test/stream', data, callbacks, signal)
 
-export const loadAiModels = data => $httpPost('/admin/ai/configs/models', data, { timeout: 90000, showErrorMessage: false })
+export const loadAiModels = (data, saved = false) => saved
+  ? $httpGet(`/admin/ai/configs/${data.id}/models`, { timeout: 90000, showErrorMessage: false })
+  : $httpPost('/admin/ai/configs/models', data, { timeout: 90000, showErrorMessage: false })
 
 export const loadAiConfigOptions = () => $httpGet('/admin/ai/configs/options')
 

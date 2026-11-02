@@ -21,6 +21,12 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
 
 import java.util.Collections;
+import com.fugary.simple.mock.service.impl.ai.AiServiceImpl;
+import com.fugary.simple.mock.service.ai.provider.AiChatProvider;
+import com.fugary.simple.mock.service.ai.provider.AiChatResponse;
+import com.fugary.simple.mock.service.ai.provider.AiStreamSession;
+import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,6 +41,8 @@ class AiIntegrationTest {
     private AiLogMapper logs;
     @Autowired
     private AiConfigService configService;
+    @Autowired
+    private AiLogService logService;
 
     private void login(String name) {
         MockUser user = new MockUser();
@@ -68,8 +76,49 @@ class AiIntegrationTest {
     }
 
     @Test
-    void helpDefaultIsEnabledAndOwnedByCurrentUser() {
-        login("ai-help-alice");
+    void ordinaryUsersCanUseEnabledConfigsButCannotManageOrOverrideConnections() {
+        login("admin");
+        AiConfig config = createConfig("Shared model");
+        AiChatProvider provider = mock(AiChatProvider.class);
+        when(provider.getProvider()).thenReturn(AiProvider.OPENAI);
+        when(provider.loadModels(any())).thenReturn(Collections.singletonList("test-model"));
+        AiChatResponse answer = new AiChatResponse();
+        answer.setContent("answer");
+        when(provider.chat(any(), any())).thenReturn(answer);
+        when(provider.chat(any(), any(), any())).thenReturn(answer);
+        AiService service = new AiServiceImpl(configService, logService, Collections.singletonList(provider));
+        login("shared-user");
+        assertEquals(Collections.singletonList("test-model"), service.loadModels(config.getId()));
+        assertEquals("answer", service.test(config.getId(), request()).getContent());
+        assertEquals("answer", service.test(config.getId(), request(), new AiStreamSession(text -> {})).getContent());
+        assertEquals(2, controller.searchLogs(logQuery(config.getId())).getResultData().size());
+        assertEquals(403, assertThrows(AiException.class, () -> controller.save(config)).getCode());
+        assertEquals(403, assertThrows(AiException.class, () -> createConfig("Forbidden")).getCode());
+        assertEquals(403, assertThrows(AiException.class, () -> controller.deleteConfig(config.getId())).getCode());
+        config.setBaseUrl("https://attacker.example.com/v1");
+        assertEquals(403, assertThrows(AiException.class, () -> service.loadModels(config)).getCode());
+        login("admin");
+        AiConfig disabled = configs.selectById(config.getId());
+        disabled.setStatus(0);
+        controller.save(disabled);
+        login("shared-user");
+        clearInvocations(provider);
+        assertNull(controller.getConfig(config.getId()).getResultData().getApiKey());
+        assertEquals(403, assertThrows(AiException.class, () -> service.loadModels(config.getId())).getCode());
+        assertEquals(403, assertThrows(AiException.class, () -> service.test(config.getId(), request())).getCode());
+        assertEquals(403, assertThrows(AiException.class, () -> controller.streamTest(config.getId(), request())).getCode());
+        verifyNoInteractions(provider);
+        login("other-user");
+        assertTrue(controller.searchLogs(logQuery(config.getId())).getResultData().isEmpty());
+        RequestContextHolder.resetRequestAttributes();
+        assertEquals(401, assertThrows(AiException.class, () -> controller.getConfig(config.getId())).getCode());
+        assertEquals(401, assertThrows(AiException.class, () -> controller.searchConfigs(new AiConfigQueryVo())).getCode());
+        assertEquals(401, assertThrows(AiException.class, () -> configService.getDefaultConfig()).getCode());
+    }
+
+    @Test
+    void helpDefaultIsEnabledAndSharedByAllUsers() {
+        login("admin");
         assertNull(configService.getDefaultConfig());
         AiConfig config = createConfig("Help model");
         config.setIsDefault(1);
@@ -77,16 +126,25 @@ class AiIntegrationTest {
         controller.save(config);
         assertEquals(config.getId(), configService.getDefaultConfig().getId());
         login("ai-help-bob");
-        assertNull(configService.getDefaultConfig());
-        login("ai-help-alice");
+        assertEquals(config.getId(), configService.getDefaultConfig().getId());
+        assertThrows(AiException.class, () -> controller.save(config));
+        login("admin");
+        AiConfig replacement = createConfig("Replacement default");
+        replacement.setIsDefault(1);
+        controller.save(replacement);
+        assertEquals(0, configs.selectById(config.getId()).getIsDefault());
+        login("ai-help-bob");
+        assertEquals(replacement.getId(), configService.getDefaultConfig().getId());
+        login("admin");
+        replacement.setStatus(0);
+        controller.save(replacement);
         config.setStatus(0);
-        controller.save(config);
         assertNull(configService.getDefaultConfig());
     }
 
     @Test
-    void databaseQueriesEnforceIsolationAndPreserveHistory() {
-        login("ai-test-alice");
+    void sharedConfigurationsKeepLogsPrivateAndPreserveHistory() {
+        login("admin");
         AiConfig alice = createConfig("Alice model");
         AiConfig connection = new AiConfig();
         connection.setId(alice.getId());
@@ -121,7 +179,7 @@ class AiIntegrationTest {
         assertEquals("new-key", configs.selectById(alice.getId()).getApiKey());
 
         AiLog entry = new AiLog();
-        entry.setUserName("ai-test-alice");
+        entry.setUserName("admin");
         entry.setConfigId(alice.getId());
         entry.setConfigName("Alice model");
         entry.setPrompt("private prompt");
@@ -129,13 +187,17 @@ class AiIntegrationTest {
         entry.setStatus(1);
         logs.insert(entry);
 
+        AiConfig bob = createConfig("Second public model");
+        edited.setStatus(0);
+        controller.save(edited);
         login("ai-test-bob");
         assertThrows(AiException.class, () -> configService.resolveConnection(connection));
         connection.setApiKey("own-key");
         assertThrows(AiException.class, () -> configService.resolveConnection(connection));
         assertThrows(AiException.class, () -> controller.loadModels(alice.getId()));
-        AiConfig bob = createConfig("Bob model");
-        assertThrows(AiException.class, () -> controller.getConfig(alice.getId()));
+        assertThrows(AiException.class, () -> createConfig("Forbidden"));
+        assertThrows(AiException.class, () -> controller.save(edited));
+        assertNull(controller.getConfig(alice.getId()).getResultData().getApiKey());
         assertThrows(AiException.class, () -> controller.deleteConfig(alice.getId()));
         assertThrows(AiException.class, () -> controller.test(alice.getId(), request()));
         assertThrows(AiException.class, () -> controller.getLog(entry.getId()));
@@ -146,8 +208,8 @@ class AiIntegrationTest {
         assertEquals(bob.getId(), controller.searchConfigs(query).getResultData().get(0).getId());
         assertTrue(controller.searchLogs(logQuery(alice.getId())).getResultData().isEmpty());
 
-        login("ai-test-alice");
-        assertThrows(AiException.class, () -> controller.getConfig(bob.getId()));
+        login("admin");
+        assertEquals(bob.getId(), controller.getConfig(bob.getId()).getResultData().getId());
         assertEquals(1, controller.searchLogs(logQuery(alice.getId())).getResultData().size());
         assertTrue(controller.searchLogs(logQuery(bob.getId())).getResultData().isEmpty());
         assertNull(controller.searchLogs(logQuery(alice.getId())).getResultData().get(0).getPrompt());
@@ -158,8 +220,8 @@ class AiIntegrationTest {
     }
 
     @Test
-    void configurationFiltersCombineWithoutLosingUserIsolation() {
-        login("ai-filter-alice");
+    void configurationFiltersWorkForPublicReadOnlyAccess() {
+        login("admin");
         AiConfig target = createConfig("Team primary");
         target.setProvider("anthropic");
         target.setApiKey("private-key");
@@ -168,13 +230,6 @@ class AiIntegrationTest {
         controller.save(target);
         createConfig("Team fallback");
         login("ai-filter-bob");
-        AiConfig foreign = createConfig("Team primary");
-        foreign.setProvider("anthropic");
-        foreign.setApiKey("private-key");
-        foreign.setDefaultModel("claude-example");
-        foreign.setStatus(0);
-        controller.save(foreign);
-        login("ai-filter-alice");
 
         AiConfigQueryVo query = new AiConfigQueryVo();
         query.setKeyword("primary");
@@ -208,13 +263,13 @@ class AiIntegrationTest {
 
     @Test
     void logFiltersAndOptionsIncludeHistoryButNeverAnotherOwner() {
-        login("log-filter-alice");
+        login("admin");
         AiConfig config = createConfig("history config");
         for (int i = 0; i < 11; i++) {
             createConfig("choice " + i);
         }
         AiLog entry = new AiLog();
-        entry.setUserName("log-filter-alice");
+        entry.setUserName("admin");
         entry.setConfigId(config.getId());
         entry.setConfigName(config.getConfigName());
         entry.setModel("test-model");
@@ -250,13 +305,14 @@ class AiIntegrationTest {
         assertEquals(1, controller.searchLogs(query).getResultData().size());
         login("log-filter-bob");
         assertTrue(controller.searchLogs(query).getResultData().isEmpty());
-        assertTrue(controller.options().getResultData().isEmpty());
+        assertEquals(11, controller.options().getResultData().size());
+        assertFalse(controller.options().getResultData().stream().anyMatch(option -> option.getId().equals(config.getId())));
     }
 
 
     @Test
-    void ownerDetailExposesKeyButListsAndOptionsNeverDo() throws Exception {
-        login("key-detail-owner");
+    void onlyAdminDetailExposesKeyAndPublicResponsesNeverDo() throws Exception {
+        login("admin");
         AiConfig config = createConfig("private config");
         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         AiConfig detail = controller.getConfig(config.getId()).getResultData();
@@ -271,7 +327,12 @@ class AiIntegrationTest {
         assertFalse(mapper.writeValueAsString(controller.save(config)).contains("apiKey"));
         assertEquals("private-key", configs.selectById(config.getId()).getApiKey());
         login("key-detail-stranger");
-        assertThrows(AiException.class, () -> controller.getConfig(config.getId()));
+        assertNull(controller.getConfig(config.getId()).getResultData().getApiKey());
+        assertFalse(mapper.writeValueAsString(controller.getConfig(config.getId())).contains("private-key"));
+        assertFalse(mapper.writeValueAsString(controller.searchConfigs(new AiConfigQueryVo())).contains("private-key"));
+        assertFalse(mapper.writeValueAsString(controller.options()).contains("private-key"));
+        login("admin");
+        assertEquals("private-key", controller.getConfig(config.getId()).getResultData().getApiKey());
     }
 
 }

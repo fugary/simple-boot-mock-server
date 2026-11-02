@@ -11,8 +11,9 @@ public interface AiConfigService extends IService<AiConfig> {
     AiConfig getDefaultConfig();
     List<AiConfigOption> options();
     AiConfig resolveConnection(AiConfig config);
-    AiConfig getOwned(Integer id);
+    AiConfig getConfig(Integer id);
+    AiConfig getUsableConfig(Integer id);
     AiConfig saveConfig(AiConfig config);
-    boolean deleteOwned(Integer id);
+    boolean deleteConfig(Integer id);
     Page<AiConfig> search(AiConfigQueryVo query);
 }

@@ -25,7 +25,7 @@ class AiServiceTest {
         config.setProvider("openai");
         config.setStatus(1);
         config.setDefaultModel("model");
-        when(configs.getOwned(1)).thenReturn(config);
+        when(configs.getUsableConfig(1)).thenReturn(config);
         AiChatResponse response = new AiChatResponse();
         response.setContent("answer");
         response.setPromptTokens(2);
@@ -60,7 +60,7 @@ class AiServiceTest {
         config.setProvider("openai");
         config.setStatus(1);
         config.setDefaultModel("model");
-        when(configs.getOwned(1)).thenReturn(config);
+        when(configs.getUsableConfig(1)).thenReturn(config);
         org.springframework.mock.web.MockHttpServletRequest servletRequest = new org.springframework.mock.web.MockHttpServletRequest();
         com.fugary.simple.mock.entity.mock.MockUser user = new com.fugary.simple.mock.entity.mock.MockUser();
         user.setUserName("stream-user");
@@ -96,7 +96,7 @@ class AiServiceTest {
         AiChatProvider provider = mock(AiChatProvider.class);
         when(provider.getProvider()).thenReturn(AiProvider.OPENAI);
         AiService service = new AiServiceImpl(configs, logs, List.of(provider));
-        when(configs.getOwned(1)).thenThrow(new AiException(404, "simple.error.code.404"));
+        when(configs.getUsableConfig(1)).thenThrow(new AiException(404, "simple.error.code.404"));
         assertThrows(AiException.class, () -> service.test(1, new AiChatRequest()));
         verify(provider, never()).chat(any(), any());
         verifyNoInteractions(logs);

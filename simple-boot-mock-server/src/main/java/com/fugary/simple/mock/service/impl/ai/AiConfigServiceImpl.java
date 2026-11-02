@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
 import java.util.Date;
 
-/** Owns configuration validation, user isolation and atomic default selection. */
+/** Validates shared configurations and restricts management to administrators. */
 @Service
 public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> implements AiConfigService {
     @Autowired
@@ -42,8 +42,9 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
     }
 
     @Override
-    public AiConfig getOwned(Integer id) {
-        AiConfig value = baseMapper.selectOne(Wrappers.<AiConfig>query().eq("id", id).eq("user_name", user()));
+    public AiConfig getConfig(Integer id) {
+        user();
+        AiConfig value = baseMapper.selectOne(Wrappers.<AiConfig>query().eq("id", id));
         if (value == null) {
             throw new AiException(404, "simple.error.code.404");
         }
@@ -52,9 +53,10 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
 
     @Override
     public Page<AiConfig> search(AiConfigQueryVo query) {
+        user();
         return baseMapper.selectPage(SimpleResultUtils.toPage(query), Wrappers.<AiConfig>query()
             .select(AiConfig.class, field -> !"apiKey".equals(field.getProperty()))
-            .eq("user_name", user()).like(StringUtils.isNotBlank(query.getKeyword()), "config_name", query.getKeyword())
+            .like(StringUtils.isNotBlank(query.getKeyword()), "config_name", query.getKeyword())
             .eq(StringUtils.isNotBlank(query.getProvider()), "provider", StringUtils.trim(query.getProvider()))
             .like(StringUtils.isNotBlank(query.getDefaultModel()), "default_model", StringUtils.trim(query.getDefaultModel()))
             .eq(query.getStatus() != null, "status", query.getStatus()).orderByDesc("id"));
@@ -63,8 +65,9 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
     @Override
     @Transactional
     public AiConfig saveConfig(AiConfig input) {
+        requireAdmin();
         String owner = user();
-        AiConfig old = input.getId() == null ? null : getOwned(input.getId());
+        AiConfig old = input.getId() == null ? null : getConfig(input.getId());
         AiConfig value = new AiConfig();
         value.setId(input.getId());
         value.setConfigName(input.getConfigName());
@@ -84,14 +87,14 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
             throw new AiException(400, "simple.ai.invalidConfig");
         }
         value.setProvider(provider);
-        value.setUserName(owner);
+        value.setUserName(old == null ? owner : old.getUserName());
         value.setStatus(Integer.valueOf(0).equals(value.getStatus()) ? 0 : 1);
         value.setIsDefault(Integer.valueOf(1).equals(value.getIsDefault()) ? 1 : 0);
         value.setCreator(old == null ? owner : old.getCreator());
         value.setCreateDate(old == null ? new Date() : old.getCreateDate());
         SimpleMockUtils.addAuditInfo(value);
         if (value.getIsDefault() == 1) {
-            baseMapper.update(null, Wrappers.<AiConfig>update().eq("user_name", owner).set("is_default", 0));
+            baseMapper.update(null, Wrappers.<AiConfig>update().set("is_default", 0));
         }
         if (old == null) {
             baseMapper.insert(value);
@@ -102,8 +105,9 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
     }
 
     @Override
-    public boolean deleteOwned(Integer id) {
-        getOwned(id);
+    public boolean deleteConfig(Integer id) {
+        requireAdmin();
+        getConfig(id);
         return baseMapper.deleteById(id) > 0;
     }
 
@@ -133,11 +137,11 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
 
     @Override
     public AiConfig resolveConnection(AiConfig input) {
-        user();
+        requireAdmin();
         if (input == null) {
             throw new AiException(400, "simple.ai.invalidConfig");
         }
-        AiConfig stored = input.getId() == null ? null : getOwned(input.getId());
+        AiConfig stored = input.getId() == null ? null : getConfig(input.getId());
         AiConfig config = new AiConfig();
         config.setProvider(AiProvider.fromCode(input.getProvider()).getCode());
         config.setBaseUrl(StringUtils.stripEnd(StringUtils.trim(input.getBaseUrl()), "/"));
@@ -152,7 +156,8 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
 
     @Override
     public AiConfig getDefaultConfig() {
-        return getOne(Wrappers.<AiConfig>query().eq("user_name", user())
+        user();
+        return getOne(Wrappers.<AiConfig>query()
             .eq("is_default", 1).eq("status", 1));
     }
 
@@ -162,7 +167,7 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
         Map<Integer, AiConfigOption> options = new LinkedHashMap<>();
         for (AiConfig config : list(Wrappers.<AiConfig>query()
             .select("id", "config_name", "provider", "base_url", "is_default", "status")
-            .eq("user_name", owner).orderByDesc("id"))) {
+            .orderByDesc("id"))) {
             AiConfigOption option = new AiConfigOption();
             BeanUtils.copyProperties(config, option);
             options.put(config.getId(), option);
@@ -179,6 +184,22 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
             }
         }
         return new ArrayList<>(options.values());
+    }
+
+    @Override
+    public AiConfig getUsableConfig(Integer id) {
+        AiConfig config = getConfig(id);
+        if (!config.isEnabled()) {
+            throw new AiException(403, "simple.error.code.403");
+        }
+        return config;
+    }
+
+    private void requireAdmin() {
+        user();
+        if (!SecurityUtils.isAdminUser()) {
+            throw new AiException(403, "simple.error.code.403");
+        }
     }
 
     private void requireSameConnection(AiConfig input, AiConfig stored) {

@@ -31,6 +31,6 @@ class AiLogHttpTest {
         assertEquals(1000, query.getValue().getEndDate().getTime() - query.getValue().getStartDate().getTime());
         mvc.perform(get("/admin/ai/configs/options")).andExpect(status().isOk());
         verify(configs).options();
-        verify(configs, never()).getOwned(any());
+        verify(configs, never()).getConfig(any());
     }
 }

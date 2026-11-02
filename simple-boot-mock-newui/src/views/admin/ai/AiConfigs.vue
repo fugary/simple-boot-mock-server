@@ -3,8 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { AiConfigApi } from '@/api/mock/AiApi'
-import { $i18nBundle } from '@/messages'
-import { $coreConfirm, formatDate } from '@/utils'
+import { $i18nBundle, $i18nKey } from '@/messages'
+import { $coreConfirm, formatDate, isAdminUser } from '@/utils'
 import { useDefaultPage } from '@/config'
 import AiConfigTestWindow from './AiConfigTestWindow.vue'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
@@ -16,6 +16,7 @@ import { AI_PROVIDERS } from '@/consts/AiConstants'
 import { omit } from 'lodash-es'
 
 const router = useRouter()
+const isAdmin = computed(() => isAdminUser())
 let querySequence = 0
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
   defaultParam: { keyword: '', page: useDefaultPage() },
@@ -106,6 +107,11 @@ const options = computed(() => [
   { labelKey: 'common.label.statusEnable', prop: 'status', type: 'switch', attrs: { activeValue: 1, inactiveValue: 0 } },
   { labelKey: 'mock.label.aiDefault', prop: 'isDefault', type: 'switch', attrs: { activeValue: 1, inactiveValue: 0 } }
 ])
+const viewOptions = computed(() => isAdmin.value
+  ? options.value
+  : options.value
+    .filter(option => option.prop !== 'apiKey')
+    .map(option => ({ ...option, disabled: true, required: false, tooltip: undefined, tooltipFunc: undefined })))
 const columns = computed(() => [
   { labelKey: 'mock.label.aiConfigName', prop: 'configName', minWidth: '160px' },
   {
@@ -126,7 +132,7 @@ const columns = computed(() => [
     width: '100px',
     attrs: { align: 'center' },
     formatter: row => <DelFlagTag v-model={row.status}
-                                clickToToggle={!toggling.value}
+                                clickToToggle={isAdmin.value && !toggling.value}
                                 onToggleValue={value => toggleConfig(row, 'status', value)} />
   },
   {
@@ -135,7 +141,7 @@ const columns = computed(() => [
     width: '100px',
     attrs: { align: 'center' },
     formatter: row => <DelFlagTag v-model={row.isDefault}
-                                clickToToggle={!toggling.value}
+                                clickToToggle={isAdmin.value && !toggling.value}
                                 typeConfig={{ 1: 'primary', 0: 'info' }}
                                 valueConfig={{
                                   1: $i18nBundle('mock.label.setDefault'),
@@ -146,9 +152,9 @@ const columns = computed(() => [
   { labelKey: 'common.label.createDate', prop: 'createDate', width: '170px', formatter: row => formatDate(row.createDate) }
 ])
 const buttons = computed(() => [
-  { labelKey: 'common.label.edit', type: 'primary', click: row => edit(row) },
-  { labelKey: 'common.label.test', type: 'success', click: showTest },
-  { labelKey: 'common.label.delete', type: 'danger', click: remove }
+  { labelKey: isAdmin.value ? 'common.label.edit' : 'common.label.view', type: 'primary', click: row => edit(row) },
+  { labelKey: 'common.label.test', type: 'success', buttonIf: row => row.status === 1, click: showTest },
+  { labelKey: 'common.label.delete', type: 'danger', buttonIf: () => isAdmin.value, click: remove }
 ])
 </script>
 <template>
@@ -168,6 +174,7 @@ const buttons = computed(() => [
           {{ $t('common.label.test') }}
         </el-button>
         <el-button
+          v-if="isAdmin"
           type="info"
           @click="edit()"
         >
@@ -197,7 +204,10 @@ const buttons = computed(() => [
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item @click="edit(row, true)">
+              <el-dropdown-item
+                v-if="isAdmin"
+                @click="edit(row, true)"
+              >
                 {{ $t('common.label.copy') }}
               </el-dropdown-item>
               <el-dropdown-item @click="router.push({ name: 'AiLogs', query: { configId: row.id } })">
@@ -212,7 +222,9 @@ const buttons = computed(() => [
       v-model="item"
       v-model:show-edit-window="editVisible"
       :name="$i18nBundle('mock.label.aiConfig')"
-      :form-options="options"
+      :form-options="viewOptions"
+      :editable="isAdmin"
+      :window-attrs="isAdmin ? {} : { title: $i18nKey('common.label.commonView', $i18nBundle('mock.label.aiConfig')) }"
       :save-current-item="save"
       label-width="140px"
     />

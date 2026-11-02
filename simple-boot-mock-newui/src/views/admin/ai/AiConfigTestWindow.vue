@@ -15,7 +15,7 @@ const formData = ref({ configId: props.config.id, model: props.config.defaultMod
 const configs = ref(props.config.id ? [props.config] : [])
 const selectedConfig = ref(props.config)
 const loadingConfig = ref(false)
-const { modelOption } = useAiModels(selectedConfig, formData, 'model')
+const { modelOption } = useAiModels(selectedConfig, formData, 'model', true)
 let configSequence = 0
 const selectConfig = async id => {
   const sequence = ++configSequence

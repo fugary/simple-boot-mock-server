@@ -49,7 +49,7 @@ public class AiServiceImpl implements AiService {
     public AiChatResponse test(Integer configId, AiChatRequest request,
             AiStreamSession stream) {
         AiConfig config = new AiConfig();
-        BeanUtils.copyProperties(configs.getOwned(configId), config);
+        BeanUtils.copyProperties(configs.getUsableConfig(configId), config);
         if (!config.isEnabled() || request == null || StringUtils.isBlank(request.getPrompt()) || request.getPrompt().length() > 16000) {
             throw new AiException(400, "simple.ai.invalidConfig");
         }
@@ -98,7 +98,7 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public List<String> loadModels(Integer configId) {
-        AiConfig config = configs.getOwned(configId);
+        AiConfig config = configs.getUsableConfig(configId);
         return provider(config).loadModels(config);
     }
 

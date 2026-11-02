@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import { loadAiModels } from '@/api/mock/AiApi'
 import { $i18nBundle } from '@/messages'
 
-export const useAiModels = (config, form, modelProp) => {
+export const useAiModels = (config, form, modelProp, saved = false) => {
   const models = ref([])
   const loading = ref(false)
   let generation = 0
@@ -18,7 +18,7 @@ export const useAiModels = (config, form, modelProp) => {
     const requestGeneration = generation
     loading.value = true
     try {
-      const response = await loadAiModels(config.value)
+      const response = await loadAiModels(config.value, saved)
       if (requestGeneration !== generation) return
       if (!response.success || !Array.isArray(response.resultData)) {
         ElMessage.error(response.message || $i18nBundle('common.msg.unknownError'))

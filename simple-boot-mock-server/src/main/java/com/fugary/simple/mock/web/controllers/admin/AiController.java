@@ -10,11 +10,13 @@ import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
 import com.fugary.simple.mock.service.ai.provider.AiChatResponse;
 import com.fugary.simple.mock.service.ai.provider.AiSseSupport;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
+import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.AiConfigOption;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.AiConfigQueryVo;
 import com.fugary.simple.mock.web.vo.query.AiLogQueryVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -51,7 +53,14 @@ public class AiController {
 
     @GetMapping("/configs/{id}")
     public SimpleResult<AiConfig> getConfig(@PathVariable Integer id) {
-        return SimpleResultUtils.createSimpleResult(configs.getOwned(id));
+        AiConfig config = configs.getConfig(id);
+        if (!SecurityUtils.isAdminUser()) {
+            AiConfig visible = new AiConfig();
+            BeanUtils.copyProperties(config, visible);
+            visible.setApiKey(null);
+            config = visible;
+        }
+        return SimpleResultUtils.createSimpleResult(config);
     }
 
     @PostMapping("/configs")
@@ -63,7 +72,7 @@ public class AiController {
 
     @DeleteMapping("/configs/{id}")
     public SimpleResult<Boolean> deleteConfig(@PathVariable Integer id) {
-        return SimpleResultUtils.createSimpleResult(configs.deleteOwned(id));
+        return SimpleResultUtils.createSimpleResult(configs.deleteConfig(id));
     }
 
     @GetMapping("/logs")
@@ -89,7 +98,7 @@ public class AiController {
     @PostMapping(value = "/configs/{id}/test/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamTest(
             @PathVariable Integer id, @RequestBody AiChatRequest request) {
-        configs.getOwned(id);
+        configs.getUsableConfig(id);
         return sse.start((emitter, stream) -> {
             AiChatResponse response = ai.test(id, request, stream);
             AiSseSupport.send(emitter, "finish",
