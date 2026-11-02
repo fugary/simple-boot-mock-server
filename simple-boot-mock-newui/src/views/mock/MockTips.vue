@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onActivated, onMounted, ref } from 'vue'
+import { computed, nextTick, onActivated, onMounted, ref } from 'vue'
 import { loadAiHelpStatus } from '@/api/mock/AiApi'
 import { $i18nBundle, $i18nMsg } from '@/messages'
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
@@ -348,6 +348,29 @@ const quickStartResponse = `{
 const commonGuideSections = ['Response', 'Proxy', 'Import', 'Diagnostics']
 const advancedGuideSections = ['Scenario', 'RoundRobin', 'Schema', 'Ai', 'Scripts']
 
+const guideTopic = ref('QuickStart')
+const guideGroups = [
+  { title: 'guideCommonTitle', topics: commonGuideSections },
+  { title: 'guideAdvancedTitle', topics: advancedGuideSections }
+]
+const guideLinks = { Response: ['basic'], Scripts: ['buildInObjects', 'buildIn', 'basic', 'matchPattern', 'postProcessor', 'fetch'] }
+const tabLabels = computed(() => ({
+  guide: $i18nBundle('mock.label.guideTitle'),
+  buildInObjects: $i18nBundle('mock.label.buildInObjects'),
+  buildIn: $i18nBundle('mock.label.buildInFunctions'),
+  ...Object.fromEntries(exampleGroups.value.map(group => [group.name, group.label]))
+}))
+const currentTopic = computed(() => currentTab.value === 'guide'
+  ? $i18nBundle('mock.label.guide' + guideTopic.value + 'Title')
+  : tabLabels.value[currentTab.value])
+const aiHelp = ref()
+const askAboutTab = async () => {
+  const question = $i18nBundle('mock.msg.aiHelpTopicPrompt', [currentTopic.value])
+  currentTab.value = 'aiHelp'
+  await nextTick()
+  aiHelp.value?.prefillQuestion(question)
+}
+
 const exampleHeights = ref({})
 const fitExampleHeight = (editor, key) => {
   const updateHeight = () => {
@@ -360,20 +383,42 @@ const fitExampleHeight = (editor, key) => {
 
 <template>
   <el-container
-    class="flex-column"
+    class="flex-column mock-tips"
     style="height: calc(100% - 45px)"
   >
+    <div
+      v-if="aiHelpAvailable && currentTab !== 'aiHelp'"
+      class="help-topic-action"
+    >
+      <el-button
+        v-common-tooltip="$t('mock.label.aiHelpAboutTopic', [currentTopic])"
+        :aria-label="$t('mock.label.aiHelpAboutTopic', [currentTopic])"
+        text
+        circle
+        @click="askAboutTab"
+      >
+        <common-icon
+          icon="AutoAwesomeOutlined"
+          :size="18"
+        />
+      </el-button>
+    </div>
     <el-tabs
       v-model="currentTab"
       class="tip-tabs"
+      :class="{ 'ai-help-tabs': currentTab === 'aiHelp', 'has-topic-action': aiHelpAvailable && currentTab !== 'aiHelp' }"
     >
       <el-tab-pane
         v-if="aiHelpAvailable"
         :label="$t('mock.label.aiHelp')"
         name="aiHelp"
+        class="ai-help-pane"
         lazy
       >
-        <mock-ai-help />
+        <mock-ai-help
+          ref="aiHelp"
+          :active="currentTab === 'aiHelp'"
+        />
       </el-tab-pane>
       <el-tab-pane
         :label="$i18nBundle('mock.label.guideTitle')"
@@ -381,48 +426,98 @@ const fitExampleHeight = (editor, key) => {
         lazy
       >
         <div class="user-guide">
-          <section class="guide-section">
+          <nav
+            class="guide-nav"
+            :aria-label="$t('mock.label.guideTitle')"
+          >
+            <button
+              type="button"
+              :class="{ active: guideTopic === 'QuickStart' }"
+              :aria-pressed="guideTopic === 'QuickStart'"
+              @click="guideTopic = 'QuickStart'"
+            >
+              {{ $t('mock.label.guideQuickStartTitle') }}
+            </button>
+            <template
+              v-for="group in guideGroups"
+              :key="group.title"
+            >
+              <h4>{{ $t('mock.label.' + group.title) }}</h4>
+              <button
+                v-for="topic in group.topics"
+                :key="topic"
+                type="button"
+                :class="{ active: guideTopic === topic }"
+                :aria-pressed="guideTopic === topic"
+                @click="guideTopic = topic"
+              >
+                {{ $t('mock.label.guide' + topic + 'Title') }}
+              </button>
+            </template>
+          </nav>
+          <section
+            v-if="guideTopic === 'QuickStart'"
+            class="guide-section"
+          >
             <h3>{{ $t('mock.label.guideQuickStartTitle') }}</h3>
-            <p>{{ $t('mock.msg.guideIntroText') }}</p>
+            <p class="guide-intro">
+              {{ $t('mock.msg.guideIntroText') }}
+            </p>
             <ol class="guide-steps">
               <li
                 v-for="step in quickStartSteps"
                 :key="step"
               >
-                {{ $t('mock.msg.guideStep' + step) }}
+                <strong>{{ $t('mock.label.guideStep' + step + 'Title') }}</strong>
+                <p>{{ $t('mock.msg.guideStep' + step) }}</p>
               </li>
             </ol>
-            <div class="guide-example-title">
-              {{ $t('mock.label.guideSampleTitle') }}
-              <mock-url-copy-link :content="quickStartResponse" />
+            <div class="guide-example">
+              <div class="guide-example-title">
+                <span>{{ $t('mock.label.guideSampleTitle') }}</span>
+                <mock-url-copy-link :content="quickStartResponse" />
+              </div>
+              <vue-monaco-editor
+                :value="quickStartResponse"
+                language="json"
+                :options="monacoEditorOptions"
+                class="common-resize-vertical"
+                :theme="useGlobalConfigStore().monacoTheme"
+                :height="exampleHeights.quickStart || calcHeight(quickStartResponse)"
+                @mount="editor => fitExampleHeight(editor, 'quickStart')"
+              />
             </div>
-            <pre class="guide-example"><code>{{ quickStartResponse }}</code></pre>
-            <p>{{ $t('mock.msg.guideExpectedText') }}</p>
-          </section>
-          <section class="guide-section">
-            <h3>{{ $t('mock.label.guideCommonTitle') }}</h3>
-            <dl class="guide-topics">
-              <template
-                v-for="topic in commonGuideSections"
-                :key="topic"
+            <div class="guide-result">
+              <p>{{ $t('mock.msg.guideExpectedText') }}</p>
+              <el-button
+                type="primary"
+                link
+                @click="guideTopic = 'Diagnostics'"
               >
-                <dt>{{ $t('mock.label.guide' + topic + 'Title') }}</dt>
-                <dd>{{ $t('mock.msg.guide' + topic + 'Text') }}</dd>
-              </template>
-            </dl>
+                {{ $t('mock.label.guideDiagnosticsTitle') }}
+                <common-icon icon="ArrowRight" />
+              </el-button>
+            </div>
           </section>
-          <section class="guide-section">
-            <h3>{{ $t('mock.label.guideAdvancedTitle') }}</h3>
-            <el-collapse class="guide-advanced">
-              <el-collapse-item
-                v-for="topic in advancedGuideSections"
-                :key="topic"
-                :name="topic"
-                :title="$t('mock.label.guide' + topic + 'Title')"
+          <section
+            v-else
+            :key="guideTopic"
+            class="guide-section"
+          >
+            <h3>{{ $t('mock.label.guide' + guideTopic + 'Title') }}</h3>
+            <p>{{ $t('mock.msg.guide' + guideTopic + 'Text') }}</p>
+            <div class="guide-links">
+              <el-button
+                v-for="tab in guideLinks[guideTopic]"
+                :key="tab"
+                type="primary"
+                plain
+                @click="currentTab = tab"
               >
-                <p>{{ $t('mock.msg.guide' + topic + 'Text') }}</p>
-              </el-collapse-item>
-            </el-collapse>
+                {{ tabLabels[tab] }}
+                <common-icon icon="ArrowRight" />
+              </el-button>
+            </div>
           </section>
         </div>
       </el-tab-pane>
@@ -512,104 +607,81 @@ const fitExampleHeight = (editor, key) => {
 </template>
 
 <style scoped>
+.mock-tips { position: relative; }
+.tip-tabs { flex: 1; min-height: 0; }
+.ai-help-tabs :deep(.el-tabs__content) { overflow: hidden; }
+.ai-help-pane { height: 100%; }
+.help-topic-action { position: absolute; top: 4px; right: 0; z-index: 1; }
+.has-topic-action :deep(.el-tabs__header) {
+  padding-right: 44px;
+  background: linear-gradient(var(--el-border-color-light), var(--el-border-color-light)) left bottom / 100% 2px no-repeat;
+}
 .user-guide {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
   font-size: var(--el-font-size-base);
   color: var(--el-text-color-regular);
-  line-height: 1.6;
-}
-.guide-section {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-.guide-section:last-child {
-  border-bottom: 0;
-}
-.guide-section h3 {
-  margin: 0 0 12px;
-  font-size: var(--el-font-size-base);
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-.guide-section p {
-  margin: 8px 0;
-}
-.guide-steps {
-  margin: 12px 0;
-  padding-left: 24px;
-}
-.guide-steps li + li {
-  margin-top: 8px;
-}
-.guide-example-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.guide-example {
-  margin: 8px 0;
-  padding: 12px;
-  overflow-x: auto;
-  font-size: inherit;
-  background: var(--el-fill-color-light);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: var(--el-border-radius-base);
-}
-.guide-topics {
-  margin: 0;
-}
-.guide-topics dt {
-  margin-top: 12px;
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-}
-.guide-topics dd {
-  margin: 4px 0 0;
-}
-.user-guide :deep(.el-collapse-item__header),
-.user-guide :deep(.el-collapse-item__content) {
-  font-size: inherit;
-}
-.guide-advanced {
-  border: 0;
-}
-.guide-advanced :deep(.el-collapse-item) {
-  margin-bottom: 10px;
-  overflow: hidden;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: var(--el-border-radius-base);
-}
-.guide-advanced :deep(.el-collapse-item:last-child) {
-  margin-bottom: 0;
-}
-.guide-advanced :deep(.el-collapse-item__header) {
-  height: auto;
-  min-height: 44px;
-  padding: 10px 14px;
-  box-sizing: border-box;
-  line-height: 1.6;
-  text-align: left;
-  border-bottom: 0;
-  background: var(--el-fill-color-light);
-}
-.guide-advanced :deep(.el-collapse-item__header:hover),
-.guide-advanced :deep(.el-collapse-item__header.is-active) {
-  color: var(--el-color-primary);
-}
-.guide-advanced :deep(.el-collapse-item__arrow) {
-  order: -1;
-  flex-shrink: 0;
-  margin: 0 10px 0 0;
-}
-.guide-advanced :deep(.el-collapse-item__wrap) {
-  border-bottom: 0;
-  border-top: 1px solid var(--el-border-color-lighter);
-}
-.guide-advanced :deep(.el-collapse-item__content) {
-  padding: 12px 14px;
   line-height: 1.7;
-  color: var(--el-text-color-regular);
 }
-.guide-advanced :deep(.el-collapse-item__content p) {
-  margin: 0;
+.guide-nav { padding: 4px 16px 12px 0; border-right: 1px solid var(--el-border-color-lighter); }
+.guide-nav h4 { margin: 22px 12px 8px; font-size: 12px; font-weight: 400; color: var(--el-text-color-secondary); }
+.guide-nav button {
+  display: block;
+  width: 100%;
+  margin: 2px 0;
+  padding: 8px 12px;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 0 var(--el-border-radius-base) var(--el-border-radius-base) 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.guide-nav button:hover { background: var(--el-fill-color-light); }
+.guide-nav button.active { color: var(--el-color-primary); border-left-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
+.guide-section { min-width: 0; max-width: 960px; padding: 8px 8px 20px 0; }
+.guide-section h3 { margin: 0 0 12px; font-size: 18px; font-weight: 600; color: var(--el-text-color-primary); }
+.guide-section p { margin: 8px 0; }
+.guide-intro { color: var(--el-text-color-secondary); }
+.guide-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 18px 24px;
+  margin: 24px 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: guide-step;
+}
+.guide-steps li { position: relative; padding-left: 36px; counter-increment: guide-step; }
+.guide-steps li::before {
+  content: counter(guide-step);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+  font-weight: 600;
+}
+.guide-steps strong { color: var(--el-text-color-primary); font-weight: 500; }
+.guide-steps p { margin: 4px 0 0; color: var(--el-text-color-secondary); }
+.guide-example { margin: 20px 0; }
+.guide-example-title { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.guide-result { padding: 0 0 0 12px; border-left: 2px solid var(--el-border-color); color: var(--el-text-color-secondary); }
+.guide-result p { margin: 0 0 4px; }
+.guide-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.guide-links .el-button { margin-left: 0; }
+@media (max-width: 700px) {
+  .user-guide { grid-template-columns: 1fr; gap: 16px; }
+  .guide-nav { max-height: 180px; overflow-y: auto; border-right: 0; border-bottom: 1px solid var(--el-border-color-lighter); padding-right: 0; }
+  .guide-section { padding-right: 0; }
 }
 </style>

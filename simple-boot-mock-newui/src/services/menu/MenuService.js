@@ -17,6 +17,7 @@ import { $logout } from '@/utils'
 import { ALL_MENUS } from '@/services/menu/MenuData'
 import { cloneDeep, isFunction } from 'lodash-es'
 import { nextTick } from 'vue'
+import { showMockTips } from '@/utils/DynamicUtils'
 
 /**
  * @param menu {MenuDto}
@@ -168,6 +169,15 @@ export const useBaseTopMenus = () => {
     {
       isSplit: true,
       menuCls: 'flex-grow'
+    },
+    {
+      isDropdown: true,
+      icon: 'HelpOutlineOutlined',
+      click: () => showMockTips('guide'),
+      attrs: {
+        title: $i18nBundle('mock.label.guideWindowTitle'),
+        'aria-label': $i18nBundle('mock.label.guideWindowTitle')
+      }
     },
     ...useThemeAndLocaleMenus(),
     {

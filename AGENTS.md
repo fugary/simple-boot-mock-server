@@ -45,7 +45,7 @@ Simple Boot Mock Server 是一个基于 Spring Boot 开发的轻量级、高性�
 
 ## 5. 当前开发进度 (Current Status)
 - [x] AI 配置测试对齐 simple-api-doc：异步 SSE 增量输出，支持三种供应商协议、停止取消上游请求、结束校验及统一日志。
-- [x] 帮助页 AI 提问：使用当前用户已启用的默认 AI 配置，基于随版本发布的本地功能文档独立问答，复用统一使用日志。功能变更时同步维护 `simple-boot-mock-server/src/main/resources/ai/help.md`。
+- [x] 帮助页与 AI 提问：使用指南按主题导航，顶部帮助弹窗与当前主题 AI 预填入口；使用当前用户已启用的默认 AI 配置，基于本地功能文档独立流式问答，支持取消、滚动跟随、Markdown 高亮、图表和公式预览，复用统一使用日志。功能变更时同步维护 `simple-boot-mock-server/src/main/resources/ai/help.md`。
 - [x] 本地 AI 配置与统一使用日志：用户自行添加 OpenAI 兼容、Anthropic 和 Gemini 配置，支持加载或手填模型、临时切换测试模型及日志筛选、详情和删除，无需配置文件预置。
 - [x] MockTips 使用指南：补充请求诊断、轮询、Schema 示例、AI、导入及场景置顶说明，使用中英文资源词条。
 - [x] GitHub Actions 同版本覆盖发布：默认关闭，仅从 master 覆盖最新正式版本，构建前校验版本及不可变 Release，更新标签时检查分支、旧标签对象与最新版本；正文保持分类更新说明，标签保留追溯信息，支持原运行失败重试。
@@ -60,7 +60,7 @@ Simple Boot Mock Server 是一个基于 Spring Boot 开发的轻量级、高性�
 - [x] UI/UX 优化：菜单动画、响应式侧边栏等。
 
 ---
-*Last Updated: 2026-10-30*
+*Last Updated: 2026-11-02*
 
 ## 6. 项目规则 (Project Rules)
 为了保证项目的开发的一致性和质量，AI 代理在协作时需遵循项目内置的规则：

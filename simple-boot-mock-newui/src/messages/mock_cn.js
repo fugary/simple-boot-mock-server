@@ -480,9 +480,23 @@ mock.msg.guideStepGroup = '打开 Mock 分组，选择项目（也可以使用�
 mock.msg.guideStepRequest = '进入分组的请求列表，新增请求，方法选择 GET，路径填写 /hello。'
 mock.msg.guideStepResponse = '添加响应数据，状态码使用 200，内容类型选择 JSON，粘贴下面的示例并保存请求和响应。'
 mock.msg.guideStepTest = '打开请求测试并发送请求，检查返回结果；复制页面提供的完整 Mock 地址，在浏览器或前端项目中调用。'
-mock.msg.guideExpectedText = '预期能收到示例中的 code、message 和 data。调用时使用完整 Mock 地址，不能只访问 /hello；若未返回预期内容，按下方“请求诊断”检查。'
+mock.msg.guideExpectedText = '预期能收到示例中的 code、message 和 data。调用时使用完整 Mock 地址，不能只访问 /hello；若未返回预期内容，选择左侧“请求诊断”检查。'
 mock.msg.guideResponseText = '在同一个请求下添加成功、失败等响应，并将需要联调的一条设为默认响应。需要模拟慢接口时设置响应延迟（毫秒）。先用固定响应完成页面联调，再到“基本示例”查看随机数据写法。'
 mock.msg.guideProxyText = '在分组中填写真实后端的代理地址，只为需要模拟的接口配置 Mock。其他请求转发到代理地址。临时使用真实接口时可暂停 Mock，完成后恢复；未配置代理时，暂停 Mock 会返回 404。'
 
 mock.label.aiConfigSelect = 'AI接口配置'
 mock.label.aiTestResult = '测试结果'
+
+mock.msg.aiHelpAnswerPlaceholder = '提问后，回答将在这里逐步显示。'
+
+mock.label.aiScrollToLatest = '回到最新内容'
+
+mock.msg.aiHelpKeyboardHint = 'Enter 发送，Shift + Enter 换行'
+
+mock.label.aiHelpAboutTopic = '向 AI 提问：{0}'
+mock.msg.aiHelpTopicPrompt = '请介绍“{0}”的用法，给出配置步骤、可直接参考的示例和常见注意事项。'
+
+mock.label.guideStepGroupTitle = '创建分组'
+mock.label.guideStepRequestTitle = '添加请求'
+mock.label.guideStepResponseTitle = '配置响应'
+mock.label.guideStepTestTitle = '测试并调用'

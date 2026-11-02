@@ -17,7 +17,7 @@ defineExpose({
 })
 const fullscreen = ref(false)
 const tipsHeight = computed(() => {
-  return fullscreen.value ? 'calc(100dvh - 150px)' : '400px'
+  return fullscreen.value ? 'calc(100dvh - 100px)' : 'min(720px, calc(90dvh - 110px))'
 })
 </script>
 
@@ -25,10 +25,10 @@ const tipsHeight = computed(() => {
   <common-window
     v-model="showWindow"
     v-model:fullscreen="fullscreen"
-    width="1000px"
+    width="min(1100px, calc(100vw - 32px))"
+    top="5dvh"
     show-fullscreen
-    :show-cancel="false"
-    :ok-label="$t('common.label.close')"
+    :show-buttons="false"
     destroy-on-close
     :title="$t('mock.label.guideWindowTitle')"
     append-to-body

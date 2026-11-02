@@ -3,6 +3,9 @@ package com.fugary.simple.mock.service.ai;
 import com.fugary.simple.mock.entity.mock.AiConfig;
 import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import com.fugary.simple.mock.service.ai.provider.AiStreamSession;
 import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,8 +13,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class AiHelpServiceTest {
-    @Test
-    void addsPackagedDocumentationAndUsesDefaultModelOnly() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void addsPackagedDocumentationAndUsesDefaultModelOnly(boolean streaming) throws Exception {
         AiConfigService configs = mock(AiConfigService.class);
         AiService ai = mock(AiService.class);
         AiConfig config = new AiConfig();
@@ -22,10 +26,14 @@ class AiHelpServiceTest {
         AiChatRequest question = new AiChatRequest();
         question.setPrompt("如何按订单轮询？");
         question.setModel("must-not-override-default");
-        help.ask(question);
+        AiStreamSession stream = streaming ? new AiStreamSession(text -> {}) : null;
+        if (streaming) help.ask(question, stream);
+        else help.ask(question);
         ArgumentCaptor<AiChatRequest> sent = ArgumentCaptor.forClass(AiChatRequest.class);
-        verify(ai).test(eq(7), sent.capture());
+        verify(ai).test(eq(7), sent.capture(), same(stream));
         assertNull(sent.getValue().getModel());
+        assertTrue(sent.getValue().getPrompt().contains("当前项目"));
+        assertFalse(sent.getValue().getPrompt().contains("Simple Boot Mock Server"));
         assertTrue(sent.getValue().getPrompt().contains("## 响应轮询"));
         assertTrue(sent.getValue().getPrompt().contains("request.params.orderId"));
         assertTrue(sent.getValue().getPrompt().contains(question.getPrompt()));

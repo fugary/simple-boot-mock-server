@@ -84,6 +84,39 @@ async function checkDelFlagTag () {
   console.log('DelFlagTag regression passed: default/custom colors, numeric/string values, confirmation, cancellation, read-only rendering')
 }
 async function main () {
+  let markdownConfig
+  let markdownTheme
+  const markdownSource = read('vendors/markdown.js').replace(/^import .*$/gm, '').replace(/export const /g, 'const ')
+  const markdown = new Function('config', 'mermaid', 'katex', 'hljs', markdownSource + '; return { mermaidFencePlugin, initMarkdownTheme, handleMarkdownLink, MD_AUTO_FOLD_THRESHOLD }')(
+    value => { markdownConfig = value }, { initialize: value => { markdownTheme = value } }, {}, {}
+  )
+  assert.equal(markdown.MD_AUTO_FOLD_THRESHOLD, 200)
+  markdown.initMarkdownTheme(true)
+  assert.equal(markdownTheme.theme, 'dark')
+  assert.equal(markdownTheme.securityLevel, 'strict')
+  assert.equal(markdownConfig.mermaidConfig({ theme: 'dark' }).securityLevel, 'strict')
+  for (const [markup, lines, expected] of [['~~~', 3, 'true'], ['~~~', 2, 'false'], ['```', 3, 'original']]) {
+    let closed = 'original'
+    const md = { renderer: { renderAttrs: () => closed } }
+    markdown.mermaidFencePlugin(md)
+    assert.equal(md.renderer.renderAttrs({
+      type: 'fence',
+      info: 'mermaid',
+      markup,
+      map: [0, lines],
+      content: 'graph TD; A-->B\n',
+      attrGet: () => closed,
+      attrSet: (name, value) => { closed = value }
+    }), expected)
+  }
+  let scrolled = false
+  markdown.handleMarkdownLink({
+    target: { closest: () => ({ getAttribute: () => '#%E6%B5%8B%E8%AF%95' }) },
+    currentTarget: { querySelectorAll: () => [{ id: '测试', scrollIntoView: () => { scrolled = true } }] },
+    preventDefault: () => {}
+  })
+  assert.equal(scrolled, true)
+  console.log('Markdown configuration, incomplete fences, scoped anchors and theme checks passed')
   jsxPlugin = (await import('@vue/babel-plugin-jsx')).default
   await checkDelFlagTag()
   const route = { name: 'AiLogs', query: { configId: '7' } }
@@ -185,12 +218,17 @@ async function main () {
   const answerProps = ref({ content: '{"id":9007199254740993123}', maxHeight: 240 })
   const answer = setup('views/components/utils/AiAnswerViewer.vue', {
     ref,
+    watch: () => {},
+    initMarkdownTheme: () => {},
     computed,
     defineProps: () => answerProps.value,
     useGlobalConfigStore: () => ({ monacoTheme: 'vs-dark' }),
     $i18nBundle: key => key
   }, 'isJson,sourceOptions,sourceHeight,modeOptions,previewContent')
   assert.equal(answer.isJson.value, true)
+  answerProps.value.loading = true
+  assert.equal(answer.isJson.value, false)
+  answerProps.value.loading = false
   assert.equal(answer.sourceHeight.value, '160px')
   assert.equal(answerProps.value.content, '{"id":9007199254740993123}')
   assert.equal(answer.previewContent.value, '```json\n{"id":9007199254740993123}\n```')
@@ -333,9 +371,13 @@ async function main () {
     defineProps: () => ({ config: { id: 7, defaultModel: 'm' } }),
     useAiModels: () => ({ modelOption: ref({}) }),
     $i18nBundle: key => key,
-    testAiConfig: (id, data, signal) => {
+    testAiConfig: (id, data, callbacks, signal) => {
       signals.push(signal)
-      return new Promise(resolve => responses.push(resolve))
+      return new Promise(resolve => responses.push(response => {
+        if (response.success) callbacks.onFinish(response)
+        else callbacks.onError(response)
+        resolve()
+      }))
     }
   }, 'executeTest,stopTest,visible,formData,testing,metrics,metricFields,error')
   const firstTest = cancellation.executeTest()
@@ -364,6 +406,116 @@ async function main () {
   validations[1](true)
   await Promise.resolve()
   assert.equal(calls, 1)
+  const helpRequests = []
+  const helpProps = ref({ active: true })
+  let deactivateHelp
+  let resizeAnswer
+  const helpScope = effectScope()
+  const help = helpScope.run(() => setup('views/components/mock/MockAiHelp.vue', {
+    ref,
+    computed,
+    onScopeDispose,
+    onDeactivated: callback => { deactivateHelp = callback },
+    watch,
+    defineProps: () => helpProps.value,
+    defineExpose: () => {},
+    nextTick: callback => Promise.resolve().then(callback),
+    useResizeObserver: (target, callback) => { resizeAnswer = callback },
+    $i18nBundle: key => key,
+    askAiHelp: (prompt, callbacks, signal) => new Promise((resolve, reject) => {
+      helpRequests.push({ prompt, callbacks, signal, resolve, reject })
+    })
+  }, 'ask,stop,formData,loading,error,stopped,metricFields,answerViewport,following,trackScroll,scrollToLatest,handleQuestionKeydown,submittedQuestion,prefillQuestion'))
+  help.answerViewport.value = { scrollHeight: 1000, scrollTop: 0, clientHeight: 300 }
+  resizeAnswer()
+  assert.equal(help.answerViewport.value.scrollTop, 1000)
+  help.answerViewport.value.scrollTop = 100
+  help.trackScroll()
+  resizeAnswer()
+  assert.equal(help.answerViewport.value.scrollTop, 100)
+  assert.equal(help.following.value, false)
+  help.scrollToLatest()
+  assert.equal(help.following.value, true)
+  assert.equal(help.answerViewport.value.scrollTop, 1000)
+  await help.prefillQuestion('Explain matching rules')
+  assert.equal(help.formData.value.question, 'Explain matching rules')
+  assert.equal(helpRequests.length, 0)
+  await help.prefillQuestion('Explain matching rules')
+  assert.equal(helpRequests.length, 0)
+  help.formData.value.question = '  help  '
+  for (const event of [{ key: 'Enter', shiftKey: true }, { key: 'Enter', isComposing: true }, { key: 'Enter', keyCode: 229 }, { key: 'Enter', ctrlKey: true }]) {
+    help.handleQuestionKeydown({ ...event, preventDefault: () => assert.fail('Must preserve newline or IME input') })
+  }
+  assert.equal(helpRequests.length, 0)
+  let prevented = false
+  const firstHelp = help.handleQuestionKeydown({ key: 'Enter', preventDefault: () => { prevented = true } })
+  assert.equal(prevented, true)
+  assert.equal(helpRequests.length, 1)
+
+  help.ask()
+  assert.equal(helpRequests.length, 1)
+  assert.equal(helpRequests[0].prompt, 'help')
+  assert.equal(help.formData.value.question, '')
+  assert.equal(help.submittedQuestion.value, 'help')
+  helpRequests[0].callbacks.onDelta({ text: 'partial' })
+  assert.equal(help.formData.value.answer, 'partial')
+  help.stop()
+  assert.equal(helpRequests[0].signal.aborted, true)
+  assert.equal(help.formData.value.answer, 'partial')
+  assert.equal(help.stopped.value, true)
+  assert.equal(help.formData.value.question, 'help')
+  const secondHelp = help.ask()
+  helpRequests[0].callbacks.onDelta({ text: 'stale' })
+  helpRequests[0].callbacks.onFinish({ resultData: { content: 'stale' } })
+  helpRequests[0].callbacks.onError({ message: 'stale' })
+  helpRequests[0].reject(new Error('stale'))
+  await firstHelp
+  assert.equal(help.formData.value.answer, '')
+  assert.equal(help.error.value, '')
+  assert.equal(help.loading.value, true)
+  helpRequests[1].callbacks.onDelta({ text: 'new' })
+  helpRequests[1].callbacks.onFinish({ resultData: { content: 'complete', durationMs: 0, totalTokens: 0 } })
+  helpRequests[1].resolve()
+  await secondHelp
+  assert.equal(help.formData.value.answer, 'complete')
+  assert.equal(help.metricFields.value.length, 2)
+  assert.equal(help.loading.value, false)
+  assert.equal(help.formData.value.question, '')
+  help.formData.value.question = 'retry question'
+  const failedHelp = help.ask()
+  helpRequests[2].callbacks.onDelta({ text: 'incomplete' })
+  helpRequests[2].reject(new Error('interrupted'))
+  await failedHelp
+  assert.equal(help.formData.value.answer, 'incomplete')
+  assert.equal(help.error.value, 'interrupted')
+  assert.equal(help.formData.value.question, 'retry question')
+  const hiddenHelp = help.ask()
+  helpRequests[3].callbacks.onDelta({ text: 'hidden partial' })
+  helpProps.value.active = false
+  assert.equal(helpRequests[3].signal.aborted, true)
+  assert.equal(help.formData.value.answer, 'hidden partial')
+  helpRequests[3].resolve()
+  await hiddenHelp
+  await help.ask()
+  assert.equal(helpRequests.length, 4)
+  helpProps.value.active = true
+  const deactivatedHelp = help.ask()
+  deactivateHelp()
+  assert.equal(helpRequests[4].signal.aborted, true)
+  helpRequests[4].resolve()
+  await deactivatedHelp
+  const serverErrorHelp = help.ask()
+  helpRequests[5].callbacks.onError({ message: 'provider failed' })
+  helpRequests[5].resolve()
+  await serverErrorHelp
+  assert.equal(help.formData.value.question, 'retry question')
+  assert.equal(help.error.value, 'provider failed')
+  const disposedHelp = help.ask()
+  helpScope.stop()
+  assert.equal(helpRequests[6].signal.aborted, true)
+  helpRequests[6].resolve()
+  await disposedHelp
+  console.log('AI help streaming, cancellation, stale callbacks, metrics, failure and disposal checks passed')
   const modelRequests = []
   const messages = []
   const modelSource = read('hooks/AiHooks.js').replace(/^import .*$/gm, '').replace('export const', 'const')

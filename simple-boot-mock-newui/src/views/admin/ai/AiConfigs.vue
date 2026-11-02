@@ -13,6 +13,7 @@ import { ElTag } from 'element-plus'
 import { useAiModels } from '@/hooks/AiHooks'
 import { useSearchStatus } from '@/consts/GlobalConstants'
 import { AI_PROVIDERS } from '@/consts/AiConstants'
+import { omit } from 'lodash-es'
 
 const router = useRouter()
 let querySequence = 0
@@ -31,12 +32,19 @@ const { modelOption } = useAiModels(item, item, 'defaultModel')
 const testVisible = ref(false)
 const testItem = ref({})
 let editSequence = 0
-const edit = async row => {
+const edit = async (row, copy = false) => {
   const sequence = ++editSequence
   if (row?.id) {
     const res = await AiConfigApi.getById(row.id)
     if (!res.success || sequence !== editSequence) return
     item.value = { ...res.resultData }
+    if (copy) {
+      item.value = {
+        ...omit(item.value, ['id', 'version', 'userName', 'creator', 'createDate', 'modifier', 'modifyDate', 'modifyFrom']),
+        configName: `${item.value.configName || ''}-copy`,
+        isDefault: 0
+      }
+    }
   } else {
     item.value = { provider: 'openai', apiKey: '', status: 1, isDefault: 0 }
   }
@@ -138,9 +146,8 @@ const columns = computed(() => [
   { labelKey: 'common.label.createDate', prop: 'createDate', width: '170px', formatter: row => formatDate(row.createDate) }
 ])
 const buttons = computed(() => [
-  { labelKey: 'common.label.edit', type: 'primary', click: edit },
+  { labelKey: 'common.label.edit', type: 'primary', click: row => edit(row) },
   { labelKey: 'common.label.test', type: 'success', click: showTest },
-  { labelKey: 'mock.label.aiLogs', type: 'info', click: row => router.push({ name: 'AiLogs', query: { configId: row.id } }) },
   { labelKey: 'common.label.delete', type: 'danger', click: remove }
 ])
 </script>
@@ -175,9 +182,32 @@ const buttons = computed(() => [
       :buttons="buttons"
       :loading="loading"
       :buttons-column-attrs="{ minWidth: '280px', fixed: 'right' }"
+      buttons-slot="moreActions"
       @page-size-change="searchMethod()"
       @current-page-change="searchMethod()"
-    />
+    >
+      <template #moreActions="{ row }">
+        <el-dropdown class="more-actions">
+          <el-button size="small">
+            {{ $t('common.label.more') }}
+            <common-icon
+              icon="ArrowDown"
+              class="margin-left1"
+            />
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="edit(row, true)">
+                {{ $t('common.label.copy') }}
+              </el-dropdown-item>
+              <el-dropdown-item @click="router.push({ name: 'AiLogs', query: { configId: row.id } })">
+                {{ $t('mock.label.aiLogs') }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </template>
+    </common-table>
     <simple-edit-window
       v-model="item"
       v-model:show-edit-window="editVisible"
@@ -193,3 +223,14 @@ const buttons = computed(() => [
     />
   </el-container>
 </template>
+
+<style scoped>
+.more-actions {
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.more-actions :deep(.el-button) {
+  outline: none;
+}
+</style>

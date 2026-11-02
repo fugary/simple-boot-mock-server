@@ -480,9 +480,23 @@ mock.msg.guideStepGroup = 'Open Mock Groups, select a project (the default proje
 mock.msg.guideStepRequest = 'Open the group request list, add a request, select GET and enter /hello as the path.'
 mock.msg.guideStepResponse = 'Add response data with status 200 and JSON content type. Paste the sample below, then save the request and response.'
 mock.msg.guideStepTest = 'Open the request test, send it and check the result. Copy the full Mock URL provided by the page to call it from a browser or frontend project.'
-mock.msg.guideExpectedText = 'The response should contain the sample code, message and data fields. Use the full Mock URL, not just /hello. If the result differs, follow Request diagnostics below.'
+mock.msg.guideExpectedText = 'The response should contain the sample code, message and data fields. Use the full Mock URL, not just /hello. If the result differs, select Request diagnostics in the guide.'
 mock.msg.guideResponseText = 'Add success and error responses under the same request and set the one you need as the default. Set a response delay in milliseconds to simulate a slow endpoint. Start with fixed responses, then see Basic examples for random data.'
 mock.msg.guideProxyText = 'Set the real backend proxy URL on the group and configure Mock responses only for endpoints you want to simulate. Other requests are forwarded to the proxy. Pause Mock to temporarily use the real endpoint, then resume it; without a proxy, paused Mock returns 404.'
 
 mock.label.aiConfigSelect = 'AI Configuration'
 mock.label.aiTestResult = 'Test Result'
+
+mock.msg.aiHelpAnswerPlaceholder = 'Ask a question to see the answer stream here.'
+
+mock.label.aiScrollToLatest = 'Jump to latest'
+
+mock.msg.aiHelpKeyboardHint = 'Enter to send, Shift + Enter for a new line'
+
+mock.label.aiHelpAboutTopic = 'Ask AI: {0}'
+mock.msg.aiHelpTopicPrompt = 'Explain how to use {0}, with configuration steps, a practical example, and common pitfalls.'
+
+mock.label.guideStepGroupTitle = 'Create a group'
+mock.label.guideStepRequestTitle = 'Add a request'
+mock.label.guideStepResponseTitle = 'Configure a response'
+mock.label.guideStepTestTitle = 'Test and call'

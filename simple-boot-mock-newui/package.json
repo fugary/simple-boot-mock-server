@@ -22,10 +22,15 @@
     "axios": "^1.16.0",
     "better-mock": "^0.3.7",
     "dayjs": "^1.11.19",
+    "dompurify": "3.3.1",
     "echarts": "^6.0.0",
     "element-plus": "^2.13.1",
     "fast-xml-parser": "^5.7.1",
+    "highlight.js": "11.10.0",
+    "katex": "^0.16.47",
     "lodash-es": "^4.17.23",
+    "md-editor-v3": "5.8.5",
+    "mermaid": "^11.17.2",
     "monaco-editor": "^0.55.1",
     "nprogress": "^0.2.0",
     "numeral": "^2.0.6",
@@ -38,9 +43,7 @@
     "vue-echarts": "^8.0.1",
     "vue-i18n": "^9.14.4",
     "vue-router": "^4.6.4",
-    "vue-virtual-scroller": "^2.0.0-beta.8",
-    "dompurify": "3.3.1",
-    "md-editor-v3": "5.8.5"
+    "vue-virtual-scroller": "^2.0.0-beta.8"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.15.0",

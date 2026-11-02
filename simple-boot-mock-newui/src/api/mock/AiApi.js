@@ -10,4 +10,4 @@ export const loadAiModels = data => $httpPost('/admin/ai/configs/models', data, 
 export const loadAiConfigOptions = () => $httpGet('/admin/ai/configs/options')
 
 export const loadAiHelpStatus = () => $httpGet('/admin/ai/help', { showErrorMessage: false })
-export const askAiHelp = prompt => $httpPost('/admin/ai/help', { prompt }, { timeout: 90000, showErrorMessage: false })
+export const askAiHelp = (prompt, callbacks, signal) => streamAiRequest('/admin/ai/help/stream', { prompt }, callbacks, signal)
