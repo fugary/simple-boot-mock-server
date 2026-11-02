@@ -311,7 +311,7 @@ mock.label.apiName = '接口名称'
 mock.label.apiPath = '接口路径'
 mock.label.interceptCount = '调用总频次'
 mock.label.times = '次'
-mock.msg.loadBalanceTips = '没有匹配规则且有多条响应数据时，使用什么策略返回数据'
+mock.msg.loadBalanceTips = '响应匹配规则优先；没有规则命中时，从未配置规则的已启用响应中按策略选择。自动策略优先默认响应，随机和轮询不优先默认响应。'
 mock.msg.roundRobinKeyExpressionTips = '选填，例如 request.body.pnr 或 request.params.orderId。留空时同一接口共用轮询进度；填写后，不同计算结果分别计数。返回非空字符串或有限数字时生效；求值失败或返回无效值时记录日志，并回退到接口共用进度。'
 mock.msg.configSetDefault = '确定要设为默认响应？'
 mock.msg.noExportData = '没有需要导出的数据'
@@ -357,8 +357,8 @@ mock.msg.expressionRequired = '请输入表达式'
 mock.label.expressionResult = '计算结果'
 mock.label.applyExpression = '应用到表单'
 mock.msg.requestNameTooltip = '简单接口名称，可不填写'
-mock.msg.requestIntro = `request.body——body内容对象<br>
-                        request.bodyStr——body内容字符串<br>
+mock.msg.requestIntro = `request.body——解析后的请求体对象，支持 JSON 和 XML（XML 自动转换为对象，不包含外层根节点）<br>
+                        request.bodyStr——原始请求体字符串，XML 请求保留原始 XML<br>
                         request.headers——头信息对象<br>
                         request.parameters——请求参数对象<br>
                         request.pathParameters——路径参数对象<br>
@@ -416,7 +416,7 @@ mock.label.aiHelp = 'AI 提问'
 mock.label.aiHelpQuestion = '问题'
 mock.label.aiHelpAnswer = '回答'
 mock.label.aiHelpAsk = '提问'
-mock.msg.aiHelpDescription = '依据当前版本的本地功能文档回答，每次提问独立。问题和功能文档将发送至管理员配置的公共默认 AI 服务，并记录到 AI 日志；不会自动读取 Mock 数据。示例请检查后使用。'
+mock.msg.aiHelpDescription = '依据本地功能文档回答，支持最近最多 3 轮成功问答的追问，较长历史会缩减。问题、相关历史和文档将发送至公共默认 AI 服务并记录到 AI 日志；不会自动读取 Mock 数据。新对话可清空上下文，示例请检查后使用。'
 mock.label.aiPrompt = '提示词'
 mock.label.aiConfigId = '配置ID'
 mock.label.aiSuccess = '成功'
@@ -517,3 +517,5 @@ mock.msg.aiPartialUsage = '服务商未返回完整 Token 用量，上述指标�
 
 mock.label.aiRequestJson = '请求 JSON'
 mock.msg.aiNoRawRequest = '未保存原始请求体'
+
+mock.label.aiNewConversation = '新对话'

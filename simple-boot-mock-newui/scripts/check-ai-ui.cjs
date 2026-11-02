@@ -422,10 +422,10 @@ async function main () {
     nextTick: callback => Promise.resolve().then(callback),
     useResizeObserver: (target, callback) => { resizeAnswer = callback },
     $i18nBundle: key => key,
-    askAiHelp: (prompt, callbacks, signal) => new Promise((resolve, reject) => {
-      helpRequests.push({ prompt, callbacks, signal, resolve, reject })
+    askAiHelp: (prompt, callbacks, signal, history) => new Promise((resolve, reject) => {
+      helpRequests.push({ prompt, callbacks, signal, history: [...history], resolve, reject })
     })
-  }, 'ask,stop,formData,loading,error,stopped,metricFields,answerViewport,following,trackScroll,scrollToLatest,handleQuestionKeydown,submittedQuestion,prefillQuestion'))
+  }, 'ask,stop,formData,loading,error,stopped,metricFields,answerViewport,following,trackScroll,scrollToLatest,handleQuestionKeydown,submittedQuestion,prefillQuestion,history,previousTurns,newConversation'))
   help.answerViewport.value = { scrollHeight: 1000, scrollTop: 0, clientHeight: 300 }
   resizeAnswer()
   assert.equal(help.answerViewport.value.scrollTop, 1000)
@@ -510,10 +510,41 @@ async function main () {
   await serverErrorHelp
   assert.equal(help.formData.value.question, 'retry question')
   assert.equal(help.error.value, 'provider failed')
+  assert.deepEqual(help.history.value, [{ question: 'help', answer: 'complete' }])
+  assert.deepEqual(helpRequests[2].history, [{ question: 'help', answer: 'complete' }])
+  for (let i = 0; i < 4; i++) {
+    help.formData.value.question = 'follow-up-' + i
+    const pending = help.ask()
+    const request = helpRequests.at(-1)
+    assert.ok(request.history.length <= 3)
+    request.callbacks.onFinish({ resultData: { content: 'answer-' + i } })
+    request.resolve()
+    await pending
+  }
+  assert.deepEqual(help.history.value.map(turn => turn.question), ['follow-up-1', 'follow-up-2', 'follow-up-3'])
+  help.formData.value.question = 'large answer'
+  const longHelp = help.ask()
+  helpRequests.at(-1).callbacks.onFinish({ resultData: { content: 'x'.repeat(4000) } })
+  helpRequests.at(-1).resolve()
+  await longHelp
+  assert.equal(help.history.value.length, 0)
+  help.formData.value.question = 'reset during generation'
+  const resetHelp = help.ask()
+  const resetRequest = helpRequests.at(-1)
+  help.newConversation()
+  assert.equal(resetRequest.signal.aborted, true)
+  resetRequest.callbacks.onFinish({ resultData: { content: 'stale after reset' } })
+  resetRequest.resolve()
+  await resetHelp
+  assert.equal(help.history.value.length, 0)
+  assert.equal(help.previousTurns.value.length, 0)
+  assert.equal(help.formData.value.answer, '')
+  assert.equal(help.submittedQuestion.value, '')
+  help.formData.value.question = 'dispose'
   const disposedHelp = help.ask()
   helpScope.stop()
-  assert.equal(helpRequests[6].signal.aborted, true)
-  helpRequests[6].resolve()
+  assert.equal(helpRequests.at(-1).signal.aborted, true)
+  helpRequests.at(-1).resolve()
   await disposedHelp
   console.log('AI help streaming, cancellation, stale callbacks, metrics, failure and disposal checks passed')
   const modelRequests = []

@@ -19,6 +19,8 @@ const loading = ref(false)
 const error = ref('')
 const formData = ref({ question: '', answer: '' })
 const submittedQuestion = ref('')
+const history = ref([])
+const previousTurns = ref([])
 const options = computed(() => [{
   prop: 'question',
   disabled: loading.value,
@@ -69,6 +71,17 @@ const stop = () => {
 const restoreQuestion = () => {
   if (!formData.value.question) formData.value.question = submittedQuestion.value
 }
+const newConversation = () => {
+  stop()
+  history.value = []
+  previousTurns.value = []
+  formData.value = { question: '', answer: '' }
+  submittedQuestion.value = ''
+  error.value = ''
+  stopped.value = false
+  metrics.value = null
+  nextTick(scrollToLatest)
+}
 onScopeDispose(stop)
 onDeactivated(stop)
 watch(() => props.active, active => { if (!active) stop() }, { flush: 'sync' })
@@ -82,6 +95,7 @@ const ask = async () => {
   metrics.value = null
   loading.value = true
   error.value = ''
+  previousTurns.value = [...history.value]
   submittedQuestion.value = question
   formData.value.question = ''
   formData.value.answer = ''
@@ -96,11 +110,17 @@ const ask = async () => {
         if (current !== controller) return
         formData.value.answer = data.resultData?.content || formData.value.answer
         metrics.value = data.resultData
+        if (formData.value.answer.trim()) {
+          history.value = [...history.value, { question, answer: formData.value.answer }].slice(-3)
+          // Match the server's serialized history budget; remove whole oldest turns.
+          const turnLength = turn => turn.question.length + turn.answer.length + 53
+          while (history.value.reduce((size, turn) => size + turnLength(turn), 0) > 4000) history.value.shift()
+        }
       },
       onError: data => {
         if (current === controller) error.value = errorMessage(data)
       }
-    }, current.signal)
+    }, current.signal, history.value)
   } catch (err) {
     if (current === controller) error.value = errorMessage(err)
   } finally {
@@ -129,6 +149,20 @@ const handleQuestionKeydown = event => {
         <p class="ai-help-description">
           {{ $t('mock.msg.aiHelpDescription') }}
         </p>
+        <div
+          v-for="(turn, index) in previousTurns"
+          :key="index"
+          class="ai-help-turn"
+        >
+          <div class="ai-help-question">
+            <strong>{{ $t('mock.label.aiHelpQuestion') }}</strong>
+            <p>{{ turn.question }}</p>
+          </div>
+          <ai-answer-viewer
+            :content="turn.answer"
+            :max-height="0"
+          />
+        </div>
         <div
           v-if="submittedQuestion"
           class="ai-help-question"
@@ -211,20 +245,31 @@ const handleQuestionKeydown = event => {
         >
           {{ $t('mock.msg.aiHelpKeyboardHint') }}
         </el-text>
-        <el-button
-          v-if="loading"
-          @click="stop"
-        >
-          {{ $t('mock.label.aiStopWaiting') }}
-        </el-button>
-        <el-button
-          v-else
-          type="primary"
-          :disabled="!formData.question.trim()"
-          @click="ask"
-        >
-          {{ $t('mock.label.aiHelpAsk') }}
-        </el-button>
+        <div class="ai-help-buttons">
+          <el-button
+            type="primary"
+            plain
+            @click="newConversation"
+          >
+            {{ $t('mock.label.aiNewConversation') }}
+          </el-button>
+          <el-button
+            v-if="loading"
+            type="warning"
+            plain
+            @click="stop"
+          >
+            {{ $t('mock.label.aiStopWaiting') }}
+          </el-button>
+          <el-button
+            v-else
+            type="primary"
+            :disabled="!formData.question.trim()"
+            @click="ask"
+          >
+            {{ $t('mock.label.aiHelpAsk') }}
+          </el-button>
+        </div>
       </div>
     </div>
   </section>
@@ -235,10 +280,13 @@ const handleQuestionKeydown = event => {
 .ai-help-answer { flex: 1; min-height: 0; overflow-y: auto; overflow-anchor: none; padding: 0 12px 16px; }
 .ai-help-description { line-height: 1.6; color: var(--el-text-color-secondary); }
 .ai-help-heading { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; }
+.ai-help-turn { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--el-border-color-lighter); }
 .ai-help-question { margin-bottom: 16px; padding: 12px; border-radius: var(--el-border-radius-base); background: var(--el-fill-color-light); }
 .ai-help-question p { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ai-help-composer { position: relative; flex-shrink: 0; padding: 12px; border-top: 1px solid var(--el-border-color-lighter); background: var(--el-bg-color); }
 .ai-help-composer :deep(.el-form-item) { margin-bottom: 8px; }
-.ai-help-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ai-help-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.ai-help-buttons { display: flex; flex-shrink: 0; align-items: center; gap: 8px; margin-left: auto; }
+.ai-help-buttons .el-button { margin-left: 0; }
 .ai-help-latest { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); }
 </style>

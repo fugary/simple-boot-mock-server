@@ -311,7 +311,7 @@ mock.label.apiName = 'API Name'
 mock.label.apiPath = 'API Path'
 mock.label.interceptCount = 'Total Calls'
 mock.label.times = 'Times'
-mock.msg.loadBalanceTips = 'When there are multiple response data entries and no matching rules, this defines which strategy is used to return the response'
+mock.msg.loadBalanceTips = 'Response matching rules take priority. If none match, the strategy selects from enabled responses without rules. Auto prefers the default response; Random and Round Robin do not.'
 mock.msg.roundRobinKeyExpressionTips = 'Optional, e.g. request.body.pnr or request.params.orderId. Leave blank to share one counter per endpoint; otherwise each result has its own counter. Non-blank strings and finite numbers are accepted. Evaluation failures or invalid results are logged and fall back to the shared endpoint counter.'
 mock.msg.configSetDefault = 'Confirm to set as default?'
 mock.msg.noExportData = 'No data to export'
@@ -357,8 +357,8 @@ mock.msg.expressionRequired = 'Please enter an expression'
 mock.label.expressionResult = 'Expression Result'
 mock.label.applyExpression = 'Apply to Form'
 mock.msg.requestNameTooltip = 'Simple interface name, not required.'
-mock.msg.requestIntro = `request.body — The body content object (only JSON)<br>
-                        request.bodyStr — The body content string<br>
+mock.msg.requestIntro = `request.body — The parsed request body object; supports JSON and XML (XML is automatically converted to an object without the outer root element)<br>
+                        request.bodyStr — The original request body string; XML requests retain the original XML<br>
                         request.headers — The headers object<br>
                         request.parameters — The request parameters object<br>
                         request.pathParameters — The path parameters object<br>
@@ -416,7 +416,7 @@ mock.label.aiHelp = 'Ask AI'
 mock.label.aiHelpQuestion = 'Question'
 mock.label.aiHelpAnswer = 'Answer'
 mock.label.aiHelpAsk = 'Ask'
-mock.msg.aiHelpDescription = 'Answers use the local feature guide shipped with this version. Each question is independent. Your question and the guide are sent to the shared default AI service configured by an administrator and recorded in AI logs; Mock data is not read automatically. Review examples before use.'
+mock.msg.aiHelpDescription = 'Answers use the local guide and up to 3 recent completed turns; long history is reduced. Questions, included history and the guide are sent to the shared default AI service and recorded in AI logs. Mock data is not read automatically. Start a new conversation to clear context. Review examples before use.'
 mock.label.aiPrompt = 'Prompt'
 mock.label.aiConfigId = 'Configuration ID'
 mock.label.aiSuccess = 'Success'
@@ -517,3 +517,5 @@ mock.msg.aiPartialUsage = 'The provider did not return complete token usage; the
 
 mock.label.aiRequestJson = 'Request JSON'
 mock.msg.aiNoRawRequest = 'No raw request body saved'
+
+mock.label.aiNewConversation = 'New conversation'

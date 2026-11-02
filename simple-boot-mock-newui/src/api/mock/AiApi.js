@@ -12,4 +12,4 @@ export const loadAiModels = (data, saved = false) => saved
 export const loadAiConfigOptions = () => $httpGet('/admin/ai/configs/options')
 
 export const loadAiHelpStatus = () => $httpGet('/admin/ai/help', { showErrorMessage: false })
-export const askAiHelp = (prompt, callbacks, signal) => streamAiRequest('/admin/ai/help/stream', { prompt }, callbacks, signal)
+export const askAiHelp = (prompt, callbacks, signal, history = []) => streamAiRequest('/admin/ai/help/stream', { prompt, history }, callbacks, signal)
