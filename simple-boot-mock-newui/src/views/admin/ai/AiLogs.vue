@@ -7,8 +7,10 @@ import { $i18nBundle } from '@/messages'
 import { $coreConfirm } from '@/utils'
 import { useDefaultPage } from '@/config'
 import AiLogDetailWindow from './AiLogDetailWindow.vue'
-import { ElSpace, ElTag } from 'element-plus'
+import { ElTag } from 'element-plus'
 import { AI_PROVIDERS } from '@/consts/AiConstants'
+import AiConfigLabel from '@/views/components/utils/AiConfigLabel.vue'
+import { showCodeWindow } from '@/utils/DynamicUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -71,23 +73,23 @@ const configOptions = computed(() => {
       value: record.id,
       label: [provider ? $i18nBundle(provider.labelKey) : '', record.configName, record.baseUrl, ...markers].filter(Boolean).join(' · '),
       slots: {
-        default: () => h(ElSpace, { size: 6 }, () => [
-          provider ? h(ElTag, { type: provider.tagType, size: 'small' }, () => $i18nBundle(provider.labelKey)) : null,
-          h('span', record.configName),
-          record.baseUrl ? h('small', { class: 'margin-left2' }, record.baseUrl) : null,
-          ...markers.map(marker => h(ElTag, { type: 'info', size: 'small' }, () => marker))
-        ])
+        default: () => h(AiConfigLabel, { config: record })
       }
     }
   })
 })
 const detailVisible = ref(false)
 const detailRecord = ref(null)
+const recordConfig = record => ({ ...configs.value.find(config => config.id === record.configId), configName: record.configName })
 let detailSequence = 0
-const view = async row => {
+const view = async (row, json = false) => {
   const sequence = ++detailSequence
   const res = await AiLogApi.getById(row.id)
   if (res.success && sequence === detailSequence) {
+    if (json) {
+      showCodeWindow(res.resultData, { title: $i18nBundle('mock.label.aiRecordJson'), language: 'json', readOnly: true })
+      return
+    }
     detailRecord.value = res.resultData
     detailVisible.value = true
   }
@@ -119,7 +121,7 @@ const options = computed(() => [
   { labelKey: 'common.label.status', prop: 'status', type: 'select', children: [{ labelKey: 'mock.label.aiSuccess', value: 1 }, { labelKey: 'mock.label.aiFailed', value: 0 }], attrs: { clearable: true }, change: () => searchMethod(1) }
 ])
 const columns = computed(() => [
-  { labelKey: 'mock.label.aiConfigName', prop: 'configName', minWidth: '160px' },
+  { labelKey: 'mock.label.aiConfigName', prop: 'configName', minWidth: '240px', formatter: row => h(AiConfigLabel, { config: recordConfig(row) }) },
   { labelKey: 'mock.label.aiModel', prop: 'model', minWidth: '180px', attrs: { showOverflowTooltip: true } },
   { labelKey: 'common.label.status', width: '100px', attrs: { align: 'center' }, formatter: row => h(ElTag, { type: row.status === 1 ? 'success' : 'danger' }, () => $i18nBundle(row.status === 1 ? 'mock.label.aiSuccess' : 'mock.label.aiFailed')) },
   { labelKey: 'mock.label.aiDuration', prop: 'durationMs', width: '120px', attrs: { align: 'center' } },
@@ -127,7 +129,7 @@ const columns = computed(() => [
   { labelKey: 'mock.label.aiError', prop: 'errorMessage', minWidth: '200px', attrs: { showOverflowTooltip: true } },
   { labelKey: 'common.label.createDate', prop: 'createDate', dateFormat: 'YYYY-MM-DD HH:mm:ss', minWidth: '170px' }
 ])
-const buttons = [{ labelKey: 'common.label.view', type: 'primary', click: view }, { labelKey: 'common.label.delete', type: 'danger', click: remove }]
+const buttons = [{ labelKey: 'common.label.view', type: 'primary', click: row => view(row) }, { labelKey: 'mock.label.aiRecordJson', click: row => view(row, true) }, { labelKey: 'common.label.delete', type: 'danger', click: remove }]
 </script>
 <template>
   <el-container class="flex-column">
@@ -144,7 +146,7 @@ const buttons = [{ labelKey: 'common.label.view', type: 'primary', click: view }
       :columns="columns"
       :buttons="buttons"
       :loading="loading"
-      :buttons-column-attrs="{ minWidth: '150px', fixed: 'right' }"
+      :buttons-column-attrs="{ minWidth: '240px', fixed: 'right' }"
       @row-dblclick="view($event)"
       @page-size-change="searchMethod()"
       @current-page-change="searchMethod()"
@@ -153,6 +155,7 @@ const buttons = [{ labelKey: 'common.label.view', type: 'primary', click: view }
       v-if="detailRecord"
       v-model="detailVisible"
       :record="detailRecord"
+      :config="recordConfig(detailRecord)"
     />
   </el-container>
 </template>

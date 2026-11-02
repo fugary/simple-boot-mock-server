@@ -113,7 +113,8 @@ async function main () {
     useDefaultPage: () => ({ pageNumber: 3 }),
     AI_PROVIDERS: providers,
     ElTag: 'span',
-    ElSpace: 'span'
+    ElSpace: 'span',
+    AiConfigLabel: { name: 'AiConfigLabel' }
   }
   const page = setup('views/admin/ai/AiLogs.vue', bindings, 'options,configs,syncRouteConfig,searchParam,changeConfig,remove,view,detailRecord')
   page.syncRouteConfig()
@@ -154,6 +155,60 @@ async function main () {
   details[0]({ success: true, resultData: { id: 1 } })
   await Promise.all([viewA, viewB])
   assert.equal(page.detailRecord.value.id, 2)
+  const jsonWindows = []
+  const recordProps = ref({
+    record: { id: 2, configName: 'Historical name', durationMs: 0, promptTokens: 0, totalTokens: 0 },
+    config: { configName: 'Renamed config', deleted: true }
+  })
+  const detail = setup('views/admin/ai/AiLogDetailWindow.vue', {
+    ref,
+    computed,
+    h,
+    watch,
+    defineModel: () => ref(true),
+    defineProps: () => recordProps.value,
+    formatDate: value => value,
+    $i18nBundle: key => key,
+    showCodeWindow: (...args) => jsonWindows.push(args)
+  }, 'activeTab,metrics,configIdentity,viewJson')
+  assert.equal(detail.configIdentity.value.configName, 'Historical name')
+  assert.equal(detail.configIdentity.value.deleted, true)
+  assert.equal(detail.metrics.value.find(field => field.labelKey === 'mock.label.aiDuration').value, '0')
+  assert.equal(detail.metrics.value.find(field => field.labelKey === 'mock.label.aiCompletionTokens').value, '-')
+  detail.viewJson()
+  assert.equal(jsonWindows[0][0], recordProps.value.record)
+  assert.equal(jsonWindows[0][1].readOnly, true)
+  detail.activeTab.value = 'metrics'
+  recordProps.value.record = { id: 3, configName: 'Next record' }
+  await Promise.resolve()
+  assert.equal(detail.activeTab.value, 'result')
+  const answerProps = ref({ content: '{"id":9007199254740993123}', maxHeight: 240 })
+  const answer = setup('views/components/utils/AiAnswerViewer.vue', {
+    ref,
+    computed,
+    defineProps: () => answerProps.value,
+    useGlobalConfigStore: () => ({ monacoTheme: 'vs-dark' }),
+    $i18nBundle: key => key
+  }, 'isJson,sourceOptions,sourceHeight,modeOptions,previewContent')
+  assert.equal(answer.isJson.value, true)
+  assert.equal(answer.sourceHeight.value, '160px')
+  assert.equal(answerProps.value.content, '{"id":9007199254740993123}')
+  assert.equal(answer.previewContent.value, '```json\n{"id":9007199254740993123}\n```')
+  assert.equal(answer.sourceOptions.readOnly, true)
+  assert.equal(answer.sourceOptions.domReadOnly, true)
+  answerProps.value.content = '# Markdown\n'.repeat(30)
+  assert.equal(answer.isJson.value, false)
+  assert.equal(answer.sourceHeight.value, '240px')
+  assert.deepEqual(answer.modeOptions.value.map(option => option.value), ['preview', 'source'])
+  const rawResponse = '{"usage":{"total_tokens":2238},"id":9007199254740993123}'
+  const responseAction = setup('views/components/utils/AiResponseJsonAction.vue', {
+    defineProps: () => ({}),
+    $i18nBundle: key => key,
+    showCodeWindow: (...args) => jsonWindows.push(args)
+  }, 'view')
+  responseAction.view(rawResponse)
+  assert.equal(jsonWindows.at(-1)[0], rawResponse)
+  assert.equal(jsonWindows.at(-1)[1].language, 'json')
   const edits = []
   const configPage = setup('views/admin/ai/AiConfigs.vue', {
     ...bindings,
@@ -191,6 +246,8 @@ async function main () {
   const test = setup('views/admin/ai/AiConfigTestWindow.vue', {
     ref,
     computed,
+    watch,
+    onScopeDispose: () => {},
     defineModel: () => ref(true),
     defineProps: () => ({ config: { id: 7, defaultModel: 'm' } }),
     useAiModels: () => ({ modelOption: ref({}) }),
@@ -204,6 +261,42 @@ async function main () {
   validations[0](true)
   await Promise.resolve()
   assert.equal(calls, 1)
+  const responses = []
+  const signals = []
+  const cancellation = setup('views/admin/ai/AiConfigTestWindow.vue', {
+    ref,
+    computed,
+    watch,
+    onScopeDispose: () => {},
+    defineModel: () => ref(true),
+    defineProps: () => ({ config: { id: 7, defaultModel: 'm' } }),
+    useAiModels: () => ({ modelOption: ref({}) }),
+    $i18nBundle: key => key,
+    testAiConfig: (id, data, signal) => {
+      signals.push(signal)
+      return new Promise(resolve => responses.push(resolve))
+    }
+  }, 'executeTest,stopTest,visible,formData,testing,metrics,metricFields,error')
+  const firstTest = cancellation.executeTest()
+  cancellation.stopTest()
+  assert.equal(signals[0].aborted, true)
+  const nextTest = cancellation.executeTest()
+  responses[0]({ success: false, message: 'stale failure' })
+  await firstTest
+  assert.equal(cancellation.testing.value, true)
+  assert.equal(cancellation.error.value, '')
+  responses[1]({ success: true, resultData: { content: 'latest', durationMs: 0, totalTokens: 0 } })
+  await nextTest
+  assert.equal(cancellation.formData.value.result, 'latest')
+  assert.equal(cancellation.metricFields.value.length, 2)
+  assert.equal(cancellation.testing.value, false)
+  const closedTest = cancellation.executeTest()
+  cancellation.visible.value = false
+  assert.equal(signals[2].aborted, true)
+  responses[2]({ success: true, resultData: { content: 'closed' } })
+  await closedTest
+  assert.equal(cancellation.formData.value.result, '')
+  assert.equal(cancellation.metrics.value, null)
   assert.ok(test.formData.value.prompt.trim())
   test.runTest({ form })
   test.visible.value = false
