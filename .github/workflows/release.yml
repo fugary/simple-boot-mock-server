@@ -312,6 +312,7 @@ jobs:
           # Function to get and filter logs
           get_logs() {
             local pattern=$1
+            local scope_pattern='(\([^()]+\))?'
             local exclude_msgs="(version:|docs: add github release automation workflow|mvn versions:set|Updating simple-boot-mock-newui version)"
             
             git log --reverse "$REVISION_RANGE" --pretty=tformat:"%an|%s|%H" | \
@@ -322,11 +323,11 @@ jobs:
                 local non_ignored_count=$(echo "$files" | awk '! /^(\.github\/|release\.yml|$)/ {count++} END {print count+0}')
                 if [ "$non_ignored_count" -gt 0 ]; then
                     if [ "$pattern" == "other" ]; then
-                        if [[ ! "$subject" =~ ^(feat|fix|bug|opt|dep|test): ]]; then
+                        if [[ ! "$subject" =~ ^(feat|fix|bug|opt|dep|test|docs)$scope_pattern: ]]; then
                             echo "$subject|$hash"
                         fi
                     else
-                        if [[ "$subject" =~ ^($pattern): ]]; then
+                        if [[ "$subject" =~ ^($pattern)$scope_pattern: ]]; then
                             echo "$subject|$hash"
                         fi
                     fi
@@ -351,6 +352,7 @@ jobs:
           OPTS=$(get_logs "opt")
           DEPS=$(get_logs "dep")
           TESTS=$(get_logs "test")
+          DOCS=$(get_logs "docs")
           OTHERS=$(get_logs "other")
 
           format_list "🚀 Features" "$FEATS"
@@ -358,6 +360,7 @@ jobs:
           format_list "🧪 Tests" "$TESTS"
           format_list "⚡ Optimizations" "$OPTS"
           format_list "📦 Dependencies" "$DEPS"
+          format_list "📚 Documentation" "$DOCS"
           format_list "📝 Other Changes" "$OTHERS"
           
           if [ -n "$PREVIOUS_TAG" ]; then

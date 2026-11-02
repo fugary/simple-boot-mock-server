@@ -94,6 +94,14 @@ class ReleaseTest(unittest.TestCase):
     def remote_tag(self):
         return self.git('--git-dir', str(self.remote), 'rev-parse', 'refs/tags/v2.9.6')
 
+    def changelog(self, tag):
+        result = subprocess.run([BASH, '-e', '-o', 'pipefail', '-c', STEPS['Generate Changelog']['run']],
+                                cwd=self.repo, env=dict(self.env, CURRENT_TAG=tag,
+                                                       GITHUB_OUTPUT=str(self.base / 'changelog-output')),
+                                text=True, encoding='utf-8', capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        return (self.repo / 'changelog.txt').read_text(encoding='utf-8')
+
     def write_versions(self, version, root_version=None):
         for name in ('simple-boot-mock-server', 'simple-boot-mock-newui'):
             (self.repo / name).mkdir(exist_ok=True)
@@ -124,12 +132,7 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(self.git('--git-dir', str(self.remote), 'rev-parse', 'v2.9.6^{commit}'), self.source_sha)
         self.assertEqual(self.git('--git-dir', str(self.remote), 'rev-parse', 'master'), self.source_sha)
         self.assertEqual(self.state['previous_commit'], self.release_sha)
-        result = subprocess.run([BASH, '-e', '-o', 'pipefail', '-c', STEPS['Generate Changelog']['run']],
-                                cwd=self.repo, env=dict(self.env, CURRENT_TAG='v2.9.6',
-                                                       GITHUB_OUTPUT=str(self.base / 'changelog-output')),
-                                text=True, encoding='utf-8', capture_output=True)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        body = (self.repo / 'changelog.txt').read_text(encoding='utf-8')
+        body = self.changelog('v2.9.6')
         self.assertTrue(body.startswith("## What's Changed\n"))
         for text in ('同版本重新发布', '发布时间', '原提交', '构建提交', '本次修复',
                      published['republished_at']):
@@ -153,6 +156,37 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(self.state['previous_commit'], self.release_sha)
         self.assertEqual(self.step('Replace existing release tag'), published)
         self.assertEqual(self.remote_tag(), moved_oid)
+
+    def test_changelog_groups_scoped_and_unscoped_prefixes(self):
+        categories = {
+            'feat': '🚀 Features', 'fix': '🐛 Bug Fixes', 'bug': '🐛 Bug Fixes',
+            'opt': '⚡ Optimizations', 'dep': '📦 Dependencies', 'test': '🧪 Tests',
+            'docs': '📚 Documentation',
+        }
+        expected = {}
+        for prefix, category in categories.items():
+            for scope in ('', '(ai)', '(mock-ui)'):
+                subject = f'{prefix}{scope}: 更新说明'
+                self.commit(subject)
+                expected[subject] = category
+        for subject in ('无前缀的说明', 'chore(ci): maintenance', 'fix(): empty scope',
+                        'fix(ai) missing colon', 'prefix feat(ai): not at start'):
+            self.commit(subject)
+            expected[subject] = '📝 Other Changes'
+        # Repeated subjects are listed once, and release housekeeping remains excluded.
+        self.commit('docs(ai): 更新说明')
+        self.commit('version: 2.9.7')
+        self.commit('docs: add github release automation workflow')
+        self.git('tag', 'v2.9.7')
+        body = self.changelog('v2.9.7')
+        sections = {section.split('\n', 1)[0]: section.split('\n', 1)[1]
+                    for section in body.split('### ')[1:]}
+        for subject, category in expected.items():
+            with self.subTest(subject=subject):
+                self.assertIn(f'[{subject}]', sections[category])
+                self.assertEqual(body.count(f'[{subject}]'), 1)
+        self.assertNotIn('[version: 2.9.7]', body)
+        self.assertNotIn('[docs: add github release automation workflow]', body)
 
     def test_newer_remote_tag_during_build_blocks_overwrite(self):
         self.step('Prepare release')
