@@ -173,7 +173,7 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
             options.put(config.getId(), option);
         }
         for (AiLog history : logMapper.selectList(Wrappers.<AiLog>query()
-            .select("config_id", "config_name").eq("user_name", owner).isNotNull("config_id")
+            .select("config_id", "config_name").eq(!SecurityUtils.isAdminUser(), "user_name", owner).isNotNull("config_id")
             .groupBy("config_id", "config_name").orderByDesc("config_id"))) {
             if (!options.containsKey(history.getConfigId())) {
                 AiConfigOption option = new AiConfigOption();

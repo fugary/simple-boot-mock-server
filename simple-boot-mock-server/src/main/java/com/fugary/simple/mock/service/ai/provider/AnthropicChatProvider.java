@@ -21,7 +21,7 @@ public class AnthropicChatProvider extends AbstractAiChatProvider {
         headers.set("anthropic-version", "2023-06-01");
         Map<String, Object> body = Map.of("model", config.getDefaultModel(), "max_tokens", 1024,
             "messages", List.of(Map.of("role", "user", "content", request.getPrompt())));
-        JsonNode data = post(url(config.getBaseUrl(), "/messages"), headers, body, stream);
+        JsonNode data = post(url(config.getBaseUrl(), "/messages"), headers, body, stream, request.getTrace());
         StringBuilder text = new StringBuilder();
         for (JsonNode block : data.path("content")) {
             if ("text".equals(block.path("type").asText()) && block.path("text").isTextual()) {

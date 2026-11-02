@@ -26,7 +26,7 @@ public class GeminiChatProvider extends AbstractAiChatProvider {
         String path = "/models/" + UriUtils.encodePathSegment(model, StandardCharsets.UTF_8) + ":generateContent";
         Map<String, Object> body = Map.of("contents", List.of(Map.of("role", "user",
             "parts", List.of(Map.of("text", request.getPrompt())))));
-        JsonNode data = post(url(config.getBaseUrl(), path), headers("x-goog-api-key", config.getApiKey()), body, stream);
+        JsonNode data = post(url(config.getBaseUrl(), path), headers("x-goog-api-key", config.getApiKey()), body, stream, request.getTrace());
         StringBuilder text = new StringBuilder();
         for (JsonNode part : data.path("candidates").path(0).path("content").path("parts")) {
             if (!part.path("thought").asBoolean() && part.path("text").isTextual()) {

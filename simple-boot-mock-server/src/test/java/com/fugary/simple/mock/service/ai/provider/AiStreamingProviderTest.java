@@ -78,13 +78,19 @@ class AiStreamingProviderTest {
         try {
             StringBuilder emitted = new StringBuilder();
             AiStreamSession stream = new AiStreamSession(text -> { emitted.append(text); firstText.countDown(); });
-            Future<AiChatResponse> future = worker.submit(() -> provider(name).chat(config(server.getAddress().getPort()), request(), stream));
+            AiChatRequest request = request();
+            Future<AiChatResponse> future = worker.submit(() -> provider(name).chat(config(server.getAddress().getPort()), request, stream));
             assertThat(firstText.await(5, TimeUnit.SECONDS)).isTrue();
             assertThat(future.isDone()).isFalse();
             release.countDown();
             AiChatResponse response = future.get(5, TimeUnit.SECONDS);
             assertThat(emitted.toString()).isEqualTo(ANSWER).doesNotContain("private", "sig");
             assertThat(response.getContent()).isEqualTo(ANSWER);
+            JsonNode raw = mapper.readTree(request.getTrace().rawResponse());
+            assertThat(raw.path("format").asText()).isEqualTo("sse");
+            assertThat(raw.path("content").asText()).isEqualTo("gemini".equals(name) ? fixture : fixture.stripTrailing() + "\n\n");
+            assertThat(raw.path("truncated").asBoolean()).isFalse();
+            assertThat(request.getTrace().getHttpStatus()).isEqualTo(200);
             assertThat(response.getPromptTokens()).isEqualTo(10);
             assertThat(response.getCompletionTokens()).isEqualTo(4);
             assertThat(response.getTotalTokens()).isEqualTo(14);
@@ -92,6 +98,79 @@ class AiStreamingProviderTest {
             else assertThat(requestBody.get().path("stream").asBoolean()).isTrue();
         } finally {
             release.countDown();
+            server.stop(0);
+            worker.shutdownNow();
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {429, 200})
+    void stopsReadingOversizedErrorBodyBeforeUpstreamCloses(int status) throws Exception {
+        CountDownLatch release = new CountDownLatch(1);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            try {
+                exchange.getRequestBody().readAllBytes();
+                exchange.getResponseHeaders().set("Content-Type", "text/plain");
+                exchange.sendResponseHeaders(status, 0);
+                exchange.getResponseBody().write("x".repeat(70000).getBytes(StandardCharsets.UTF_8));
+                exchange.getResponseBody().flush();
+                release.await(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally { exchange.close(); }
+        });
+        server.start();
+        ExecutorService worker = Executors.newSingleThreadExecutor();
+        AiStreamSession stream = new AiStreamSession(text -> fail("Unexpected text"));
+        try {
+            AiChatRequest request = request();
+            Future<?> future = worker.submit(() -> provider("openai").chat(config(server.getAddress().getPort()), request, stream));
+            assertThatThrownBy(() -> future.get(5, TimeUnit.SECONDS))
+                .isInstanceOf(ExecutionException.class)
+                .satisfies(failure -> assertThat(failure.getCause()).isInstanceOfSatisfying(com.fugary.simple.mock.service.ai.AiException.class, error -> {
+                    assertThat(error.getMessageKey()).isEqualTo(status == 429 ? "simple.ai.httpError" : "simple.ai.invalidResponse");
+                    if (status == 429) assertThat(error.getArguments()[0]).isEqualTo(429);
+                }));
+            assertThat(release.getCount()).isEqualTo(1);
+            assertThat(request.getTrace().getHttpStatus()).isEqualTo(status);
+            JsonNode raw = mapper.readTree(request.getTrace().rawResponse());
+            assertThat(raw.path("content").asText()).hasSize(64000);
+            assertThat(raw.path("truncated").asBoolean()).isTrue();
+        } finally {
+            stream.cancel();
+            release.countDown();
+            server.stop(0);
+            worker.shutdownNow();
+        }
+    }
+
+    @Test
+    void preservesHttpErrorWhenDiagnosticBodyIsIncomplete() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            try {
+                exchange.getRequestBody().readAllBytes();
+                exchange.sendResponseHeaders(429, 100);
+                exchange.getResponseBody().write("partial".getBytes(StandardCharsets.UTF_8));
+                exchange.getResponseBody().flush();
+            } finally { exchange.close(); }
+        });
+        server.start();
+        ExecutorService worker = Executors.newSingleThreadExecutor();
+        AiStreamSession stream = new AiStreamSession(text -> fail("Unexpected text"));
+        try {
+            AiChatRequest request = request();
+            Future<?> future = worker.submit(() -> provider("openai").chat(config(server.getAddress().getPort()), request, stream));
+            assertThatThrownBy(() -> future.get(5, TimeUnit.SECONDS))
+                .isInstanceOf(ExecutionException.class)
+                .satisfies(failure -> assertThat(failure.getCause()).isInstanceOfSatisfying(com.fugary.simple.mock.service.ai.AiException.class, error -> {
+                    assertThat(error.getMessageKey()).isEqualTo("simple.ai.httpError");
+                    assertThat(error.getArguments()[0]).isEqualTo(429);
+                }));
+            assertThat(request.getTrace().rawResponse()).isEqualTo("partial");
+        } finally {
+            stream.cancel();
             server.stop(0);
             worker.shutdownNow();
         }

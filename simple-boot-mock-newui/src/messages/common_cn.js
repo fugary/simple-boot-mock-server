@@ -175,3 +175,5 @@ common.msg.moveSameUser = '移动目标用户不能与项目当前所属用户�
 common.msg.copyError = '不支持复制功能!'
 common.msg.clickToCopy = '点击复制'
 common.msg.sessionExpired = '认证失败或登录状态已失效，请重新登录'
+
+common.label.json = 'JSON'

@@ -43,6 +43,9 @@ class AiServiceTest {
         ArgumentCaptor<AiLog> captured = ArgumentCaptor.forClass(AiLog.class);
         verify(logs, times(2)).record(captured.capture());
         assertEquals(1, captured.getAllValues().get(0).getStatus());
+        assertEquals("openai", captured.getAllValues().get(0).getProvider());
+        assertTrue(captured.getAllValues().get(0).getExecutionDetail().contains("success"));
+        assertTrue(captured.getAllValues().get(1).getExecutionDetail().contains("failed"));
         assertEquals("override-model", captured.getAllValues().get(0).getModel());
         assertEquals(5, captured.getAllValues().get(0).getTotalTokens());
         assertEquals(0, captured.getAllValues().get(1).getStatus());
@@ -70,6 +73,7 @@ class AiServiceTest {
         com.fugary.simple.mock.service.ai.provider.AiStreamSession stream =
             new com.fugary.simple.mock.service.ai.provider.AiStreamSession(text -> {});
         when(provider.chat(any(), any(), any())).thenAnswer(call -> {
+            ((AiChatRequest) call.getArgument(1)).getTrace().append("partial upstream event");
             stream.text("partial");
             servletRequest.removeAttribute(com.fugary.simple.mock.contants.MockConstants.MOCK_USER_KEY);
             stream.cancel();
@@ -83,6 +87,8 @@ class AiServiceTest {
             ArgumentCaptor<AiLog> captured = ArgumentCaptor.forClass(AiLog.class);
             verify(logs).recordForUser(captured.capture(), eq("stream-user"));
             assertEquals("partial", captured.getValue().getResponseText());
+            assertEquals("partial upstream event", captured.getValue().getRawResponse());
+            assertTrue(captured.getValue().getExecutionDetail().contains("cancelled"));
             assertEquals(0, captured.getValue().getStatus());
         } finally {
             org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();

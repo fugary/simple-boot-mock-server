@@ -4,7 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { AiLogApi, loadAiConfigOptions } from '@/api/mock/AiApi'
 import { $i18nBundle } from '@/messages'
-import { $coreConfirm } from '@/utils'
+import { $coreConfirm, isAdminUser } from '@/utils'
+import { useAllUsers } from '@/api/mock/MockUserApi'
 import { useDefaultPage } from '@/config'
 import AiLogDetailWindow from './AiLogDetailWindow.vue'
 import { ElTag } from 'element-plus'
@@ -31,6 +32,7 @@ const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm(
     return sequence === querySequence ? response : { success: false }
   }
 })
+const { userOptions, loadSelectUsers } = useAllUsers(searchParam, { current: false })
 const routeConfigId = () => {
   const value = Number(route.query.configId)
   return Number.isSafeInteger(value) && value > 0 ? value : undefined
@@ -43,7 +45,7 @@ const syncRouteConfig = () => {
 }
 const { initLoadOnce } = useInitLoadOnce(async () => {
   syncRouteConfig()
-  const response = await loadAiConfigOptions()
+  const [response] = await Promise.all([loadAiConfigOptions(), isAdminUser() ? loadSelectUsers() : Promise.resolve()])
   if (response.success) configs.value = response.resultData || []
   await searchMethod(1)
 })
@@ -80,7 +82,10 @@ const configOptions = computed(() => {
 })
 const detailVisible = ref(false)
 const detailRecord = ref(null)
-const recordConfig = record => ({ ...configs.value.find(config => config.id === record.configId), configName: record.configName })
+const recordConfig = record => {
+  const config = configs.value.find(config => config.id === record.configId)
+  return { ...config, configName: record.configName, provider: record.provider || config?.provider }
+}
 let detailSequence = 0
 const view = async (row, json = false) => {
   const sequence = ++detailSequence
@@ -104,6 +109,15 @@ const remove = async row => {
 const options = computed(() => [
   { labelKey: 'common.label.keywords', prop: 'keyword' },
   {
+    labelKey: 'common.label.username',
+    prop: 'userName',
+    type: 'select',
+    enabled: isAdminUser(),
+    children: userOptions.value,
+    attrs: { filterable: true, clearable: true, allowCreate: true, defaultFirstOption: true },
+    change: () => searchMethod(1)
+  },
+  {
     labelKey: 'mock.label.aiConfigName',
     prop: 'configId',
     type: 'select',
@@ -121,6 +135,7 @@ const options = computed(() => [
   { labelKey: 'common.label.status', prop: 'status', type: 'select', children: [{ labelKey: 'mock.label.aiSuccess', value: 1 }, { labelKey: 'mock.label.aiFailed', value: 0 }], attrs: { clearable: true }, change: () => searchMethod(1) }
 ])
 const columns = computed(() => [
+  { labelKey: 'common.label.username', prop: 'userName', minWidth: '120px', attrs: { showOverflowTooltip: true } },
   { labelKey: 'mock.label.aiConfigName', prop: 'configName', minWidth: '240px', formatter: row => h(AiConfigLabel, { config: recordConfig(row) }) },
   { labelKey: 'mock.label.aiModel', prop: 'model', minWidth: '180px', attrs: { showOverflowTooltip: true } },
   { labelKey: 'common.label.status', width: '100px', attrs: { align: 'center' }, formatter: row => h(ElTag, { type: row.status === 1 ? 'success' : 'danger' }, () => $i18nBundle(row.status === 1 ? 'mock.label.aiSuccess' : 'mock.label.aiFailed')) },
@@ -129,7 +144,7 @@ const columns = computed(() => [
   { labelKey: 'mock.label.aiError', prop: 'errorMessage', minWidth: '200px', attrs: { showOverflowTooltip: true } },
   { labelKey: 'common.label.createDate', prop: 'createDate', dateFormat: 'YYYY-MM-DD HH:mm:ss', minWidth: '170px' }
 ])
-const buttons = [{ labelKey: 'common.label.view', type: 'primary', click: row => view(row) }, { labelKey: 'mock.label.aiRecordJson', click: row => view(row, true) }, { labelKey: 'common.label.delete', type: 'danger', click: remove }]
+const buttons = [{ labelKey: 'common.label.view', type: 'primary', click: row => view(row) }, { labelKey: 'common.label.json', click: row => view(row, true) }, { labelKey: 'common.label.delete', type: 'danger', click: remove }]
 </script>
 <template>
   <el-container class="flex-column">

@@ -11,6 +11,9 @@ public class AiLog extends MockBase {
     private String model;
     private String prompt;
     private String responseText;
+    private String rawResponse;
+    private String executionDetail;
+    private String provider;
     private String errorMessage;
     private Long durationMs;
     private Integer promptTokens;

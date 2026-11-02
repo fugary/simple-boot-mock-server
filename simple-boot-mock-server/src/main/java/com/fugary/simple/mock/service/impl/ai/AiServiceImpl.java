@@ -7,10 +7,12 @@ import com.fugary.simple.mock.service.ai.AiException;
 import com.fugary.simple.mock.service.ai.AiLogService;
 import com.fugary.simple.mock.service.ai.AiProvider;
 import com.fugary.simple.mock.service.ai.AiService;
+import com.fugary.simple.mock.service.ai.provider.AiCallTrace;
 import com.fugary.simple.mock.service.ai.provider.AiChatProvider;
 import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
 import com.fugary.simple.mock.service.ai.provider.AiChatResponse;
 import com.fugary.simple.mock.service.ai.provider.AiStreamSession;
+import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -61,7 +63,9 @@ public class AiServiceImpl implements AiService {
             config.setDefaultModel(model);
         }
         AiChatProvider provider = provider(config);
+        request.setTrace(new AiCallTrace());
         AiLog entry = new AiLog();
+        entry.setProvider(config.getProvider());
         entry.setConfigId(configId);
         entry.setConfigName(config.getConfigName());
         entry.setModel(config.getDefaultModel());
@@ -70,6 +74,7 @@ public class AiServiceImpl implements AiService {
         entry.setStatus(0);
         String owner = SecurityUtils.getLoginUserName();
         long start = System.nanoTime();
+        String finishReason = "failed";
         try {
             AiChatResponse response = stream == null ? provider.chat(config, request) : provider.chat(config, request, stream);
             response.setDurationMs((System.nanoTime() - start) / 1000000);
@@ -78,8 +83,10 @@ public class AiServiceImpl implements AiService {
             entry.setCompletionTokens(response.getCompletionTokens());
             entry.setTotalTokens(response.getTotalTokens());
             entry.setStatus(1);
+            finishReason = "success";
             return response;
         } catch (CancellationException e) {
+            finishReason = "cancelled";
             entry.setErrorMessage(SimpleResultUtils.getErrorMsg("simple.ai.cancelled", null));
             throw e;
         } catch (AiException e) {
@@ -91,6 +98,17 @@ public class AiServiceImpl implements AiService {
         } finally {
             if (stream != null && entry.getStatus() != 1) entry.setResponseText(StringUtils.left(stream.getText(), 16000));
             entry.setDurationMs((System.nanoTime() - start) / 1000000);
+            entry.setRawResponse(request.getTrace().rawResponse());
+            Map<String, Object> detail = new java.util.LinkedHashMap<>();
+            detail.put("version", 1);
+            detail.put("finishReason", finishReason);
+            detail.put("streaming", stream != null);
+            detail.put("httpStatus", request.getTrace().getHttpStatus());
+            detail.put("requestBody", request.getTrace().getRequestBody());
+            detail.put("truncated", request.getTrace().isTruncated());
+            detail.put("usageComplete", entry.getPromptTokens() != null && entry.getCompletionTokens() != null && entry.getTotalTokens() != null);
+            detail.put("steps", List.of(Map.of("type", "model", "round", 1, "status", finishReason, "duration", entry.getDurationMs())));
+            entry.setExecutionDetail(JsonUtils.toJson(detail));
             if (stream == null) logs.record(entry);
             else logs.recordForUser(entry, owner);
         }

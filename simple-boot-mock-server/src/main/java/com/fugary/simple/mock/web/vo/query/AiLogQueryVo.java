@@ -8,6 +8,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AiLogQueryVo extends SimpleQueryVo {
+    private String userName;
     private Integer configId;
     private String model;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")

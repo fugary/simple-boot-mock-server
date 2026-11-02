@@ -21,7 +21,7 @@ public class OpenAiChatProvider extends AbstractAiChatProvider {
         HttpHeaders headers = headers("Authorization", StringUtils.isBlank(config.getApiKey()) ? null : "Bearer " + config.getApiKey());
         Map<String, Object> body = Map.of("model", config.getDefaultModel(), "messages",
             List.of(Map.of("role", "user", "content", request.getPrompt())));
-        JsonNode data = post(url(config.getBaseUrl(), "/chat/completions"), headers, body, stream);
+        JsonNode data = post(url(config.getBaseUrl(), "/chat/completions"), headers, body, stream, request.getTrace());
         AiChatResponse response = response(data.path("choices").path(0).path("message").path("content").asText());
         JsonNode usage = data.path("usage");
         response.setPromptTokens(tokenCount(usage, "prompt_tokens"));

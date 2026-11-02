@@ -184,6 +184,9 @@ class AiIntegrationTest {
         entry.setConfigName("Alice model");
         entry.setPrompt("private prompt");
         entry.setResponseText("private answer");
+        entry.setRawResponse("{\"answer\":\"private answer\"}");
+        entry.setExecutionDetail("{\"version\":1}");
+        entry.setProvider("openai");
         entry.setStatus(1);
         logs.insert(entry);
 
@@ -213,6 +216,10 @@ class AiIntegrationTest {
         assertEquals(1, controller.searchLogs(logQuery(alice.getId())).getResultData().size());
         assertTrue(controller.searchLogs(logQuery(bob.getId())).getResultData().isEmpty());
         assertNull(controller.searchLogs(logQuery(alice.getId())).getResultData().get(0).getPrompt());
+        assertNull(controller.searchLogs(logQuery(alice.getId())).getResultData().get(0).getRawResponse());
+        assertNull(controller.searchLogs(logQuery(alice.getId())).getResultData().get(0).getExecutionDetail());
+        assertEquals(entry.getRawResponse(), controller.getLog(entry.getId()).getResultData().getRawResponse());
+        assertEquals(entry.getExecutionDetail(), controller.getLog(entry.getId()).getResultData().getExecutionDetail());
         controller.deleteConfig(alice.getId());
         assertEquals("private answer", controller.getLog(entry.getId()).getResultData().getResponseText());
         controller.deleteLog(entry.getId());
@@ -254,6 +261,61 @@ class AiIntegrationTest {
         assertEquals(2, controller.searchConfigs(query).getResultData().size());
     }
 
+
+    @Test
+    void adminCanFilterAndManageAllLogsWhileOrdinaryUsersStayScoped() {
+        login("admin");
+        AiConfig config = createConfig("Shared history");
+        java.util.Map<String, Integer> ids = new java.util.HashMap<>();
+        for (String name : java.util.List.of("admin", "log-alice", "log-bob")) {
+            AiLog entry = new AiLog();
+            entry.setConfigId(config.getId());
+            entry.setConfigName(config.getConfigName());
+            entry.setUserName(name);
+            entry.setStatus(1);
+            entry.setRawResponse("private-" + name);
+            logs.insert(entry);
+            ids.put(name, entry.getId());
+        }
+        AiLogQueryVo query = logQuery(config.getId());
+        assertEquals(3, controller.searchLogs(query).getResultData().size());
+        query.setUserName(" log-bob ");
+        assertEquals(ids.get("log-bob"), controller.searchLogs(query).getResultData().get(0).getId());
+        query.setUserName("log-b");
+        assertTrue(controller.searchLogs(query).getResultData().isEmpty());
+        query.setUserName(" ");
+        assertEquals(3, controller.searchLogs(query).getResultData().size());
+        assertEquals("private-log-bob", controller.getLog(ids.get("log-bob")).getResultData().getRawResponse());
+        query.setUserName("x".repeat(256));
+        assertEquals(400, assertThrows(AiException.class, () -> controller.searchLogs(query)).getCode());
+
+        login("log-alice");
+        query.setUserName("log-bob");
+        assertEquals(1, controller.searchLogs(query).getResultData().size());
+        assertEquals(ids.get("log-alice"), controller.searchLogs(query).getResultData().get(0).getId());
+        assertEquals(404, assertThrows(AiException.class, () -> controller.getLog(ids.get("log-bob"))).getCode());
+        assertEquals(404, assertThrows(AiException.class, () -> controller.deleteLog(ids.get("log-bob"))).getCode());
+        assertEquals("private-log-alice", controller.getLog(ids.get("log-alice")).getResultData().getRawResponse());
+        controller.deleteLog(ids.get("log-alice"));
+        assertNull(logs.selectById(ids.get("log-alice")));
+
+        login("admin");
+        controller.deleteLog(ids.get("admin"));
+        controller.deleteConfig(config.getId());
+        // 只剩其他用户的历史记录，管理员仍能从配置选项筛选。
+        assertTrue(controller.options().getResultData().stream().anyMatch(option -> option.getId().equals(config.getId()) && option.isDeleted()));
+        login("log-alice");
+        assertFalse(controller.options().getResultData().stream().anyMatch(option -> option.getId().equals(config.getId())));
+        login("admin");
+        controller.deleteLog(ids.get("log-bob"));
+        assertNull(logs.selectById(ids.get("log-bob")));
+
+        RequestContextHolder.resetRequestAttributes();
+        query.setUserName("admin");
+        assertEquals(401, assertThrows(AiException.class, () -> controller.searchLogs(query)).getCode());
+        assertEquals(401, assertThrows(AiException.class, () -> controller.getLog(ids.get("log-bob"))).getCode());
+        assertEquals(401, assertThrows(AiException.class, () -> controller.deleteLog(ids.get("log-bob"))).getCode());
+    }
 
     private AiLogQueryVo logQuery(Integer configId) {
         AiLogQueryVo query = new AiLogQueryVo();

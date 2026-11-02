@@ -16,7 +16,7 @@ const view = response => showCodeWindow(response, { title: $i18nBundle('mock.lab
         size="small"
         @click="view(response)"
       >
-        {{ $t('mock.label.aiResponseJson') }}
+        {{ $t('common.label.json') }}
       </el-button>
     </span>
   </el-tooltip>

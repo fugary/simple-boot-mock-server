@@ -614,7 +614,19 @@ const fitExampleHeight = (editor, key) => {
 .help-topic-action { position: absolute; top: 4px; right: 0; z-index: 1; }
 .has-topic-action :deep(.el-tabs__header) {
   padding-right: 44px;
-  background: linear-gradient(var(--el-border-color-light), var(--el-border-color-light)) left bottom / 100% 2px no-repeat;
+}
+.has-topic-action :deep(.el-tabs__header)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background-color: var(--el-border-color-light);
+  pointer-events: none;
+}
+.has-topic-action :deep(.el-tabs__nav-wrap)::after {
+  display: none;
 }
 .user-guide {
   display: grid;

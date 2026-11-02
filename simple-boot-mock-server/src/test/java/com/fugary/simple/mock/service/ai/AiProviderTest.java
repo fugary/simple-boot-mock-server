@@ -52,6 +52,10 @@ class AiProviderTest {
                 request.setPrompt("test prompt");
                 AiChatResponse result = client.chat(config, request);
                 assertEquals("hello", result.getContent());
+                assertEquals(200, request.getTrace().getHttpStatus());
+                assertNotNull(mapper.readTree(request.getTrace().rawResponse()));
+                assertEquals(mapper.readTree(body.get()), mapper.readTree(request.getTrace().getRequestBody()));
+                assertFalse(request.getTrace().getRequestBody().contains("secret-key"));
                 assertEquals(2, result.getPromptTokens());
                 assertEquals(3, result.getCompletionTokens());
                 assertEquals(5, result.getTotalTokens());
@@ -100,6 +104,8 @@ class AiProviderTest {
                     () -> new OpenAiChatProvider().chat(config, request));
                 assertEquals(status == 429 ? "simple.ai.httpError" : "simple.ai.invalidResponse", error.getMessageKey());
                 assertFalse(error.toString().contains("private-key"));
+                assertEquals(status, request.getTrace().getHttpStatus());
+                assertEquals("private-key malformed-response", request.getTrace().rawResponse());
                 if (status == 429) {
                     assertEquals(429, error.getArguments()[0]);
                 }

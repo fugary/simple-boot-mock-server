@@ -175,3 +175,5 @@ common.msg.moveSuccess = 'Moved Successfully!'
 common.msg.moveSameTarget = 'Move target must be different from current target.'
 common.msg.moveSameUser = 'Move target user must be different from current project owner.'
 common.msg.sessionExpired = 'Authentication failed or login status has expired, please log in again.'
+
+common.label.json = 'JSON'

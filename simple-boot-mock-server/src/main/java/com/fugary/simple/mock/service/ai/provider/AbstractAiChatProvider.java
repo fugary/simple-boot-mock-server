@@ -52,16 +52,18 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
     }
 
     protected JsonNode post(String url, HttpHeaders headers, Object body) {
-        return exchange(url, HttpMethod.POST, headers, body);
+        return exchange(url, HttpMethod.POST, headers, body, null);
     }
 
     protected JsonNode get(String url, HttpHeaders headers) {
-        return exchange(url, HttpMethod.GET, headers, null);
+        return exchange(url, HttpMethod.GET, headers, null, null);
     }
 
-    private JsonNode exchange(String url, HttpMethod method, HttpHeaders headers, Object body) {
+    private JsonNode exchange(String url, HttpMethod method, HttpHeaders headers, Object body, AiCallTrace trace) {
         try {
-            String response = restTemplate.exchange(URI.create(url), method, new HttpEntity<>(body, headers), String.class).getBody();
+            org.springframework.http.ResponseEntity<String> entity = restTemplate.exchange(URI.create(url), method, new HttpEntity<>(body, headers), String.class);
+            String response = entity.getBody();
+            if (trace != null) { trace.setHttpStatus(entity.getStatusCodeValue()); trace.append(response); }
             if (StringUtils.isBlank(response)) {
                 throw new AiException(500, "simple.ai.invalidResponse");
             }
@@ -71,6 +73,7 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
             }
             return parsed;
         } catch (RestClientResponseException e) {
+            if (trace != null) { trace.setHttpStatus(e.getRawStatusCode()); trace.append(e.getResponseBodyAsString()); }
             throw new AiException(500, "simple.ai.httpError", e.getRawStatusCode());
         } catch (ResourceAccessException e) {
             throw new AiException(500, e.getRootCause() instanceof SocketTimeoutException
@@ -82,8 +85,10 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
         }
     }
 
-    protected JsonNode post(String url, HttpHeaders headers, Map<String, Object> body, AiStreamSession stream) {
-        if (stream == null) return post(url, headers, body);
+    protected JsonNode post(String url, HttpHeaders headers, Map<String, Object> body, AiStreamSession stream, AiCallTrace trace) {
+        trace.setRequestBody(JsonUtils.toJson(body));
+        trace.setStreaming(stream != null);
+        if (stream == null) return exchange(url, HttpMethod.POST, headers, body, trace);
         stream.check();
         Map<String, Object> streamingBody = new HashMap<>(body);
         if (getProvider() == AiProvider.GEMINI) {
@@ -92,6 +97,7 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
             streamingBody.put("stream", true);
             if (getProvider() == AiProvider.OPENAI) streamingBody.put("stream_options", Map.of("include_usage", true));
         }
+        trace.setRequestBody(JsonUtils.toJson(streamingBody));
         HttpPost post = new HttpPost(url);
         headers.forEach((key, values) -> values.forEach(value -> post.addHeader(key, value)));
         post.setHeader("Accept", "text/event-stream");
@@ -105,11 +111,14 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
                     StandardCharsets.UTF_8));
             try (CloseableHttpResponse response = client.execute(post)) {
                 int status = response.getStatusLine().getStatusCode();
+                trace.setHttpStatus(status);
                 if (status < 200 || status >= 300) {
+                    captureBody(response, trace, post, stream);
                     throw new AiException(500, "simple.ai.httpError", status);
                 }
                 if (response.getEntity() == null || response.getEntity().getContentType() == null
                         || !response.getEntity().getContentType().getValue().toLowerCase(Locale.ROOT).contains("text/event-stream")) {
+                    captureBody(response, trace, post, stream);
                     throw new AiException(500, "simple.ai.invalidResponse");
                 }
                 AiStreamAccumulator accumulator = new AiStreamAccumulator(getProvider(), JsonUtils.getMapper(), stream);
@@ -119,6 +128,7 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
                     String line;
                     int received = 0;
                     while ((line = reader.readLine()) != null) {
+                        trace.append(line + "\n");
                         stream.check();
                         received += line.length();
                         if (received > 8 * 1024 * 1024) throw new IOException("AI 流式响应超出大小限制");
@@ -144,6 +154,27 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
         } finally {
             stream.unbind();
         }
+    }
+
+    private void captureBody(CloseableHttpResponse response, AiCallTrace trace, HttpPost post, AiStreamSession stream) {
+        trace.setStreaming(false);
+        try {
+            if (response.getEntity() != null) {
+                // 不单独关闭 Reader：HttpClient 会在关闭时排空剩余正文，由 finally 中止连接。
+                java.io.Reader reader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8);
+                char[] buffer = new char[4096];
+                int count;
+                while (!trace.isTruncated() && (count = reader.read(buffer)) != -1) {
+                    stream.check();
+                    trace.append(new String(buffer, 0, count));
+                }
+            }
+        } catch (IOException ignored) {
+            // 诊断正文读取失败不能覆盖已经收到的 HTTP 错误。
+        } finally {
+            post.abort();
+        }
+        stream.check();
     }
 
     protected String url(String base, String path) {

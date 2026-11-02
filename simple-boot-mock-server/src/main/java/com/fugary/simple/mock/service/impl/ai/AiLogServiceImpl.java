@@ -13,7 +13,7 @@ import com.fugary.simple.mock.web.vo.query.AiLogQueryVo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-/** Keeps execution history independent of configuration deletion and scoped to its owner. */
+/** 日志独立于配置保留，管理员可全局管理，普通用户仅可访问自己的记录。 */
 @Service
 public class AiLogServiceImpl extends ServiceImpl<AiLogMapper, AiLog> implements AiLogService {
     private String user() {
@@ -24,14 +24,20 @@ public class AiLogServiceImpl extends ServiceImpl<AiLogMapper, AiLog> implements
         return owner;
     }
 
+    private String queryUser(String requestedUser) {
+        String currentUser = user();
+        return SecurityUtils.isAdminUser() ? StringUtils.trimToNull(requestedUser) : currentUser;
+    }
+
     @Override
     public Page<AiLog> search(AiLogQueryVo query) {
         validateQuery(query);
+        String owner = queryUser(query.getUserName());
         String keyword = StringUtils.trimToEmpty(query.getKeyword());
         return page(SimpleResultUtils.toPage(query), Wrappers.<AiLog>query()
-            .select("id", "user_name", "config_id", "config_name", "model", "status", "duration_ms",
+            .select("id", "user_name", "provider", "config_id", "config_name", "model", "status", "duration_ms",
                 "prompt_tokens", "completion_tokens", "total_tokens", "create_date", "error_message")
-            .eq("user_name", user()).eq(query.getConfigId() != null, "config_id", query.getConfigId())
+            .eq(owner != null, "user_name", owner).eq(query.getConfigId() != null, "config_id", query.getConfigId())
             .like(StringUtils.isNotBlank(query.getModel()), "model", StringUtils.trim(query.getModel()))
             .ge(query.getStartDate() != null, "create_date", query.getStartDate())
             .le(query.getEndDate() != null, "create_date", query.getEndDate())
@@ -42,7 +48,8 @@ public class AiLogServiceImpl extends ServiceImpl<AiLogMapper, AiLog> implements
 
     @Override
     public AiLog getOwned(Integer id) {
-        AiLog value = getOne(Wrappers.<AiLog>query().eq("id", id).eq("user_name", user()));
+        String owner = queryUser(null);
+        AiLog value = getOne(Wrappers.<AiLog>query().eq("id", id).eq(owner != null, "user_name", owner));
         if (value == null) {
             throw new AiException(404, "simple.error.code.404");
         }
@@ -72,7 +79,7 @@ public class AiLogServiceImpl extends ServiceImpl<AiLogMapper, AiLog> implements
     }
 
     private void validateQuery(AiLogQueryVo query) {
-        if (StringUtils.length(query.getKeyword()) > 255 || StringUtils.length(query.getModel()) > 255
+        if (StringUtils.length(query.getUserName()) > 255 || StringUtils.length(query.getKeyword()) > 255 || StringUtils.length(query.getModel()) > 255
             || (query.getStatus() != null && query.getStatus() != 0 && query.getStatus() != 1)
             || (query.getConfigId() != null && query.getConfigId() <= 0)
             || (query.getStartDate() != null && query.getEndDate() != null && query.getStartDate().after(query.getEndDate()))
