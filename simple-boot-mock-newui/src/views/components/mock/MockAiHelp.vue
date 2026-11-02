@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onDeactivated, onScopeDispose, ref, watch, nextTick } from 'vue'
+import { computed, ref, nextTick } from 'vue'
 import { useResizeObserver } from '@vueuse/core'
-import { askAiHelp } from '@/api/mock/AiApi'
+import { storeToRefs } from 'pinia'
+import { useAiHelpStore } from '@/stores/AiHelpStore'
 import AiAnswerViewer from '@/views/components/utils/AiAnswerViewer.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import { $i18nBundle } from '@/messages'
@@ -9,18 +10,13 @@ import { $i18nBundle } from '@/messages'
 const props = defineProps({ active: { type: Boolean, default: true } })
 const composer = ref()
 const prefillQuestion = async question => {
-  stop()
   formData.value.question = question
   await nextTick()
   composer.value?.querySelector('textarea')?.focus()
 }
 defineExpose({ prefillQuestion })
-const loading = ref(false)
-const error = ref('')
-const formData = ref({ question: '', answer: '' })
-const submittedQuestion = ref('')
-const history = ref([])
-const previousTurns = ref([])
+const conversation = useAiHelpStore()
+const { loading, error, formData, submittedQuestion, previousTurns, stopped, metrics } = storeToRefs(conversation)
 const options = computed(() => [{
   prop: 'question',
   disabled: loading.value,
@@ -49,87 +45,22 @@ const trackScroll = () => {
 useResizeObserver([answerContent, answerViewport], () => {
   if (following.value) scrollToLatest()
 })
-const stopped = ref(false)
-const metrics = ref(null)
 const metricFields = computed(() => [
   ['mock.label.aiDuration', metrics.value?.durationMs],
   ['mock.label.aiPromptTokens', metrics.value?.promptTokens],
   ['mock.label.aiCompletionTokens', metrics.value?.completionTokens],
   ['mock.label.aiTotalTokens', metrics.value?.totalTokens]
 ].filter(([, value]) => value != null))
-let controller
-const stop = () => {
-  const current = controller
-  controller = undefined
-  current?.abort()
-  if (loading.value) {
-    stopped.value = true
-    restoreQuestion()
-  }
-  loading.value = false
-}
-const restoreQuestion = () => {
-  if (!formData.value.question) formData.value.question = submittedQuestion.value
-}
+const stop = () => conversation.stop()
 const newConversation = () => {
-  stop()
-  history.value = []
-  previousTurns.value = []
-  formData.value = { question: '', answer: '' }
-  submittedQuestion.value = ''
-  error.value = ''
-  stopped.value = false
-  metrics.value = null
+  conversation.clear()
   nextTick(scrollToLatest)
 }
-onScopeDispose(stop)
-onDeactivated(stop)
-watch(() => props.active, active => { if (!active) stop() }, { flush: 'sync' })
-const errorMessage = err => err?.data?.message || err?.response?.data?.message || err?.message || $i18nBundle('common.msg.unknownError')
-const ask = async () => {
-  const question = formData.value.question.trim()
-  if (!question || loading.value || !props.active) return
-  const current = new AbortController()
-  controller = current
-  stopped.value = false
-  metrics.value = null
-  loading.value = true
-  error.value = ''
-  previousTurns.value = [...history.value]
-  submittedQuestion.value = question
-  formData.value.question = ''
-  formData.value.answer = ''
+const ask = () => {
+  if (!formData.value.question.trim() || loading.value || !props.active) return
   following.value = true
   nextTick(scrollToLatest)
-  try {
-    await askAiHelp(question, {
-      onDelta: data => {
-        if (current === controller) formData.value.answer += data.text || ''
-      },
-      onFinish: data => {
-        if (current !== controller) return
-        formData.value.answer = data.resultData?.content || formData.value.answer
-        metrics.value = data.resultData
-        if (formData.value.answer.trim()) {
-          history.value = [...history.value, { question, answer: formData.value.answer }].slice(-3)
-          // Match the server's serialized history budget; remove whole oldest turns.
-          const turnLength = turn => turn.question.length + turn.answer.length + 53
-          while (history.value.reduce((size, turn) => size + turnLength(turn), 0) > 4000) history.value.shift()
-        }
-      },
-      onError: data => {
-        if (current === controller) error.value = errorMessage(data)
-      }
-    }, current.signal, history.value)
-  } catch (err) {
-    if (current === controller) error.value = errorMessage(err)
-  } finally {
-    if (current === controller) {
-      if (error.value) restoreQuestion()
-      controller = undefined
-      loading.value = false
-    }
-  }
+  return conversation.ask()
 }
 const handleQuestionKeydown = event => {
   if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || event.isComposing || event.keyCode === 229) return

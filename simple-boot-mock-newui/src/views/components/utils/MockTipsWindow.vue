@@ -1,9 +1,13 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useAiHelpStore } from '@/stores/AiHelpStore'
 import MockTips from '@/views/mock/MockTips.vue'
 import { isString } from 'lodash-es'
 
 const showWindow = ref(false)
+watch(showWindow, visible => {
+  if (!visible) useAiHelpStore().stop()
+}, { flush: 'sync' })
 
 const currentTab = ref()
 const showMockTips = (tab) => {

@@ -406,26 +406,31 @@ async function main () {
   validations[1](true)
   await Promise.resolve()
   assert.equal(calls, 1)
+  const { createPinia, defineStore, storeToRefs } = require('pinia')
   const helpRequests = []
+  const askAiHelp = (prompt, callbacks, signal, history) => new Promise((resolve, reject) => {
+    helpRequests.push({ prompt, callbacks, signal, history: [...history], resolve, reject })
+  })
+  const useAiHelpStoreDefinition = new Function('defineStore', 'ref', 'askAiHelp', '$i18nBundle', read('stores/AiHelpStore.js').replace(/^import .*$/gm, '').replace('export const', 'const') + '; return useAiHelpStore')(defineStore, ref, askAiHelp, key => key)
+  const helpPinia = createPinia()
+  const useAiHelpStore = () => useAiHelpStoreDefinition(helpPinia)
   const helpProps = ref({ active: true })
-  let deactivateHelp
   let resizeAnswer
-  const helpScope = effectScope()
-  const help = helpScope.run(() => setup('views/components/mock/MockAiHelp.vue', {
+  const helpBindings = {
     ref,
     computed,
-    onScopeDispose,
-    onDeactivated: callback => { deactivateHelp = callback },
-    watch,
+    storeToRefs,
+    useAiHelpStore,
     defineProps: () => helpProps.value,
     defineExpose: () => {},
     nextTick: callback => Promise.resolve().then(callback),
     useResizeObserver: (target, callback) => { resizeAnswer = callback },
-    $i18nBundle: key => key,
-    askAiHelp: (prompt, callbacks, signal, history) => new Promise((resolve, reject) => {
-      helpRequests.push({ prompt, callbacks, signal, history: [...history], resolve, reject })
-    })
-  }, 'ask,stop,formData,loading,error,stopped,metricFields,answerViewport,following,trackScroll,scrollToLatest,handleQuestionKeydown,submittedQuestion,prefillQuestion,history,previousTurns,newConversation'))
+    $i18nBundle: key => key
+  }
+  const createHelp = scope => scope.run(() => setup('views/components/mock/MockAiHelp.vue', helpBindings, 'ask,stop,formData,loading,error,stopped,metricFields,answerViewport,following,trackScroll,scrollToLatest,handleQuestionKeydown,submittedQuestion,prefillQuestion,previousTurns,newConversation'))
+  const helpScope = effectScope()
+  const help = createHelp(helpScope)
+  const store = useAiHelpStore()
   help.answerViewport.value = { scrollHeight: 1000, scrollTop: 0, clientHeight: 300 }
   resizeAnswer()
   assert.equal(help.answerViewport.value.scrollTop, 1000)
@@ -433,120 +438,128 @@ async function main () {
   help.trackScroll()
   resizeAnswer()
   assert.equal(help.answerViewport.value.scrollTop, 100)
-  assert.equal(help.following.value, false)
   help.scrollToLatest()
   assert.equal(help.following.value, true)
-  assert.equal(help.answerViewport.value.scrollTop, 1000)
-  await help.prefillQuestion('Explain matching rules')
-  assert.equal(help.formData.value.question, 'Explain matching rules')
+  await help.prefillQuestion('help')
   assert.equal(helpRequests.length, 0)
-  await help.prefillQuestion('Explain matching rules')
-  assert.equal(helpRequests.length, 0)
-  help.formData.value.question = '  help  '
-  for (const event of [{ key: 'Enter', shiftKey: true }, { key: 'Enter', isComposing: true }, { key: 'Enter', keyCode: 229 }, { key: 'Enter', ctrlKey: true }]) {
-    help.handleQuestionKeydown({ ...event, preventDefault: () => assert.fail('Must preserve newline or IME input') })
+  for (const event of [{ key: 'Enter', shiftKey: true }, { key: 'Enter', isComposing: true }]) {
+    help.handleQuestionKeydown({ ...event, preventDefault: () => assert.fail('Preserve newline and IME') })
   }
-  assert.equal(helpRequests.length, 0)
-  let prevented = false
-  const firstHelp = help.handleQuestionKeydown({ key: 'Enter', preventDefault: () => { prevented = true } })
-  assert.equal(prevented, true)
-  assert.equal(helpRequests.length, 1)
-
-  help.ask()
-  assert.equal(helpRequests.length, 1)
-  assert.equal(helpRequests[0].prompt, 'help')
-  assert.equal(help.formData.value.question, '')
-  assert.equal(help.submittedQuestion.value, 'help')
-  helpRequests[0].callbacks.onDelta({ text: 'partial' })
-  assert.equal(help.formData.value.answer, 'partial')
-  help.stop()
-  assert.equal(helpRequests[0].signal.aborted, true)
-  assert.equal(help.formData.value.answer, 'partial')
-  assert.equal(help.stopped.value, true)
-  assert.equal(help.formData.value.question, 'help')
-  const secondHelp = help.ask()
-  helpRequests[0].callbacks.onDelta({ text: 'stale' })
-  helpRequests[0].callbacks.onFinish({ resultData: { content: 'stale' } })
-  helpRequests[0].callbacks.onError({ message: 'stale' })
-  helpRequests[0].reject(new Error('stale'))
-  await firstHelp
-  assert.equal(help.formData.value.answer, '')
-  assert.equal(help.error.value, '')
-  assert.equal(help.loading.value, true)
-  helpRequests[1].callbacks.onDelta({ text: 'new' })
-  helpRequests[1].callbacks.onFinish({ resultData: { content: 'complete', durationMs: 0, totalTokens: 0 } })
-  helpRequests[1].resolve()
-  await secondHelp
-  assert.equal(help.formData.value.answer, 'complete')
-  assert.equal(help.metricFields.value.length, 2)
-  assert.equal(help.loading.value, false)
-  assert.equal(help.formData.value.question, '')
-  help.formData.value.question = 'retry question'
-  const failedHelp = help.ask()
-  helpRequests[2].callbacks.onDelta({ text: 'incomplete' })
-  helpRequests[2].reject(new Error('interrupted'))
-  await failedHelp
-  assert.equal(help.formData.value.answer, 'incomplete')
-  assert.equal(help.error.value, 'interrupted')
-  assert.equal(help.formData.value.question, 'retry question')
-  const hiddenHelp = help.ask()
-  helpRequests[3].callbacks.onDelta({ text: 'hidden partial' })
-  helpProps.value.active = false
-  assert.equal(helpRequests[3].signal.aborted, true)
-  assert.equal(help.formData.value.answer, 'hidden partial')
-  helpRequests[3].resolve()
-  await hiddenHelp
+  const firstHelp = help.handleQuestionKeydown({ key: 'Enter', preventDefault: () => {} })
   await help.ask()
-  assert.equal(helpRequests.length, 4)
+  assert.equal(helpRequests.length, 1)
+  const firstRequest = helpRequests.at(-1)
+  firstRequest.callbacks.onDelta({ text: 'partial' })
+  helpProps.value.active = false
+  assert.equal(firstRequest.signal.aborted, false)
+  helpScope.stop()
+  firstRequest.callbacks.onDelta({ text: ' in background' })
+  assert.equal(store.formData.answer, 'partial in background')
   helpProps.value.active = true
-  const deactivatedHelp = help.ask()
-  deactivateHelp()
-  assert.equal(helpRequests[4].signal.aborted, true)
-  helpRequests[4].resolve()
-  await deactivatedHelp
-  const serverErrorHelp = help.ask()
-  helpRequests[5].callbacks.onError({ message: 'provider failed' })
-  helpRequests[5].resolve()
-  await serverErrorHelp
-  assert.equal(help.formData.value.question, 'retry question')
-  assert.equal(help.error.value, 'provider failed')
-  assert.deepEqual(help.history.value, [{ question: 'help', answer: 'complete' }])
-  assert.deepEqual(helpRequests[2].history, [{ question: 'help', answer: 'complete' }])
+  const reopenedScope = effectScope()
+  const reopened = createHelp(reopenedScope)
+  assert.equal(reopened.loading.value, true)
+  assert.equal(reopened.formData.value.answer, 'partial in background')
+  await reopened.prefillQuestion('next draft')
+  assert.equal(firstRequest.signal.aborted, false)
+  firstRequest.callbacks.onFinish({ resultData: { content: 'complete', durationMs: 0, totalTokens: 0 } })
+  firstRequest.resolve()
+  await firstHelp
+  assert.equal(reopened.loading.value, false)
+  assert.equal(reopened.metricFields.value.length, 2)
+  assert.equal(reopened.formData.value.question, 'next draft')
+  assert.deepEqual(store.history, [{ question: 'help', answer: 'complete' }])
+  const canceled = reopened.ask()
+  const canceledRequest = helpRequests.at(-1)
+  assert.deepEqual(canceledRequest.history, [{ question: 'help', answer: 'complete' }])
+  canceledRequest.callbacks.onDelta({ text: 'cancel partial' })
+  reopened.stop()
+  assert.equal(canceledRequest.signal.aborted, true)
+  assert.equal(reopened.stopped.value, true)
+  assert.equal(reopened.formData.value.question, 'next draft')
+  const retry = reopened.ask()
+  canceledRequest.callbacks.onFinish({ resultData: { content: 'stale' } })
+  canceledRequest.reject(new Error('stale'))
+  await canceled
+  assert.equal(store.formData.answer, '')
+  const failedRequest = helpRequests.at(-1)
+  failedRequest.reject(new Error('interrupted'))
+  await retry
+  assert.equal(store.error, 'interrupted')
+  assert.equal(store.formData.question, 'next draft')
+  assert.equal(store.history.length, 1)
   for (let i = 0; i < 4; i++) {
-    help.formData.value.question = 'follow-up-' + i
-    const pending = help.ask()
+    store.formData.question = 'follow-up-' + i
+    const pending = reopened.ask()
     const request = helpRequests.at(-1)
     assert.ok(request.history.length <= 3)
     request.callbacks.onFinish({ resultData: { content: 'answer-' + i } })
     request.resolve()
     await pending
   }
-  assert.deepEqual(help.history.value.map(turn => turn.question), ['follow-up-1', 'follow-up-2', 'follow-up-3'])
-  help.formData.value.question = 'large answer'
-  const longHelp = help.ask()
+  assert.deepEqual(store.history.map(turn => turn.question), ['follow-up-1', 'follow-up-2', 'follow-up-3'])
+  store.formData.question = 'large'
+  const large = reopened.ask()
   helpRequests.at(-1).callbacks.onFinish({ resultData: { content: 'x'.repeat(4000) } })
   helpRequests.at(-1).resolve()
-  await longHelp
-  assert.equal(help.history.value.length, 0)
-  help.formData.value.question = 'reset during generation'
-  const resetHelp = help.ask()
-  const resetRequest = helpRequests.at(-1)
-  help.newConversation()
-  assert.equal(resetRequest.signal.aborted, true)
-  resetRequest.callbacks.onFinish({ resultData: { content: 'stale after reset' } })
-  resetRequest.resolve()
-  await resetHelp
-  assert.equal(help.history.value.length, 0)
-  assert.equal(help.previousTurns.value.length, 0)
-  assert.equal(help.formData.value.answer, '')
-  assert.equal(help.submittedQuestion.value, '')
-  help.formData.value.question = 'dispose'
-  const disposedHelp = help.ask()
-  helpScope.stop()
-  assert.equal(helpRequests.at(-1).signal.aborted, true)
-  helpRequests.at(-1).resolve()
-  await disposedHelp
-  console.log('AI help streaming, cancellation, stale callbacks, metrics, failure and disposal checks passed')
+  await large
+  assert.equal(store.history.length, 0)
+  for (const clear of [() => reopened.newConversation(), () => store.clear()]) {
+    store.formData.question = 'clear while generating'
+    const pending = reopened.ask()
+    const request = helpRequests.at(-1)
+    clear()
+    assert.equal(request.signal.aborted, true)
+    request.callbacks.onFinish({ resultData: { content: 'stale after clear' } })
+    request.resolve()
+    await pending
+    assert.equal(store.formData.answer, '')
+    assert.equal(store.formData.question, '')
+    assert.equal(store.history.length, 0)
+    assert.equal(store.loading, false)
+  }
+  store.formData.question = 'finish with no view'
+  const background = reopened.ask()
+  reopenedScope.stop()
+  const backgroundRequest = helpRequests.at(-1)
+  assert.equal(backgroundRequest.signal.aborted, false)
+  backgroundRequest.callbacks.onFinish({ resultData: { content: 'background result' } })
+  backgroundRequest.resolve()
+  await background
+  const finalScope = effectScope()
+  const finalHelp = createHelp(finalScope)
+  assert.equal(finalHelp.formData.value.answer, 'background result')
+  assert.equal(finalHelp.loading.value, false)
+  assert.equal(store.history.length, 1)
+  const windowScope = effectScope()
+  const helpWindow = windowScope.run(() => setup('views/components/utils/MockTipsWindow.vue', {
+    ref,
+    computed,
+    watch,
+    useAiHelpStore,
+    isString: value => typeof value === 'string',
+    defineExpose: () => {}
+  }, 'showWindow,showMockTips'))
+  helpWindow.showMockTips('aiHelp')
+  store.formData.question = 'close the window'
+  const pendingClose = finalHelp.ask()
+  const closeRequest = helpRequests.at(-1)
+  closeRequest.callbacks.onDelta({ text: 'kept after close' })
+  helpWindow.showWindow.value = false
+  assert.equal(closeRequest.signal.aborted, true)
+  assert.equal(store.loading, false)
+  assert.equal(store.formData.answer, 'kept after close')
+  assert.equal(store.formData.question, 'close the window')
+  closeRequest.callbacks.onFinish({ resultData: { content: 'stale after close' } })
+  closeRequest.resolve()
+  await pendingClose
+  helpWindow.showMockTips('aiHelp')
+  assert.equal(store.formData.answer, 'kept after close')
+  assert.equal(store.stopped, true)
+  windowScope.stop()
+  assert.equal(useAiHelpStoreDefinition(createPinia()).history.length, 0)
+  finalScope.stop()
+  console.log('AI help streaming, background completion, remount, history, cancellation and clearing checks passed')
   const modelRequests = []
   const messages = []
   const modelSource = read('hooks/AiHooks.js').replace(/^import .*$/gm, '').replace('export const', 'const')

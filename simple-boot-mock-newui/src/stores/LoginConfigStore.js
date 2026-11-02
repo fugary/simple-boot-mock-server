@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { login } from '@/services/login/LoginService'
 import { useTabsViewStore } from '@/stores/TabsViewStore'
 import { useGlobalSearchParamStore } from '@/stores/GlobalSearchParamStore'
+import { useAiHelpStore } from '@/stores/AiHelpStore'
 import { SYSTEM_KEY } from '@/config'
 import dayjs from 'dayjs'
 
@@ -53,6 +54,7 @@ export const useLoginConfigStore = defineStore('loginConfig', () => {
       lastLoginName.value = resultData?.account?.userName
     },
     clearLoginInfo () {
+      useAiHelpStore().clear()
       loginResult.value = null
     },
     updateUserInfo (mockUser) {
