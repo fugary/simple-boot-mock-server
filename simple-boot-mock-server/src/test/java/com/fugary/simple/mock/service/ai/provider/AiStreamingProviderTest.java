@@ -1,5 +1,9 @@
 package com.fugary.simple.mock.service.ai.provider;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fugary.simple.mock.entity.mock.AiConfig;
@@ -9,18 +13,170 @@ import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.mock.http.client.MockClientHttpResponse;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RequestCallback;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.ResponseExtractor;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.anything;
 
 class AiStreamingProviderTest {
     private final ObjectMapper mapper = new ObjectMapper();
     private static final String ANSWER = "**你好😀**\n```json\n{\"ok\":true}\n```";
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void distinguishesConnectionFailureAndLogsOriginalCause(boolean streaming) throws Exception {
+        int port;
+        try (ServerSocket socket = new ServerSocket(0)) {
+            port = socket.getLocalPort();
+        }
+        Logger logger = (Logger) LoggerFactory.getLogger(AbstractAiChatProvider.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        AiChatRequest request = request();
+        try {
+            assertThatThrownBy(() -> provider("openai").chat(config(port), request,
+                    streaming ? new AiStreamSession(text -> {}) : null))
+                .isInstanceOfSatisfying(AiException.class, error -> {
+                    assertThat(error.getMessageKey()).isEqualTo("simple.ai.connectionFailed");
+                    assertThat(error).hasRootCauseInstanceOf(ConnectException.class);
+                    assertThat(appender.list).anySatisfy(event -> {
+                        assertThat(event.getFormattedMessage()).contains("simple.ai.connectionFailed");
+                        assertThat(event.getThrowableProxy()).isNotNull();
+                        assertThat(event.getThrowableProxy().getClassName()).isEqualTo(error.getCause().getClass().getName());
+                    });
+                });
+            assertThat(request.getTrace().getHttpStatus()).isNull();
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void distinguishesMalformedResponseFromConnectionFailure(boolean streaming) throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            try {
+                exchange.getRequestBody().readAllBytes();
+                exchange.getResponseHeaders().set("Content-Type", streaming ? "text/event-stream" : "application/json");
+                byte[] body = (streaming ? "data: {broken\n\n" : "{broken").getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(200, body.length);
+                exchange.getResponseBody().write(body);
+            } finally { exchange.close(); }
+        });
+        server.start();
+        AiChatRequest request = request();
+        try {
+            assertThatThrownBy(() -> provider("openai").chat(config(server.getAddress().getPort()), request,
+                    streaming ? new AiStreamSession(text -> {}) : null))
+                .isInstanceOfSatisfying(AiException.class, error -> {
+                    assertThat(error.getMessageKey()).isEqualTo("simple.ai.invalidResponse");
+                    assertThat(error.getCause()).isInstanceOf(JsonProcessingException.class);
+                });
+            assertThat(request.getTrace().getHttpStatus()).isEqualTo(200);
+            assertThat(request.getTrace().rawResponse()).contains("{broken");
+        } finally { server.stop(0); }
+    }
+
+    @Test
+    void distinguishesInterruptedResponseReadFromMalformedResponse() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            try {
+                exchange.getRequestBody().readAllBytes();
+                exchange.getResponseHeaders().set("Content-Type", "text/event-stream");
+                exchange.sendResponseHeaders(200, 100);
+                exchange.getResponseBody().write(": heartbeat\n\n".getBytes(StandardCharsets.UTF_8));
+                exchange.getResponseBody().flush();
+            } finally { exchange.close(); }
+        });
+        server.start();
+        ExecutorService worker = Executors.newSingleThreadExecutor();
+        AiStreamSession stream = new AiStreamSession(text -> fail("Unexpected text"));
+        AiChatRequest request = request();
+        try {
+            Future<?> future = worker.submit(() -> provider("openai").chat(config(server.getAddress().getPort()), request, stream));
+            assertThatThrownBy(() -> future.get(5, TimeUnit.SECONDS))
+                .isInstanceOf(ExecutionException.class)
+                .satisfies(failure -> assertThat(failure.getCause()).isInstanceOfSatisfying(AiException.class, error -> {
+                    assertThat(error.getMessageKey()).isEqualTo("simple.ai.responseReadFailed");
+                    assertThat(error.getCause()).isInstanceOf(IOException.class);
+                }));
+            assertThat(request.getTrace().getHttpStatus()).isEqualTo(200);
+            assertThat(request.getTrace().rawResponse()).contains("heartbeat");
+        } finally {
+            stream.cancel();
+            server.stop(0);
+            worker.shutdownNow();
+        }
+    }
+
+    @Test
+    void classifiesSynchronousBodyReadFailureAfterReceivingStatus() {
+        AbstractAiChatProvider provider = provider("openai");
+        RestTemplate client = (RestTemplate) ReflectionTestUtils.getField(provider, "restTemplate");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(client).build();
+        IOException cause = new IOException("connection reset while reading body");
+        server.expect(anything())
+            .andRespond(request -> new MockClientHttpResponse(new byte[0], HttpStatus.OK) {
+                @Override
+                public InputStream getBody() {
+                    return new InputStream() {
+                        @Override
+                        public int read() throws IOException { throw cause; }
+                    };
+                }
+            });
+        AiChatRequest request = request();
+        assertThatThrownBy(() -> provider.chat(config(1), request))
+            .isInstanceOfSatisfying(AiException.class, error -> {
+                assertThat(error.getMessageKey()).isEqualTo("simple.ai.responseReadFailed");
+                assertThat(error).hasRootCause(cause);
+            });
+        assertThat(request.getTrace().getHttpStatus()).isEqualTo(200);
+        server.verify();
+    }
+
+    @Test
+    void preservesNestedTimeoutClassification() {
+        AbstractAiChatProvider provider = provider("openai");
+        RestTemplate client = mock(RestTemplate.class);
+        ReflectionTestUtils.setField(provider, "restTemplate", client);
+        when(client.execute(any(URI.class),
+                eq(HttpMethod.POST),
+                nullable(RequestCallback.class),
+                any(ResponseExtractor.class)))
+            .thenThrow(new ResourceAccessException("read failed",
+                    new IOException("wrapped", new SocketTimeoutException("timed out"))));
+        assertThatThrownBy(() -> provider.chat(config(1), request()))
+            .isInstanceOfSatisfying(AiException.class, error -> {
+                assertThat(error.getMessageKey()).isEqualTo("simple.ai.timeout");
+                assertThat(error).hasRootCauseInstanceOf(SocketTimeoutException.class);
+            });
+    }
 
     private AbstractAiChatProvider provider(String name) {
         AbstractAiChatProvider provider = "openai".equals(name) ? new OpenAiChatProvider()

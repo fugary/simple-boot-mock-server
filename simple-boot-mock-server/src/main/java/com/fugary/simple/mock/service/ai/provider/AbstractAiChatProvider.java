@@ -5,10 +5,12 @@ import com.fugary.simple.mock.entity.mock.AiConfig;
 import com.fugary.simple.mock.service.ai.AiException;
 import com.fugary.simple.mock.service.ai.AiProvider;
 import com.fugary.simple.mock.utils.JsonUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -18,7 +20,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
@@ -38,6 +40,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /** Shared bounded transport; provider credentials and response bodies never enter errors. */
+@Slf4j
 public abstract class AbstractAiChatProvider implements AiChatProvider {
     private final RestTemplate restTemplate;
 
@@ -62,10 +65,16 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
     }
 
     private JsonNode exchange(String url, HttpMethod method, HttpHeaders headers, Object body, AiCallTrace trace) {
+        AiCallTrace callTrace = trace != null ? trace : new AiCallTrace();
         try {
-            ResponseEntity<String> entity = restTemplate.exchange(URI.create(url), method, new HttpEntity<>(body, headers), String.class);
+            ResponseEntity<String> entity = restTemplate.execute(URI.create(url), method,
+                    restTemplate.httpEntityCallback(new HttpEntity<>(body, headers), String.class), response -> {
+                        // 先记录状态，正文读取异常时仍能区分连接失败和响应读取失败。
+                        callTrace.setHttpStatus(response.getRawStatusCode());
+                        return restTemplate.<String>responseEntityExtractor(String.class).extractData(response);
+                    });
             String response = entity.getBody();
-            if (trace != null) { trace.setHttpStatus(entity.getStatusCodeValue()); trace.append(response); }
+            callTrace.append(response);
             if (StringUtils.isBlank(response)) {
                 throw new AiException(500, "simple.ai.invalidResponse");
             }
@@ -76,14 +85,16 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
             return parsed;
         } catch (RestClientResponseException e) {
             if (trace != null) { trace.setHttpStatus(e.getRawStatusCode()); trace.append(e.getResponseBodyAsString()); }
-            throw new AiException(500, "simple.ai.httpError", e.getRawStatusCode());
-        } catch (ResourceAccessException e) {
-            throw new AiException(500, e.getRootCause() instanceof SocketTimeoutException
-                ? "simple.ai.timeout" : "simple.ai.requestFailed");
+            throw failure("simple.ai.httpError", e, e.getRawStatusCode());
+        } catch (RestClientException e) {
+            if (e.getRootCause() instanceof IOException) {
+                throw transportFailure(e, callTrace.getHttpStatus() != null);
+            }
+            throw failure("simple.ai.requestFailed", e);
         } catch (AiException e) {
             throw e;
         } catch (Exception e) {
-            throw new AiException(500, "simple.ai.invalidResponse");
+            throw failure("simple.ai.invalidResponse", e);
         }
     }
 
@@ -133,10 +144,16 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
                         trace.append(line + "\n");
                         stream.check();
                         received += line.length();
-                        if (received > 8 * 1024 * 1024) throw new IOException("AI 流式响应超出大小限制");
+                        if (received > 8 * 1024 * 1024) {
+                            throw failure("simple.ai.invalidResponse", new IOException("AI 流式响应超出大小限制"));
+                        }
                         if (line.isEmpty()) {
                             if (data.length() > 0) {
-                                accumulator.accept(data.toString());
+                                try {
+                                    accumulator.accept(data.toString());
+                                } catch (IOException e) {
+                                    throw failure("simple.ai.invalidResponse", e);
+                                }
                                 data.setLength(0);
                                 if (accumulator.isTerminal()) break;
                             }
@@ -147,15 +164,35 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
                         }
                     }
                     // 不分发缺少空行结束的残缺事件。
-                    return accumulator.result();
+                    try {
+                        return accumulator.result();
+                    } catch (IOException e) {
+                        throw failure("simple.ai.invalidResponse", e);
+                    }
                 }
             }
         } catch (IOException e) {
             stream.check();
-            throw new AiException(500, e instanceof SocketTimeoutException ? "simple.ai.timeout" : "simple.ai.invalidResponse");
+            throw transportFailure(e, trace.getHttpStatus() != null);
         } finally {
             stream.unbind();
         }
+    }
+
+    private AiException transportFailure(Exception cause, boolean responseReceived) {
+        for (Throwable current = cause; current != null; current = current.getCause()) {
+            if (current instanceof SocketTimeoutException || current instanceof ConnectTimeoutException) {
+                return failure("simple.ai.timeout", cause);
+            }
+        }
+        return failure(responseReceived ? "simple.ai.responseReadFailed" : "simple.ai.connectionFailed", cause);
+    }
+
+    private AiException failure(String messageKey, Exception cause, Object... arguments) {
+        log.warn("AI upstream failure: provider={}, error={}", getProvider(), messageKey, cause);
+        AiException error = new AiException(500, messageKey, arguments);
+        error.initCause(cause);
+        return error;
     }
 
     private void captureBody(CloseableHttpResponse response, AiCallTrace trace, HttpPost post, AiStreamSession stream) {
@@ -171,7 +208,10 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
                     trace.append(new String(buffer, 0, count));
                 }
             }
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            stream.check();
+            log.warn("AI upstream diagnostic body read failed: provider={}, httpStatus={}",
+                    getProvider(), trace.getHttpStatus(), e);
             // 诊断正文读取失败不能覆盖已经收到的 HTTP 错误。
         } finally {
             post.abort();
