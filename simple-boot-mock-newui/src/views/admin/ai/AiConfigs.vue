@@ -92,7 +92,7 @@ const searchOptions = computed(() => [
     labelKey: 'mock.label.aiProvider',
     prop: 'provider',
     type: 'select',
-    children: AI_PROVIDERS.map(({ labelKey, value }) => ({ labelKey, value })),
+    children: AI_PROVIDERS.map(({ labelKey, optionLabelKey, value }) => ({ labelKey: optionLabelKey || labelKey, value })),
     change: () => searchMethod(1)
   },
   { labelKey: 'mock.label.aiModelName', prop: 'defaultModel' },
@@ -100,7 +100,7 @@ const searchOptions = computed(() => [
 ])
 const options = computed(() => [
   { labelKey: 'mock.label.aiConfigName', prop: 'configName', required: true },
-  { labelKey: 'mock.label.aiProvider', prop: 'provider', type: 'select', required: true, children: AI_PROVIDERS.map(({ labelKey, value }) => ({ labelKey, value })) },
+  { labelKey: 'mock.label.aiProvider', prop: 'provider', type: 'select', required: true, children: AI_PROVIDERS.map(({ labelKey, optionLabelKey, value }) => ({ labelKey: optionLabelKey || labelKey, value })) },
   { labelKey: 'mock.label.aiBaseUrl', prop: 'baseUrl', type: 'autocomplete', required: true, placeholder: $i18nBundle('mock.label.aiBaseUrlHint'), attrs: { fetchSuggestions: baseUrlSuggestions } },
   { labelKey: 'mock.label.aiApiKey', prop: 'apiKey', required: !item.value.id, placeholder: $i18nBundle('mock.label.aiKeyHint'), attrs: { type: 'password', showPassword: true, autocomplete: 'new-password' } },
   modelOption.value,

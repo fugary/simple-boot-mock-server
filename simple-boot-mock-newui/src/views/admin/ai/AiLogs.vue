@@ -107,7 +107,6 @@ const remove = async row => {
   }
 }
 const options = computed(() => [
-  { labelKey: 'common.label.keywords', prop: 'keyword' },
   {
     labelKey: 'common.label.username',
     prop: 'userName',
@@ -122,7 +121,7 @@ const options = computed(() => [
     prop: 'configId',
     type: 'select',
     children: configOptions.value,
-    attrs: { filterable: true, clearable: true, style: { width: '320px' } },
+    attrs: { filterable: true, clearable: true },
     change: changeConfig
   },
   { labelKey: 'mock.label.aiModel', prop: 'model' },
@@ -132,17 +131,18 @@ const options = computed(() => [
     type: 'date-picker',
     attrs: { type: 'datetimerange', valueFormat: 'YYYY-MM-DD HH:mm:ss', unlinkPanels: true, clearable: true }
   },
-  { labelKey: 'common.label.status', prop: 'status', type: 'select', children: [{ labelKey: 'mock.label.aiSuccess', value: 1 }, { labelKey: 'mock.label.aiFailed', value: 0 }], attrs: { clearable: true }, change: () => searchMethod(1) }
+  { labelKey: 'common.label.status', prop: 'status', type: 'select', children: [{ labelKey: 'mock.label.aiSuccess', value: 1 }, { labelKey: 'mock.label.aiFailed', value: 0 }], attrs: { clearable: true }, change: () => searchMethod(1) },
+  { labelKey: 'common.label.keywords', prop: 'keyword' }
 ])
 const columns = computed(() => [
-  { labelKey: 'common.label.username', prop: 'userName', minWidth: '120px', attrs: { showOverflowTooltip: true } },
-  { labelKey: 'mock.label.aiConfigName', prop: 'configName', minWidth: '240px', formatter: row => h(AiConfigLabel, { config: recordConfig(row) }) },
+  { labelKey: 'common.label.username', prop: 'userName', width: '100px', attrs: { showOverflowTooltip: true } },
+  { labelKey: 'mock.label.aiConfigName', prop: 'configName', minWidth: '360px', formatter: row => h(AiConfigLabel, { config: recordConfig(row) }) },
   { labelKey: 'mock.label.aiModel', prop: 'model', minWidth: '180px', attrs: { showOverflowTooltip: true } },
-  { labelKey: 'common.label.status', width: '100px', attrs: { align: 'center' }, formatter: row => h(ElTag, { type: row.status === 1 ? 'success' : 'danger' }, () => $i18nBundle(row.status === 1 ? 'mock.label.aiSuccess' : 'mock.label.aiFailed')) },
-  { labelKey: 'mock.label.aiDuration', prop: 'durationMs', width: '120px', attrs: { align: 'center' } },
+  { labelKey: 'common.label.status', width: '80px', attrs: { align: 'center' }, formatter: row => h(ElTag, { type: row.status === 1 ? 'success' : 'danger' }, () => $i18nBundle(row.status === 1 ? 'mock.label.aiSuccess' : 'mock.label.aiFailed')) },
+  { labelKey: 'mock.label.aiDuration', prop: 'durationMs', width: '100px', attrs: { align: 'center' } },
   { labelKey: 'mock.label.aiTotalTokens', prop: 'totalTokens', width: '110px', attrs: { align: 'center' } },
-  { labelKey: 'mock.label.aiError', prop: 'errorMessage', minWidth: '200px', attrs: { showOverflowTooltip: true } },
-  { labelKey: 'common.label.createDate', prop: 'createDate', dateFormat: 'YYYY-MM-DD HH:mm:ss', minWidth: '170px' }
+  { labelKey: 'mock.label.aiError', prop: 'errorMessage', minWidth: '140px', attrs: { showOverflowTooltip: true } },
+  { labelKey: 'common.label.createDate', prop: 'createDate', dateFormat: 'YYYY-MM-DD HH:mm:ss', width: '170px' }
 ])
 const buttons = [{ labelKey: 'common.label.view', type: 'primary', click: row => view(row) }, { labelKey: 'common.label.json', click: row => view(row, true) }, { labelKey: 'common.label.delete', type: 'danger', click: remove }]
 </script>
@@ -161,7 +161,7 @@ const buttons = [{ labelKey: 'common.label.view', type: 'primary', click: row =>
       :columns="columns"
       :buttons="buttons"
       :loading="loading"
-      :buttons-column-attrs="{ minWidth: '240px', fixed: 'right' }"
+      :buttons-column-attrs="{ width: '210px', fixed: 'right' }"
       @row-dblclick="view($event)"
       @page-size-change="searchMethod()"
       @current-page-change="searchMethod()"
