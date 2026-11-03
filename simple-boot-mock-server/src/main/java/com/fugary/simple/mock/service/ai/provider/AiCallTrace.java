@@ -3,6 +3,8 @@ package com.fugary.simple.mock.service.ai.provider;
 import com.fugary.simple.mock.utils.JsonUtils;
 import lombok.Data;
 
+import java.util.Map;
+
 /** 单次调用的有界诊断信息，不记录认证请求头。 */
 @Data
 public class AiCallTrace {
@@ -23,7 +25,7 @@ public class AiCallTrace {
     public String rawResponse() {
         if (raw.length() == 0) return null;
         // SSE 和被截断的 JSON 以有效 JSON 包装，避免把拼装后的正文冒充原始响应。
-        if (streaming || truncated) return JsonUtils.toJson(java.util.Map.of(
+        if (streaming || truncated) return JsonUtils.toJson(Map.of(
             "format", streaming ? "sse" : "text", "content", raw.toString(), "truncated", truncated));
         return raw.toString();
     }

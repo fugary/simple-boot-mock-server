@@ -16,6 +16,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
@@ -24,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -61,7 +63,7 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
 
     private JsonNode exchange(String url, HttpMethod method, HttpHeaders headers, Object body, AiCallTrace trace) {
         try {
-            org.springframework.http.ResponseEntity<String> entity = restTemplate.exchange(URI.create(url), method, new HttpEntity<>(body, headers), String.class);
+            ResponseEntity<String> entity = restTemplate.exchange(URI.create(url), method, new HttpEntity<>(body, headers), String.class);
             String response = entity.getBody();
             if (trace != null) { trace.setHttpStatus(entity.getStatusCodeValue()); trace.append(response); }
             if (StringUtils.isBlank(response)) {
@@ -161,7 +163,7 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
         try {
             if (response.getEntity() != null) {
                 // 不单独关闭 Reader：HttpClient 会在关闭时排空剩余正文，由 finally 中止连接。
-                java.io.Reader reader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8);
+                Reader reader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8);
                 char[] buffer = new char[4096];
                 int count;
                 while (!trace.isTruncated() && (count = reader.read(buffer)) != -1) {

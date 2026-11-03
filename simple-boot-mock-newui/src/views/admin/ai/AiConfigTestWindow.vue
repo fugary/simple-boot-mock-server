@@ -2,20 +2,21 @@
 import { computed, h, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { useAiModels } from '@/hooks/AiHooks'
 import { $i18nBundle } from '@/messages'
-import { AiConfigApi, loadAiConfigOptions, testAiConfig } from '@/api/mock/AiApi'
+import { AiConfigApi, loadAiConfigOptions, testAiConfig, testAiDraftConfig } from '@/api/mock/AiApi'
 import { AI_PROVIDERS } from '@/consts/AiConstants'
 import AiAnswerViewer from '@/views/components/utils/AiAnswerViewer.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import AiConfigLabel from '@/views/components/utils/AiConfigLabel.vue'
 const visible = defineModel({ type: Boolean, default: false })
 const props = defineProps({
-  config: { type: Object, default: () => ({}) }
+  config: { type: Object, default: () => ({}) },
+  draft: { type: Boolean, default: false }
 })
 const formData = ref({ configId: props.config.id, model: props.config.defaultModel, prompt: $i18nBundle('mock.msg.aiDefaultPrompt'), result: '' })
 const configs = ref(props.config.id ? [props.config] : [])
 const selectedConfig = ref(props.config)
 const loadingConfig = ref(false)
-const { modelOption } = useAiModels(selectedConfig, formData, 'model', true)
+const { modelOption } = useAiModels(selectedConfig, formData, 'model', !props.draft)
 let configSequence = 0
 const selectConfig = async id => {
   const sequence = ++configSequence
@@ -43,7 +44,7 @@ const selectConfig = async id => {
   }
 }
 onMounted(async () => {
-  if (props.config.id) return
+  if (props.draft || props.config.id) return
   loadingConfig.value = true
   try {
     const response = await loadAiConfigOptions()
@@ -64,26 +65,32 @@ onMounted(async () => {
     loadingConfig.value = false
   }
 })
-const formOptions = computed(() => [{
-  labelKey: 'mock.label.aiConfigSelect',
-  prop: 'configId',
-  type: 'select',
-  required: true,
-  disabled: !!props.config.id || loadingConfig.value || testing.value,
-  attrs: { clearable: false, filterable: true, loading: loadingConfig.value },
-  slots: {
-    label: () => h(AiConfigLabel, { config: selectedConfig.value })
-  },
-  change: selectConfig,
-  children: configs.value.map(config => {
-    const provider = AI_PROVIDERS.find(provider => provider.value === config.provider)
-    return {
-      value: config.id,
-      label: [provider ? $i18nBundle(provider.labelKey) : '', config.configName, config.baseUrl, config.isDefault === 1 ? $i18nBundle('mock.label.default') : ''].filter(Boolean).join(' · '),
-      slots: { default: () => h(AiConfigLabel, { config }) }
+const formOptions = computed(() => [props.draft
+  ? {
+      labelKey: 'mock.label.aiConfigName',
+      prop: 'draftConfig',
+      slot: 'draftConfig'
     }
-  })
-}, { ...modelOption.value, disabled: testing.value || loadingConfig.value }, {
+  : {
+      labelKey: 'mock.label.aiConfigSelect',
+      prop: 'configId',
+      type: 'select',
+      required: true,
+      disabled: !!props.config.id || loadingConfig.value || testing.value,
+      attrs: { clearable: false, filterable: true, loading: loadingConfig.value },
+      slots: {
+        label: () => h(AiConfigLabel, { config: selectedConfig.value })
+      },
+      change: selectConfig,
+      children: configs.value.map(config => {
+        const provider = AI_PROVIDERS.find(provider => provider.value === config.provider)
+        return {
+          value: config.id,
+          label: [provider ? $i18nBundle(provider.labelKey) : '', config.configName, config.baseUrl, config.isDefault === 1 ? $i18nBundle('mock.label.default') : ''].filter(Boolean).join(' · '),
+          slots: { default: () => h(AiConfigLabel, { config }) }
+        }
+      })
+    }, { ...modelOption.value, disabled: testing.value || loadingConfig.value }, {
   labelKey: 'mock.label.aiPrompt',
   prop: 'prompt',
   required: true,
@@ -143,7 +150,8 @@ const executeTest = async () => {
   metrics.value = null
   stopped.value = false
   try {
-    await testAiConfig(selectedConfig.value.id, { prompt: formData.value.prompt, model: formData.value.model }, {
+    const test = props.draft ? testAiDraftConfig : testAiConfig
+    await test(props.draft ? selectedConfig.value : selectedConfig.value.id, { prompt: formData.value.prompt, model: formData.value.model }, {
       onDelta: data => {
         if (current === generation) formData.value.result += data.text || ''
       },
@@ -206,6 +214,14 @@ const runTest = ({ form }) => {
         :options="formOptions"
         label-width="140px"
       >
+        <template #draftConfig="{ option }">
+          <common-form-control
+            :model="formData"
+            :option="option"
+          >
+            <ai-config-label :config="selectedConfig" />
+          </common-form-control>
+        </template>
         <template #result="{ option }">
           <common-form-control
             :model="formData"

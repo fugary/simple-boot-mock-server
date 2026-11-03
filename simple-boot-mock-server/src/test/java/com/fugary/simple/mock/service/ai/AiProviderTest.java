@@ -1,13 +1,17 @@
 package com.fugary.simple.mock.service.ai;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fugary.simple.mock.entity.mock.AiConfig;
+import com.fugary.simple.mock.service.ai.provider.*;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
-import com.fugary.simple.mock.service.ai.provider.*;
+
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AiProviderTest {
@@ -59,7 +63,7 @@ class AiProviderTest {
                 assertEquals(2, result.getPromptTokens());
                 assertEquals(3, result.getCompletionTokens());
                 assertEquals(5, result.getTotalTokens());
-                com.fasterxml.jackson.databind.JsonNode sent = mapper.readTree(body.get());
+                JsonNode sent = mapper.readTree(body.get());
                 if ("gemini".equals(provider)) {
                     assertEquals("test prompt", sent.path("contents").path(0).path("parts").path(0).path("text").asText());
                     assertFalse(sent.has("model"));
@@ -118,7 +122,7 @@ class AiProviderTest {
 
     @Test
     void discoversSortedModelsUsingProviderGetProtocols() throws Exception {
-        for (AiChatProvider provider : java.util.List.of(new OpenAiChatProvider(), new AnthropicChatProvider(), new GeminiChatProvider())) {
+        for (AiChatProvider provider : List.of(new OpenAiChatProvider(), new AnthropicChatProvider(), new GeminiChatProvider())) {
             HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
             AtomicReference<String> method = new AtomicReference<>();
             AtomicReference<String> credential = new AtomicReference<>();
@@ -140,7 +144,7 @@ class AiProviderTest {
                 AiConfig config = new AiConfig();
                 config.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort() + "/v1");
                 config.setApiKey("secret");
-                assertEquals(java.util.List.of("a", "z"), provider.loadModels(config));
+                assertEquals(List.of("a", "z"), provider.loadModels(config));
                 assertEquals("GET", method.get());
                 assertTrue(credential.get().endsWith("secret"));
             } finally {

@@ -1,2 +1,6 @@
 package com.fugary.simple.mock.mapper.mock;
-public interface AiConfigMapper extends com.baomidou.mybatisplus.core.mapper.BaseMapper<com.fugary.simple.mock.entity.mock.AiConfig> {}
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.fugary.simple.mock.entity.mock.AiConfig;
+
+public interface AiConfigMapper extends BaseMapper<AiConfig> {}

@@ -1,15 +1,21 @@
 package com.fugary.simple.mock.service.ai;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.entity.mock.AiConfig;
 import com.fugary.simple.mock.entity.mock.AiLog;
 import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.mapper.mock.AiConfigMapper;
 import com.fugary.simple.mock.mapper.mock.AiLogMapper;
+import com.fugary.simple.mock.service.ai.provider.AiChatProvider;
+import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
+import com.fugary.simple.mock.service.ai.provider.AiChatResponse;
+import com.fugary.simple.mock.service.ai.provider.AiStreamSession;
+import com.fugary.simple.mock.service.impl.ai.AiServiceImpl;
 import com.fugary.simple.mock.web.controllers.admin.AiController;
-import com.fugary.simple.mock.web.vo.query.SimplePage;
 import com.fugary.simple.mock.web.vo.query.AiConfigQueryVo;
 import com.fugary.simple.mock.web.vo.query.AiLogQueryVo;
+import com.fugary.simple.mock.web.vo.query.SimplePage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,17 +24,16 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
 
 import java.util.Collections;
-import com.fugary.simple.mock.service.impl.ai.AiServiceImpl;
-import com.fugary.simple.mock.service.ai.provider.AiChatProvider;
-import com.fugary.simple.mock.service.ai.provider.AiChatResponse;
-import com.fugary.simple.mock.service.ai.provider.AiStreamSession;
-import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.any;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @Transactional
@@ -65,7 +70,7 @@ class AiIntegrationTest {
         config.setDefaultModel("test-model");
         config.setApiKey("private-key");
         config.setModifier("forged-user");
-        config.setModifyDate(new java.util.Date(0));
+        config.setModifyDate(new Date(0));
         return controller.save(config).getResultData();
     }
 
@@ -163,7 +168,7 @@ class AiIntegrationTest {
         assertThrows(AiException.class, () -> configService.resolveConnection(connection));
         connection.setBaseUrl("https://example.com/v1");
         assertNotEquals("forged-user", configs.selectById(alice.getId()).getModifier());
-        assertNotEquals(new java.util.Date(0), configs.selectById(alice.getId()).getModifyDate());
+        assertNotEquals(new Date(0), configs.selectById(alice.getId()).getModifyDate());
         AiConfig edited = configs.selectById(alice.getId());
         edited.setApiKey("");
         edited.setConfigName("Alice edited");
@@ -266,8 +271,8 @@ class AiIntegrationTest {
     void adminCanFilterAndManageAllLogsWhileOrdinaryUsersStayScoped() {
         login("admin");
         AiConfig config = createConfig("Shared history");
-        java.util.Map<String, Integer> ids = new java.util.HashMap<>();
-        for (String name : java.util.List.of("admin", "log-alice", "log-bob")) {
+        Map<String, Integer> ids = new HashMap<>();
+        for (String name : List.of("admin", "log-alice", "log-bob")) {
             AiLog entry = new AiLog();
             entry.setConfigId(config.getId());
             entry.setConfigName(config.getConfigName());
@@ -339,7 +344,7 @@ class AiIntegrationTest {
         entry.setResponseText("find-answer");
         entry.setErrorMessage("find-error");
         entry.setStatus(0);
-        entry.setCreateDate(new java.util.Date(1700000000000L));
+        entry.setCreateDate(new Date(1700000000000L));
         logs.insert(entry);
         controller.deleteConfig(config.getId());
         assertEquals(12, controller.options().getResultData().size());
@@ -356,7 +361,7 @@ class AiIntegrationTest {
         query.setStatus(1);
         assertTrue(controller.searchLogs(query).getResultData().isEmpty());
         query.setStatus(null);
-        query.setStartDate(new java.util.Date(entry.getCreateDate().getTime() + 1));
+        query.setStartDate(new Date(entry.getCreateDate().getTime() + 1));
         assertThrows(AiException.class, () -> controller.searchLogs(query));
         query.setEndDate(null);
         assertTrue(controller.searchLogs(query).getResultData().isEmpty());
@@ -376,7 +381,7 @@ class AiIntegrationTest {
     void onlyAdminDetailExposesKeyAndPublicResponsesNeverDo() throws Exception {
         login("admin");
         AiConfig config = createConfig("private config");
-        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper();
         AiConfig detail = controller.getConfig(config.getId()).getResultData();
         assertEquals("private-key", mapper.readTree(mapper.writeValueAsString(detail)).path("apiKey").asText());
         assertFalse(detail.toString().contains("private-key"));

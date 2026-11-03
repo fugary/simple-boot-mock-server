@@ -3,6 +3,8 @@ package com.fugary.simple.mock.service.ai.provider;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fugary.simple.mock.entity.mock.AiConfig;
+import com.fugary.simple.mock.service.ai.AiException;
+import com.fugary.simple.mock.service.ai.AiProvider;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -128,7 +130,7 @@ class AiStreamingProviderTest {
             Future<?> future = worker.submit(() -> provider("openai").chat(config(server.getAddress().getPort()), request, stream));
             assertThatThrownBy(() -> future.get(5, TimeUnit.SECONDS))
                 .isInstanceOf(ExecutionException.class)
-                .satisfies(failure -> assertThat(failure.getCause()).isInstanceOfSatisfying(com.fugary.simple.mock.service.ai.AiException.class, error -> {
+                .satisfies(failure -> assertThat(failure.getCause()).isInstanceOfSatisfying(AiException.class, error -> {
                     assertThat(error.getMessageKey()).isEqualTo(status == 429 ? "simple.ai.httpError" : "simple.ai.invalidResponse");
                     if (status == 429) assertThat(error.getArguments()[0]).isEqualTo(429);
                 }));
@@ -164,7 +166,7 @@ class AiStreamingProviderTest {
             Future<?> future = worker.submit(() -> provider("openai").chat(config(server.getAddress().getPort()), request, stream));
             assertThatThrownBy(() -> future.get(5, TimeUnit.SECONDS))
                 .isInstanceOf(ExecutionException.class)
-                .satisfies(failure -> assertThat(failure.getCause()).isInstanceOfSatisfying(com.fugary.simple.mock.service.ai.AiException.class, error -> {
+                .satisfies(failure -> assertThat(failure.getCause()).isInstanceOfSatisfying(AiException.class, error -> {
                     assertThat(error.getMessageKey()).isEqualTo("simple.ai.httpError");
                     assertThat(error.getArguments()[0]).isEqualTo(429);
                 }));
@@ -208,7 +210,7 @@ class AiStreamingProviderTest {
     @ParameterizedTest
     @ValueSource(strings = {"openai", "anthropic", "gemini"})
     void rejectsTruncatedAndErrorStreams(String name) throws Exception {
-        AiStreamAccumulator accumulator = new AiStreamAccumulator(com.fugary.simple.mock.service.ai.AiProvider.valueOf(name.toUpperCase()), mapper, new AiStreamSession(text -> {}));
+        AiStreamAccumulator accumulator = new AiStreamAccumulator(AiProvider.valueOf(name.toUpperCase()), mapper, new AiStreamSession(text -> {}));
         assertThatThrownBy(accumulator::result).isInstanceOf(IOException.class).hasMessageContaining("中断");
         assertThatThrownBy(() -> accumulator.accept("{\"error\":{\"message\":\"upstream failed\"}}"))
                 .isInstanceOf(IOException.class).hasMessageContaining("upstream error");
@@ -217,7 +219,7 @@ class AiStreamingProviderTest {
     @Test
     void anthropicUsageUpdateDoesNotEraseTruncatedFinishReason() throws Exception {
         AiStreamAccumulator accumulator = new AiStreamAccumulator(
-            com.fugary.simple.mock.service.ai.AiProvider.ANTHROPIC, mapper, new AiStreamSession(text -> {}));
+            AiProvider.ANTHROPIC, mapper, new AiStreamSession(text -> {}));
         accumulator.accept("{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"max_tokens\"}}");
         accumulator.accept("{\"type\":\"message_delta\",\"usage\":{\"output_tokens\":4}}");
         accumulator.accept("{\"type\":\"message_stop\"}");
@@ -228,7 +230,7 @@ class AiStreamingProviderTest {
     @ValueSource(strings = {"ANTHROPIC", "GEMINI"})
     void rejectsOpenAiEndMarkerForOtherProtocols(String name) {
         AiStreamAccumulator accumulator = new AiStreamAccumulator(
-            com.fugary.simple.mock.service.ai.AiProvider.valueOf(name), mapper, new AiStreamSession(text -> {}));
+            AiProvider.valueOf(name), mapper, new AiStreamSession(text -> {}));
         assertThatThrownBy(() -> accumulator.accept("[DONE]")).isInstanceOf(IOException.class);
         assertThatThrownBy(accumulator::result).isInstanceOf(IOException.class);
     }

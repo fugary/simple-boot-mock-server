@@ -124,6 +124,7 @@ async function main () {
   let request
   const searches = []
   const watches = []
+  const admin = ref(true)
   const api = { search: query => { request = query; return Promise.resolve({ success: true, resultData: [] }) }, deleteById: async () => ({ success: true }) }
   const bindings = {
     ref,
@@ -140,6 +141,8 @@ async function main () {
       return { tableData: ref([{ id: 1 }]), loading: ref(false), searchParam: ref(options.defaultParam), searchMethod: async page => searches.push(page) }
     },
     AiLogApi: api,
+    isAdminUser: () => admin.value,
+    useAllUsers: () => ({ userOptions: ref([{ label: 'Admin', value: 'admin' }]), loadSelectUsers: async () => {} }),
     loadAiConfigOptions: async () => ({ success: true, resultData: [] }),
     $i18nBundle: key => key,
     $coreConfirm: async () => {},
@@ -190,7 +193,7 @@ async function main () {
   assert.equal(page.detailRecord.value.id, 2)
   const jsonWindows = []
   const recordProps = ref({
-    record: { id: 2, configName: 'Historical name', durationMs: 0, promptTokens: 0, totalTokens: 0 },
+    record: { id: 2, configName: 'Historical name', durationMs: 0, promptTokens: 0, totalTokens: 0, executionDetail: JSON.stringify({ requestBody: '{"model":"test"}' }) },
     config: { configName: 'Renamed config', deleted: true }
   })
   const detail = setup('views/admin/ai/AiLogDetailWindow.vue', {
@@ -203,13 +206,13 @@ async function main () {
     formatDate: value => value,
     $i18nBundle: key => key,
     showCodeWindow: (...args) => jsonWindows.push(args)
-  }, 'activeTab,metrics,configIdentity,viewJson')
+  }, 'activeTab,metrics,configIdentity,viewRequest')
   assert.equal(detail.configIdentity.value.configName, 'Historical name')
   assert.equal(detail.configIdentity.value.deleted, true)
   assert.equal(detail.metrics.value.find(field => field.labelKey === 'mock.label.aiDuration').value, '0')
   assert.equal(detail.metrics.value.find(field => field.labelKey === 'mock.label.aiCompletionTokens').value, '-')
-  detail.viewJson()
-  assert.equal(jsonWindows[0][0], recordProps.value.record)
+  detail.viewRequest()
+  assert.equal(jsonWindows[0][0], '{"model":"test"}')
   assert.equal(jsonWindows[0][1].readOnly, true)
   detail.activeTab.value = 'metrics'
   recordProps.value.record = { id: 3, configName: 'Next record' }
@@ -255,7 +258,7 @@ async function main () {
     AiConfigApi: { getById: () => new Promise(resolve => edits.push(resolve)) },
     useSearchStatus: () => ({ type: 'select', children: [{ label: 'Enabled', value: 1 }, { label: 'Disabled', value: 0 }] }),
     useAiModels: () => ({ modelOption: ref({ type: 'select', children: [{ label: 'm', value: 'm' }] }) })
-  }, 'options,searchOptions,columns,edit,item')
+  }, 'options,searchOptions,columns,buttons,edit,item,editWindowAttrs,testItem,testDraft,testVisible')
   for (const prop of ['status', 'isDefault']) {
     const toggle = configPage.columns.value.find(column => column.prop === prop).formatter({ status: 1, isDefault: 0 })
     assert.equal(toggle.type.name, 'DelFlagTag')
@@ -277,9 +280,63 @@ async function main () {
   await oldEdit
   assert.equal(configPage.item.value.id, undefined)
   assert.equal(configPage.item.value.apiKey, '')
+  const editTest = configPage.editWindowAttrs.value.buttons[0]
+  editTest.click({ form: { validate: onValid => onValid(false) } })
+  assert.equal(configPage.testVisible.value, false)
+  configPage.item.value.baseUrl = 'http://localhost:1234/v1'
+  editTest.click({ form: { validate: onValid => onValid(true) } })
+  assert.equal(configPage.testDraft.value, true)
+  assert.equal(configPage.testVisible.value, true)
+  assert.equal(configPage.testItem.value.baseUrl, 'http://localhost:1234/v1')
+  configPage.item.value.baseUrl = 'http://localhost:5678/v1'
+  assert.equal(configPage.testItem.value.baseUrl, 'http://localhost:1234/v1')
   const selectedConfig = page.options.value.find(option => option.prop === 'configId').children[0]
+  // The table passes both the row and its scope to the configured click handler.
+  for (const isAdmin of [true, false]) {
+    admin.value = isAdmin
+    configPage.testDraft.value = true
+    configPage.testVisible.value = false
+    const row = { id: 7, status: 1, defaultModel: 'saved-model' }
+    const rowTest = configPage.buttons.value.find(button => button.labelKey === 'common.label.test')
+    assert.equal(rowTest.buttonIf(row), true)
+    rowTest.click(row, { row, $index: 0 })
+    assert.equal(configPage.testDraft.value, false)
+    assert.equal(configPage.testVisible.value, true)
+    assert.deepEqual(configPage.testItem.value, row)
+  }
+  admin.value = true
   assert.ok(selectedConfig.slots.default())
   let mountTest
+  const draftCalls = []
+  const draftConfig = { provider: 'openai', baseUrl: 'http://localhost:1234/v1', apiKey: 'draft-key', defaultModel: 'draft-model' }
+  const draftTest = setup('views/admin/ai/AiConfigTestWindow.vue', {
+    h,
+    AiConfigLabel: {},
+    ref,
+    computed,
+    watch,
+    onMounted: callback => { mountTest = callback },
+    onScopeDispose: () => {},
+    defineModel: () => ref(true),
+    defineProps: () => ({ config: draftConfig, draft: true }),
+    useAiModels: (config, form, prop, saved) => {
+      assert.equal(saved, false)
+      return { modelOption: ref({}) }
+    },
+    $i18nBundle: key => key,
+    testAiDraftConfig: async (config, data, callbacks) => {
+      draftCalls.push({ config, data })
+      callbacks.onDelta({ text: 'draft answer' })
+    }
+  }, 'formOptions,formData,executeTest')
+  await mountTest()
+  assert.equal(draftTest.formOptions.value[0].prop, 'draftConfig')
+  draftTest.formData.value.model = 'temporary-model'
+  await draftTest.executeTest()
+  assert.deepEqual(draftCalls[0].config, draftConfig)
+  assert.equal(draftCalls[0].data.model, 'temporary-model')
+  assert.equal(draftTest.formData.value.result, 'draft answer')
+  assert.equal(draftConfig.defaultModel, 'draft-model')
   const configRequests = []
   const testCalls = []
   const switchable = setup('views/admin/ai/AiConfigTestWindow.vue', {

@@ -32,6 +32,7 @@ const item = ref({})
 const { modelOption } = useAiModels(item, item, 'defaultModel')
 const testVisible = ref(false)
 const testItem = ref({})
+const testDraft = ref(false)
 let editSequence = 0
 const edit = async (row, copy = false) => {
   const sequence = ++editSequence
@@ -77,10 +78,25 @@ const remove = async row => {
     await searchMethod(tableData.value.length === 1 ? Math.max(1, searchParam.value.page.pageNumber - 1) : undefined)
   }
 }
-const showTest = row => {
-  testItem.value = row || {}
+const showTest = (row, draft = false) => {
+  testDraft.value = draft
+  testItem.value = { ...row }
   testVisible.value = true
 }
+const editWindowAttrs = computed(() => isAdmin.value
+  ? {
+      buttons: [{
+        labelKey: 'common.label.test',
+        type: 'success',
+        click: ({ form }) => {
+          form.validate(valid => {
+            if (valid) showTest(item.value, true)
+          })
+          return false
+        }
+      }]
+    }
+  : { title: $i18nKey('common.label.commonView', $i18nBundle('mock.label.aiConfig')) })
 
 const baseUrlSuggestions = (query, callback) => {
   const defaultUrl = AI_PROVIDERS.find(provider => provider.value === item.value.provider)?.baseUrl
@@ -153,7 +169,7 @@ const columns = computed(() => [
 ])
 const buttons = computed(() => [
   { labelKey: isAdmin.value ? 'common.label.edit' : 'common.label.view', type: 'primary', click: row => edit(row) },
-  { labelKey: 'common.label.test', type: 'success', buttonIf: row => row.status === 1, click: showTest },
+  { labelKey: 'common.label.test', type: 'success', buttonIf: row => row.status === 1, click: row => showTest(row) },
   { labelKey: 'common.label.delete', type: 'danger', buttonIf: () => isAdmin.value, click: remove }
 ])
 </script>
@@ -224,7 +240,7 @@ const buttons = computed(() => [
       :name="$i18nBundle('mock.label.aiConfig')"
       :form-options="viewOptions"
       :editable="isAdmin"
-      :window-attrs="isAdmin ? {} : { title: $i18nKey('common.label.commonView', $i18nBundle('mock.label.aiConfig')) }"
+      :window-attrs="editWindowAttrs"
       :save-current-item="save"
       label-width="140px"
     />
@@ -232,6 +248,7 @@ const buttons = computed(() => [
       v-if="testVisible"
       v-model="testVisible"
       :config="testItem"
+      :draft="testDraft"
     />
   </el-container>
 </template>

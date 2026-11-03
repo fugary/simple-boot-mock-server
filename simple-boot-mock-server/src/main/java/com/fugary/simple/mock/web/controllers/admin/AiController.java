@@ -12,6 +12,7 @@ import com.fugary.simple.mock.service.ai.provider.AiSseSupport;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.AiConfigOption;
+import com.fugary.simple.mock.web.vo.AiConfigTestRequest;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.query.AiConfigQueryVo;
 import com.fugary.simple.mock.web.vo.query.AiLogQueryVo;
@@ -101,6 +102,18 @@ public class AiController {
         configs.getUsableConfig(id);
         return sse.start((emitter, stream) -> {
             AiChatResponse response = ai.test(id, request, stream);
+            AiSseSupport.send(emitter, "finish",
+                Map.of("status", "SUCCESS", "resultData", response));
+        });
+    }
+
+    @PostMapping(value = "/configs/test/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamDraftTest(@RequestBody AiConfigTestRequest request) {
+        if (!SecurityUtils.isAdminUser()) {
+            throw new AiException(403, "simple.error.code.403");
+        }
+        return sse.start((emitter, stream) -> {
+            AiChatResponse response = ai.testDraft(request.getConfig(), request, stream);
             AiSseSupport.send(emitter, "finish",
                 Map.of("status", "SUCCESS", "resultData", response));
         });

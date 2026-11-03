@@ -1,17 +1,19 @@
 package com.fugary.simple.mock.service.impl.ai;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fugary.simple.mock.entity.mock.AiLog;
 import com.fugary.simple.mock.mapper.mock.AiLogMapper;
-import com.fugary.simple.mock.service.ai.AiLogService;
 import com.fugary.simple.mock.service.ai.AiException;
+import com.fugary.simple.mock.service.ai.AiLogService;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.utils.security.SecurityUtils;
 import com.fugary.simple.mock.web.vo.query.AiLogQueryVo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
 
 /** 日志独立于配置保留，管理员可全局管理，普通用户仅可访问自己的记录。 */
 @Service
@@ -74,7 +76,7 @@ public class AiLogServiceImpl extends ServiceImpl<AiLogMapper, AiLog> implements
         log.setId(null);
         log.setUserName(userName);
         log.setCreator(userName);
-        if (log.getCreateDate() == null) log.setCreateDate(new java.util.Date());
+        if (log.getCreateDate() == null) log.setCreateDate(new Date());
         save(log);
     }
 

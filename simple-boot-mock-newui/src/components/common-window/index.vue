@@ -237,13 +237,6 @@ if (props.showFullscreen && props.dblclickToFullscreen) {
           :loading="okLoading"
           @click="okButtonClick($event)"
         >{{ okLabel||$t('common.label.confirm') }}</el-button>
-        <el-button
-          v-if="showCancel"
-          type="default"
-          @click="cancelButtonClick($event)"
-        >
-          {{ cancelLabel||$t('common.label.cancel') }}
-        </el-button>
         <template v-for="(button, index) in buttons">
           <el-button
             v-if="button.enabled!==false&&(!button.buttonIf||button.buttonIf())"
@@ -259,6 +252,13 @@ if (props.showFullscreen && props.dblclickToFullscreen) {
             {{ button.label || $t(button.labelKey) }}
           </el-button>
         </template>
+        <el-button
+          v-if="showCancel"
+          type="default"
+          @click="cancelButtonClick($event)"
+        >
+          {{ cancelLabel||$t('common.label.cancel') }}
+        </el-button>
       </span>
     </template>
   </el-dialog>

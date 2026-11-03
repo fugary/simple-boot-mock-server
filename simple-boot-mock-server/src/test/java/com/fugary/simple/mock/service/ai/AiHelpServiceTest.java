@@ -2,11 +2,14 @@ package com.fugary.simple.mock.service.ai;
 
 import com.fugary.simple.mock.entity.mock.AiConfig;
 import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
+import com.fugary.simple.mock.service.ai.provider.AiStreamSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import com.fugary.simple.mock.service.ai.provider.AiStreamSession;
 import org.mockito.ArgumentCaptor;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
@@ -69,14 +72,14 @@ class AiHelpServiceTest {
         AiHelpService help = new AiHelpService(configs, ai);
         AiChatRequest question = new AiChatRequest();
         question.setPrompt("current-question");
-        question.setHistory(java.util.List.of(turn("oldest", "answer"), turn("second", "answer"),
+        question.setHistory(List.of(turn("oldest", "answer"), turn("second", "answer"),
             turn("third", "answer"), turn("latest", "answer")));
         help.ask(question);
-        question.setHistory(java.util.List.of(turn("older-large", "x".repeat(3900)), turn("latest", "answer")));
+        question.setHistory(List.of(turn("older-large", "x".repeat(3900)), turn("latest", "answer")));
         help.ask(question);
-        question.setHistory(java.util.List.of(turn("older", "answer"), turn("oversize", "x".repeat(4000))));
+        question.setHistory(List.of(turn("older", "answer"), turn("oversize", "x".repeat(4000))));
         help.ask(question);
-        question.setHistory(java.util.Arrays.asList(turn("older", "answer"), null));
+        question.setHistory(Arrays.asList(turn("older", "answer"), null));
         help.ask(question);
         ArgumentCaptor<AiChatRequest> sent = ArgumentCaptor.forClass(AiChatRequest.class);
         verify(ai, times(4)).test(eq(7), sent.capture(), isNull());

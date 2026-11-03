@@ -1,19 +1,79 @@
 package com.fugary.simple.mock.service.ai;
 
+import com.fugary.simple.mock.contants.MockConstants;
 import com.fugary.simple.mock.entity.mock.AiConfig;
 import com.fugary.simple.mock.entity.mock.AiLog;
-import com.fugary.simple.mock.service.impl.ai.AiServiceImpl;
+import com.fugary.simple.mock.entity.mock.MockUser;
 import com.fugary.simple.mock.service.ai.provider.AiChatProvider;
 import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
 import com.fugary.simple.mock.service.ai.provider.AiChatResponse;
+import com.fugary.simple.mock.service.ai.provider.AiStreamSession;
+import com.fugary.simple.mock.service.impl.ai.AiServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
 import java.util.List;
+import java.util.concurrent.CancellationException;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class AiServiceTest {
+    @Test
+    void draftUsesUnsavedConnectionAndModelWithoutSaving() {
+        AiConfigService configs = mock(AiConfigService.class);
+        AiLogService logs = mock(AiLogService.class);
+        AiChatProvider provider = mock(AiChatProvider.class);
+        when(provider.getProvider()).thenReturn(AiProvider.OPENAI);
+        AiService service = new AiServiceImpl(configs, logs, List.of(provider));
+        AiConfig draft = new AiConfig();
+        draft.setConfigName("draft");
+        draft.setDefaultModel("draft-model");
+        draft.setStatus(0);
+        AiConfig connection = new AiConfig();
+        connection.setProvider("openai");
+        connection.setBaseUrl("http://localhost:1234/v1");
+        connection.setApiKey("draft-key");
+        when(configs.resolveConnection(draft)).thenReturn(connection);
+        AiChatResponse response = new AiChatResponse();
+        response.setContent("draft answer");
+        when(provider.chat(any(), any())).thenReturn(response);
+        AiChatRequest request = new AiChatRequest();
+        request.setPrompt("hello");
+        request.setModel("temporary-model");
+        assertEquals("draft answer", service.testDraft(draft, request, null).getContent());
+        ArgumentCaptor<AiConfig> sent = ArgumentCaptor.forClass(AiConfig.class);
+        verify(provider).chat(sent.capture(), eq(request));
+        assertEquals("http://localhost:1234/v1", sent.getValue().getBaseUrl());
+        assertEquals("draft-key", sent.getValue().getApiKey());
+        assertEquals("temporary-model", sent.getValue().getDefaultModel());
+        assertEquals("draft-model", draft.getDefaultModel());
+        ArgumentCaptor<AiLog> recorded = ArgumentCaptor.forClass(AiLog.class);
+        verify(logs).record(recorded.capture());
+        assertNull(recorded.getValue().getConfigId());
+        assertEquals("draft", recorded.getValue().getConfigName());
+        verify(configs).resolveConnection(draft);
+        verifyNoMoreInteractions(configs);
+    }
+
+    @Test
+    void draftAccessDeniedBeforeProviderInvocation() {
+        AiConfigService configs = mock(AiConfigService.class);
+        AiLogService logs = mock(AiLogService.class);
+        AiChatProvider provider = mock(AiChatProvider.class);
+        when(provider.getProvider()).thenReturn(AiProvider.OPENAI);
+        AiService service = new AiServiceImpl(configs, logs, List.of(provider));
+        AiConfig draft = new AiConfig();
+        when(configs.resolveConnection(draft)).thenThrow(new AiException(403, "simple.error.code.403"));
+        assertThrows(AiException.class, () -> service.testDraft(draft, new AiChatRequest(), null));
+        verify(provider, never()).chat(any(), any());
+        verifyNoInteractions(logs);
+    }
+
     @Test
     void recordsSuccessUsageAndSafeFailure() {
         AiConfigService configs = mock(AiConfigService.class);
@@ -64,18 +124,18 @@ class AiServiceTest {
         config.setStatus(1);
         config.setDefaultModel("model");
         when(configs.getUsableConfig(1)).thenReturn(config);
-        org.springframework.mock.web.MockHttpServletRequest servletRequest = new org.springframework.mock.web.MockHttpServletRequest();
-        com.fugary.simple.mock.entity.mock.MockUser user = new com.fugary.simple.mock.entity.mock.MockUser();
+        MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        MockUser user = new MockUser();
         user.setUserName("stream-user");
-        servletRequest.setAttribute(com.fugary.simple.mock.contants.MockConstants.MOCK_USER_KEY, user);
-        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
-            new org.springframework.web.context.request.ServletRequestAttributes(servletRequest));
-        com.fugary.simple.mock.service.ai.provider.AiStreamSession stream =
-            new com.fugary.simple.mock.service.ai.provider.AiStreamSession(text -> {});
+        servletRequest.setAttribute(MockConstants.MOCK_USER_KEY, user);
+        RequestContextHolder.setRequestAttributes(
+            new ServletRequestAttributes(servletRequest));
+        AiStreamSession stream =
+            new AiStreamSession(text -> {});
         when(provider.chat(any(), any(), any())).thenAnswer(call -> {
             ((AiChatRequest) call.getArgument(1)).getTrace().append("partial upstream event");
             stream.text("partial");
-            servletRequest.removeAttribute(com.fugary.simple.mock.contants.MockConstants.MOCK_USER_KEY);
+            servletRequest.removeAttribute(MockConstants.MOCK_USER_KEY);
             stream.cancel();
             stream.check();
             return null;
@@ -83,7 +143,7 @@ class AiServiceTest {
         try {
             AiChatRequest request = new AiChatRequest();
             request.setPrompt("hello");
-            assertThrows(java.util.concurrent.CancellationException.class, () -> service.test(1, request, stream));
+            assertThrows(CancellationException.class, () -> service.test(1, request, stream));
             ArgumentCaptor<AiLog> captured = ArgumentCaptor.forClass(AiLog.class);
             verify(logs).recordForUser(captured.capture(), eq("stream-user"));
             assertEquals("partial", captured.getValue().getResponseText());
@@ -91,7 +151,7 @@ class AiServiceTest {
             assertTrue(captured.getValue().getExecutionDetail().contains("cancelled"));
             assertEquals(0, captured.getValue().getStatus());
         } finally {
-            org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+            RequestContextHolder.resetRequestAttributes();
         }
     }
 

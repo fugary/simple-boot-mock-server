@@ -1,11 +1,13 @@
 package com.fugary.simple.mock.service.ai.provider;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+
 import java.util.List;
 
 @Data
 public class AiChatRequest {
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @JsonIgnore
     private AiCallTrace trace = new AiCallTrace();
     private String prompt;
     private String model;

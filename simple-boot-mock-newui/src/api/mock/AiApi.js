@@ -4,6 +4,7 @@ import { $httpGet, $httpPost } from '@/vendors/axios'
 export const AiConfigApi = useResourceApi('/admin/ai/configs')
 export const AiLogApi = useResourceApi('/admin/ai/logs')
 export const testAiConfig = (id, data, callbacks, signal) => streamAiRequest('/admin/ai/configs/' + id + '/test/stream', data, callbacks, signal)
+export const testAiDraftConfig = (config, data, callbacks, signal) => streamAiRequest('/admin/ai/configs/test/stream', { ...data, config }, callbacks, signal)
 
 export const loadAiModels = (data, saved = false) => saved
   ? $httpGet(`/admin/ai/configs/${data.id}/models`, { timeout: 90000, showErrorMessage: false })

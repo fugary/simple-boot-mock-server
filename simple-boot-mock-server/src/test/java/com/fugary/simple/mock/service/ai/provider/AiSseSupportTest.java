@@ -2,6 +2,7 @@ package com.fugary.simple.mock.service.ai.provider;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -75,7 +76,7 @@ class AiSseSupportTest {
 
     @Test
     void rejectedWorkerReturnsStreamErrorAndCancelsHeartbeat() {
-        doThrow(new org.springframework.core.task.TaskRejectedException("full"))
+        doThrow(new TaskRejectedException("full"))
             .when(scheduler).execute(any(Runnable.class));
         SseEmitter emitter = support.start((target, stream) -> fail("Rejected action must not run"));
         assertErrorEvent(emitter);
@@ -84,7 +85,7 @@ class AiSseSupportTest {
 
     @Test
     void rejectedHeartbeatReturnsStreamErrorWithoutStartingWorker() {
-        doThrow(new org.springframework.core.task.TaskRejectedException("shutdown"))
+        doThrow(new TaskRejectedException("shutdown"))
             .when(scheduler).scheduleAtFixedRate(any(Runnable.class), eq(5000L));
         SseEmitter emitter = support.start((target, stream) -> fail("Rejected action must not run"));
         assertErrorEvent(emitter);

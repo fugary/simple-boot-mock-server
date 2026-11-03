@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -52,7 +53,20 @@ public class AiServiceImpl implements AiService {
             AiStreamSession stream) {
         AiConfig config = new AiConfig();
         BeanUtils.copyProperties(configs.getUsableConfig(configId), config);
-        if (!config.isEnabled() || request == null || StringUtils.isBlank(request.getPrompt()) || request.getPrompt().length() > 16000) {
+        return executeTest(config, request, stream);
+    }
+
+    @Override
+    public AiChatResponse testDraft(AiConfig input, AiChatRequest request, AiStreamSession stream) {
+        AiConfig config = configs.resolveConnection(input);
+        config.setId(input.getId());
+        config.setConfigName(StringUtils.left(StringUtils.trim(input.getConfigName()), 255));
+        config.setDefaultModel(input.getDefaultModel());
+        return executeTest(config, request, stream);
+    }
+
+    private AiChatResponse executeTest(AiConfig config, AiChatRequest request, AiStreamSession stream) {
+        if (request == null || StringUtils.isBlank(request.getPrompt()) || request.getPrompt().length() > 16000) {
             throw new AiException(400, "simple.ai.invalidConfig");
         }
         if (StringUtils.isNotBlank(request.getModel())) {
@@ -62,11 +76,14 @@ public class AiServiceImpl implements AiService {
             }
             config.setDefaultModel(model);
         }
+        if (StringUtils.isBlank(config.getDefaultModel()) || config.getDefaultModel().length() > 255) {
+            throw new AiException(400, "simple.ai.invalidConfig");
+        }
         AiChatProvider provider = provider(config);
         request.setTrace(new AiCallTrace());
         AiLog entry = new AiLog();
         entry.setProvider(config.getProvider());
-        entry.setConfigId(configId);
+        entry.setConfigId(config.getId());
         entry.setConfigName(config.getConfigName());
         entry.setModel(config.getDefaultModel());
         entry.setPrompt(request.getPrompt());
@@ -99,7 +116,7 @@ public class AiServiceImpl implements AiService {
             if (stream != null && entry.getStatus() != 1) entry.setResponseText(StringUtils.left(stream.getText(), 16000));
             entry.setDurationMs((System.nanoTime() - start) / 1000000);
             entry.setRawResponse(request.getTrace().rawResponse());
-            Map<String, Object> detail = new java.util.LinkedHashMap<>();
+            Map<String, Object> detail = new LinkedHashMap<>();
             detail.put("version", 1);
             detail.put("finishReason", finishReason);
             detail.put("streaming", stream != null);
