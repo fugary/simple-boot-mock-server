@@ -288,6 +288,8 @@ MonacoDiffEditor.inheritAttrs = false
 
 export default {
   install (app) {
+    // 在任意编辑器创建前配置本地 Monaco，避免先打开对比编辑器时加载 CDN。
+    loader.config({ monaco })
     app.component(VueMonacoDiffEditor.name, MonacoDiffEditor)
     app.component(VueMonacoEditor.name, {
       inheritAttrs: false,
@@ -306,7 +308,6 @@ export default {
           diagnosticCodesToIgnore: [1003, 1005, 1128]
         })
         initMockJsHints()
-        loader.config({ monaco })
         const resizedHeight = ref()
         const resizeWrapperRef = ref()
         const isResizable = () => `${context.attrs.class || ''}`.includes('common-resize-vertical')
