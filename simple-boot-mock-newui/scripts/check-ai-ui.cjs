@@ -267,7 +267,7 @@ async function main () {
     },
     useSearchStatus: () => ({ type: 'select', children: [{ label: 'Enabled', value: 1 }, { label: 'Disabled', value: 0 }] }),
     useAiModels: () => ({ modelOption: ref({ type: 'select', children: [{ label: 'm', value: 'm' }] }) })
-  }, 'options,searchOptions,columns,buttons,edit,save,item,editWindowAttrs,testItem,testDraft,testVisible')
+  }, 'options,searchOptions,columns,buttons,edit,save,item,editVisible,editWindowAttrs,testItem,testDraft,testVisible')
   for (const prop of ['status', 'isDefault']) {
     const toggle = configPage.columns.value.find(column => column.prop === prop).formatter({ status: 1, isDefault: 0 })
     assert.equal(toggle.type.name, 'DelFlagTag')
@@ -290,15 +290,36 @@ async function main () {
   assert.equal(configPage.item.value.id, undefined)
   assert.equal(configPage.item.value.apiKey, '')
   const editTest = configPage.editWindowAttrs.value.buttons[0]
-  editTest.click({ form: { validate: onValid => onValid(false) } })
-  assert.equal(configPage.testVisible.value, false)
-  configPage.item.value.baseUrl = 'http://localhost:1234/v1'
-  editTest.click({ form: { validate: onValid => onValid(true) } })
+  const validateConnection = {
+    validate: () => assert.fail('Testing must not validate the configuration name or default model'),
+    validateField: (fields, onValid) => {
+      assert.deepEqual(fields, ['provider', 'baseUrl', 'apiKey'])
+      const requiredFields = configPage.options.value.filter(option => fields.includes(option.prop) && option.required)
+      onValid(requiredFields.every(option => !!configPage.item.value[option.prop]))
+    }
+  }
+  for (const missing of ['provider', 'baseUrl', 'apiKey']) {
+    configPage.item.value = { provider: 'openai', baseUrl: 'http://localhost:1234/v1', apiKey: 'key', [missing]: '  ' }
+    editTest.click({ form: validateConnection })
+    assert.equal(configPage.testVisible.value, false)
+  }
+  configPage.item.value = { provider: ' openai ', baseUrl: ' http://localhost:1234/v1 ', apiKey: ' key ', configName: '', defaultModel: '' }
+  editTest.click({ form: validateConnection })
   assert.equal(configPage.testDraft.value, true)
   assert.equal(configPage.testVisible.value, true)
   assert.equal(configPage.testItem.value.baseUrl, 'http://localhost:1234/v1')
   configPage.item.value.baseUrl = 'http://localhost:5678/v1'
   assert.equal(configPage.testItem.value.baseUrl, 'http://localhost:1234/v1')
+  configPage.testVisible.value = false
+  configPage.item.value = { id: 7, provider: 'openai', baseUrl: 'http://localhost:1234/v1', apiKey: '  ' }
+  editTest.click({ form: validateConnection })
+  assert.equal(configPage.testVisible.value, true, 'Saved configurations may reuse their key')
+  configPage.testVisible.value = false
+  let finishValidation
+  editTest.click({ form: { validateField: (fields, callback) => { finishValidation = callback } } })
+  configPage.editVisible.value = false
+  finishValidation(true)
+  assert.equal(configPage.testVisible.value, false, 'Closing the editor invalidates pending validation')
   const selectedConfig = page.options.value.find(option => option.prop === 'configId').children[0]
   // The table passes both the row and its scope to the configured click handler.
   for (const isAdmin of [true, false]) {

@@ -97,8 +97,11 @@ const editWindowAttrs = computed(() => isAdmin.value
         labelKey: 'common.label.test',
         type: 'success',
         click: ({ form }) => {
-          form.validate(valid => {
-            if (valid) showTest(item.value, true)
+          const config = item.value
+          const fields = ['provider', 'baseUrl', 'apiKey']
+          fields.forEach(field => { config[field] = config[field]?.trim() || '' })
+          form.validateField(fields, valid => {
+            if (valid && editVisible.value && item.value === config) showTest(config, true)
           })
           return false
         }
