@@ -97,7 +97,7 @@ public class AiSseSupport {
 
     private void sendError(SseEmitter emitter, Exception error) {
         String message = error instanceof AiException
-            ? SimpleResultUtils.getErrorMsg(((AiException) error).getMessageKey(), ((AiException) error).getArguments())
+            ? ((AiException) error).getErrorMessage()
             : SimpleResultUtils.getErrorMsg("simple.ai.requestFailed", null);
         try {
             send(emitter, "error", Map.of("message", message));

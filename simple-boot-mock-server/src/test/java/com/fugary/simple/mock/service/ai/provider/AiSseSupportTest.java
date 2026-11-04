@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.service.ai.provider;
 
+import com.fugary.simple.mock.service.ai.AiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.task.TaskRejectedException;
@@ -72,6 +73,19 @@ class AiSseSupportTest {
                 .contains("event:error").doesNotContain("event:finish");
         verify(heartbeat, atLeastOnce()).cancel(false);
         assertThat(RequestContextHolder.getRequestAttributes()).isNull();
+    }
+
+    @Test
+    void upstreamDetailsReachTheErrorEvent() {
+        SseEmitter emitter = support.start((target, stream) -> {
+            throw new AiException(500, "simple.ai.httpError", 429).withDetail("Quota exceeded");
+        });
+        worker.get().run();
+        @SuppressWarnings("unchecked")
+        Set<ResponseBodyEmitter.DataWithMediaType> data = (Set<ResponseBodyEmitter.DataWithMediaType>)
+                ReflectionTestUtils.getField(emitter, "earlySendAttempts");
+        assertThat(data.stream().map(item -> String.valueOf(item.getData())).collect(Collectors.joining()))
+                .contains("event:error", "Quota exceeded").doesNotContain("event:finish");
     }
 
     @Test

@@ -81,6 +81,26 @@ class AiIntegrationTest {
     }
 
     @Test
+    void longErrorDetailsDoNotPreventFailureLogging() {
+        login("admin");
+        AiConfig config = createConfig("Error details");
+        AiChatProvider provider = mock(AiChatProvider.class);
+        when(provider.getProvider()).thenReturn(AiProvider.OPENAI);
+        AiService service = new AiServiceImpl(configService, logService, List.of(provider));
+        AiException failure = new AiException(500, "simple.ai.httpError", 429)
+                .withDetail("Quota exceeded " + "x".repeat(1900));
+        when(provider.chat(any(), any())).thenThrow(failure);
+        assertSame(failure, assertThrows(AiException.class, () -> service.test(config.getId(), request())));
+        AiLogQueryVo query = new AiLogQueryVo();
+        query.setConfigId(config.getId());
+        AiLog entry = logService.search(query).getRecords().get(0);
+        assertEquals(0, entry.getStatus());
+        assertEquals(512, entry.getErrorMessage().length());
+        assertTrue(entry.getErrorMessage().contains("Quota exceeded"));
+        assertEquals(failure.getErrorMessage(), controller.handleError(failure).getMessage());
+    }
+
+    @Test
     void normalizesConnectionsAndModelsForSavingLoadingAndTesting() {
         login("admin");
         AiConfig draft = new AiConfig();

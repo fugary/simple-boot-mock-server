@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-/** Shared bounded transport; provider credentials and response bodies never enter errors. */
+/** Shared bounded transport; only bounded, credential-redacted upstream messages enter errors. */
 @Slf4j
 public abstract class AbstractAiChatProvider implements AiChatProvider {
     private final RestTemplate restTemplate;
@@ -82,17 +82,21 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
             if (parsed == null || !parsed.isObject()) {
                 throw new AiException(500, "simple.ai.invalidResponse");
             }
+            if (parsed.hasNonNull("error")) {
+                throw new AiException(500, "simple.ai.requestFailed").withDetail(errorDetail(parsed));
+            }
             return parsed;
         } catch (RestClientResponseException e) {
             if (trace != null) { trace.setHttpStatus(e.getRawStatusCode()); trace.append(e.getResponseBodyAsString()); }
-            throw failure("simple.ai.httpError", e, e.getRawStatusCode());
+            throw sanitizeError(failure("simple.ai.httpError", e, e.getRawStatusCode())
+                    .withDetail(errorDetail(e.getResponseBodyAsString())), headers);
         } catch (RestClientException e) {
             if (e.getRootCause() instanceof IOException) {
                 throw transportFailure(e, callTrace.getHttpStatus() != null);
             }
             throw failure("simple.ai.requestFailed", e);
         } catch (AiException e) {
-            throw e;
+            throw sanitizeError(e, headers);
         } catch (Exception e) {
             throw failure("simple.ai.invalidResponse", e);
         }
@@ -127,12 +131,14 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
                 trace.setHttpStatus(status);
                 if (status < 200 || status >= 300) {
                     captureBody(response, trace, post, stream);
-                    throw new AiException(500, "simple.ai.httpError", status);
+                    throw new AiException(500, "simple.ai.httpError", status)
+                            .withDetail(errorDetail(trace.getRaw().toString()));
                 }
                 if (response.getEntity() == null || response.getEntity().getContentType() == null
                         || !response.getEntity().getContentType().getValue().toLowerCase(Locale.ROOT).contains("text/event-stream")) {
                     captureBody(response, trace, post, stream);
-                    throw new AiException(500, "simple.ai.invalidResponse");
+                    throw new AiException(500, "simple.ai.invalidResponse")
+                            .withDetail(errorDetail(trace.getRaw().toString()));
                 }
                 AiStreamAccumulator accumulator = new AiStreamAccumulator(getProvider(), JsonUtils.getMapper(), stream);
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(
@@ -171,6 +177,8 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
                     }
                 }
             }
+        } catch (AiException e) {
+            throw sanitizeError(e, headers);
         } catch (IOException e) {
             stream.check();
             throw transportFailure(e, trace.getHttpStatus() != null);
@@ -186,6 +194,50 @@ public abstract class AbstractAiChatProvider implements AiChatProvider {
             }
         }
         return failure(responseReceived ? "simple.ai.responseReadFailed" : "simple.ai.connectionFailed", cause);
+    }
+
+    private static String errorDetail(String body) {
+        String text = StringUtils.trimToEmpty(StringUtils.left(body, 64000));
+        if (text.isEmpty() || text.startsWith("<")) return null;
+        try {
+            return errorDetail(JsonUtils.getMapper().readTree(text));
+        } catch (IOException ignored) {
+            // Plain-text gateway errors are useful too; never return an HTML error page.
+            return text.startsWith("{") || text.startsWith("[") ? null : text;
+        }
+    }
+
+    static String errorDetail(JsonNode node) {
+        return errorDetail(node, 0);
+    }
+
+    private static String errorDetail(JsonNode node, int depth) {
+        if (node == null || depth > 5) return null;
+        if (node.isTextual()) return StringUtils.trimToNull(node.asText());
+        if (node.isArray()) {
+            for (JsonNode child : node) {
+                String detail = errorDetail(child, depth + 1);
+                if (detail != null) return detail;
+            }
+        } else if (node.isObject()) {
+            for (String field : List.of("error", "message", "detail", "error_description", "errors")) {
+                String detail = errorDetail(node.get(field), depth + 1);
+                if (detail != null) return detail;
+            }
+        }
+        return null;
+    }
+
+    private AiException sanitizeError(AiException error, HttpHeaders headers) {
+        String detail = error.getDetail();
+        if (detail == null) return error;
+        for (String name : List.of(HttpHeaders.AUTHORIZATION, "x-api-key", "x-goog-api-key")) {
+            String credential = headers.getFirst(name);
+            if (StringUtils.isBlank(credential)) continue;
+            if (credential.startsWith("Bearer ")) credential = credential.substring(7);
+            if (StringUtils.isNotBlank(credential)) detail = detail.replace(credential, "[REDACTED]");
+        }
+        return error.withDetail(StringUtils.abbreviate(detail, 2000));
     }
 
     private AiException failure(String messageKey, Exception cause, Object... arguments) {

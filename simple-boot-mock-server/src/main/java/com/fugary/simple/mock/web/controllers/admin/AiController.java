@@ -44,7 +44,7 @@ public class AiController {
     @ExceptionHandler(AiException.class)
     public SimpleResult<Void> handleError(AiException exception) {
         return SimpleResultUtils.createError(exception.getCode(),
-            SimpleResultUtils.getErrorMsg(exception.getMessageKey(), exception.getArguments()));
+            exception.getErrorMessage());
     }
 
     @GetMapping("/configs")

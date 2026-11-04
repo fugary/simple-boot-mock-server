@@ -370,7 +370,7 @@ class AiStreamingProviderTest {
         AiStreamAccumulator accumulator = new AiStreamAccumulator(AiProvider.valueOf(name.toUpperCase()), mapper, new AiStreamSession(text -> {}));
         assertThatThrownBy(accumulator::result).isInstanceOf(IOException.class).hasMessageContaining("中断");
         assertThatThrownBy(() -> accumulator.accept("{\"error\":{\"message\":\"upstream failed\"}}"))
-                .isInstanceOf(IOException.class).hasMessageContaining("upstream error");
+                .isInstanceOfSatisfying(AiException.class, error -> assertThat(error.getDetail()).isEqualTo("upstream failed"));
         assertThatThrownBy(() -> accumulator.accept("{broken" )).isInstanceOf(IOException.class);
     }
     @Test

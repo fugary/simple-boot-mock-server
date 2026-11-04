@@ -3,6 +3,7 @@ package com.fugary.simple.mock.service.ai.provider;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fugary.simple.mock.service.ai.AiException;
 import com.fugary.simple.mock.service.ai.AiProvider;
 
 import java.io.IOException;
@@ -34,7 +35,10 @@ class AiStreamAccumulator {
         }
         JsonNode event = mapper.readTree(data);
         if (event == null || !event.isObject()) throw new IOException("AI 流式响应格式无效");
-        if (event.hasNonNull("error")) throw new IOException("AI upstream error");
+        if (event.hasNonNull("error")) {
+            throw new AiException(500, "simple.ai.requestFailed")
+                    .withDetail(AbstractAiChatProvider.errorDetail(event));
+        }
         switch (provider) {
             case OPENAI: openAi(event); break;
             case ANTHROPIC: anthropic(event); break;

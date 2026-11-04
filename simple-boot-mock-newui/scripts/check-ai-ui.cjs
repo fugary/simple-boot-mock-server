@@ -459,10 +459,15 @@ async function main () {
   assert.equal(cancellation.formData.value.result, 'latest')
   assert.equal(cancellation.metricFields.value.length, 2)
   assert.equal(cancellation.testing.value, false)
+  const failedTest = cancellation.executeTest()
+  responses[2]({ success: false, message: 'HTTP 429\nQuota exceeded <script>alert(1)</script>' })
+  await failedTest
+  assert.equal(cancellation.error.value, 'HTTP 429\nQuota exceeded <script>alert(1)</script>')
   const closedTest = cancellation.executeTest()
+  assert.equal(cancellation.error.value, '', 'Retry clears previous error details')
   cancellation.visible.value = false
-  assert.equal(signals[2].aborted, true)
-  responses[2]({ success: true, resultData: { content: 'closed' } })
+  assert.equal(signals[3].aborted, true)
+  responses[3]({ success: true, resultData: { content: 'closed' } })
   await closedTest
   assert.equal(cancellation.formData.value.result, '')
   assert.equal(cancellation.metrics.value, null)

@@ -287,6 +287,7 @@ const runTest = ({ form }) => {
       <el-alert
         v-if="error"
         :title="error"
+        class="ai-test-error"
         type="error"
         :closable="false"
       />
@@ -295,4 +296,5 @@ const runTest = ({ form }) => {
 </template>
 <style scoped>
 .ai-test-placeholder { display: flex; align-items: center; gap: 8px; min-height: 120px; }
+.ai-test-error { white-space: pre-wrap; overflow-wrap: anywhere; }
 </style>

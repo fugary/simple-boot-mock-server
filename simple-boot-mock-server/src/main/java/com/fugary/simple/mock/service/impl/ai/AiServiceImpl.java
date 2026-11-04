@@ -107,7 +107,7 @@ public class AiServiceImpl implements AiService {
             entry.setErrorMessage(SimpleResultUtils.getErrorMsg("simple.ai.cancelled", null));
             throw e;
         } catch (AiException e) {
-            entry.setErrorMessage(SimpleResultUtils.getErrorMsg(e.getMessageKey(), e.getArguments()));
+            entry.setErrorMessage(StringUtils.abbreviate(e.getErrorMessage(), 512));
             throw e;
         } catch (Exception e) {
             entry.setErrorMessage(SimpleResultUtils.getErrorMsg("simple.ai.requestFailed", null));
