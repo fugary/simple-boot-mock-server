@@ -14,8 +14,10 @@ import { useAiModels } from '@/hooks/AiHooks'
 import { useSearchStatus } from '@/consts/GlobalConstants'
 import { AI_PROVIDERS } from '@/consts/AiConstants'
 import { omit } from 'lodash-es'
+import { useAiHelpStore } from '@/stores/AiHelpStore'
 
 const router = useRouter()
+const modelCache = useAiHelpStore().modelCache
 const isAdmin = computed(() => isAdminUser())
 let querySequence = 0
 const { tableData, loading, searchParam, searchMethod } = useTableAndSearchForm({
@@ -40,6 +42,7 @@ const edit = async (row, copy = false) => {
     const res = await AiConfigApi.getById(row.id)
     if (!res.success || sequence !== editSequence) return
     item.value = { ...res.resultData }
+    modelCache.remember(item.value)
     if (copy) {
       item.value = {
         ...omit(item.value, ['id', 'version', 'userName', 'creator', 'createDate', 'modifier', 'modifyDate', 'modifyFrom']),
@@ -53,10 +56,14 @@ const edit = async (row, copy = false) => {
   editVisible.value = true
 }
 const save = async data => {
+  const cachedModels = modelCache.get(data)
   const res = await AiConfigApi.saveOrUpdate(data)
   if (!res.success) {
     throw new Error(res.message)
   }
+  modelCache.invalidate(res.resultData.id)
+  modelCache.remember({ ...res.resultData, apiKey: data.apiKey })
+  if (cachedModels.length) modelCache.set(res.resultData, true, cachedModels)
   await searchMethod()
 }
 const toggling = ref(false)
@@ -75,6 +82,7 @@ const remove = async row => {
   await $coreConfirm($i18nBundle('common.msg.deleteConfirm'))
   const res = await AiConfigApi.deleteById(row.id)
   if (res.success) {
+    modelCache.invalidate(row.id)
     await searchMethod(tableData.value.length === 1 ? Math.max(1, searchParam.value.page.pageNumber - 1) : undefined)
   }
 }

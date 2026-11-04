@@ -1,10 +1,69 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { askAiHelp } from '@/api/mock/AiApi'
 import { $i18nBundle } from '@/messages'
 
+const createModelCache = () => {
+  const entries = reactive(new Map())
+  const connections = reactive(new Map())
+  const epoch = ref(0)
+  const ttl = 5 * 60 * 1000
+  const connectionKey = config => JSON.stringify([
+    config.provider?.trim().toLowerCase(), config.baseUrl?.trim().replace(/\/+$/, ''), config.apiKey?.trim() || ''
+  ])
+  const savedKey = config => JSON.stringify([config.id, config.modifyDate, config.provider, config.baseUrl])
+  const key = (config, saved) => saved
+    ? connections.get(savedKey(config)) || `saved:${savedKey(config)}`
+    : config.id && !config.apiKey?.trim()
+      ? connections.get(savedKey(config)) || `saved:${savedKey(config)}`
+      : connectionKey(config)
+  const put = (map, id, value) => {
+    map.delete(id)
+    map.set(id, value)
+    if (map.size > 100) map.delete(map.keys().next().value)
+  }
+  const get = (config, saved = false) => {
+    const entry = entries.get(key(config, saved))
+    return entry && Date.now() - entry.time < ttl ? [...entry.models] : []
+  }
+  const set = (config, saved, models) => {
+    put(entries, key(config, saved), { models: [...new Set(models.filter(model => typeof model === 'string' && model.trim()))], time: Date.now() })
+  }
+  // Only bind server-confirmed connections; unsaved edits must not alias the saved ID.
+  const remember = config => {
+    if (!config.id || !config.apiKey?.trim()) return
+    const id = savedKey(config)
+    const target = connectionKey(config)
+    const existing = entries.get(`saved:${id}`)
+    if (existing) {
+      put(entries, target, existing)
+      entries.delete(`saved:${id}`)
+    }
+    put(connections, id, target)
+  }
+  const invalidate = id => {
+    for (const [identity, connection] of connections) {
+      if (JSON.parse(identity)[0] === id) {
+        entries.delete(connection)
+        connections.delete(identity)
+      }
+    }
+    for (const identity of entries.keys()) {
+      if (identity.startsWith('saved:') && JSON.parse(identity.slice(6))[0] === id) entries.delete(identity)
+    }
+    epoch.value++
+  }
+  const clear = () => {
+    entries.clear()
+    connections.clear()
+    epoch.value++
+  }
+  return reactive({ epoch, get, set, remember, invalidate, clear })
+}
+
 // Session memory only: do not persist questions or answers to browser storage.
 export const useAiHelpStore = defineStore('aiHelp', () => {
+  const modelCache = createModelCache()
   const formData = ref({ question: '', answer: '' })
   const submittedQuestion = ref('')
   const history = ref([])
@@ -73,7 +132,7 @@ export const useAiHelpStore = defineStore('aiHelp', () => {
     }
   }
 
-  const clear = () => {
+  const clearConversation = () => {
     stop()
     formData.value = { question: '', answer: '' }
     submittedQuestion.value = ''
@@ -84,5 +143,9 @@ export const useAiHelpStore = defineStore('aiHelp', () => {
     stopped.value = false
     metrics.value = null
   }
-  return { formData, submittedQuestion, history, previousTurns, loading, error, stopped, metrics, ask, stop, clear }
+  const clear = () => {
+    clearConversation()
+    modelCache.clear()
+  }
+  return { modelCache, formData, submittedQuestion, history, previousTurns, loading, error, stopped, metrics, ask, stop, clearConversation, clear }
 })

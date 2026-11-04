@@ -2,15 +2,16 @@ import { computed, onScopeDispose, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { loadAiModels } from '@/api/mock/AiApi'
 import { $i18nBundle } from '@/messages'
+import { useAiHelpStore } from '@/stores/AiHelpStore'
 
 export const useAiModels = (config, form, modelProp, saved = false) => {
-  const models = ref([])
+  const cache = useAiHelpStore().modelCache
+  const models = computed(() => cache.get(config.value, saved))
   const loading = ref(false)
   let generation = 0
   onScopeDispose(() => { generation++ })
-  watch(() => [config.value.id, config.value.provider, config.value.baseUrl, config.value.apiKey], () => {
+  watch(() => [config.value.id, config.value.provider, config.value.baseUrl, config.value.apiKey, config.value.modifyDate, cache.epoch], () => {
     generation++
-    models.value = []
     loading.value = false
   }, { flush: 'sync' })
   const fetchModels = async () => {
@@ -24,7 +25,7 @@ export const useAiModels = (config, form, modelProp, saved = false) => {
         ElMessage.error(response.message || $i18nBundle('common.msg.unknownError'))
         return
       }
-      models.value = response.resultData
+      cache.set(config.value, saved, response.resultData)
       if (!form.value[modelProp]) form.value[modelProp] = models.value[0] || ''
     } catch (error) {
       if (requestGeneration === generation) {

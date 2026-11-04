@@ -53,7 +53,7 @@ const metricFields = computed(() => [
 ].filter(([, value]) => value != null))
 const stop = () => conversation.stop()
 const newConversation = () => {
-  conversation.clear()
+  conversation.clearConversation()
   nextTick(scrollToLatest)
 }
 const ask = () => {

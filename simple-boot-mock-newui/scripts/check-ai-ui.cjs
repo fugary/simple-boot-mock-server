@@ -8,7 +8,13 @@ const { transformSync } = require('@babel/core')
 let jsxPlugin
 const root = path.resolve(__dirname, '..')
 const read = file => fs.readFileSync(path.join(root, 'src', file), 'utf8')
+const { defineStore: defineModelStore, createPinia: createModelPinia } = require('pinia')
+const modelPinia = createModelPinia()
+const createAiStoreDefinition = askAiHelp => new Function('defineStore', 'ref', 'reactive', 'askAiHelp', '$i18nBundle', read('stores/AiHelpStore.js').replace(/^import .*$/gm, '').replace('export const', 'const') + '; return useAiHelpStore')(defineModelStore, ref, require('vue').reactive, askAiHelp, key => key)
+const modelStoreDefinition = createAiStoreDefinition(async () => {})
+const useModelAiStore = () => modelStoreDefinition(modelPinia)
 const setup = (file, bindings, result) => {
+  bindings = { useAiHelpStore: useModelAiStore, ...bindings }
   const script = read(file).match(/<script setup([^>]*)>([\s\S]*?)<\/script>/)
   let source = script[2].replace(/^import .*$/gm, '')
   if (script[1].includes('jsx')) {
@@ -255,10 +261,13 @@ async function main () {
     ...bindings,
     formatDate: value => value,
     DelFlagTag: { name: 'DelFlagTag' },
-    AiConfigApi: { getById: () => new Promise(resolve => edits.push(resolve)) },
+    AiConfigApi: {
+      getById: () => new Promise(resolve => edits.push(resolve)),
+      saveOrUpdate: async () => ({ success: true, resultData: { id: 14, provider: 'openai', baseUrl: 'https://example.com/v1', modifyDate: 'v2' } })
+    },
     useSearchStatus: () => ({ type: 'select', children: [{ label: 'Enabled', value: 1 }, { label: 'Disabled', value: 0 }] }),
     useAiModels: () => ({ modelOption: ref({ type: 'select', children: [{ label: 'm', value: 'm' }] }) })
-  }, 'options,searchOptions,columns,buttons,edit,item,editWindowAttrs,testItem,testDraft,testVisible')
+  }, 'options,searchOptions,columns,buttons,edit,save,item,editWindowAttrs,testItem,testDraft,testVisible')
   for (const prop of ['status', 'isDefault']) {
     const toggle = configPage.columns.value.find(column => column.prop === prop).formatter({ status: 1, isDefault: 0 })
     assert.equal(toggle.type.name, 'DelFlagTag')
@@ -463,12 +472,12 @@ async function main () {
   validations[1](true)
   await Promise.resolve()
   assert.equal(calls, 1)
-  const { createPinia, defineStore, storeToRefs } = require('pinia')
+  const { createPinia, storeToRefs } = require('pinia')
   const helpRequests = []
   const askAiHelp = (prompt, callbacks, signal, history) => new Promise((resolve, reject) => {
     helpRequests.push({ prompt, callbacks, signal, history: [...history], resolve, reject })
   })
-  const useAiHelpStoreDefinition = new Function('defineStore', 'ref', 'askAiHelp', '$i18nBundle', read('stores/AiHelpStore.js').replace(/^import .*$/gm, '').replace('export const', 'const') + '; return useAiHelpStore')(defineStore, ref, askAiHelp, key => key)
+  const useAiHelpStoreDefinition = createAiStoreDefinition(askAiHelp)
   const helpPinia = createPinia()
   const useAiHelpStore = () => useAiHelpStoreDefinition(helpPinia)
   const helpProps = ref({ active: true })
@@ -620,7 +629,7 @@ async function main () {
   const modelRequests = []
   const messages = []
   const modelSource = read('hooks/AiHooks.js').replace(/^import .*$/gm, '').replace('export const', 'const')
-  const useModels = new Function('ref', 'computed', 'watch', 'onScopeDispose', 'loadAiModels', 'ElMessage', '$i18nBundle', modelSource + ';return useAiModels')(ref, computed, watch, onScopeDispose, () => new Promise((resolve, reject) => modelRequests.push({ resolve, reject })), { error: message => messages.push(message) }, key => key)
+  const useModels = new Function('ref', 'computed', 'watch', 'onScopeDispose', 'loadAiModels', 'ElMessage', '$i18nBundle', 'useAiHelpStore', modelSource + ';return useAiModels')(ref, computed, watch, onScopeDispose, () => new Promise((resolve, reject) => modelRequests.push({ resolve, reject })), { error: message => messages.push(message) }, key => key, useModelAiStore)
   const scope = effectScope()
   const config = ref({ id: 1, provider: 'openai', baseUrl: 'url', apiKey: 'key' })
   const modelForm = ref({ model: 'manual' })
@@ -646,6 +655,75 @@ async function main () {
   modelRequests[3].reject(new Error('closed window'))
   await final
   assert.equal(messages.length, 0)
+  const cache = useModelAiStore().modelCache
+  cache.clear()
+  const savedConfig = { id: 12, provider: 'openai', baseUrl: 'https://example.com/v1', apiKey: 'secret', modifyDate: 'v1' }
+  cache.remember(savedConfig)
+  const cacheScope = effectScope()
+  const editConfig = ref({ ...savedConfig })
+  const editModels = cacheScope.run(() => useModels(editConfig, ref({ model: 'manual' }), 'model'))
+  const load = editModels.modelOption.value.tooltipFunc()
+  modelRequests.at(-1).resolve({ success: true, resultData: ['a', 'b', 'a'] })
+  await load
+  const savedModels = cacheScope.run(() => useModels(ref({ ...savedConfig, apiKey: undefined }), ref({ model: 'manual' }), 'model', true))
+  const optionsOf = selector => selector.modelOption.value.children.map(option => option.value)
+  assert.deepEqual(optionsOf(savedModels), ['manual', 'a', 'b'])
+  const requestCount = modelRequests.length
+  const draftModels = cacheScope.run(() => useModels(ref({ ...savedConfig, id: undefined }), ref({ model: 'manual' }), 'model'))
+  assert.deepEqual(optionsOf(draftModels), ['manual', 'a', 'b'])
+  assert.equal(modelRequests.length, requestCount)
+  editConfig.value.apiKey = 'different-key'
+  assert.deepEqual(optionsOf(editModels), ['manual'])
+  editConfig.value = { ...savedConfig, baseUrl: 'https://different.example.com/v1' }
+  assert.deepEqual(optionsOf(editModels), ['manual'])
+  editConfig.value = { ...savedConfig, provider: 'gemini' }
+  assert.deepEqual(optionsOf(editModels), ['manual'])
+  editConfig.value = { ...savedConfig, baseUrl: ' https://example.com/v1/ ', apiKey: ' secret ' }
+  assert.deepEqual(optionsOf(editModels), ['manual', 'a', 'b'])
+  const refresh = savedModels.modelOption.value.tooltipFunc()
+  assert.equal(modelRequests.length, requestCount + 1)
+  modelRequests.at(-1).resolve({ success: true, resultData: ['fresh'] })
+  await refresh
+  assert.deepEqual(optionsOf(draftModels), ['manual', 'fresh'])
+  const invalidated = savedModels.modelOption.value.tooltipFunc()
+  cache.invalidate(savedConfig.id)
+  modelRequests.at(-1).resolve({ success: true, resultData: ['stale'] })
+  await invalidated
+  assert.deepEqual(optionsOf(savedModels), ['manual'])
+  assert.deepEqual(cache.get(savedConfig), [])
+  const pendingLogout = editModels.modelOption.value.tooltipFunc()
+  useModelAiStore().clear()
+  modelRequests.at(-1).resolve({ success: true, resultData: ['after-logout'] })
+  await pendingLogout
+  assert.deepEqual(optionsOf(editModels), ['manual'])
+  cache.set(savedConfig, false, ['old'])
+  const now = Date.now
+  try {
+    Date.now = () => now() + 6 * 60 * 1000
+    assert.deepEqual(cache.get(savedConfig), [])
+  } finally {
+    Date.now = now
+  }
+  cache.clear()
+  const newDraft = { ...savedConfig, id: undefined }
+  cache.set(newDraft, false, ['before-save'])
+  await configPage.save(newDraft)
+  const savedResult = { id: 14, provider: 'openai', baseUrl: 'https://example.com/v1', modifyDate: 'v2' }
+  assert.deepEqual(cache.get(savedResult, true), ['before-save'])
+  cache.set(savedResult, true, ['refreshed'])
+  cache.remember({ ...savedResult, apiKey: 'secret' })
+  assert.deepEqual(cache.get(newDraft), ['refreshed'])
+  assert.equal(JSON.stringify(useModelAiStore().$state).includes('secret'), false)
+  useModelAiStore().formData.question = 'new conversation'
+  useModelAiStore().clearConversation()
+  assert.equal(useModelAiStore().formData.question, '')
+  assert.deepEqual(cache.get(newDraft), ['refreshed'])
+  useModelAiStore().clear()
+  assert.deepEqual(cache.get(newDraft), [])
+  assert.deepEqual(cache.get(savedResult, true), [])
+  cacheScope.stop()
+  cache.clear()
+  console.log('AI model cache regression passed: shared selectors, connection changes, refresh, invalidation, logout and expiry')
   console.log('AI UI regression passed: real option resolver, date/status filters, route clear, stale response, delete paging, validation lock')
 }
 main().catch(error => { console.error(error); process.exitCode = 1 })

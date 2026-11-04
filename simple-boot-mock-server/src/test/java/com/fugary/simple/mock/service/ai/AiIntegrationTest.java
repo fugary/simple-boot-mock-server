@@ -81,6 +81,52 @@ class AiIntegrationTest {
     }
 
     @Test
+    void normalizesConnectionsAndModelsForSavingLoadingAndTesting() {
+        login("admin");
+        AiConfig draft = new AiConfig();
+        draft.setConfigName("  Normalized config  ");
+        draft.setProvider(" OPENAI ");
+        draft.setBaseUrl(" https://example.com/v1/// ");
+        draft.setApiKey(" private-key ");
+        draft.setDefaultModel(" test-model ");
+        AiChatProvider provider = mock(AiChatProvider.class);
+        when(provider.getProvider()).thenReturn(AiProvider.OPENAI);
+        AiService service = new AiServiceImpl(configService, logService, Collections.singletonList(provider));
+        when(provider.loadModels(any())).thenAnswer(call -> {
+            AiConfig connection = call.getArgument(0);
+            assertEquals("https://example.com/v1", connection.getBaseUrl());
+            assertEquals("private-key", connection.getApiKey());
+            assertEquals("openai", connection.getProvider());
+            return List.of("test-model");
+        });
+        when(provider.chat(any(), any())).thenAnswer(call -> {
+            AiConfig connection = call.getArgument(0);
+            assertEquals("test-model", connection.getDefaultModel());
+            assertEquals("https://example.com/v1", connection.getBaseUrl());
+            assertEquals("private-key", connection.getApiKey());
+            AiChatResponse response = new AiChatResponse();
+            response.setContent("answer");
+            return response;
+        });
+        assertEquals(List.of("test-model"), service.loadModels(draft));
+        assertEquals("answer", service.testDraft(draft, request(), null).getContent());
+        AiConfig saved = configService.saveConfig(draft);
+        AiConfig stored = configs.selectById(saved.getId());
+        assertEquals("Normalized config", stored.getConfigName());
+        assertEquals("test-model", stored.getDefaultModel());
+        assertEquals("https://example.com/v1", stored.getBaseUrl());
+        assertEquals(List.of("test-model"), service.loadModels(saved.getId()));
+        assertEquals("answer", service.test(saved.getId(), request()).getContent());
+        draft.setId(saved.getId());
+        draft.setApiKey(" ");
+        assertEquals("private-key", configService.resolveConnection(draft).getApiKey());
+        assertEquals("private-key", configService.saveConfig(draft).getApiKey());
+        draft.setBaseUrl(" https://different.example.com/v1/ ");
+        assertThrows(AiException.class, () -> configService.resolveConnection(draft));
+        assertThrows(AiException.class, () -> configService.saveConfig(draft));
+    }
+
+    @Test
     void ordinaryUsersCanUseEnabledConfigsButCannotManageOrOverrideConnections() {
         login("admin");
         AiConfig config = createConfig("Shared model");

@@ -7,7 +7,9 @@ import { AI_PROVIDERS } from '@/consts/AiConstants'
 import AiAnswerViewer from '@/views/components/utils/AiAnswerViewer.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import AiConfigLabel from '@/views/components/utils/AiConfigLabel.vue'
+import { useAiHelpStore } from '@/stores/AiHelpStore'
 const visible = defineModel({ type: Boolean, default: false })
+const modelCache = useAiHelpStore().modelCache
 const props = defineProps({
   config: { type: Object, default: () => ({}) },
   draft: { type: Boolean, default: false }
@@ -33,6 +35,7 @@ const selectConfig = async id => {
     if (sequence !== configSequence) return
     if (response.success) {
       selectedConfig.value = response.resultData
+      modelCache.remember(response.resultData)
       formData.value.model = response.resultData.defaultModel || ''
     } else {
       error.value = response.message || $i18nBundle('common.msg.unknownError')

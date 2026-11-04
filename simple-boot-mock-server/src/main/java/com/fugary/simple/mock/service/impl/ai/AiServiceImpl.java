@@ -61,7 +61,7 @@ public class AiServiceImpl implements AiService {
         AiConfig config = configs.resolveConnection(input);
         config.setId(input.getId());
         config.setConfigName(StringUtils.left(StringUtils.trim(input.getConfigName()), 255));
-        config.setDefaultModel(input.getDefaultModel());
+        config.setDefaultModel(StringUtils.trim(input.getDefaultModel()));
         return executeTest(config, request, stream);
     }
 

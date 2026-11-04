@@ -70,15 +70,12 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
         AiConfig old = input.getId() == null ? null : getConfig(input.getId());
         AiConfig value = new AiConfig();
         value.setId(input.getId());
-        value.setConfigName(input.getConfigName());
-        value.setProvider(input.getProvider());
-        value.setBaseUrl(input.getBaseUrl());
-        value.setDefaultModel(input.getDefaultModel());
-        value.setApiKey(input.getApiKey());
+        value.setConfigName(StringUtils.trim(input.getConfigName()));
+        normalizeConnection(input, value);
+        value.setDefaultModel(StringUtils.trim(input.getDefaultModel()));
         value.setStatus(input.getStatus());
         value.setIsDefault(input.getIsDefault());
         validateConfig(value);
-        String provider = AiProvider.fromCode(value.getProvider()).getCode();
         if (StringUtils.isBlank(value.getApiKey()) && old != null) {
             requireSameConnection(value, old);
             value.setApiKey(old.getApiKey());
@@ -86,7 +83,6 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
         if (StringUtils.length(value.getApiKey()) > 4096) {
             throw new AiException(400, "simple.ai.invalidConfig");
         }
-        value.setProvider(provider);
         value.setUserName(old == null ? owner : old.getUserName());
         value.setStatus(Integer.valueOf(0).equals(value.getStatus()) ? 0 : 1);
         value.setIsDefault(Integer.valueOf(1).equals(value.getIsDefault()) ? 1 : 0);
@@ -143,15 +139,23 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
         }
         AiConfig stored = input.getId() == null ? null : getConfig(input.getId());
         AiConfig config = new AiConfig();
-        config.setProvider(AiProvider.fromCode(input.getProvider()).getCode());
-        config.setBaseUrl(StringUtils.stripEnd(StringUtils.trim(input.getBaseUrl()), "/"));
-        config.setApiKey(input.getApiKey());
+        normalizeConnection(input, config);
         validateConnection(config);
         if (stored != null && StringUtils.isBlank(config.getApiKey())) {
             requireSameConnection(config, stored);
             config.setApiKey(stored.getApiKey());
         }
         return config;
+    }
+
+    private void normalizeConnection(AiConfig input, AiConfig target) {
+        target.setProvider(AiProvider.fromCode(StringUtils.trim(input.getProvider())).getCode());
+        target.setBaseUrl(normalizeBaseUrl(input.getBaseUrl()));
+        target.setApiKey(StringUtils.trim(input.getApiKey()));
+    }
+
+    private String normalizeBaseUrl(String baseUrl) {
+        return StringUtils.stripEnd(StringUtils.trim(baseUrl), "/");
     }
 
     @Override
@@ -204,7 +208,7 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
 
     private void requireSameConnection(AiConfig input, AiConfig stored) {
         if (!input.getProvider().equalsIgnoreCase(stored.getProvider())
-            || !StringUtils.stripEnd(input.getBaseUrl(), "/").equals(StringUtils.stripEnd(stored.getBaseUrl(), "/"))) {
+            || !normalizeBaseUrl(input.getBaseUrl()).equals(normalizeBaseUrl(stored.getBaseUrl()))) {
             throw new AiException(400, "simple.ai.keyRequired");
         }
     }
