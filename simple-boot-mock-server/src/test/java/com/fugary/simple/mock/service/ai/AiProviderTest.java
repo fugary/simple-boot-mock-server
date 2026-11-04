@@ -73,7 +73,7 @@ class AiProviderTest {
                     assertEquals("test prompt", sent.path("messages").path(0).path("content").asText());
                 }
                 if ("anthropic".equals(provider)) {
-                    assertEquals(1024, sent.path("max_tokens").asInt());
+                    assertEquals(8192, sent.path("max_tokens").asInt());
                     assertEquals("2023-06-01", version.get());
                 }
                 assertTrue(body.get().contains("test prompt"));

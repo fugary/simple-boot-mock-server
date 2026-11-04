@@ -10,6 +10,8 @@ import java.util.Map;
 
 @Component
 public class AnthropicChatProvider extends AbstractAiChatProvider {
+    private static final int DEFAULT_MAX_TOKENS = 8192;
+
     @Override
     public AiProvider getProvider() {
         return AiProvider.ANTHROPIC;
@@ -19,7 +21,7 @@ public class AnthropicChatProvider extends AbstractAiChatProvider {
     public AiChatResponse chat(AiConfig config, AiChatRequest request, AiStreamSession stream) {
         HttpHeaders headers = headers("x-api-key", config.getApiKey());
         headers.set("anthropic-version", "2023-06-01");
-        Map<String, Object> body = Map.of("model", config.getDefaultModel(), "max_tokens", 1024,
+        Map<String, Object> body = Map.of("model", config.getDefaultModel(), "max_tokens", DEFAULT_MAX_TOKENS,
             "messages", List.of(Map.of("role", "user", "content", request.getPrompt())));
         JsonNode data = post(url(config.getBaseUrl(), "/messages"), headers, body, stream, request.getTrace());
         StringBuilder text = new StringBuilder();

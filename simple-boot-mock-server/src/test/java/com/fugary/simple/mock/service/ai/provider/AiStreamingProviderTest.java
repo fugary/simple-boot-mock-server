@@ -252,6 +252,7 @@ class AiStreamingProviderTest {
             assertThat(response.getPromptTokens()).isEqualTo(10);
             assertThat(response.getCompletionTokens()).isEqualTo(4);
             assertThat(response.getTotalTokens()).isEqualTo(14);
+            if ("anthropic".equals(name)) assertThat(requestBody.get().path("max_tokens").asInt()).isEqualTo(8192);
             if ("gemini".equals(name)) assertThat(requestPath.get()).endsWith(":streamGenerateContent?alt=sse");
             else assertThat(requestBody.get().path("stream").asBoolean()).isTrue();
         } finally {
