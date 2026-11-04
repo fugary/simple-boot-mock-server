@@ -16,6 +16,10 @@ export const useAiModels = (config, form, modelProp, saved = false) => {
   }, { flush: 'sync' })
   const fetchModels = async () => {
     if (loading.value) return
+    if (!saved && (!config.value.baseUrl?.trim() || (!config.value.id && !config.value.apiKey?.trim()))) {
+      ElMessage.warning($i18nBundle('mock.msg.aiLoadModelsNeedKey'))
+      return
+    }
     const requestGeneration = generation
     loading.value = true
     try {
@@ -27,6 +31,7 @@ export const useAiModels = (config, form, modelProp, saved = false) => {
       }
       cache.set(config.value, saved, response.resultData)
       if (!form.value[modelProp]) form.value[modelProp] = models.value[0] || ''
+      ElMessage.success($i18nBundle('mock.msg.aiLoadModelsSuccess', [models.value.length]))
     } catch (error) {
       if (requestGeneration === generation) {
         ElMessage.error(error?.data?.message || error?.response?.data?.message || error?.message || $i18nBundle('common.msg.unknownError'))

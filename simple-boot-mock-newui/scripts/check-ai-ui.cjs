@@ -654,8 +654,14 @@ async function main () {
   console.log('AI help streaming, background completion, remount, history, cancellation and clearing checks passed')
   const modelRequests = []
   const messages = []
+  const modelWarnings = []
+  const modelSuccesses = []
   const modelSource = read('hooks/AiHooks.js').replace(/^import .*$/gm, '').replace('export const', 'const')
-  const useModels = new Function('ref', 'computed', 'watch', 'onScopeDispose', 'loadAiModels', 'ElMessage', '$i18nBundle', 'useAiHelpStore', modelSource + ';return useAiModels')(ref, computed, watch, onScopeDispose, () => new Promise((resolve, reject) => modelRequests.push({ resolve, reject })), { error: message => messages.push(message) }, key => key, useModelAiStore)
+  const useModels = new Function('ref', 'computed', 'watch', 'onScopeDispose', 'loadAiModels', 'ElMessage', '$i18nBundle', 'useAiHelpStore', modelSource + ';return useAiModels')(ref, computed, watch, onScopeDispose, () => new Promise((resolve, reject) => modelRequests.push({ resolve, reject })), {
+    error: message => messages.push(message),
+    warning: message => modelWarnings.push(message),
+    success: message => modelSuccesses.push(message)
+  }, (key, args) => ({ key, args }), useModelAiStore)
   const scope = effectScope()
   const config = ref({ id: 1, provider: 'openai', baseUrl: 'url', apiKey: 'key' })
   const modelForm = ref({ model: 'manual' })
@@ -681,6 +687,33 @@ async function main () {
   modelRequests[3].reject(new Error('closed window'))
   await final
   assert.equal(messages.length, 0)
+  assert.equal(modelSuccesses.length, 0, 'Stale responses must not report success')
+  const validationScope = effectScope()
+  const incompleteConfig = ref({ provider: 'openai', baseUrl: '  ', apiKey: 'key' })
+  const validatedModels = validationScope.run(() => useModels(incompleteConfig, ref({ model: '' }), 'model'))
+  const requestsBeforeValidation = modelRequests.length
+  const missingUrl = validatedModels.modelOption.value.tooltipFunc()
+  assert.equal(modelRequests.length, requestsBeforeValidation, 'Missing URL must not send a request')
+  await missingUrl
+  incompleteConfig.value = { provider: 'openai', baseUrl: 'https://example.com/v1', apiKey: '  ' }
+  const missingKey = validatedModels.modelOption.value.tooltipFunc()
+  assert.equal(modelRequests.length, requestsBeforeValidation, 'Missing key must not send a request')
+  await missingKey
+  assert.equal(modelRequests.length, requestsBeforeValidation)
+  assert.deepEqual(modelWarnings.map(message => message.key), ['mock.msg.aiLoadModelsNeedKey', 'mock.msg.aiLoadModelsNeedKey'])
+  incompleteConfig.value.id = 10
+  const reuseKey = validatedModels.modelOption.value.tooltipFunc()
+  assert.equal(modelRequests.length, requestsBeforeValidation + 1, 'Existing configurations may reuse a saved key')
+  modelRequests.at(-1).resolve({ success: true, resultData: [] })
+  await reuseKey
+  assert.deepEqual(modelSuccesses.at(-1), { key: 'mock.msg.aiLoadModelsSuccess', args: [0] })
+  const failedLoad = validatedModels.modelOption.value.tooltipFunc()
+  const successesBeforeFailure = modelSuccesses.length
+  modelRequests.at(-1).resolve({ success: false, message: 'upstream failure' })
+  await failedLoad
+  assert.equal(modelSuccesses.length, successesBeforeFailure)
+  assert.equal(messages.at(-1), 'upstream failure')
+  validationScope.stop()
   const cache = useModelAiStore().modelCache
   cache.clear()
   const savedConfig = { id: 12, provider: 'openai', baseUrl: 'https://example.com/v1', apiKey: 'secret', modifyDate: 'v1' }
@@ -691,6 +724,7 @@ async function main () {
   const load = editModels.modelOption.value.tooltipFunc()
   modelRequests.at(-1).resolve({ success: true, resultData: ['a', 'b', 'a'] })
   await load
+  assert.deepEqual(modelSuccesses.at(-1), { key: 'mock.msg.aiLoadModelsSuccess', args: [2] })
   const savedModels = cacheScope.run(() => useModels(ref({ ...savedConfig, apiKey: undefined }), ref({ model: 'manual' }), 'model', true))
   const optionsOf = selector => selector.modelOption.value.children.map(option => option.value)
   assert.deepEqual(optionsOf(savedModels), ['manual', 'a', 'b'])
@@ -710,6 +744,7 @@ async function main () {
   assert.equal(modelRequests.length, requestCount + 1)
   modelRequests.at(-1).resolve({ success: true, resultData: ['fresh'] })
   await refresh
+  assert.deepEqual(modelSuccesses.at(-1), { key: 'mock.msg.aiLoadModelsSuccess', args: [1] })
   assert.deepEqual(optionsOf(draftModels), ['manual', 'fresh'])
   const invalidated = savedModels.modelOption.value.tooltipFunc()
   cache.invalidate(savedConfig.id)

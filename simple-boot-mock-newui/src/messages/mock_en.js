@@ -461,6 +461,8 @@ mock.msg.aiStreamInterrupted = 'AI response interrupted before completion. Pleas
 mock.msg.aiLogResponseLimit = 'Logs retain only the first 16000 characters of the response; longer responses are truncated.'
 
 mock.label.aiLoadModels = 'Load models'
+mock.msg.aiLoadModelsNeedKey = 'Enter the base URL and required API key first.'
+mock.msg.aiLoadModelsSuccess = 'Loaded {0} models.'
 mock.msg.aiSelectOrInputModel = 'Select or enter a model name'
 mock.label.aiApiKey = 'API Key'
 mock.label.aiProviderOpenai = 'OpenAI'

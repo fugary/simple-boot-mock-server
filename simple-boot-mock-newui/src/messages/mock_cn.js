@@ -461,6 +461,8 @@ mock.msg.aiStreamInterrupted = 'AI 响应中断，未收到完整结果，请重
 mock.msg.aiLogResponseLimit = '日志响应最多保存前 16000 字符，超出部分不会保存在日志中。'
 
 mock.label.aiLoadModels = '加载模型'
+mock.msg.aiLoadModelsNeedKey = '请先填写接口地址和所需的 API Key。'
+mock.msg.aiLoadModelsSuccess = '已加载 {0} 个模型。'
 mock.msg.aiSelectOrInputModel = '选择或输入模型名称'
 mock.label.aiApiKey = 'API Key'
 mock.label.aiProviderOpenai = 'OpenAI'
