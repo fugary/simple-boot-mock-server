@@ -90,6 +90,10 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
         value.setUserName(old == null ? owner : old.getUserName());
         value.setStatus(Integer.valueOf(0).equals(value.getStatus()) ? 0 : 1);
         value.setIsDefault(Integer.valueOf(1).equals(value.getIsDefault()) ? 1 : 0);
+        // 普通保存忽略无变化提交；主动回滚仍保留新的版本记录。
+        if (preserveBlankKey && old != null && SimpleMockUtils.isSameMockData(old, value)) {
+            return old;
+        }
         value.setCreator(old == null ? owner : old.getCreator());
         value.setCreateDate(old == null ? new Date() : old.getCreateDate());
         SimpleMockUtils.addAuditInfo(value);

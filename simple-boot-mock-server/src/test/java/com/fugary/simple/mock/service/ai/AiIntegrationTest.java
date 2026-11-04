@@ -12,6 +12,7 @@ import com.fugary.simple.mock.service.ai.provider.AiChatRequest;
 import com.fugary.simple.mock.service.ai.provider.AiChatResponse;
 import com.fugary.simple.mock.service.ai.provider.AiStreamSession;
 import com.fugary.simple.mock.service.impl.ai.AiServiceImpl;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.controllers.admin.AiController;
 import com.fugary.simple.mock.web.vo.query.AiConfigQueryVo;
 import com.fugary.simple.mock.web.vo.query.AiLogQueryVo;
@@ -30,6 +31,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -78,6 +80,50 @@ class AiIntegrationTest {
         AiChatRequest request = new AiChatRequest();
         request.setPrompt("test");
         return request;
+    }
+
+    @Test
+    void unchangedSavesKeepVersionAndAuditButChangesAndRollbacksCreateVersions() {
+        login("admin");
+        AiConfig original = configs.selectById(createConfig("Unchanged config").getId());
+        AiConfig input = SimpleMockUtils.copy(original, AiConfig.class);
+        input.setConfigName(" Unchanged config ");
+        input.setProvider(" OPENAI ");
+        input.setBaseUrl(" https://example.com/v1/// ");
+        input.setDefaultModel(" test-model ");
+        input.setApiKey("  ");
+        input.setStatus(null);
+        input.setIsDefault(null);
+        input.setVersion(999);
+        input.setModifier("forged-user");
+        input.setModifyDate(new Date(0));
+        AiConfig unchanged = configService.saveConfig(input);
+        assertEquals(original, unchanged);
+        assertEquals(original, configs.selectById(original.getId()));
+        assertEquals(0, configService.histories(original.getId(), new AiConfigQueryVo()).getTotal());
+
+        List<Consumer<AiConfig>> changes = List.of(
+                value -> value.setConfigName("Changed name"),
+                value -> value.setProvider("anthropic"),
+                value -> value.setBaseUrl("https://different.example.com/v1"),
+                value -> value.setApiKey("different-key"),
+                value -> value.setDefaultModel("different-model"),
+                value -> value.setStatus(0),
+                value -> value.setIsDefault(1));
+        int version = original.getVersion();
+        for (Consumer<AiConfig> change : changes) {
+            AiConfig updated = configs.selectById(original.getId());
+            change.accept(updated);
+            AiConfig saved = configService.saveConfig(updated);
+            assertEquals(++version, saved.getVersion());
+            assertEquals(version - 1, configService.histories(original.getId(), new AiConfigQueryVo()).getTotal());
+            assertEquals(saved, configService.saveConfig(saved));
+            assertEquals(version - 1, configService.histories(original.getId(), new AiConfigQueryVo()).getTotal());
+        }
+        AiConfig snapshot = configService.histories(original.getId(), new AiConfigQueryVo()).getRecords().get(0);
+        configService.recover(snapshot.getId());
+        // 回滚目标与当前内容相同，也应记录用户的主动回滚操作。
+        assertEquals(version + 2, configService.recover(snapshot.getId()).getVersion());
     }
 
     @Test
