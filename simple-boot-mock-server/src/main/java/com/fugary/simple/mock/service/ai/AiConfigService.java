@@ -8,6 +8,9 @@ import com.fugary.simple.mock.web.vo.AiConfigOption;
 import java.util.List;
 
 public interface AiConfigService extends IService<AiConfig> {
+    Page<AiConfig> histories(Integer id, AiConfigQueryVo query);
+    java.util.Map<String, AiConfig> historyDiff(Integer id);
+    AiConfig recover(Integer id);
     AiConfig getDefaultConfig();
     List<AiConfigOption> options();
     AiConfig resolveConnection(AiConfig config);

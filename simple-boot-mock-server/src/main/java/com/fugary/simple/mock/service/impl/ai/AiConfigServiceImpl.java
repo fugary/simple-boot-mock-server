@@ -44,7 +44,7 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
     @Override
     public AiConfig getConfig(Integer id) {
         user();
-        AiConfig value = baseMapper.selectOne(Wrappers.<AiConfig>query().eq("id", id));
+        AiConfig value = baseMapper.selectOne(Wrappers.<AiConfig>query().eq("id", id).isNull("modify_from"));
         if (value == null) {
             throw new AiException(404, "simple.error.code.404");
         }
@@ -55,7 +55,7 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
     public Page<AiConfig> search(AiConfigQueryVo query) {
         user();
         return baseMapper.selectPage(SimpleResultUtils.toPage(query), Wrappers.<AiConfig>query()
-            .select(AiConfig.class, field -> !"apiKey".equals(field.getProperty()))
+            .isNull("modify_from").select(AiConfig.class, field -> !"apiKey".equals(field.getProperty()))
             .like(StringUtils.isNotBlank(query.getKeyword()), "config_name", query.getKeyword())
             .eq(StringUtils.isNotBlank(query.getProvider()), "provider", StringUtils.trim(query.getProvider()))
             .like(StringUtils.isNotBlank(query.getDefaultModel()), "default_model", StringUtils.trim(query.getDefaultModel()))
@@ -65,6 +65,10 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
     @Override
     @Transactional
     public AiConfig saveConfig(AiConfig input) {
+        return saveConfig(input, true);
+    }
+
+    private AiConfig saveConfig(AiConfig input, boolean preserveBlankKey) {
         requireAdmin();
         String owner = user();
         AiConfig old = input.getId() == null ? null : getConfig(input.getId());
@@ -76,7 +80,7 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
         value.setStatus(input.getStatus());
         value.setIsDefault(input.getIsDefault());
         validateConfig(value);
-        if (StringUtils.isBlank(value.getApiKey()) && old != null) {
+        if (preserveBlankKey && StringUtils.isBlank(value.getApiKey()) && old != null) {
             requireSameConnection(value, old);
             value.setApiKey(old.getApiKey());
         }
@@ -90,21 +94,89 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
         value.setCreateDate(old == null ? new Date() : old.getCreateDate());
         SimpleMockUtils.addAuditInfo(value);
         if (value.getIsDefault() == 1) {
-            baseMapper.update(null, Wrappers.<AiConfig>update().set("is_default", 0));
+            for (AiConfig previous : list(Wrappers.<AiConfig>query().isNull("modify_from")
+                    .eq("is_default", 1).ne(value.getId() != null, "id", value.getId()))) {
+                archive(previous);
+                previous.setIsDefault(0);
+                SimpleMockUtils.addAuditInfo(previous);
+                updateVersion(previous);
+            }
         }
+        value.setVersion(old == null ? 1 : old.getVersion() + 1);
         if (old == null) {
             baseMapper.insert(value);
         } else {
-            baseMapper.updateById(value);
+            archive(old);
+            updateVersion(value);
         }
         return value;
     }
 
     @Override
+    @Transactional
     public boolean deleteConfig(Integer id) {
         requireAdmin();
         getConfig(id);
+        baseMapper.delete(Wrappers.<AiConfig>query().eq("modify_from", id));
         return baseMapper.deleteById(id) > 0;
+    }
+
+    private void updateVersion(AiConfig value) {
+        if (baseMapper.update(value, Wrappers.<AiConfig>update().eq("id", value.getId())
+                .eq("version", value.getVersion() - 1).isNull("modify_from")) != 1) {
+            throw new AiException(409, "simple.ai.invalidConfig");
+        }
+    }
+
+    private void archive(AiConfig current) {
+        AiConfig snapshot = new AiConfig();
+        BeanUtils.copyProperties(current, snapshot);
+        snapshot.setId(null);
+        snapshot.setModifyFrom(current.getId());
+        baseMapper.insert(snapshot);
+        current.setVersion(current.getVersion() + 1);
+    }
+
+    @Override
+    public Page<AiConfig> histories(Integer id, AiConfigQueryVo query) {
+        requireAdmin();
+        getConfig(id);
+        return baseMapper.selectPage(SimpleResultUtils.toPage(query), Wrappers.<AiConfig>query()
+                .eq("modify_from", id).orderByDesc("version"));
+    }
+
+    private AiConfig historyRecord(Integer id) {
+        requireAdmin();
+        AiConfig record = getById(id);
+        if (record == null) {
+            throw new AiException(404, "simple.error.code.404");
+        }
+        getConfig(record.getModifyFrom() == null ? id : record.getModifyFrom());
+        return record;
+    }
+
+    @Override
+    public Map<String, AiConfig> historyDiff(Integer id) {
+        AiConfig modified = historyRecord(id);
+        List<AiConfig> previous = baseMapper.selectPage(new Page<AiConfig>(1, 1),
+                Wrappers.<AiConfig>query()
+                        .eq("modify_from", modified.getModifyFrom() == null ? id : modified.getModifyFrom())
+                        .lt("version", modified.getVersion()).orderByDesc("version")).getRecords();
+        Map<String, AiConfig> result = new LinkedHashMap<>();
+        result.put("modified", modified);
+        result.put("original", previous.isEmpty() ? new AiConfig() : previous.get(0));
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public AiConfig recover(Integer id) {
+        AiConfig snapshot = historyRecord(id);
+        if (snapshot.getModifyFrom() == null) {
+            throw new AiException(400, "simple.ai.invalidConfig");
+        }
+        snapshot.setId(snapshot.getModifyFrom());
+        return saveConfig(snapshot, false);
     }
 
     private void validateConfig(AiConfig value) {
@@ -162,7 +234,7 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
     public AiConfig getDefaultConfig() {
         user();
         return getOne(Wrappers.<AiConfig>query()
-            .eq("is_default", 1).eq("status", 1));
+            .isNull("modify_from").eq("is_default", 1).eq("status", 1));
     }
 
     @Override
@@ -170,7 +242,7 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
         String owner = user();
         Map<Integer, AiConfigOption> options = new LinkedHashMap<>();
         for (AiConfig config : list(Wrappers.<AiConfig>query()
-            .select("id", "config_name", "provider", "base_url", "is_default", "status")
+            .isNull("modify_from").select("id", "config_name", "provider", "base_url", "is_default", "status")
             .orderByDesc("id"))) {
             AiConfigOption option = new AiConfigOption();
             BeanUtils.copyProperties(config, option);

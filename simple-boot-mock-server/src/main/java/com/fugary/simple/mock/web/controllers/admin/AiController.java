@@ -76,6 +76,24 @@ public class AiController {
         return SimpleResultUtils.createSimpleResult(configs.deleteConfig(id));
     }
 
+    @GetMapping("/configs/{id}/histories")
+    public SimpleResult<List<AiConfig>> histories(@PathVariable Integer id, AiConfigQueryVo query) {
+        return SimpleResultUtils.createSimpleResult(configs.histories(id, query))
+                .addInfo("current", configs.getConfig(id));
+    }
+
+    @GetMapping("/configs/{id}/historyDiff")
+    public SimpleResult<Map<String, AiConfig>> historyDiff(@PathVariable Integer id) {
+        return SimpleResultUtils.createSimpleResult(configs.historyDiff(id));
+    }
+
+    @PostMapping("/configs/{id}/recover")
+    public SimpleResult<AiConfig> recover(@PathVariable Integer id) {
+        AiConfig config = configs.recover(id);
+        config.setApiKey(null);
+        return SimpleResultUtils.createSimpleResult(config);
+    }
+
     @GetMapping("/logs")
     public SimpleResult<List<AiLog>> searchLogs(AiLogQueryVo query) {
         return SimpleResultUtils.createSimpleResult(logs.search(query));

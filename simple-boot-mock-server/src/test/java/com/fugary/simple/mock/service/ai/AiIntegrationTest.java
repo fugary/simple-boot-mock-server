@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@SpringBootTest(properties = "mybatis-plus.global-config.db-config.update-strategy=always")
 @Transactional
 class AiIntegrationTest {
     @Autowired
@@ -78,6 +78,138 @@ class AiIntegrationTest {
         AiChatRequest request = new AiChatRequest();
         request.setPrompt("test");
         return request;
+    }
+
+    @Test
+    void databaseRejectsTwoCurrentDefaultsButAllowsDefaultSnapshots() {
+        login("admin");
+        AiConfig first = createConfig("Default constraint first");
+        first.setIsDefault(1);
+        configService.saveConfig(first);
+        AiConfig second = createConfig("Default constraint second");
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
+                () -> configs.update(null, com.baomidou.mybatisplus.core.toolkit.Wrappers.<AiConfig>update()
+                        .eq("id", second.getId()).set("is_default", 1)));
+        assertEquals(first.getId(), configService.getDefaultConfig().getId());
+        first.setDefaultModel("changed-model");
+        configService.saveConfig(first);
+        assertEquals(1, configService.histories(first.getId(), new AiConfigQueryVo())
+                .getRecords().get(0).getIsDefault());
+    }
+
+    @Test
+    void rollbackRestoresNullKeyAcrossConnectionChanges() {
+        login("admin");
+        AiConfig input = new AiConfig();
+        input.setConfigName("No authentication");
+        input.setProvider("openai");
+        input.setBaseUrl("http://localhost:11434/v1");
+        input.setDefaultModel("local-model");
+        AiConfig current = configService.saveConfig(input);
+        current.setApiKey("new-key");
+        current.setBaseUrl("https://example.com/v1");
+        current = configService.saveConfig(current);
+        AiConfig snapshot = configService.histories(current.getId(), new AiConfigQueryVo()).getRecords().get(0);
+        AiConfig restored = configService.recover(snapshot.getId());
+        assertEquals("http://localhost:11434/v1", restored.getBaseUrl());
+        assertNull(restored.getApiKey());
+        assertNull(configs.selectById(current.getId()).getApiKey());
+        assertEquals(3, restored.getVersion());
+    }
+
+    @Test
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    void concurrentDefaultSelectionsCannotCommitTwoDefaults() throws Exception {
+        login("admin");
+        AiConfig first = createConfig("Concurrent first");
+        AiConfig second = createConfig("Concurrent second");
+        java.util.concurrent.CyclicBarrier barrier = new java.util.concurrent.CyclicBarrier(2);
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            java.util.List<java.util.concurrent.Future<Boolean>> results = new java.util.ArrayList<>();
+            for (AiConfig config : List.of(first, second)) {
+                results.add(executor.submit(() -> {
+                    login("admin");
+                    try {
+                        barrier.await(10, java.util.concurrent.TimeUnit.SECONDS);
+                        config.setIsDefault(1);
+                        configService.saveConfig(config);
+                        return true;
+                    } catch (org.springframework.dao.DataAccessException | AiException expectedConflict) {
+                        return false;
+                    } finally {
+                        RequestContextHolder.resetRequestAttributes();
+                    }
+                }));
+            }
+            int successes = 0;
+            for (java.util.concurrent.Future<Boolean> result : results) {
+                if (result.get(20, java.util.concurrent.TimeUnit.SECONDS)) successes++;
+            }
+            assertTrue(successes >= 1);
+            assertEquals(1, configs.selectCount(com.baomidou.mybatisplus.core.toolkit.Wrappers.<AiConfig>query()
+                    .isNull("modify_from").eq("is_default", 1)));
+            assertNotNull(configService.getDefaultConfig());
+        } finally {
+            executor.shutdownNow();
+            configService.deleteConfig(first.getId());
+            configService.deleteConfig(second.getId());
+        }
+    }
+
+    @Test
+    void defaultSwitchRecordsDisplacedConfigAndExcludesSnapshots() {
+        login("admin");
+        AiConfig first = createConfig("First default");
+        first.setIsDefault(1);
+        configService.saveConfig(first);
+        AiConfig second = createConfig("Second default");
+        second.setIsDefault(1);
+        configService.saveConfig(second);
+        AiConfig displaced = configService.getConfig(first.getId());
+        assertEquals(3, displaced.getVersion());
+        assertEquals(0, displaced.getIsDefault());
+        AiConfig snapshot = configService.histories(first.getId(), new AiConfigQueryVo()).getRecords().get(0);
+        assertEquals(1, snapshot.getIsDefault());
+        assertEquals(second.getId(), configService.getDefaultConfig().getId());
+        configService.recover(snapshot.getId());
+        assertEquals(first.getId(), configService.getDefaultConfig().getId());
+        assertEquals(0, configService.getConfig(second.getId()).getIsDefault());
+        assertTrue(configService.search(new AiConfigQueryVo()).getRecords().stream()
+                .allMatch(config -> config.getModifyFrom() == null));
+    }
+
+    @Test
+    void configHistoryPreservesKeysAndRestrictsAccess() {
+        login("admin");
+        AiConfig current = createConfig("History");
+        current.setApiKey("new-key");
+        current.setDefaultModel("new-model");
+        current = configService.saveConfig(current);
+        assertEquals(2, current.getVersion());
+        List<AiConfig> history = configService.histories(current.getId(), new AiConfigQueryVo()).getRecords();
+        assertEquals(1, history.size());
+        Integer historyId = history.get(0).getId();
+        assertEquals("private-key", history.get(0).getApiKey());
+        assertEquals("private-key", configService.historyDiff(current.getId()).get("original").getApiKey());
+        assertThrows(AiException.class, () -> configService.getConfig(historyId));
+        AiConfig restored = configService.recover(historyId);
+        assertEquals(3, restored.getVersion());
+        assertEquals("private-key", restored.getApiKey());
+        assertEquals("test-model", restored.getDefaultModel());
+        login("ordinary-user");
+        Integer currentId = current.getId();
+        assertEquals(403, assertThrows(AiException.class,
+                () -> controller.histories(currentId, new AiConfigQueryVo())).getCode());
+        assertEquals(403, assertThrows(AiException.class,
+                () -> controller.historyDiff(historyId)).getCode());
+        assertEquals(403, assertThrows(AiException.class,
+                () -> controller.recover(historyId)).getCode());
+        assertThrows(AiException.class, () -> controller.getConfig(historyId));
+        assertNull(controller.getConfig(currentId).getResultData().getApiKey());
+        login("admin");
+        configService.deleteConfig(currentId);
+        assertNull(configs.selectById(historyId));
     }
 
     @Test

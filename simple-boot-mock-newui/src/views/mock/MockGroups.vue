@@ -975,11 +975,11 @@ const historyColumns = computed(() => {
     labelKey: 'common.label.modifyDate',
     minWidth: '160px',
     formatter (item) {
-      return formatDate(item.modifyDate)
+      return formatDate(item.modifyDate ?? item.createDate)
     }
   }, {
     labelKey: 'common.label.modifier',
-    property: 'modifier',
+    formatter: item => item.modifier || item.creator,
     minWidth: '120px'
   }, {
     labelKey: 'mock.label.version',

@@ -1,7 +1,7 @@
 <script setup lang="jsx">
 import { onMounted, ref, computed, watch } from 'vue'
 import { defineTableColumns, defineFormOptions, defineTableButtons, limitStr } from '@/components/utils'
-import { $coreConfirm, $goto, checkShowColumn, getSingleSelectOptions, getStyleGrow } from '@/utils'
+import { $coreConfirm, formatDate, $goto, checkShowColumn, getSingleSelectOptions, getStyleGrow } from '@/utils'
 import MockDataApi, {
   ALL_STATUS_CODES,
   DEFAULT_CONTENT_TYPE,
@@ -523,8 +523,7 @@ const toShowHistoryWindow = (current) => {
       }
     }, {
       labelKey: 'common.label.modifyDate',
-      property: 'modifyDate',
-      dateFormat: 'YYYY-MM-DD HH:mm:ss',
+      formatter: item => formatDate(item.modifyDate ?? item.createDate),
       minWidth: '160px'
     }, {
       labelKey: 'common.label.modifier',

@@ -14,3 +14,7 @@ export const loadAiConfigOptions = () => $httpGet('/admin/ai/configs/options')
 
 export const loadAiHelpStatus = () => $httpGet('/admin/ai/help', { showErrorMessage: false })
 export const askAiHelp = (prompt, callbacks, signal, history = []) => streamAiRequest('/admin/ai/help/stream', { prompt, history }, callbacks, signal)
+
+export const searchAiConfigHistories = (id, query) => useResourceApi(`/admin/ai/configs/${id}/histories`).search(query)
+export const loadAiConfigHistoryDiff = id => $httpGet(`/admin/ai/configs/${id}/historyDiff`)
+export const recoverAiConfig = id => $httpPost(`/admin/ai/configs/${id}/recover`)

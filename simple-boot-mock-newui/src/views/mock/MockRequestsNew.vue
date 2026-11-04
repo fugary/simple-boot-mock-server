@@ -1,6 +1,6 @@
 <script setup lang="jsx">
 import { useRoute } from 'vue-router'
-import { $coreConfirm, getStyleGrow, useBackUrl } from '@/utils'
+import { $coreConfirm, formatDate, getStyleGrow, useBackUrl } from '@/utils'
 import { useMockGroupItem } from '@/hooks/mock/MockGroupHooks'
 import MockRequestApi, {
   ALL_METHODS,
@@ -601,8 +601,7 @@ const toShowHistoryWindow = (current) => {
       }
     }, {
       labelKey: 'common.label.modifyDate',
-      property: 'modifyDate',
-      dateFormat: 'YYYY-MM-DD HH:mm:ss',
+      formatter: item => formatDate(item.modifyDate ?? item.createDate),
       minWidth: '160px'
     }, {
       labelKey: 'common.label.modifier',

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTableAndSearchForm } from '@/hooks/CommonHooks'
-import { AiConfigApi } from '@/api/mock/AiApi'
+import { searchAiConfigHistories, loadAiConfigHistoryDiff, recoverAiConfig, AiConfigApi } from '@/api/mock/AiApi'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import { $coreConfirm, formatDate, isAdminUser } from '@/utils'
 import { useDefaultPage } from '@/config'
@@ -14,6 +14,8 @@ import { useAiModels } from '@/hooks/AiHooks'
 import { useSearchStatus } from '@/consts/GlobalConstants'
 import { AI_PROVIDERS } from '@/consts/AiConstants'
 import { omit } from 'lodash-es'
+import { showHistoryListWindow } from '@/utils/DynamicUtils'
+import { showCompareWindowNew } from '@/services/mock/NewMockDiffService'
 import { useAiHelpStore } from '@/stores/AiHelpStore'
 
 const router = useRouter()
@@ -178,6 +180,50 @@ const columns = computed(() => [
   },
   { labelKey: 'common.label.createDate', prop: 'createDate', width: '170px', formatter: row => formatDate(row.createDate) }
 ])
+const historyOptionsMethod = config => [
+  { labelKey: 'mock.label.version', prop: () => `${config.version ?? ''}${config.current ? ` <${$i18nBundle('mock.label.current')}>` : ''}` },
+  { labelKey: 'mock.label.aiConfigName', prop: 'configName' },
+  { labelKey: 'mock.label.aiProvider', prop: 'provider' },
+  { labelKey: 'mock.label.aiBaseUrl', prop: 'baseUrl' },
+  { labelKey: 'mock.label.aiApiKey', prop: 'apiKey' },
+  { labelKey: 'mock.label.aiModel', prop: 'defaultModel' },
+  { labelKey: 'common.label.status', prop: () => config.status == null ? '' : $i18nBundle(config.status ? 'common.label.statusEnabled' : 'common.label.statusDisabled') },
+  { labelKey: 'mock.label.aiDefault', prop: () => config.isDefault == null ? '' : $i18nBundle(config.isDefault ? 'common.label.yes' : 'common.label.no') },
+  { labelKey: 'common.label.modifier', prop: () => config.modifier || config.creator },
+  { labelKey: 'common.label.modifyDate', prop: () => formatDate(config.modifyDate ?? config.createDate) }
+]
+const showHistory = row => showHistoryListWindow({
+  columns: [
+    {
+      labelKey: 'mock.label.version',
+      prop: 'version',
+      minWidth: '120px',
+      formatter: item => <>
+        {item.version}
+        {item.current ? <ElTag type="success" class="margin-left1">{$i18nBundle('mock.label.current')}</ElTag> : ''}
+      </>
+    },
+    { labelKey: 'mock.label.aiConfigName', prop: 'configName' },
+    { labelKey: 'common.label.modifier', prop: 'modifier', formatter: item => item.modifier || item.creator },
+    { labelKey: 'common.label.modifyDate', prop: 'modifyDate', minWidth: '170px', formatter: item => formatDate(item.modifyDate ?? item.createDate) }
+  ],
+  searchFunc: query => searchAiConfigHistories(row.id, query),
+  compareFunc: async (original, modified, changes) => {
+    if (changes) {
+      const response = await loadAiConfigHistoryDiff(original.id)
+      if (!response.success) return
+      ;({ original, modified } = response.resultData)
+      modified.current = !modified.modifyFrom
+    }
+    showCompareWindowNew({ original, modified, historyOptionsMethod })
+  },
+  recoverFunc: async history => {
+    const response = await recoverAiConfig(history.id)
+    if (!response.success) throw new Error(response.message)
+    modelCache.invalidate(row.id)
+  },
+  onUpdateHistory: () => searchMethod()
+})
 const buttons = computed(() => [
   { labelKey: isAdmin.value ? 'common.label.edit' : 'common.label.view', type: 'primary', click: row => edit(row) },
   { labelKey: 'common.label.test', type: 'success', buttonIf: row => row.status === 1, click: row => showTest(row) },
@@ -236,6 +282,12 @@ const buttons = computed(() => [
                 @click="edit(row, true)"
               >
                 {{ $t('common.label.copy') }}
+              </el-dropdown-item>
+              <el-dropdown-item
+                v-if="isAdmin && row.version > 1"
+                @click="showHistory(row)"
+              >
+                {{ $t('mock.label.modifyHistory') }}
               </el-dropdown-item>
               <el-dropdown-item @click="router.push({ name: 'AiLogs', query: { configId: row.id } })">
                 {{ $t('mock.label.aiLogs') }}
