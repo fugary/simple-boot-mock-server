@@ -25,6 +25,11 @@ public interface ScriptWithFetchProvider {
      */
     Object internalEval(String script, ScriptEngine scriptEngine, ScriptContext scriptContext) throws ScriptException;
 
+    default Object eval(String script, ScriptEngine engine, ScriptContext context, boolean fetchEnabled)
+            throws ScriptException {
+        return fetchEnabled ? internalEval(script, engine, context) : engine.eval(script, context);
+    }
+
     /**
      * fetch函数
      * @param context

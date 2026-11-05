@@ -86,6 +86,12 @@ public class SimpleMockUtils {
 
     private static final String MOCK_DIAGNOSE_ID_ATTR = SimpleMockUtils.class.getName() + ".mockDiagnoseId";
 
+    public interface ScriptAsyncTaskPoller {
+        void pollAndRun(long timeoutNanos) throws ScriptException, InterruptedException;
+
+        void drainReady() throws ScriptException;
+    }
+
     /**
      * 转byte数组
      * @param list
@@ -738,6 +744,10 @@ public class SimpleMockUtils {
      * @throws ScriptException
      */
     public static Object executeValue(Value value, long timeout) throws ScriptException {
+        return executeValue(value, timeout, null);
+    }
+
+    public static Object executeValue(Value value, long timeout, ScriptAsyncTaskPoller poller) throws ScriptException {
         // 判断是否是 Promise
         if (value.canInvokeMember("then")) {
             CompletableFuture<Object> future = new CompletableFuture<>();
@@ -749,16 +759,33 @@ public class SimpleMockUtils {
                 return null;
             });
             try {
+                if (poller != null) {
+                    long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeout);
+                    while (!future.isDone()) {
+                        long remainingNanos = deadlineNanos - System.nanoTime();
+                        if (remainingNanos <= 0) {
+                            throw new TimeoutException("Script async execution timed out after " + timeout + " seconds");
+                        }
+                        poller.pollAndRun(remainingNanos);
+                    }
+                    return future.get();
+                }
                 return future.get(timeout, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                log.error("执行中断异常", e);
                 Thread.currentThread().interrupt();
+                throw new ScriptException(e);
             } catch (ExecutionException | TimeoutException e) {
                 if (e.getCause() instanceof ScriptException) {
                     throw (ScriptException) e.getCause();
                 }
-                throw new ScriptException((Exception) e.getCause());
+                if (e.getCause() instanceof Exception) {
+                    throw new ScriptException((Exception) e.getCause());
+                }
+                throw new ScriptException(e);
             }
+        }
+        if (poller != null) {
+            poller.drainReady();
         }
         return value.as(Object.class);
     }

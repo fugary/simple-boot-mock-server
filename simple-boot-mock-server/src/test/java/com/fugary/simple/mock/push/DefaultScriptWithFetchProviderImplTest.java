@@ -15,9 +15,16 @@ import javax.script.ScriptEngine;
 import javax.script.SimpleScriptContext;
 import javax.script.ScriptException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
 import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_POST_PROCESSOR;
@@ -27,7 +34,9 @@ import static com.fugary.simple.mock.contants.MockDiagnoseConstants.STAGE_EXTERN
 import static com.fugary.simple.mock.utils.MockJsUtils.formatScriptError;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultScriptWithFetchProviderImplTest {
@@ -40,7 +49,7 @@ class DefaultScriptWithFetchProviderImplTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        fetchExecutor = Executors.newFixedThreadPool(2);
+        fetchExecutor = Executors.newFixedThreadPool(4);
         fetchProvider = new DefaultScriptWithFetchProviderImpl();
         fetchProvider.setFetchScriptThreadPool(fetchExecutor);
         fetchProvider.setMockPushProcessor(mockParams -> {
@@ -185,6 +194,306 @@ class DefaultScriptWithFetchProviderImplTest {
         assertEquals(targetUrl, fetchSteps.get(0).getDetails().get(KEY_URL));
         assertTrue(String.valueOf(fetchSteps.get(0).getDetails().get(KEY_MESSAGE))
                 .contains(expectedError), fetchSteps.get(0).getDetails().toString());
+    }
+
+    @Test
+    void fetchCompletingDuringSynchronousExecutionShouldNotContendWithContext() throws Exception {
+        fetchExecutor.shutdownNow();
+        fetchExecutor = Executors.newSingleThreadExecutor();
+        fetchProvider.setFetchScriptThreadPool(fetchExecutor);
+        ScriptContext context = createScriptContext();
+        context.getBindings(ScriptContext.GLOBAL_SCOPE).put("waitForHttp", (Runnable) () -> {
+            try {
+                // 同一线程池的后续任务开始时，前一个请求已完成且回调已入队。
+                fetchExecutor.submit(() -> {}).get(3, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new AssertionError(e);
+            }
+        });
+        fetchProvider.internalEval(
+                "globalThis.done = false;\n"
+                        + "fetch('https://example.com/overlap').then(() => { globalThis.done = true; });\n"
+                        + "waitForHttp.run();\nvoid 0;",
+                scriptEngine,
+                context);
+
+        assertEquals(Boolean.TRUE, fetchProvider.internalEval("globalThis.done", scriptEngine, context));
+
+        Object awaitedResult = fetchProvider.internalEval(
+                "(async function(){\n"
+                        + "  const pending = fetch('https://example.com/overlap-async').then(r => r.json());\n"
+                        + "  waitForHttp.run();\n"
+                        + "  const data = await pending;\n"
+                        + "  return data.url;\n"
+                        + "})()",
+                scriptEngine,
+                context);
+        assertEquals("https://example.com/overlap-async", awaitedResult);
+    }
+
+    @Test
+    void parallelFetchCallsShouldExecuteCallbacksSeriallyOnEngineThread() throws Exception {
+        CountDownLatch allStarted = new CountDownLatch(4);
+        fetchProvider.setMockPushProcessor(mockParams -> {
+            allStarted.countDown();
+            try {
+                assertTrue(allStarted.await(3, TimeUnit.SECONDS));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            String body = "{\"url\":\"" + mockParams.getTargetUrl() + "\"}";
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body.getBytes(StandardCharsets.UTF_8));
+        });
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+        MockDiagnoseContext.set(diagnose);
+        Object result = fetchProvider.internalEval(
+                "(async function(){\n"
+                        + "  const urls = ['https://example.com/1', 'https://example.com/2', "
+                        + "'https://example.com/3', 'https://example.com/4'];\n"
+                        + "  const responses = await Promise.all(urls.map(u => fetch(u)));\n"
+                        + "  const bodies = await Promise.all(responses.map(r => r.json()));\n"
+                        + "  return bodies.map(b => b.url).join('|');\n"
+                        + "})()",
+                scriptEngine,
+                createScriptContext());
+
+        assertEquals("https://example.com/1|https://example.com/2|https://example.com/3|https://example.com/4", result);
+        assertEquals(4, fetchSteps(diagnose).size());
+    }
+
+    @Test
+    void lateFetchCallbackAfterScriptEndsShouldNotAccessEngineOrNextExecutionState() throws Exception {
+        CountDownLatch slowFetchStarted = new CountDownLatch(1);
+        CountDownLatch slowFetchFinished = new CountDownLatch(1);
+        AtomicBoolean taskInterrupted = new AtomicBoolean(false);
+        CountDownLatch releaseHttp = new CountDownLatch(1);
+        fetchProvider.setMockPushProcessor(mockParams -> {
+            slowFetchStarted.countDown();
+            try {
+                releaseHttp.await(4, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                taskInterrupted.set(true);
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(150));
+            }
+            slowFetchFinished.countDown();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("ok".getBytes(StandardCharsets.UTF_8));
+        });
+
+        MockDiagnoseVo diagnose = new MockDiagnoseVo();
+        MockDiagnoseContext.set(diagnose);
+        ScriptContext context = createScriptContext();
+
+        context.getBindings(ScriptContext.GLOBAL_SCOPE).put("started", slowFetchStarted);
+        fetchProvider.internalEval(
+                "globalThis.requestTag = 'A';\n"
+                        + "globalThis.seen = 'pending';\n"
+                        + "fetch('https://example.com/late').then(() => { globalThis.seen = globalThis.requestTag; });\n"
+                        + "started.await();\n"
+                        + "'done';",
+                scriptEngine,
+                context);
+        releaseHttp.countDown();
+
+        fetchProvider.internalEval("globalThis.requestTag = 'B';", scriptEngine, context);
+        assertTrue(slowFetchFinished.await(1, TimeUnit.SECONDS));
+        sleepQuietly(50);
+
+        assertTrue(taskInterrupted.get());
+        assertEquals("pending", fetchProvider.internalEval("globalThis.seen", scriptEngine, context));
+        assertTrue(fetchSteps(diagnose).isEmpty());
+    }
+
+    @Test
+    void lateFetchCallbackAfterExecuteValueTimeoutShouldBeCancelledAndBlocked() throws Exception {
+        CountDownLatch slowFetchFinished = new CountDownLatch(1);
+        AtomicBoolean taskInterrupted = new AtomicBoolean(false);
+        fetchProvider.setExecutionTimeoutSeconds(1);
+        fetchProvider.setMockPushProcessor(mockParams -> {
+            try {
+                Thread.sleep(1200);
+            } catch (InterruptedException e) {
+                taskInterrupted.set(true);
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
+            }
+            slowFetchFinished.countDown();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("ok".getBytes(StandardCharsets.UTF_8));
+        });
+
+        ScriptContext context = createScriptContext();
+        assertThrows(ScriptException.class, () -> fetchProvider.internalEval(
+                "globalThis.timeoutTag = 'A';\n"
+                        + "globalThis.timeoutSeen = 'pending';\n"
+                        + "fetch('https://example.com/slow-timeout').then(() => { globalThis.timeoutSeen = globalThis.timeoutTag; });",
+                scriptEngine,
+                context));
+
+        fetchProvider.setExecutionTimeoutSeconds(30);
+        fetchProvider.internalEval("globalThis.timeoutTag = 'B';", scriptEngine, context);
+        assertTrue(slowFetchFinished.await(1, TimeUnit.SECONDS));
+        sleepQuietly(50);
+
+        assertTrue(taskInterrupted.get());
+        assertEquals("pending", fetchProvider.internalEval("globalThis.timeoutSeen", scriptEngine, context));
+    }
+
+    @Test
+    void infiniteLoopInInitialEvalOrAfterAwaitFetchShouldBeInterruptedByTimeout() throws Exception {
+        fetchProvider.setExecutionTimeoutSeconds(1);
+        ScriptContext context = createScriptContext();
+
+        assertTimeoutPreemptively(Duration.ofSeconds(3), () -> {
+            ScriptException ex = assertThrows(ScriptException.class, () -> fetchProvider.internalEval(
+                    "while (true) {}",
+                    scriptEngine,
+                    context));
+            assertTrue(ex.getMessage().contains("timed out"), ex.getMessage());
+        });
+
+        assertTimeoutPreemptively(Duration.ofSeconds(3), () -> {
+            ScriptException ex = assertThrows(ScriptException.class, () -> fetchProvider.internalEval(
+                    "(async function() {\n"
+                            + "  await fetch('https://example.com/fast');\n"
+                            + "  while (true) {}\n"
+                            + "})()",
+                    scriptEngine,
+                    context));
+            assertTrue(ex.getMessage().contains("timed out"), ex.getMessage());
+        });
+
+        fetchProvider.setExecutionTimeoutSeconds(30);
+        assertEquals("recovered", fetchProvider.internalEval("'recovered'", scriptEngine, context));
+    }
+
+    @Test
+    void innerBodyPromiseTimeoutShouldNotCancelOuterScriptTimeoutProtection() throws Exception {
+        fetchProvider.setBodyExecutionTimeoutSeconds(1);
+        fetchProvider.setExecutionTimeoutSeconds(2);
+        ScriptContext context = createScriptContext();
+
+        assertTimeoutPreemptively(Duration.ofSeconds(4), () -> {
+            ScriptException ex = assertThrows(ScriptException.class, () -> fetchProvider.internalEval(
+                    "(async () => {try {await fetch('/post', {body:new Promise(() => {})});}"
+                            + "catch (e) {} while (true) {} })()",
+                    scriptEngine,
+                    context));
+            assertTrue(ex.getMessage().contains("timed out"), ex.getMessage());
+        });
+    }
+
+    @Test
+    void resolvedPromiseBodyShouldBeSentOnTheProductionContext() throws Exception {
+        AtomicReference<String> posted = new AtomicReference<>();
+        fetchProvider.setMockPushProcessor(params -> {
+            if ("/post".equals(params.getTargetUrl())) {
+                posted.set(params.getRequestBody());
+            }
+            return ResponseEntity.ok("valid".getBytes(StandardCharsets.UTF_8));
+        });
+        for (String body : List.of("Promise.resolve('valid')", "fetch('/source').then(r => r.text())")) {
+            posted.set(null);
+            Object status = fetchProvider.internalEval(
+                    "fetch('/post', {method:'POST', body:" + body + "}).then(r => r.status)",
+                    scriptEngine, scriptEngine.getContext());
+            assertEquals(200, status);
+            assertEquals("valid", posted.get());
+        }
+    }
+
+    @Test
+    void rejectedOrTimedOutBodyShouldNeverSendThePost() throws Exception {
+        AtomicBoolean sent = new AtomicBoolean();
+        fetchProvider.setMockPushProcessor(params -> {
+            sent.set(true);
+            return ResponseEntity.ok(new byte[0]);
+        });
+        fetchProvider.setBodyExecutionTimeoutSeconds(1);
+        String script = "fetch('/post', {method:'POST', body:%s}).then(() => 'sent', e => String(e))";
+        Object failure = fetchProvider.internalEval(String.format(script, "Promise.reject('invalid body')"),
+                scriptEngine, scriptEngine.getContext());
+        assertTrue(failure.toString().contains("invalid body"), failure.toString());
+        Object timeout = fetchProvider.internalEval(String.format(script, "new Promise(r => globalThis.finishBody = r)"),
+                scriptEngine, scriptEngine.getContext());
+        assertTrue(timeout.toString().contains("Fetch body timed out"), timeout.toString());
+        fetchProvider.internalEval("finishBody('late')", scriptEngine, scriptEngine.getContext());
+        assertFalse(sent.get());
+    }
+
+    @Test
+    void totalDeadlineShouldSurviveCaughtBodyTimeoutAndEngineReuse() throws Exception {
+        fetchProvider.setExecutionTimeoutSeconds(1);
+        fetchProvider.setBodyExecutionTimeoutSeconds(5);
+        ScriptContext context = createScriptContext();
+        assertTimeoutPreemptively(Duration.ofSeconds(3), () -> {
+            ScriptException ex = assertThrows(ScriptException.class, () -> fetchProvider.internalEval(
+                    "(async () => {try { await fetch('/post', {body:new Promise(() => {})}); }"
+                            + " catch (e) {} while (true) {} })()", scriptEngine, context));
+            assertTrue(ex.getMessage().contains("timed out"), ex.getMessage());
+        });
+        assertEquals("ok", fetchProvider.internalEval("'ok'", scriptEngine, context));
+    }
+
+    @Test
+    void synchronousModeShouldAlsoInterruptExpiredScripts() {
+        fetchProvider.setExecutionTimeoutSeconds(1);
+        ScriptContext context = createScriptContext();
+        assertTimeoutPreemptively(Duration.ofSeconds(3), () -> {
+            ScriptException ex = assertThrows(ScriptException.class,
+                    () -> fetchProvider.eval("while (true) {}", scriptEngine, context, false));
+            assertTrue(ex.getMessage().contains("timed out"), ex.getMessage());
+            assertEquals("ok", fetchProvider.eval("'ok'", scriptEngine, context, false));
+        });
+    }
+
+    @Test
+    void closingExecutionScopeShouldDeterministicallyCancelFetchResultFuture() throws Exception {
+        AtomicReference<CompletableFuture<DefaultScriptWithFetchProviderImpl.FetchResponseData>> capturedFuture
+                = new AtomicReference<>();
+        DefaultScriptWithFetchProviderImpl spyFetchProvider = new DefaultScriptWithFetchProviderImpl() {
+            @Override
+            CompletableFuture<FetchResponseData> createFetchFuture() {
+                CompletableFuture<FetchResponseData> future = super.createFetchFuture();
+                capturedFuture.set(future);
+                return future;
+            }
+        };
+        spyFetchProvider.setFetchScriptThreadPool(fetchExecutor);
+        CountDownLatch releaseHttp = new CountDownLatch(1);
+        spyFetchProvider.setMockPushProcessor(mockParams -> {
+            try {
+                releaseHttp.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return ResponseEntity.ok("ok".getBytes(StandardCharsets.UTF_8));
+        });
+        JavaScriptEngineFactory factory = new JavaScriptEngineFactory();
+        factory.setScriptWithFetchProvider(spyFetchProvider);
+        ScriptEngine engine = factory.create();
+
+        ScriptContext context = new SimpleScriptContext();
+        context.setBindings(engine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
+        try {
+            spyFetchProvider.internalEval(
+                    "globalThis.lateCalled = false;\n"
+                            + "fetch('https://example.com/long-timeout', { timeout: 600000 })"
+                            + ".then(() => { globalThis.lateCalled = true; });\n"
+                            + "'returned-early';",
+                    engine,
+                    context);
+
+            assertNotNull(capturedFuture.get());
+            assertTrue(capturedFuture.get().isDone());
+            assertTrue(capturedFuture.get().isCancelled());
+        } finally {
+            releaseHttp.countDown();
+        }
+        assertEquals(Boolean.FALSE, spyFetchProvider.internalEval("globalThis.lateCalled", engine, context));
     }
 
     private ScriptContext createScriptContext() {

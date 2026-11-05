@@ -98,10 +98,10 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
                 scriptEngine = scriptEnginePool.borrowObject();
             }
             ScriptContext context = getScriptContext(scriptEngine);
-            if (isFetchEnabled()) {
-                return scriptWithFetchProvider.internalEval(script, scriptEngine, context);
+            if (scriptWithFetchProvider == null) {
+                return scriptEngine.eval(script, context);
             }
-            return scriptEngine.eval(script, context);
+            return scriptWithFetchProvider.eval(script, scriptEngine, context, isFetchEnabled());
         } catch (Exception e) {
             log.error(MessageFormat.format("执行MockJs错误：{0}", script), e);
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400,
