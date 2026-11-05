@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { AI_PROVIDERS } from '@/consts/AiConstants'
 const props = defineProps({ config: { type: Object, required: true } })
 const provider = computed(() => AI_PROVIDERS.find(item => item.value === props.config.provider))
+const connectionLabel = computed(() => (props.config.configName || '-') + (props.config.baseUrl ? ' (' + props.config.baseUrl + ')' : ''))
 </script>
 
 <template>
@@ -14,7 +15,10 @@ const provider = computed(() => AI_PROVIDERS.find(item => item.value === props.c
     >
       {{ $t(provider.labelKey) }}
     </el-tag>
-    <span>{{ config.configName || '-' }}<template v-if="config.baseUrl"> ({{ config.baseUrl }})</template></span>
+    <span
+      class="ai-config-name"
+      :title="connectionLabel"
+    >{{ connectionLabel }}</span>
     <el-text
       v-if="config.isDefault === 1 && !config.deleted"
       type="success"
@@ -32,4 +36,7 @@ const provider = computed(() => AI_PROVIDERS.find(item => item.value === props.c
 
 <style scoped>
 .ai-config-label { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; overflow-wrap: anywhere; color: var(--el-text-color-regular); }
+.ai-config-label--selected { display: flex; flex-wrap: nowrap; width: 100%; overflow: hidden; white-space: nowrap; }
+.ai-config-label--selected .ai-config-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ai-config-label--selected :is(.el-tag, .el-text) { flex-shrink: 0; }
 </style>

@@ -1,9 +1,8 @@
 <script setup>
-import { computed, h, onMounted, onScopeDispose, ref, watch } from 'vue'
-import { useAiModels } from '@/hooks/AiHooks'
+import { computed, onMounted, onScopeDispose, ref, watch } from 'vue'
+import { useAiConfigOption, useAiModels } from '@/hooks/AiHooks'
 import { $i18nBundle } from '@/messages'
 import { AiConfigApi, loadAiConfigOptions, testAiConfig, testAiDraftConfig } from '@/api/mock/AiApi'
-import { AI_PROVIDERS } from '@/consts/AiConstants'
 import AiAnswerViewer from '@/views/components/utils/AiAnswerViewer.vue'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
 import AiConfigLabel from '@/views/components/utils/AiConfigLabel.vue'
@@ -19,6 +18,7 @@ const configs = ref(props.config.id ? [props.config] : [])
 const selectedConfig = ref(props.config)
 const loadingConfig = ref(false)
 const { modelOption } = useAiModels(selectedConfig, formData, 'model', !props.draft)
+const configOption = useAiConfigOption(configs, selectedConfig)
 let configSequence = 0
 const selectConfig = async id => {
   const sequence = ++configSequence
@@ -75,24 +75,10 @@ const formOptions = computed(() => [props.draft
       slot: 'draftConfig'
     }
   : {
-      labelKey: 'mock.label.aiConfigSelect',
-      prop: 'configId',
-      type: 'select',
-      required: true,
+      ...configOption.value,
       disabled: !!props.config.id || loadingConfig.value || testing.value,
-      attrs: { clearable: false, filterable: true, loading: loadingConfig.value },
-      slots: {
-        label: () => h(AiConfigLabel, { config: selectedConfig.value })
-      },
-      change: selectConfig,
-      children: configs.value.map(config => {
-        const provider = AI_PROVIDERS.find(provider => provider.value === config.provider)
-        return {
-          value: config.id,
-          label: [provider ? $i18nBundle(provider.labelKey) : '', config.configName, config.baseUrl, config.isDefault === 1 ? $i18nBundle('mock.label.default') : ''].filter(Boolean).join(' · '),
-          slots: { default: () => h(AiConfigLabel, { config }) }
-        }
-      })
+      attrs: { ...configOption.value.attrs, loading: loadingConfig.value },
+      change: selectConfig
     }, { ...modelOption.value, disabled: testing.value || loadingConfig.value }, {
   labelKey: 'mock.label.aiPrompt',
   prop: 'prompt',

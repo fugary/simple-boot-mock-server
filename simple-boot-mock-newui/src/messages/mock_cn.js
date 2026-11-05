@@ -416,7 +416,7 @@ mock.label.aiHelp = 'AI 提问'
 mock.label.aiHelpQuestion = '问题'
 mock.label.aiHelpAnswer = '回答'
 mock.label.aiHelpAsk = '提问'
-mock.msg.aiHelpDescription = '依据本地功能文档回答，支持最近最多 3 轮成功问答的追问，较长历史会缩减。问题、相关历史和文档将发送至公共默认 AI 服务并记录到 AI 日志；不会自动读取 Mock 数据。新对话可清空上下文，示例请检查后使用。'
+mock.msg.aiHelpDescription = '依据本地功能文档回答，支持最近最多 3 轮成功问答的追问，较长历史会缩减。问题、相关历史和文档将发送至所选公共 AI 服务并记录到 AI 日志；不会自动读取 Mock 数据。新对话清空历史问答，保留草稿和模型选择，示例请检查后使用。'
 mock.label.aiPrompt = '提示词'
 mock.label.aiConfigId = '配置ID'
 mock.label.aiSuccess = '成功'
@@ -522,6 +522,9 @@ mock.label.aiRequestJson = '请求 JSON'
 mock.msg.aiNoRawRequest = '未保存原始请求体'
 
 mock.label.aiNewConversation = '新对话'
+mock.label.aiClearInput = '清空输入'
 
 mock.msg.requireDescription = '异步加载 CommonJS 模块，支持 module.exports 和 exports，不支持 ESM。默认按 URL 缓存源码，写入后 5 分钟过期（可配置），过期或淘汰后各引擎在下次 require 时重新加载模块。使用 await require(url, {options}) 跳过两层缓存，本次结果不更新已有缓存。管理员可通过 simple.mock.cache.specs.require-source 或环境变量 MOCK_REQUIRE_SOURCE_CACHE_SPEC 配置，默认 maximumSize=1000,expireAfterWrite=5m，重启后生效。'
 mock.msg.clearRequireCacheDescription = '调用 clearRequireCache() 清空当前服务实例的共享源码缓存和当前引擎模块缓存；其他引擎在下次 require 时失效。'
+
+mock.msg.aiHelpUnavailable = '暂无已启用的 AI 配置，请联系管理员。'

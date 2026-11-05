@@ -242,6 +242,14 @@ public class AiConfigServiceImpl extends ServiceImpl<AiConfigMapper, AiConfig> i
     }
 
     @Override
+    public AiConfig getPreferredConfig() {
+        user();
+        List<AiConfig> available = page(new Page<AiConfig>(1, 1, false), Wrappers.<AiConfig>query()
+            .isNull("modify_from").eq("status", 1).orderByDesc("is_default", "id")).getRecords();
+        return available.isEmpty() ? null : available.get(0);
+    }
+
+    @Override
     public List<AiConfigOption> options() {
         String owner = user();
         Map<Integer, AiConfigOption> options = new LinkedHashMap<>();

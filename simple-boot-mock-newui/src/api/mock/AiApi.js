@@ -13,7 +13,7 @@ export const loadAiModels = (data, saved = false) => saved
 export const loadAiConfigOptions = () => $httpGet('/admin/ai/configs/options')
 
 export const loadAiHelpStatus = () => $httpGet('/admin/ai/help', { showErrorMessage: false })
-export const askAiHelp = (prompt, callbacks, signal, history = []) => streamAiRequest('/admin/ai/help/stream', { prompt, history }, callbacks, signal)
+export const askAiHelp = (prompt, callbacks, signal, history = [], selection = {}) => streamAiRequest('/admin/ai/help/stream', { prompt, history, configId: selection.configId, model: selection.model }, callbacks, signal)
 
 export const searchAiConfigHistories = (id, query) => useResourceApi(`/admin/ai/configs/${id}/histories`).search(query)
 export const loadAiConfigHistoryDiff = id => $httpGet(`/admin/ai/configs/${id}/historyDiff`)

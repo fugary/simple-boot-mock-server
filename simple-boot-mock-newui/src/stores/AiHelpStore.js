@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
-import { askAiHelp } from '@/api/mock/AiApi'
+import { AiConfigApi, askAiHelp, loadAiConfigOptions } from '@/api/mock/AiApi'
 import { $i18nBundle } from '@/messages'
 
 const createModelCache = () => {
@@ -64,6 +64,11 @@ const createModelCache = () => {
 // Session memory only: do not persist questions or answers to browser storage.
 export const useAiHelpStore = defineStore('aiHelp', () => {
   const modelCache = createModelCache()
+  const selection = ref({ configId: undefined, model: '' })
+  const configs = ref([])
+  const selectedConfig = ref({})
+  const loadingConfig = ref(false)
+  let configSequence = 0
   const formData = ref({ question: '', answer: '' })
   const submittedQuestion = ref('')
   const history = ref([])
@@ -73,14 +78,14 @@ export const useAiHelpStore = defineStore('aiHelp', () => {
   const stopped = ref(false)
   const metrics = ref(null)
   let controller
-  const stop = () => {
+  const stop = (restoreDraft = true) => {
     const current = controller
     if (!current) return
     controller = undefined
     current?.abort()
     if (loading.value) {
       stopped.value = true
-      restoreQuestion()
+      if (restoreDraft) restoreQuestion()
     }
     loading.value = false
   }
@@ -88,6 +93,54 @@ export const useAiHelpStore = defineStore('aiHelp', () => {
     if (!formData.value.question) formData.value.question = submittedQuestion.value
   }
   const errorMessage = err => err?.data?.message || err?.response?.data?.message || err?.message || $i18nBundle('common.msg.unknownError')
+  const selectConfig = async (id, preserveModel = false) => {
+    const sequence = ++configSequence
+    selectedConfig.value = {}
+    selection.value.configId = id
+    if (!preserveModel) {
+      error.value = ''
+      selection.value.model = ''
+    }
+    loadingConfig.value = true
+    try {
+      const response = await AiConfigApi.getById(id)
+      if (sequence !== configSequence) return
+      if (!response.success) throw new Error(response.message || $i18nBundle('common.msg.unknownError'))
+      const config = response.resultData
+      if (config.status !== 1) throw new Error($i18nBundle('mock.msg.aiHelpUnavailable'))
+      modelCache.remember(config)
+      const { id: configId, provider, baseUrl, configName, isDefault, modifyDate } = config
+      selectedConfig.value = { id: configId, provider, baseUrl, configName, isDefault, modifyDate }
+      if (!preserveModel || !selection.value.model) selection.value.model = config.defaultModel || ''
+    } catch (err) {
+      if (sequence === configSequence) error.value = errorMessage(err)
+    } finally {
+      if (sequence === configSequence) loadingConfig.value = false
+    }
+  }
+  const loadConfigs = async () => {
+    if (loadingConfig.value || loading.value) return
+    const sequence = ++configSequence
+    loadingConfig.value = true
+    try {
+      const response = await loadAiConfigOptions()
+      if (sequence !== configSequence) return
+      if (!response.success) throw new Error(response.message || $i18nBundle('common.msg.unknownError'))
+      configs.value = (response.resultData || []).filter(config => !config.deleted && config.status === 1)
+      const previous = configs.value.find(config => config.id === selection.value.configId)
+      const initial = previous || configs.value.find(config => config.isDefault === 1) || configs.value[0]
+      if (!initial) {
+        selectedConfig.value = {}
+        selection.value = { configId: undefined, model: '' }
+        throw new Error($i18nBundle('mock.msg.aiHelpUnavailable'))
+      }
+      await selectConfig(initial.id, !!previous)
+    } catch (err) {
+      if (sequence === configSequence) error.value = errorMessage(err)
+    } finally {
+      if (sequence === configSequence) loadingConfig.value = false
+    }
+  }
   const ask = async () => {
     const question = formData.value.question.trim()
     if (!question || loading.value) return
@@ -120,7 +173,7 @@ export const useAiHelpStore = defineStore('aiHelp', () => {
         onError: data => {
           if (current === controller) error.value = errorMessage(data)
         }
-      }, current.signal, history.value)
+      }, current.signal, history.value, selection.value)
     } catch (err) {
       if (current === controller) error.value = errorMessage(err)
     } finally {
@@ -133,8 +186,8 @@ export const useAiHelpStore = defineStore('aiHelp', () => {
   }
 
   const clearConversation = () => {
-    stop()
-    formData.value = { question: '', answer: '' }
+    stop(false)
+    formData.value.answer = ''
     submittedQuestion.value = ''
     history.value = []
     previousTurns.value = []
@@ -145,7 +198,13 @@ export const useAiHelpStore = defineStore('aiHelp', () => {
   }
   const clear = () => {
     clearConversation()
+    formData.value.question = ''
+    configSequence++
+    loadingConfig.value = false
+    configs.value = []
+    selectedConfig.value = {}
+    selection.value = { configId: undefined, model: '' }
     modelCache.clear()
   }
-  return { modelCache, formData, submittedQuestion, history, previousTurns, loading, error, stopped, metrics, ask, stop, clearConversation, clear }
+  return { modelCache, selection, configs, selectedConfig, loadingConfig, selectConfig, loadConfigs, formData, submittedQuestion, history, previousTurns, loading, error, stopped, metrics, ask, stop, clearConversation, clear }
 })

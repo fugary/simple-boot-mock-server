@@ -18,23 +18,23 @@ import static org.mockito.Mockito.*;
 class AiHelpServiceTest {
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void addsPackagedDocumentationAndUsesDefaultModelOnly(boolean streaming) throws Exception {
+    void addsPackagedDocumentationAndPassesTemporaryModel(boolean streaming) throws Exception {
         AiConfigService configs = mock(AiConfigService.class);
         AiService ai = mock(AiService.class);
         AiConfig config = new AiConfig();
         config.setId(7);
-        when(configs.getDefaultConfig()).thenReturn(config);
+        when(configs.getPreferredConfig()).thenReturn(config);
         AiHelpService help = new AiHelpService(configs, ai);
         assertTrue(help.available());
         AiChatRequest question = new AiChatRequest();
         question.setPrompt("如何按订单轮询？");
-        question.setModel("must-not-override-default");
+        question.setModel("temporary-model");
         AiStreamSession stream = streaming ? new AiStreamSession(text -> {}) : null;
         if (streaming) help.ask(question, stream);
         else help.ask(question);
         ArgumentCaptor<AiChatRequest> sent = ArgumentCaptor.forClass(AiChatRequest.class);
         verify(ai).test(eq(7), sent.capture(), same(stream));
-        assertNull(sent.getValue().getModel());
+        assertEquals("temporary-model", sent.getValue().getModel());
         assertTrue(sent.getValue().getPrompt().contains("当前项目"));
         assertFalse(sent.getValue().getPrompt().contains("Simple Boot Mock Server"));
         assertTrue(sent.getValue().getPrompt().contains("## 响应轮询"));
@@ -45,7 +45,7 @@ class AiHelpServiceTest {
     }
 
     @Test
-    void rejectsMissingDefaultAndInvalidQuestionsWithoutCallingAi() throws Exception {
+    void rejectsMissingConfigurationAndInvalidQuestionsWithoutCallingAi() throws Exception {
         AiConfigService configs = mock(AiConfigService.class);
         AiService ai = mock(AiService.class);
         AiHelpService help = new AiHelpService(configs, ai);
@@ -68,7 +68,7 @@ class AiHelpServiceTest {
         AiService ai = mock(AiService.class);
         AiConfig config = new AiConfig();
         config.setId(7);
-        when(configs.getDefaultConfig()).thenReturn(config);
+        when(configs.getPreferredConfig()).thenReturn(config);
         AiHelpService help = new AiHelpService(configs, ai);
         AiChatRequest question = new AiChatRequest();
         question.setPrompt("current-question");

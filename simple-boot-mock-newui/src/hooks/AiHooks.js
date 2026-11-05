@@ -1,7 +1,9 @@
-import { computed, onScopeDispose, ref, watch } from 'vue'
+import { computed, h, onScopeDispose, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { loadAiModels } from '@/api/mock/AiApi'
 import { $i18nBundle } from '@/messages'
+import AiConfigLabel from '@/views/components/utils/AiConfigLabel.vue'
+import { AI_PROVIDERS } from '@/consts/AiConstants'
 import { useAiHelpStore } from '@/stores/AiHelpStore'
 
 export const useAiModels = (config, form, modelProp, saved = false) => {
@@ -59,3 +61,20 @@ export const useAiModels = (config, form, modelProp, saved = false) => {
   }))
   return { modelOption }
 }
+
+export const useAiConfigOption = (configs, selectedConfig) => computed(() => ({
+  labelKey: 'mock.label.aiConfigSelect',
+  prop: 'configId',
+  type: 'select',
+  required: true,
+  attrs: { clearable: false, filterable: true },
+  slots: { label: () => h(AiConfigLabel, { config: selectedConfig.value, class: 'ai-config-label--selected' }) },
+  children: configs.value.map(config => {
+    const provider = AI_PROVIDERS.find(provider => provider.value === config.provider)
+    return {
+      value: config.id,
+      label: [provider ? $i18nBundle(provider.labelKey) : '', config.configName, config.baseUrl, config.isDefault === 1 ? $i18nBundle('mock.label.default') : ''].filter(Boolean).join(' · '),
+      slots: { default: () => h(AiConfigLabel, { config }) }
+    }
+  })
+}))

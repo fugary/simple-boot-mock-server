@@ -11,6 +11,8 @@ public class AiChatRequest {
     private AiCallTrace trace = new AiCallTrace();
     private String prompt;
     private String model;
+    /** Optional saved configuration for help requests; ignored by configuration tests. */
+    private Integer configId;
     /** Completed help turns, oldest first; ignored by configuration tests. */
     private List<HistoryTurn> history;
 

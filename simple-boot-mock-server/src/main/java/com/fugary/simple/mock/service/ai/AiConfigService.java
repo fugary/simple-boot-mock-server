@@ -12,6 +12,7 @@ public interface AiConfigService extends IService<AiConfig> {
     java.util.Map<String, AiConfig> historyDiff(Integer id);
     AiConfig recover(Integer id);
     AiConfig getDefaultConfig();
+    AiConfig getPreferredConfig();
     List<AiConfigOption> options();
     AiConfig resolveConnection(AiConfig config);
     AiConfig getConfig(Integer id);

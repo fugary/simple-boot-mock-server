@@ -392,6 +392,67 @@ class AiIntegrationTest {
     }
 
     @Test
+    void helpSelectsEnabledConfigsAndLogsTemporaryModelWithoutChangingDefaults() throws Exception {
+        login("admin");
+        AiConfig first = createConfig("Help first");
+        first.setIsDefault(1);
+        configService.saveConfig(first);
+        AiConfig second = createConfig("Help second");
+        AiChatProvider provider = mock(AiChatProvider.class);
+        when(provider.getProvider()).thenReturn(AiProvider.OPENAI);
+        when(provider.chat(any(), any())).thenAnswer(invocation -> {
+            AiChatResponse response = new AiChatResponse();
+            response.setContent("answer");
+            return response;
+        });
+        AiHelpService help = new AiHelpService(configService,
+            new AiServiceImpl(configService, logService, List.of(provider)));
+        login("help-reader");
+        assertTrue(help.available());
+        assertEquals(first.getId(), configService.getPreferredConfig().getId());
+        AiChatRequest question = request();
+        question.setConfigId(second.getId());
+        question.setModel(" temporary-model ");
+        help.ask(question);
+        AiLog entry = logService.search(logQuery(second.getId())).getRecords().get(0);
+        assertEquals("temporary-model", entry.getModel());
+        assertEquals("help-reader", entry.getUserName());
+        assertEquals("test-model", configService.getConfig(second.getId()).getDefaultModel());
+        assertEquals(first.getId(), configService.getDefaultConfig().getId());
+        question.setModel("x".repeat(256));
+        assertEquals(400, assertThrows(AiException.class, () -> help.ask(question)).getCode());
+        question.setModel(null);
+
+        login("admin");
+        first.setStatus(0);
+        configService.saveConfig(first);
+        Integer historyId = configService.histories(first.getId(), new AiConfigQueryVo()).getRecords().get(0).getId();
+        login("help-reader");
+        assertNull(configService.getDefaultConfig());
+        assertEquals(second.getId(), configService.getPreferredConfig().getId());
+        assertTrue(help.available());
+        question.setConfigId(null);
+        help.ask(question);
+        assertEquals("test-model", logService.search(logQuery(second.getId())).getRecords().get(0).getModel());
+        clearInvocations(provider);
+        question.setConfigId(first.getId());
+        assertEquals(403, assertThrows(AiException.class, () -> help.ask(question)).getCode());
+        question.setConfigId(historyId);
+        assertEquals(404, assertThrows(AiException.class, () -> help.ask(question)).getCode());
+        login("admin");
+        configService.deleteConfig(second.getId());
+        login("help-reader");
+        question.setConfigId(second.getId());
+        assertEquals(404, assertThrows(AiException.class, () -> help.ask(question)).getCode());
+        assertFalse(help.available());
+        question.setConfigId(null);
+        assertEquals("simple.ai.helpUnavailable", assertThrows(AiException.class, () -> help.ask(question)).getMessageKey());
+        verifyNoInteractions(provider);
+        RequestContextHolder.resetRequestAttributes();
+        assertEquals(401, assertThrows(AiException.class, help::available).getCode());
+    }
+
+    @Test
     void sharedConfigurationsKeepLogsPrivateAndPreserveHistory() {
         login("admin");
         AiConfig alice = createConfig("Alice model");

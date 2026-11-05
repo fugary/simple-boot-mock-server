@@ -33,7 +33,7 @@ public class AiHelpService {
     }
 
     public boolean available() {
-        return configs.getDefaultConfig() != null;
+        return configs.getPreferredConfig() != null;
     }
 
     public AiChatResponse ask(AiChatRequest question) {
@@ -44,11 +44,13 @@ public class AiHelpService {
         if (question == null || StringUtils.isBlank(question.getPrompt()) || question.getPrompt().length() > 2000) {
             throw new AiException(400, "simple.ai.invalidConfig");
         }
-        AiConfig config = configs.getDefaultConfig();
+        AiConfig config = question.getConfigId() == null
+            ? configs.getPreferredConfig() : configs.getUsableConfig(question.getConfigId());
         if (config == null) {
             throw new AiException(400, "simple.ai.helpUnavailable");
         }
         AiChatRequest request = new AiChatRequest();
+        request.setModel(question.getModel());
         String prompt = "你是当前项目的使用帮助助手。仅依据下方随当前版本发布的文档回答。"
             + "称呼本系统时使用‘当前项目’或‘本系统’，不要添加具体产品名称。"
             + "使用提问者的语言，先给结论，不复述问题或介绍背景。简单问题用几句话，操作问题通常用3至5步，"
