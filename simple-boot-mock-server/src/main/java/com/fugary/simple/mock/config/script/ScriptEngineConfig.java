@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolExecutorFactoryBean;
 
 import javax.script.ScriptEngine;
+import java.time.Duration;
 
 /**
  * Create date 2024/7/4<br>
@@ -46,33 +47,39 @@ public class ScriptEngineConfig {
         GenericObjectPoolConfig<ScriptEngine> config = new GenericObjectPoolConfig<>();
         int maxPoolSize = getPositivePoolSize(getPoolProperties().getScriptEngineMaxSize(),
                 SimpleMockConfigProperties.DEFAULT_SCRIPT_ENGINE_MAX_SIZE);
+        long maxWaitMillis = getPoolProperties().getScriptEngineMaxWaitMillis();
         config.setMaxTotal(maxPoolSize);
         config.setJmxEnabled(false);
         config.setMinIdle(Math.min(DEFAULT_SCRIPT_ENGINE_MIN_IDLE, maxPoolSize));
+        config.setMaxWait(Duration.ofMillis(maxWaitMillis > 0 ? maxWaitMillis
+                : SimpleMockConfigProperties.DEFAULT_SCRIPT_ENGINE_MAX_WAIT_MILLIS));
         return new ScriptGenericObjectPool<>(javaScriptEngineFactory(), config);
     }
 
     @Bean
     public ThreadPoolExecutorFactoryBean eventStreamThreadPool() {
-        return createThreadPool(getPoolProperties().getEventStreamMaxSize());
+        return createThreadPool(getPoolProperties().getEventStreamMaxSize(), false);
     }
 
     @Bean
     public ThreadPoolExecutorFactoryBean fetchScriptThreadPool() {
-        return createThreadPool(getPoolProperties().getFetchScriptMaxSize());
+        return createThreadPool(getPoolProperties().getFetchScriptMaxSize(), true);
     }
 
     @Bean
     public ThreadPoolExecutorFactoryBean asyncQueryThreadPool() {
-        return createThreadPool(getPoolProperties().getAsyncQueryMaxSize());
+        return createThreadPool(getPoolProperties().getAsyncQueryMaxSize(), false);
     }
 
-    private ThreadPoolExecutorFactoryBean createThreadPool(int configuredMaxPoolSize) {
+    private ThreadPoolExecutorFactoryBean createThreadPool(int configuredMaxPoolSize, boolean boundedQueue) {
         int maxPoolSize = getPositivePoolSize(configuredMaxPoolSize,
                 SimpleMockConfigProperties.DEFAULT_THREAD_POOL_MAX_SIZE);
         ThreadPoolExecutorFactoryBean pool = new ThreadPoolExecutorFactoryBean();
         pool.setCorePoolSize(Math.min(DEFAULT_THREAD_POOL_CORE_SIZE, maxPoolSize));
         pool.setMaxPoolSize(maxPoolSize);
+        if (boundedQueue) {
+            pool.setQueueCapacity(maxPoolSize);
+        }
         return pool;
     }
 

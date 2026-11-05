@@ -42,6 +42,9 @@ public class ScriptConsoleBridge {
 
     public static void install(ScriptEngine scriptEngine, ScriptContext scriptContext) throws ScriptException {
         scriptContext.setAttribute(BRIDGE_KEY, (ProxyExecutable) args -> {
+            if (!MockDiagnoseContext.isScriptConsoleEnabled()) {
+                return null;
+            }
             String level = args.length > 0 && args[0].isString() ? args[0].asString() : "log";
             String message = args.length > 1 && args[1].isString() ? args[1].asString() : "";
             MockDiagnoseRecorder.of(MockDiagnoseContext.get()).scriptConsole(level, message);

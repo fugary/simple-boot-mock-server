@@ -5,7 +5,6 @@ import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.web.vo.NameValue;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
-import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -46,9 +45,12 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -100,14 +102,22 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
     @Override
     public Object eval(String script, ScriptEngine engine, ScriptContext scriptContext, boolean fetchEnabled)
             throws ScriptException {
+        return eval(script, engine, scriptContext, fetchEnabled, (unusedEngine, unusedContext) -> {});
+    }
+
+    @Override
+    public Object eval(String script, ScriptEngine engine, ScriptContext scriptContext, boolean fetchEnabled, ContextSetup setup)
+            throws ScriptException {
         if (!(engine instanceof GraalJSScriptEngine)) {
-            return fetchEnabled ? null : engine.eval(script, scriptContext);
+            setup.prepare(engine, scriptContext);
+            return fetchEnabled ? null : SimpleMockUtils.detachScriptValue(engine.eval(script, scriptContext));
         }
         Context context = ((GraalJSScriptEngine) engine).getPolyglotContext(scriptContext);
         FetchExecutionScope previous = CURRENT_SCOPE.get();
         FetchExecutionScope scope = new FetchExecutionScope(context, executionTimeoutSeconds);
         CURRENT_SCOPE.set(fetchEnabled ? scope : null);
         try {
+            setup.prepare(engine, scriptContext);
             Object result;
             if (fetchEnabled) {
                 Bindings bindings = (Bindings) invokeMethod(engine, getMethod(GraalJSScriptEngine.class,
@@ -120,6 +130,7 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             } else {
                 result = engine.eval(script, scriptContext);
             }
+            result = SimpleMockUtils.detachScriptValue(result, scope::checkDeadline);
             scope.checkDeadline();
             return result;
         } catch (PolyglotException e) {
@@ -198,7 +209,7 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
         result.orTimeout(bodyExecutionTimeoutSeconds, TimeUnit.SECONDS);
         body.invokeMember("then", (ProxyExecutable) values -> result.complete(values[0].asString()),
                 (ProxyExecutable) errors -> result.completeExceptionally(new ScriptException(errors[0].toString())));
-        return toPromise(context, scope, result, (resolve, reject, text, error) -> {
+        return toPromise(context, scope, result, result, (resolve, reject, text, error) -> {
             if (error == null) {
                 resolve.executeVoid(text);
             } else {
@@ -218,7 +229,7 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             future.orTimeout(fetchTimeout, TimeUnit.MILLISECONDS);
         }
         log.info("fetch请求url:{}", url);
-        Future<?> httpTask = fetchScriptThreadPool.submit(() -> {
+        Runnable request = () -> {
             if (!executionScope.isActive() || future.isDone()) {
                 future.cancel(false);
                 return;
@@ -250,14 +261,25 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
             } catch (Throwable e) {
                 future.completeExceptionally(new FetchExecutionException(e, System.currentTimeMillis() - startTime));
             }
-        });
-        // 作用域关闭会取消 future，同时中断仍在执行的 HTTP 请求。
-        future.whenComplete((result, err) -> {
-            if (future.isCancelled() || err instanceof TimeoutException) {
+        };
+        FutureTask<Void> httpTask = new FutureTask<>(request, null);
+        try {
+            fetchScriptThreadPool.execute(httpTask);
+        } catch (RejectedExecutionException e) {
+            future.cancel(false);
+            String message = "Fetch queue is full or unavailable: " + fetchMethod + " " + url;
+            diagnoseRecorder.externalFetch(fetchMethod, url, null, null, null, new ScriptException(message));
+            return rejectedPromise(context, message);
+        }
+        CompletableFuture<FetchResponseData> completed = future.whenComplete((response, error) -> {
+            if (future.isCancelled() || error instanceof TimeoutException) {
                 httpTask.cancel(true);
+                if (fetchScriptThreadPool instanceof ThreadPoolExecutor) {
+                    ((ThreadPoolExecutor) fetchScriptThreadPool).remove(httpTask);
+                }
             }
         });
-        return toPromise(context, executionScope, future, (resolve, reject, result, err) -> {
+        return toPromise(context, executionScope, future, completed, (resolve, reject, result, err) -> {
             if (err == null) {
                 diagnoseRecorder.externalFetch(fetchMethod, url, result.getStatusCode(),
                         Objects.toString(result.getContentType(), null), result.getDurationMs(), null);
@@ -275,14 +297,14 @@ public class DefaultScriptWithFetchProviderImpl implements ScriptWithFetchProvid
     /**
      * 将宿主 future 桥接为 JS Promise，结果回调统一投递到脚本线程执行。
      */
-    private <T> Value toPromise(Context context, FetchExecutionScope scope, CompletableFuture<T> future,
-                                PromiseSettler<T> settler) {
-        scope.registerTask(future);
+    private <T> Value toPromise(Context context, FetchExecutionScope scope, Future<?> task,
+                                CompletableFuture<T> completed, PromiseSettler<T> settler) {
+        scope.registerTask(task);
         return context.eval("js", "f => new Promise(f)").execute((ProxyExecutable) callbacks -> {
             Value resolve = callbacks[0];
             Value reject = callbacks[1];
-            future.whenComplete((result, error) -> {
-                scope.unregisterTask(future);
+            completed.whenComplete((result, error) -> {
+                scope.unregisterTask(task);
                 scope.enqueueCallback(() -> settler.settle(resolve, reject, result, error));
             });
             return null;

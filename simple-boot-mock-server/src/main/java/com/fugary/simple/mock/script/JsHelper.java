@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.graalvm.polyglot.proxy.ProxyArray;
 import org.graalvm.polyglot.proxy.ProxyObject;
 
+import javax.script.ScriptException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.nio.charset.StandardCharsets;
@@ -341,8 +342,8 @@ public class JsHelper {
      * @param java
      * @return
      */
-    public String java2Json(Object java) {
-        return JsonUtils.toJson(java);
+    public String java2Json(Object java) throws ScriptException {
+        return JsonUtils.toJson(SimpleMockUtils.detachScriptValue(java));
     }
 
     /**

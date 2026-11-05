@@ -5,6 +5,7 @@ import com.fugary.simple.mock.push.ScriptWithFetchProvider;
 import com.fugary.simple.mock.utils.JsonUtils;
 import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.MockJsUtils;
+import com.fugary.simple.mock.utils.SimpleMockUtils;
 import com.fugary.simple.mock.utils.SimpleResultUtils;
 import com.fugary.simple.mock.web.vo.SimpleResult;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
@@ -99,27 +100,32 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
             }
             ScriptContext context = getScriptContext(scriptEngine);
             if (scriptWithFetchProvider == null) {
-                return scriptEngine.eval(script, context);
+                prepareScriptContext(scriptEngine, context);
+                return SimpleMockUtils.detachScriptValue(scriptEngine.eval(script, context));
             }
-            return scriptWithFetchProvider.eval(script, scriptEngine, context, isFetchEnabled());
+            return scriptWithFetchProvider.eval(script, scriptEngine, context, isFetchEnabled(), this::prepareScriptContext);
         } catch (Exception e) {
             log.error(MessageFormat.format("执行MockJs错误：{0}", script), e);
             return SimpleResultUtils.createSimpleResult(MockErrorConstants.CODE_400,
                     MockJsUtils.formatScriptError(script, e));
         } finally {
             if (scriptEngine != null && !isThreadEngine) {
-                scriptEnginePool.returnObject(scriptEngine);
+                // 临时执行之间不共享 JS 全局状态。直接销毁，无需读取用户定义的属性。
+                try {
+                    scriptEnginePool.invalidateObject(scriptEngine);
+                } catch (Exception e) {
+                    log.error("淘汰临时 ScriptEngine 失败", e);
+                }
             }
         }
     }
 
-    /**
-     * 添加其他绑定
-     * @param scriptEngine
-     */
     protected ScriptContext getScriptContext(ScriptEngine scriptEngine) throws ScriptException {
+        return scriptEngine.getContext();
+    }
+
+    private void prepareScriptContext(ScriptEngine scriptEngine, ScriptContext scriptContext) throws ScriptException {
         HttpRequestVo requestVo = MockJsUtils.getHttpRequestVo();
-        ScriptContext scriptContext = scriptEngine.getContext();
         if (MockDiagnoseContext.isScriptConsoleEnabled()) {
             ScriptConsoleBridge.install(scriptEngine, scriptContext);
         }
@@ -134,7 +140,6 @@ public class JavaScriptEngineProviderImpl implements ScriptEngineProvider {
         } else {
             scriptContext.removeAttribute("response", ScriptContext.ENGINE_SCOPE);
         }
-        return scriptContext;
     }
 
     protected Object processValue(Object value) {

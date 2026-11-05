@@ -65,6 +65,8 @@ public class SimpleMockUtils {
      */
     public static final Pattern PASSWORD_PATTERN = Pattern.compile("(?i)((password|secret)\\\\?\"):\\s*(\\\\?\")[^\"\\\\]+(\\\\?\")");
 
+    public static final int MAX_SCRIPT_RESULT_DEPTH = 64;
+
     private static final List<String> TEXT_CONTENT_TYPES = List.of(
             "application/json",
             "application/xml",
@@ -90,6 +92,11 @@ public class SimpleMockUtils {
         void pollAndRun(long timeoutNanos) throws ScriptException, InterruptedException;
 
         void drainReady() throws ScriptException;
+    }
+
+    @FunctionalInterface
+    public interface ScriptDeadlineChecker {
+        void checkDeadline() throws ScriptException;
     }
 
     /**
@@ -788,6 +795,87 @@ public class SimpleMockUtils {
             poller.drainReady();
         }
         return value.as(Object.class);
+    }
+
+    public static Object detachScriptValue(Object value) throws ScriptException {
+        return detachScriptValue(value, null);
+    }
+
+    public static Object detachScriptValue(Object value, ScriptDeadlineChecker deadlineChecker) throws ScriptException {
+        return new ScriptResultCopy(deadlineChecker).copyResult(value);
+    }
+
+    private static final class ScriptResultCopy {
+        private final ScriptDeadlineChecker deadline;
+        // Graal 的 Map/List 包装可反复创建，equals/hashCode 按底层 JS 对象身份比较。
+        private final Map<Object, CopiedContainer> guestVisits = new HashMap<>();
+        private final Map<Object, CopiedContainer> hostVisits = new IdentityHashMap<>();
+        private long uniqueEntries;
+
+        private ScriptResultCopy(ScriptDeadlineChecker deadline) {
+            this.deadline = deadline;
+        }
+
+        private Object copyResult(Object value) throws ScriptException {
+            CopiedContainer root = new CopiedContainer();
+            Object result = copy(value, 0, root);
+            if (root.entries - uniqueEntries > Math.max(10_000L, uniqueEntries * 32)) {
+                throw new ScriptException("Repeated references expand script result excessively");
+            }
+            return result;
+        }
+
+        private Object copy(Object value, int depth, CopiedContainer parent) throws ScriptException {
+            if (deadline != null) {
+                deadline.checkDeadline();
+            }
+            if (!(value instanceof Map) && !(value instanceof List)) {
+                return value != null && value.getClass().getName().startsWith("com.oracle.truffle.")
+                        ? String.valueOf(value) : value;
+            }
+            Map<Object, CopiedContainer> visits = value.getClass().getName().startsWith("com.oracle.truffle.polyglot.")
+                    ? guestVisits : hostVisits;
+            CopiedContainer node = visits.get(value);
+            if (node != null && node.value == null) {
+                throw new ScriptException("Circular reference detected in script result");
+            }
+            if (depth + (node == null ? 1 : node.height) > MAX_SCRIPT_RESULT_DEPTH) {
+                throw new ScriptException("Script result exceeds maximum nesting depth of " + MAX_SCRIPT_RESULT_DEPTH);
+            }
+            if (node == null) {
+                node = new CopiedContainer();
+                visits.put(value, node);
+                long entries = 1L + (value instanceof Map ? ((Map<?, ?>) value).size() : ((List<?>) value).size());
+                node.entries = entries;
+                uniqueEntries += entries;
+                node.value = copyChildren(value, depth + 1, node);
+            }
+            // 复用已复制的容器，只累计序列化后的大小。极深的分叉图可能超过 long。
+            parent.entries += Math.min(node.entries, Long.MAX_VALUE - parent.entries);
+            parent.height = Math.max(parent.height, node.height + 1);
+            return node.value;
+        }
+
+        private Object copyChildren(Object value, int depth, CopiedContainer parent) throws ScriptException {
+            if (value instanceof Map) {
+                Map<Object, Object> targetMap = new LinkedHashMap<>();
+                for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
+                    targetMap.put(copy(entry.getKey(), depth, parent), copy(entry.getValue(), depth, parent));
+                }
+                return targetMap;
+            }
+            List<Object> targetList = new ArrayList<>();
+            for (Object item : (List<?>) value) {
+                targetList.add(copy(item, depth, parent));
+            }
+            return targetList;
+        }
+
+        private static final class CopiedContainer {
+            private Object value;
+            private long entries;
+            private int height = 1;
+        }
     }
 
     /**

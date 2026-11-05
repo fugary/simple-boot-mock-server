@@ -16,9 +16,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.fugary.simple.mock.entity.mock.MockRequest;
 import com.fugary.simple.mock.push.MockPostScriptProcessor;
@@ -34,11 +36,14 @@ public class MockEventStreamUtils {
             ExecutorService executorService, MockPostScriptProcessor postProcessor, MockRequest mockRequest) {
         SseEmitter sseEmitter = new SseEmitter(0L); // Infinite timeout
         HttpRequestVo requestVo = HttpRequestUtils.parseRequestVo(request);
-        MockJsUtils.setCurrentRequestVo(requestVo); // Set for async thread if using standard context, but Sse is async
-        // For SSE, we use a separate thread or CompletableFuture
-        CompletableFuture.runAsync(() -> {
-            try {
-                MockJsUtils.setCurrentRequestVo(requestVo); // Need to set in the new thread
+        CountDownLatch disconnected = new CountDownLatch(1);
+        onDisconnect(sseEmitter, disconnected::countDown);
+        executorService.execute(() -> {
+            if (disconnected.getCount() == 0) {
+                return;
+            }
+            try (AutoCloseable scope = postProcessor.openSseScriptScope(mockRequest, data)) {
+                MockJsUtils.setCurrentRequestVo(requestVo);
                 Pair<String, Object> mockResponse = SimpleMockUtils.getMockResponseBody(data,
                         MediaType.TEXT_EVENT_STREAM_VALUE);
                 Object body = mockResponse.getValue();
@@ -49,26 +54,32 @@ public class MockEventStreamUtils {
                 if (body instanceof Map && (streamField = ((Map<?, ?>) body).get("stream")) instanceof Collection) {
                     body = streamField;
                 }
-                if (body instanceof Collection) {
-                    for (Object item : (Collection<?>) body) {
-                        item = postProcessor.processSse(mockRequest, data, item);
-                        sendSseItem(sseEmitter, item);
+                boolean structured = body instanceof Collection || body instanceof Map;
+                Collection<?> items = body instanceof Collection ? (Collection<?>) body : Collections.singletonList(body);
+                for (Object item : items) {
+                    if (disconnected.getCount() == 0) {
+                        return;
                     }
-                } else if (body instanceof Map) {
-                    body = postProcessor.processSse(mockRequest, data, body);
-                    sendSseItem(sseEmitter, body);
-                } else {
-                    body = postProcessor.processSse(mockRequest, data, body);
-                    sseEmitter.send(body);
+                    Object processed = postProcessor.processSse(mockRequest, data, item);
+                    if (structured) {
+                        sendSseItem(sseEmitter, processed, disconnected);
+                    } else {
+                        sseEmitter.send(processed);
+                    }
                 }
-                sseEmitter.complete();
+                if (disconnected.getCount() != 0) {
+                    sseEmitter.complete();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                sseEmitter.completeWithError(e);
             } catch (Exception e) {
                 log.error("SSE Error", e);
                 sseEmitter.completeWithError(e);
             } finally {
                 MockJsUtils.removeCurrentRequestVo();
             }
-        }, executorService);
+        });
         // Headers for SSE
         response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -76,7 +87,14 @@ public class MockEventStreamUtils {
         return sseEmitter;
     }
 
-    private static void sendSseItem(SseEmitter sseEmitter, Object item) throws IOException {
+    public static void onDisconnect(SseEmitter emitter, Runnable cancel) {
+        emitter.onCompletion(cancel);
+        emitter.onTimeout(cancel);
+        emitter.onError(error -> cancel.run());
+    }
+
+    private static void sendSseItem(SseEmitter sseEmitter, Object item, CountDownLatch disconnected)
+            throws IOException, InterruptedException {
         long delay = 0;
         Object data = item;
         if (item instanceof Map) {
@@ -93,14 +111,7 @@ public class MockEventStreamUtils {
                 data = map.get("data");
             }
         }
-        if (delay > 0) {
-            try {
-                Thread.sleep(delay);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        if (data != null) {
+        if (!disconnected.await(delay, TimeUnit.MILLISECONDS) && data != null) {
             sseEmitter.send(data);
         }
     }

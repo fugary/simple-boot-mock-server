@@ -83,6 +83,10 @@ response.statusCode 是状态码；response.headers 是响应头；response.body
   return await response.json();
 }())
 ```
+引擎池耗尽时，Mock 请求默认最多等待 5 秒，借用失败返回 HTTP 503。fetch 线程池的等待队列容量与其最大线程数相同，满载时新的 fetch 会被拒绝，排队中的 fetch 取消或超时后会释放名额。
+
+脚本可以返回大型 JSON 对象或数组，普通 JSON 的字段数和元素数没有固定上限。直接返回对象或使用内置 mockStringify 转换普通对象时，循环引用、超过 64 层的容器嵌套或过度展开的共享引用会报错。调换对象的字段顺序不会改变共享引用检查结果。
+
 每次脚本执行默认限时 30 秒，包括同步代码和 await 后的回调。需要外部请求结果时请 await fetch，或返回相应 Promise。脚本结束后，未完成的 fetch 回调会被丢弃。若请求 body 是 Promise，最多等待 10 秒；解析失败或超时会拒绝该 fetch，请求不会发往上游。
 
 require(url, options) 是异步 CommonJS 风格模块加载，返回 Promise，使用 await require(...)。支持 module.exports 和 exports，不支持 ESM export/import。默认按 URL 缓存源码，写入后 5 分钟过期（可配置），过期或淘汰后各引擎在下次 require 时重新加载模块。使用 await require(url, { cache: false }) 跳过两层缓存，本次结果不更新已有缓存。调用 clearRequireCache() 清空当前服务实例的共享源码缓存和当前引擎模块缓存，其他引擎下次 require 时同步失效。配置项为 simple.mock.cache.specs.require-source，环境变量 MOCK_REQUIRE_SOURCE_CACHE_SPEC，默认 maximumSize=1000,expireAfterWrite=5m，修改后重启生效。不同服务实例独立缓存。不要把完整 Node.js 运行环境或 npm 包自动安装能力视为本项目能力。
@@ -116,7 +120,7 @@ Swagger/OpenAPI 导入可选择合并为单个组，关闭后按 tags 分组。�
 {"stream":[{"data":"hello","delay":200},{"data":"world","delay":200}]}
 ```
 
-配置相应流式内容类型后，用支持 SSE 的客户端验证。示例在发送完数组后结束，不代表无限订阅；SSE 后置处理逐项执行。
+配置相应流式内容类型后，用支持 SSE 的客户端验证。示例在发送完数组后结束。SSE 后置处理逐项执行，同一条流可通过 JS 全局变量在事件间保存状态，每条新流从独立的引擎开始。服务端收到客户端断开通知后，会结束事件延时或取消上游请求，由流的工作线程释放引擎。
 脚本可用 fetch 获取文件并返回 await response.blob()。测试图片、音频、视频或其他流响应时，按类型设置 Accept 为 image/*、audio/*、video/* 或 application/*，并按页面提示下载或预览文本。
 
 ## 用户与管理工具

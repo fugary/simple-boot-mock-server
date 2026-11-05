@@ -1,5 +1,7 @@
 package com.fugary.simple.mock.push;
 
+import com.fugary.simple.mock.config.script.ScriptEngineConfig;
+import com.fugary.simple.mock.config.SimpleMockConfigProperties;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.script.JavaScriptEngineFactory;
 import com.fugary.simple.mock.utils.MockDiagnoseContext;
@@ -8,6 +10,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.concurrent.ThreadPoolExecutorFactoryBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.http.ResponseEntity;
 
 import javax.script.ScriptContext;
@@ -402,6 +406,35 @@ class DefaultScriptWithFetchProviderImplTest {
                     scriptEngine, scriptEngine.getContext());
             assertEquals(200, status);
             assertEquals("valid", posted.get());
+        }
+    }
+
+    @Test
+    void cancelledAndTimedOutFetchesShouldFreeTheOnlyQueueSlot() throws Exception {
+        SimpleMockConfigProperties properties = new SimpleMockConfigProperties();
+        properties.getPool().setFetchScriptMaxSize(1);
+        ScriptEngineConfig config = new ScriptEngineConfig();
+        ReflectionTestUtils.setField(config, "simpleMockConfigProperties", properties);
+        ThreadPoolExecutorFactoryBean bean = config.fetchScriptThreadPool();
+        bean.afterPropertiesSet();
+        CountDownLatch release = new CountDownLatch(1);
+        try {
+            ExecutorService executor = bean.getObject();
+            executor.submit(() -> { release.await(); return null; });
+            fetchProvider.setFetchScriptThreadPool(executor);
+            fetchProvider.setMockPushProcessor(params -> { throw new AssertionError("Unexpected upstream request"); });
+            fetchProvider.internalEval("fetch('/abandoned'); 'done'", scriptEngine, scriptEngine.getContext());
+            Object timeout = fetchProvider.internalEval("fetch('/queued', {timeout: 50}).catch(String)",
+                    scriptEngine, scriptEngine.getContext());
+            assertTrue(timeout.toString().contains("Fetch request timeout"), timeout.toString());
+            // 工作线程仍然阻塞；再次入队成功证明超时任务也已移除。
+            executor.submit(() -> {});
+            Object error = fetchProvider.internalEval("fetch('/full').then(() => 'sent', e => String(e))",
+                    scriptEngine, scriptEngine.getContext());
+            assertTrue(error.toString().contains("Fetch queue is full"), error.toString());
+        } finally {
+            release.countDown();
+            bean.destroy();
         }
     }
 

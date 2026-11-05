@@ -23,6 +23,7 @@ import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -176,6 +177,10 @@ public class MockJsUtils {
     }
 
     private static String getScriptErrorMessage(Throwable throwable) {
+        TimeoutException timeoutException = findCause(throwable, TimeoutException.class);
+        if (timeoutException != null && StringUtils.isNotBlank(timeoutException.getMessage())) {
+            return stripScriptLineMarker(timeoutException.getMessage());
+        }
         PolyglotException polyglotException = findCause(throwable, PolyglotException.class);
         if (polyglotException != null && StringUtils.isNotBlank(polyglotException.getMessage())) {
             return stripScriptLineMarker(polyglotException.getMessage());

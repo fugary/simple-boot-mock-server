@@ -2,6 +2,8 @@ package com.fugary.simple.mock.push;
 
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.script.JavaScriptEngineFactory;
+import com.fugary.simple.mock.script.JavaScriptEngineProviderImpl;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.impl.mock.MockDiagnoseRecorder;
 import com.fugary.simple.mock.utils.JsonUtils;
@@ -9,6 +11,8 @@ import com.fugary.simple.mock.utils.MockDiagnoseContext;
 import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.web.vo.http.HttpResponseVo;
 import com.fugary.simple.mock.web.vo.result.MockDiagnoseVo;
+import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
+import org.graalvm.polyglot.Context;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -26,9 +30,37 @@ import static com.fugary.simple.mock.contants.MockDiagnoseConstants.GROUP_POST_P
 import static com.fugary.simple.mock.contants.MockDiagnoseConstants.RESULT_TYPE_MOCK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultMockPostScriptProcessorImplTest {
+
+    @Test
+    void sseEventsShouldShareStateOnlyWithinTheirStream() throws Exception {
+        DefaultScriptWithFetchProviderImpl fetch = new DefaultScriptWithFetchProviderImpl();
+        JavaScriptEngineFactory factory = new JavaScriptEngineFactory();
+        factory.setScriptWithFetchProvider(fetch);
+        JavaScriptEngineProviderImpl provider = new JavaScriptEngineProviderImpl();
+        provider.setScriptWithFetchProvider(fetch);
+        provider.setFetchEnabled(true);
+        DefaultMockPostScriptProcessorImpl processor = new DefaultMockPostScriptProcessorImpl();
+        ReflectionTestUtils.setField(processor, "scriptEngineFactory", factory);
+        ReflectionTestUtils.setField(processor, "scriptEngineProvider", provider);
+        MockRequest request = new MockRequest();
+        request.setPostProcessor("(globalThis.count = (globalThis.count || 0) + 1) + response.body");
+
+        // 两条流先后使用同一个工作线程。
+        for (int stream = 0; stream < 2; stream++) {
+            Context context;
+            try (AutoCloseable scope = processor.openSseScriptScope(request, null)) {
+                context = ((GraalJSScriptEngine) MockJsUtils.getCurrentScriptEngine()).getPolyglotContext();
+                assertEquals("1a", processor.processSse(request, null, "a"));
+                assertEquals("2b", processor.processSse(request, null, "b"));
+            }
+            assertNull(MockJsUtils.getCurrentScriptEngine());
+            assertThrows(IllegalStateException.class, () -> context.eval("js", "1"));
+        }
+    }
 
     @AfterEach
     void tearDown() {

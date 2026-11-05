@@ -5,6 +5,7 @@ import com.fugary.simple.mock.security.UserSecurityInterceptor;
 import com.fugary.simple.mock.utils.http.SimpleHttpClientUtils;
 import com.fugary.simple.mock.web.filters.MockMetaDataFilter;
 import com.fugary.simple.mock.web.filters.locale.CustomHeaderLocaleContextResolver;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -97,10 +98,15 @@ public class ApplicationConfig implements WebMvcConfigurer {
         return registration;
     }
 
+    // 连接管理器由 SimpleHttpClientUtils 全局共享，单个 Spring 上下文不拥有它。
+    @Bean(destroyMethod = "")
+    public CloseableHttpClient mockHttpClient() {
+        return SimpleHttpClientUtils.getHttpsClient(false);
+    }
+
     @Bean
-    public RestTemplate restTemplate() {
-        ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(
-                SimpleHttpClientUtils.getHttpsClient(false));
+    public RestTemplate restTemplate(CloseableHttpClient mockHttpClient) {
+        ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(mockHttpClient);
         RestTemplate restTemplate = new RestTemplate(clientHttpRequestFactory);
         restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         return restTemplate;

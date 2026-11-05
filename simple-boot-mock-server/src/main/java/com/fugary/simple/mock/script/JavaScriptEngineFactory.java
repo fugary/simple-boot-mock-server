@@ -85,7 +85,7 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
     }
 
     @Override
-    public ScriptEngine create() throws Exception {
+    public GraalJSScriptEngine create() throws Exception {
 //        System.setProperty("nashorn.args", "--language=es6");
 //        System.setProperty("polyglot.js.nashorn-compat", "true");
 //        System.setProperty("polyglot.js.ecmascript-version", "2022");
@@ -124,5 +124,13 @@ public class JavaScriptEngineFactory extends BasePooledObjectFactory<ScriptEngin
     @Override
     public PooledObject<ScriptEngine> wrap(ScriptEngine scriptEngine) {
         return new DefaultPooledObject<>(scriptEngine);
+    }
+
+    @Override
+    public void destroyObject(PooledObject<ScriptEngine> p) throws Exception {
+        ScriptEngine scriptEngine = p == null ? null : p.getObject();
+        if (scriptEngine instanceof AutoCloseable) {
+            ((AutoCloseable) scriptEngine).close();
+        }
     }
 }

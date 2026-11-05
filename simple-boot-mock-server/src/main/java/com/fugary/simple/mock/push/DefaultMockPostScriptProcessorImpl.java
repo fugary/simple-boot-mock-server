@@ -3,6 +3,7 @@ package com.fugary.simple.mock.push;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fugary.simple.mock.entity.mock.MockData;
 import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.script.JavaScriptEngineFactory;
 import com.fugary.simple.mock.script.ScriptEngineProvider;
 import com.fugary.simple.mock.service.impl.mock.MockDiagnoseRecorder;
 import com.fugary.simple.mock.utils.MockDiagnoseContext;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import javax.script.ScriptEngine;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,28 @@ public class DefaultMockPostScriptProcessorImpl implements MockPostScriptProcess
 
     @Autowired
     private ScriptEngineProvider scriptEngineProvider;
+
+    @Autowired
+    private JavaScriptEngineFactory scriptEngineFactory;
+
+    @Override
+    public AutoCloseable openSseScriptScope(MockRequest mockRequest, MockData mockData) throws Exception {
+        if (StringUtils.isBlank(SimpleMockUtils.getPostProcessor(mockRequest, mockData))) {
+            return () -> {};
+        }
+        // 长连接独占自己的引擎，避免占用普通 Mock 请求的池名额。
+        ScriptEngine previous = MockJsUtils.getCurrentScriptEngine();
+        var engine = scriptEngineFactory.create();
+        MockJsUtils.setCurrentScriptEngine(engine);
+        return () -> {
+            if (previous == null) {
+                MockJsUtils.removeCurrentScriptEngine();
+            } else {
+                MockJsUtils.setCurrentScriptEngine(previous);
+            }
+            engine.close();
+        };
+    }
 
     @Override
     public String process(MockRequest mockRequest, MockData mockData, String responseBody) {

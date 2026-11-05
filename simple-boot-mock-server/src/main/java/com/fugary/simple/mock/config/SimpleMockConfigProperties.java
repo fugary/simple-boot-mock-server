@@ -20,6 +20,8 @@ public class SimpleMockConfigProperties {
 
     public static final int DEFAULT_SCRIPT_ENGINE_MAX_SIZE = 10;
 
+    public static final long DEFAULT_SCRIPT_ENGINE_MAX_WAIT_MILLIS = 5000L;
+
     public static final int DEFAULT_THREAD_POOL_MAX_SIZE = 20;
 
     private String jwtPassword = "";
@@ -66,6 +68,8 @@ public class SimpleMockConfigProperties {
     public static class PoolProperties {
 
         private int scriptEngineMaxSize = DEFAULT_SCRIPT_ENGINE_MAX_SIZE;
+
+        private long scriptEngineMaxWaitMillis = DEFAULT_SCRIPT_ENGINE_MAX_WAIT_MILLIS;
 
         private int eventStreamMaxSize = DEFAULT_THREAD_POOL_MAX_SIZE;
 

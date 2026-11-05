@@ -1,5 +1,6 @@
 package com.fugary.simple.mock.push;
 
+import com.fugary.simple.mock.utils.SimpleMockUtils;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 
@@ -28,6 +29,17 @@ public interface ScriptWithFetchProvider {
     default Object eval(String script, ScriptEngine engine, ScriptContext context, boolean fetchEnabled)
             throws ScriptException {
         return fetchEnabled ? internalEval(script, engine, context) : engine.eval(script, context);
+    }
+
+    @FunctionalInterface
+    interface ContextSetup {
+        void prepare(ScriptEngine engine, ScriptContext context) throws ScriptException;
+    }
+
+    default Object eval(String script, ScriptEngine engine, ScriptContext context, boolean fetchEnabled, ContextSetup setup)
+            throws ScriptException {
+        setup.prepare(engine, context);
+        return SimpleMockUtils.detachScriptValue(eval(script, engine, context, fetchEnabled));
     }
 
     /**

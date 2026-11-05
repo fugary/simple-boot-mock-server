@@ -29,6 +29,11 @@ public interface MockPostScriptProcessor {
      */
     ResponseEntity<?> process(MockRequest mockRequest, ResponseEntity<?> responseEntity);
 
+    /** 在发送事件的线程打开，流结束时在同一线程关闭。 */
+    default AutoCloseable openSseScriptScope(MockRequest mockRequest, MockData mockData) throws Exception {
+        return () -> {};
+    }
+
     /**
      * 后置处理脚本（SSE）
      *

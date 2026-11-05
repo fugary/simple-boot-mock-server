@@ -1,23 +1,29 @@
 package com.fugary.simple.mock.push;
 
+import com.fugary.simple.mock.entity.mock.MockData;
+import com.fugary.simple.mock.entity.mock.MockRequest;
+import com.fugary.simple.mock.utils.MockEventStreamUtils;
 import com.fugary.simple.mock.utils.MockJsUtils;
 import com.fugary.simple.mock.web.vo.http.HttpRequestVo;
 import com.fugary.simple.mock.web.vo.query.MockParamsVo;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-import com.fugary.simple.mock.entity.mock.MockData;
-import com.fugary.simple.mock.entity.mock.MockRequest;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.net.URI;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -25,11 +31,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * SSE 代理处理器默认实现
- * 使用 RestTemplate 进行流式读取并转发 SSE 事件
+ * 逐行读取并转发上游 SSE 事件
  *
  * Create date 2026/01/03<br>
  *
@@ -40,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DefaultMockSsePushProcessorImpl implements MockSsePushProcessor {
 
     @Autowired
-    private RestTemplate restTemplate;
+    private CloseableHttpClient mockHttpClient;
 
     @Autowired
     private DefaultMockPushProcessorImpl defaultPushProcessor;
@@ -56,194 +61,130 @@ public class DefaultMockSsePushProcessorImpl implements MockSsePushProcessor {
     public SseEmitter processSseProxy(MockParamsVo mockParams, MockRequest mockRequest, MockData mockData) {
         SseEmitter sseEmitter = new SseEmitter(0L); // 无限超时
         String requestUrl = defaultPushProcessor.getRequestUrl(mockParams.getTargetUrl(), mockParams);
-        AtomicBoolean cancelled = new AtomicBoolean(false);
+        CompletableFuture<Void> disconnected = new CompletableFuture<>();
+        MockEventStreamUtils.onDisconnect(sseEmitter, () -> disconnected.complete(null));
+        HttpRequestVo requestVo = MockJsUtils.getHttpRequestVo();
 
-        log.info("开始处理 SSE 代理请求: {}", requestUrl);
-
-        // Capture request context from the main thread
-        final HttpRequestVo requestVo = MockJsUtils.getHttpRequestVo();
-
-        // 设置生命周期回调
-        Runnable cleanupTask = () -> {
-            cancelled.set(true);
-            log.info("SSE 连接已关闭，清理资源: {}", requestUrl);
-        };
-
-        sseEmitter.onCompletion(cleanupTask);
-        sseEmitter.onTimeout(cleanupTask);
-        sseEmitter.onError(throwable -> {
-            log.warn("SSE 连接发生错误: {}, 错误: {}", requestUrl, throwable.getMessage());
-            cleanupTask.run();
-        });
-
-        CompletableFuture.runAsync(() -> {
-            // Set request context in the new thread
+        eventStreamThreadPool.execute(() -> {
+            if (disconnected.isDone()) {
+                return;
+            }
             MockJsUtils.setCurrentRequestVo(requestVo);
-            try {
-                // 准备请求头
-                HttpHeaders headers = defaultPushProcessor.getHeaders(mockParams);
-                headers.setAccept(Collections.singletonList(MediaType.TEXT_EVENT_STREAM));
-
-                // 使用 RestTemplate.execute 进行流式处理
-                restTemplate.execute(
-                        URI.create(requestUrl),
-                        Optional.ofNullable(HttpMethod.resolve(mockParams.getMethod())).orElse(HttpMethod.GET),
-                        clientHttpRequest -> {
-                            // 设置请求头
-                            headers.forEach((key, values) -> values
-                                    .forEach(value -> clientHttpRequest.getHeaders().add(key, value)));
-                            // 如果有请求体，写入请求体
-                            if (mockParams.getRequestBody() != null
-                                    && !HttpMethod.GET.matches(mockParams.getMethod())
-                                    && !HttpMethod.HEAD.matches(mockParams.getMethod())) {
-                                byte[] bodyBytes = mockParams.getRequestBody() instanceof String
-                                        ? ((String) mockParams.getRequestBody()).getBytes(StandardCharsets.UTF_8)
-                                        : mockParams.getRequestBody().toString().getBytes(StandardCharsets.UTF_8);
-                                clientHttpRequest.getBody().write(bodyBytes);
-                            }
-                        },
-                        clientHttpResponse -> {
-                            // 逐行读取 SSE 响应并转发
-                            log.info("开始读取 SSE 响应流，状态码: {}", clientHttpResponse.getStatusCode());
-
-                            try (BufferedReader reader = new BufferedReader(
-                                    new InputStreamReader(clientHttpResponse.getBody(), StandardCharsets.UTF_8))) {
-                                String line;
-                                Map<String, Object> eventMap = new LinkedHashMap<>();
-                                boolean hasData = false;
-                                StringBuilder dataBuffer = new StringBuilder();
-
-                                while (!cancelled.get() && (line = reader.readLine()) != null) {
-                                    if (line.isEmpty()) {
-                                        // 遇到空行，发送之前累积的事件
-                                        if (hasData) {
-                                            if (dataBuffer.length() > 0) {
-                                                eventMap.put("data", dataBuffer.toString());
-                                                dataBuffer.setLength(0);
-                                            }
-                                            try {
-                                                log.debug("发送 SSE 事件对象");
-                                                Object processed = mockPostScriptProcessor.processSse(mockRequest,
-                                                        mockData, eventMap);
-                                                if (processed != null) {
-                                                    if (processed instanceof Map) {
-                                                        Map<?, ?> map = (Map<?, ?>) processed;
-                                                        SseEmitter.SseEventBuilder builder = SseEmitter.event();
-                                                        if (map.containsKey("id")) {
-                                                            builder.id(String.valueOf(map.get("id")));
-                                                        }
-                                                        if (map.containsKey("event")) {
-                                                            builder.name(String.valueOf(map.get("event")));
-                                                        }
-                                                        if (map.containsKey("retry")) {
-                                                            try {
-                                                                builder.reconnectTime(Long
-                                                                        .parseLong(String.valueOf(map.get("retry"))));
-                                                            } catch (Exception ignored) {
-                                                            }
-                                                        }
-                                                        if (map.containsKey("data")) {
-                                                            builder.data(map.get("data"));
-                                                        }
-                                                        sseEmitter.send(builder);
-                                                    } else {
-                                                        sseEmitter.send(processed);
-                                                    }
-                                                }
-                                            } catch (Exception e) {
-                                                log.warn("发送 SSE 事件失败，客户端可能已断开: {}", e.getMessage());
-                                                cancelled.set(true);
-                                                break;
-                                            }
-                                        }
-                                        eventMap.clear();
-                                        hasData = false;
-                                    } else {
-                                        if (line.startsWith("data:")) {
-                                            String dataContent = line.substring(5);
-                                            if (dataContent.startsWith(" ")) {
-                                                dataContent = dataContent.substring(1);
-                                            }
-                                            if (dataBuffer.length() > 0) {
-                                                dataBuffer.append("\n");
-                                            }
-                                            dataBuffer.append(dataContent);
-                                            hasData = true;
-                                        } else if (line.startsWith("event:")) {
-                                            eventMap.put("event", line.substring(6).trim());
-                                        } else if (line.startsWith("id:")) {
-                                            eventMap.put("id", line.substring(3).trim());
-                                        } else if (line.startsWith("retry:")) {
-                                            try {
-                                                eventMap.put("retry", Long.parseLong(line.substring(6).trim()));
-                                            } catch (Exception ignored) {
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if (!cancelled.get()) {
-                                    // 发送最后一个事件（如果有）
-                                    if (hasData) {
-                                        if (dataBuffer.length() > 0) {
-                                            eventMap.put("data", dataBuffer.toString());
-                                        }
-                                        try {
-                                            Object processed = mockPostScriptProcessor.processSse(mockRequest, mockData,
-                                                    eventMap);
-                                            if (processed != null) {
-                                                if (processed instanceof Map) {
-                                                    Map<?, ?> map = (Map<?, ?>) processed;
-                                                    SseEmitter.SseEventBuilder builder = SseEmitter.event();
-                                                    if (map.containsKey("id")) {
-                                                        builder.id(String.valueOf(map.get("id")));
-                                                    }
-                                                    if (map.containsKey("event")) {
-                                                        builder.name(String.valueOf(map.get("event")));
-                                                    }
-                                                    if (map.containsKey("retry")) {
-                                                        builder.reconnectTime(
-                                                                Long.parseLong(String.valueOf(map.get("retry"))));
-                                                    }
-                                                    if (map.containsKey("data")) {
-                                                        builder.data(map.get("data"));
-                                                    }
-                                                    sseEmitter.send(builder);
-                                                } else {
-                                                    sseEmitter.send(processed);
-                                                }
-                                            }
-                                        } catch (Exception e) {
-                                            log.warn("发送最后的 SSE 事件失败: {}", e.getMessage());
-                                        }
-                                    }
-                                    sseEmitter.complete();
-                                    log.info("SSE 代理请求完成");
-                                } else {
-                                    log.info("SSE 代理请求被取消");
-                                }
-                            }
-                            return null;
-                        });
+            try (AutoCloseable scope = mockPostScriptProcessor.openSseScriptScope(mockRequest, mockData)) {
+                HttpUriRequest upstream = createRequest(requestUrl, mockParams);
+                // 即使客户端在请求创建前断开，注册时也会立即 abort，唤醒连接池等待或 socket 读取。
+                disconnected.thenRun(upstream::abort);
+                try (CloseableHttpResponse response = mockHttpClient.execute(upstream)) {
+                    int status = response.getStatusLine().getStatusCode();
+                    if (status >= 400) {
+                        throw new HttpResponseException(status, response.getStatusLine().getReasonPhrase());
+                    }
+                    if (response.getEntity() != null) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                                response.getEntity().getContent(), StandardCharsets.UTF_8));
+                        forwardEvents(reader, sseEmitter, mockRequest, mockData, disconnected);
+                    }
+                }
+                if (!disconnected.isDone()) {
+                    sseEmitter.complete();
+                }
             } catch (Exception e) {
-                if (!cancelled.get()) {
+                if (!disconnected.isDone()) {
                     log.error("SSE 代理请求错误: {}", requestUrl, e);
                     try {
-                        // 尝试发送错误信息给客户端
-                        sseEmitter.send(SseEmitter.event()
-                                .name("error")
-                                .data("SSE Proxy Error: " + e.getMessage()));
+                        sseEmitter.send(SseEmitter.event().name("error").data("SSE Proxy Error: " + e.getMessage()));
                     } catch (Exception sendError) {
-                        log.error("发送错误事件失败", sendError);
+                        log.debug("SSE 连接已关闭", sendError);
                     }
                     sseEmitter.completeWithError(e);
                 }
             } finally {
-                // Clean up request context
                 MockJsUtils.removeCurrentRequestVo();
             }
-        }, eventStreamThreadPool);
-
+        });
         return sseEmitter;
+    }
+
+    private HttpUriRequest createRequest(String url, MockParamsVo params) {
+        HttpMethod method = Optional.ofNullable(HttpMethod.resolve(params.getMethod())).orElse(HttpMethod.GET);
+        RequestBuilder builder = RequestBuilder.create(method.name()).setUri(url);
+        HttpHeaders headers = defaultPushProcessor.getHeaders(params);
+        headers.setAccept(Collections.singletonList(MediaType.TEXT_EVENT_STREAM));
+        // 由 HttpClient 根据实际发送的实体生成传输长度。
+        headers.remove(HttpHeaders.CONTENT_LENGTH);
+        headers.remove(HttpHeaders.TRANSFER_ENCODING);
+        headers.forEach((key, values) -> values.forEach(value -> builder.addHeader(key, value)));
+        if (params.getRequestBody() != null && method != HttpMethod.GET && method != HttpMethod.HEAD) {
+            builder.setEntity(new ByteArrayEntity(params.getRequestBody().getBytes(StandardCharsets.UTF_8)));
+        }
+        return builder.build();
+    }
+
+    private void forwardEvents(BufferedReader reader, SseEmitter emitter, MockRequest request, MockData data,
+                               CompletableFuture<Void> disconnected) throws IOException {
+        Map<String, Object> event = new LinkedHashMap<>();
+        StringBuilder body = new StringBuilder();
+        boolean hasData = false;
+        String line;
+        while (!disconnected.isDone() && (line = reader.readLine()) != null) {
+            if (line.isEmpty()) {
+                if (hasData) {
+                    sendEvent(emitter, request, data, event, body);
+                }
+                event.clear();
+                body.setLength(0);
+                hasData = false;
+            } else if (line.startsWith("data:")) {
+                if (body.length() > 0) {
+                    body.append('\n');
+                }
+                body.append(line, line.startsWith("data: ") ? 6 : 5, line.length());
+                hasData = true;
+            } else if (line.startsWith("event:")) {
+                event.put("event", line.substring(6).trim());
+            } else if (line.startsWith("id:")) {
+                event.put("id", line.substring(3).trim());
+            } else if (line.startsWith("retry:")) {
+                try {
+                    event.put("retry", Long.parseLong(line.substring(6).trim()));
+                } catch (NumberFormatException ignored) {
+                    // 忽略无效的 retry 值。
+                }
+            }
+        }
+        if (hasData && !disconnected.isDone()) {
+            sendEvent(emitter, request, data, event, body);
+        }
+    }
+
+    private void sendEvent(SseEmitter emitter, MockRequest request, MockData data,
+                           Map<String, Object> event, StringBuilder body) throws IOException {
+        if (body.length() > 0) {
+            event.put("data", body.toString());
+        }
+        Object processed = mockPostScriptProcessor.processSse(request, data, event);
+        if (processed instanceof Map) {
+            Map<?, ?> fields = (Map<?, ?>) processed;
+            SseEmitter.SseEventBuilder builder = SseEmitter.event();
+            if (fields.containsKey("id")) {
+                builder.id(String.valueOf(fields.get("id")));
+            }
+            if (fields.containsKey("event")) {
+                builder.name(String.valueOf(fields.get("event")));
+            }
+            if (fields.containsKey("retry")) {
+                try {
+                    builder.reconnectTime(Long.parseLong(String.valueOf(fields.get("retry"))));
+                } catch (NumberFormatException ignored) {
+                    // 后置脚本也可能返回无效的 retry。
+                }
+            }
+            if (fields.containsKey("data")) {
+                builder.data(fields.get("data"));
+            }
+            emitter.send(builder);
+        } else if (processed != null) {
+            emitter.send(processed);
+        }
     }
 }
