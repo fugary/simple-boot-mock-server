@@ -130,8 +130,9 @@ export const processPasteCode = data => {
 }
 /**
  * @param config {IStandaloneEditorConstructionOptions} 配置信息
+ * @param {Function} [preferredLanguage] 当前记录指定的语言
  */
-export const useMonacoEditorOptions = (config) => {
+export const useMonacoEditorOptions = (config, preferredLanguage) => {
   const contentRef = ref('')
   const languageRef = ref(config?.language || '')
   const editorRef = ref()
@@ -169,7 +170,7 @@ export const useMonacoEditorOptions = (config) => {
     }
   }
   const checkEditorLang = (lang) => {
-    languageRef.value = lang || (monacoEditorOptions.autoCheckLang && $checkLang(contentRef.value, {
+    languageRef.value = lang || preferredLanguage?.() || (monacoEditorOptions.autoCheckLang && $checkLang(contentRef.value, {
       excludeTypes: monacoEditorOptions.excludeCheckLangs
     })) || monacoEditorOptions.language
     if (contentRef.value && editorRef.value) {

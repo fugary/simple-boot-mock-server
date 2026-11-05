@@ -1,5 +1,5 @@
 <script setup>
-import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
+import { useMockResponseEditor } from '@/services/mock/MockEditService'
 import { computed, ref, toRaw } from 'vue'
 import { cloneDeep, isString } from 'lodash-es'
 import MockUrlCopyLink from '@/views/components/mock/MockUrlCopyLink.vue'
@@ -17,15 +17,13 @@ import {
   showSchemaCodeWindow
 } from '@/services/mock/MockCommonService'
 import { loadSchemas } from '@/api/mock/MockRequestApi'
-import { calcContentType } from '@/consts/MockConstants'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
 
-const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, languageSelectOption, formatDocument, checkEditorLang } = useMonacoEditorOptions({ readOnly: false })
 const showWindow = ref(false)
 const currentMockData = ref()
 const schemas = ref([])
 const componentsSpec = ref()
-const isRedirect = ref(false)
+const { contentRef, languageRef, editorRef, monacoEditorOptions, languageModel, responseFormatOption, formatDocument, checkEditorLang, isRedirect } = useMockResponseEditor(currentMockData)
 
 defineProps({
   editable: {
@@ -40,7 +38,6 @@ const originalMockDataStr = ref('')
 const toEditDataResponse = (mockData) => {
   isTransformed.value = false
   currentMockData.value = cloneDeep(mockData)
-  contentRef.value = mockData.responseBody
   showWindow.value = true
   loadSchemas({
     requestId: mockData.requestId,
@@ -49,18 +46,13 @@ const toEditDataResponse = (mockData) => {
     schemas.value = schemasData.schemas
     componentsSpec.value = schemasData.componentSpec
   })
-  const status = currentMockData.value?.statusCode || 200
-  isRedirect.value = status >= 300 && status < 400 // redirect
-  languageRef.value = mockData.responseFormat || (isRedirect.value ? 'text' : undefined)
-  if (!languageRef.value) {
-    checkEditorLang()
-  }
 }
 
 const emit = defineEmits(['saveDataResponse'])
 
 const saveDataResponse = () => {
   currentMockData.value.responseBody = contentRef.value
+  currentMockData.value.responseFormat = languageRef.value
   showWindow.value = false
   emit('saveDataResponse', currentMockData.value)
 }
@@ -87,15 +79,6 @@ const selectExample = (example) => {
 }
 
 const contentTypeOption = useContentTypeOption()
-const langOption = {
-  ...languageSelectOption.value,
-  change (val) {
-    if (currentMockData.value) {
-      currentMockData.value.responseFormat = val
-      currentMockData.value.contentType = calcContentType(val, currentMockData.value?.responseBody, currentMockData.value.contentType)
-    }
-  }
-}
 const supportedGenerates = computed(() => generateSampleCheckResults(schemaBody.value, componentsSpec.value, schema.value?.responseMediaType))
 const isJsonOrXmlContent = computed(() => isJson(contentRef.value) || isXml(contentRef.value))
 
@@ -186,7 +169,7 @@ const transformToMock = () => {
       </el-row>
       <common-form-control
         :model="languageModel"
-        :option="langOption"
+        :option="responseFormatOption"
       >
         <template #childAfter>
           <mock-url-copy-link

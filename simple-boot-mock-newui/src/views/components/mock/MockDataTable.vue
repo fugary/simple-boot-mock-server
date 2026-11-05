@@ -16,7 +16,6 @@ import CommonFormControl from '@/components/common-form-control/index.vue'
 import DelFlagTag from '@/views/components/utils/DelFlagTag.vue'
 import SimpleEditWindow from '@/views/components/utils/SimpleEditWindow.vue'
 import { useFormDelay, useFormStatus, useSearchStatus } from '@/consts/GlobalConstants'
-import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
 import {
   showMockTips,
   showHistoryListWindow,
@@ -29,13 +28,13 @@ import CommonParamsEdit from '@/views/components/utils/CommonParamsEdit.vue'
 import MockDataResponseEdit from '@/views/components/mock/MockDataResponseEdit.vue'
 import ViewDataLink from '@/views/components/utils/ViewDataLink.vue'
 import MockRequestPreview from '@/views/components/mock/MockRequestPreview.vue'
-import { calcContentType, DEFAULT_HEADERS } from '@/consts/MockConstants'
+import { DEFAULT_HEADERS } from '@/consts/MockConstants'
 import { useContentTypeOption } from '@/services/mock/MockCommonService'
 import { useDefaultPage } from '@/config'
 import { getDataHistoryViewOptions, showCompareWindowNew } from '@/services/mock/NewMockDiffService'
 import { getStatusCode } from '@/services/mock/MockDiffService'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
-import { useMockMonacoFieldOption } from '@/services/mock/MockEditService'
+import { useMockMonacoFieldOption, useMockResponseEditor } from '@/services/mock/MockEditService'
 
 const props = defineProps({
   groupItem: {
@@ -274,8 +273,6 @@ const newOrEdit = async id => {
     await MockDataApi.getById(id).then(data => {
       data.resultData && (currentDataItem.value = data.resultData)
       originalResponseBody = currentDataItem.value?.responseBody
-      contentRef.value = currentDataItem.value?.responseBody
-      languageRef.value = currentDataItem.value?.responseFormat || languageRef.value
       currentDataItem.value.headerParams = JSON.parse(currentDataItem.value.headers || '[]')
     })
   } else {
@@ -289,11 +286,10 @@ const newOrEdit = async id => {
     return value && (Array.isArray(value) ? value.length > 0 : true)
   })
 }
-const { contentRef, languageRef, monacoEditorOptions, languageSelectOption } = useMonacoEditorOptions({ readOnly: false })
+const { contentRef, languageRef, monacoEditorOptions, responseFormatOption, isRedirect: isRedirectResponse } = useMockResponseEditor(currentDataItem)
 
 const editFormOptions = computed(() => {
-  const status = currentDataItem.value?.statusCode || 200
-  const isRedirect = status >= 300 && status < 400 // redirect
+  const isRedirect = isRedirectResponse.value
   const statusOptions = ALL_STATUS_CODES.map(status => {
     const label = $i18nMsg(`${status.labelCn} - ${(status.labelEn)}`, `${status.labelEn} - ${(status.labelCn)}`)
     return {
@@ -336,15 +332,7 @@ const editFormOptions = computed(() => {
     slot: 'newContentType',
     enabled: !isRedirect,
     prop: 'contentType'
-  }, {
-    ...languageSelectOption.value,
-    change (val) {
-      if (currentDataItem.value) {
-        currentDataItem.value.responseFormat = val
-        currentDataItem.value.contentType = calcContentType(val, currentDataItem.value?.responseBody, currentDataItem.value.contentType)
-      }
-    }
-  }, {
+  }, responseFormatOption, {
     labelKey: isRedirect ? 'mock.label.redirectUrl' : 'mock.label.mockResponseBody',
     type: 'vue-monaco-editor',
     prop: 'responseBody',
@@ -353,14 +341,14 @@ const editFormOptions = computed(() => {
       tooltip: $i18nBundle('common.label.newWindowEdit'),
       tooltipIcon: 'EditPen',
       tooltipFunc: () => showCodeWindow(currentDataItem.value?.responseBody, {
-        language: currentDataItem.value?.responseFormat,
+        language: languageRef.value,
         forceLanguage: false,
         autoCheckLang: false,
         title: $i18nKey('common.label.commonEdit', isRedirect ? 'mock.label.redirectUrl' : 'mock.label.mockResponseBody'),
         readOnly: false,
         change: (value, lang) => {
           currentDataItem.value.responseBody = value
-          console.log('===============================value,lang', value, lang)
+          contentRef.value = value
           currentDataItem.value.responseFormat = lang
           languageRef.value = lang
         }
@@ -376,7 +364,7 @@ const editFormOptions = computed(() => {
         currentDataItem.value.responseBody = value
         contentRef.value = value
       },
-      language: currentDataItem.value?.responseFormat || (isRedirect ? 'text' : languageRef.value),
+      language: languageRef.value,
       height: '200px',
       theme: useGlobalConfigStore().monacoTheme,
       options: monacoEditorOptions
@@ -759,7 +747,7 @@ const pageAttrs = {
       :form-options="editFormOptions"
       :name="$t('mock.label.mockData')"
       label-width="160px"
-      :save-current-item="saveMockData"
+      :save-current-item="data => saveMockData({ ...data, responseFormat: languageRef })"
       inline-auto-mode
       :editable="writable"
       width="900px"
