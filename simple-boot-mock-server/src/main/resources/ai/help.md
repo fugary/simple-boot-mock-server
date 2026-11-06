@@ -64,6 +64,7 @@ request.body 是解析后的请求体对象，支持 JSON 和 XML；XML 请求�
 匹配表达式根据 request 内容返回匹配结果，支持表达式测试。需要区分相同路径的不同请求时，可结合 Method 和表达式检查参数、请求头或请求体。不要猜测未提供的匹配优先级。
 
 ## 响应与后置处理
+后置处理器中，编辑器会检查内置 response 的字段。脚本中用 `const response = await fetch(url)` 声明的局部变量可以调用 `response.blob()`。检测到 request 或 response 可能是局部变量或参数时，会跳过当前脚本中该对象的字段告警；XML+JS 按单个 `{{...}}` 表达式判断。
 response.statusCode 是状态码；response.headers 是响应头；response.body 是响应体对象；response.bodyStr 是响应体字符串。后置处理可修改状态码和响应头并返回新响应体，例如：
 ```javascript
 (function () {

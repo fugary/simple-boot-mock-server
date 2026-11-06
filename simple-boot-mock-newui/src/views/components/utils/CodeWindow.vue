@@ -278,7 +278,7 @@ watch([originalContent, modifiedContent], ([original, modified]) => {
         :height="codeHeight"
         :theme="useGlobalConfigStore().monacoTheme"
         :options="monacoEditorOptions"
-        @mount="editorRef=$event"
+        @mount="editorRef=$event; codeConfig.onEditorMount?.($event)"
         @change="codeRef=$event"
       />
     </el-container>

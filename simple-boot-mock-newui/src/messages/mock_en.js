@@ -378,6 +378,7 @@ mock.msg.previewStreamConfirm = 'The Content-Type header indicates that this res
 mock.msg.recoverFromHistory = 'Would you like to use this version of the data as the latest one?'
 mock.msg.responseCharsetTooltip = 'Default charset is UTF-8, none for responding without charset'
 mock.msg.matchPatternDescription = 'The matching rule refers to distinguishing different requests under the same URL and HTTP method based on a given JavaScript expression, so that different responses can be returned. It is used to match Mock requests with Mock data.'
+mock.msg.unknownScriptField = '{name}.{field} is undefined. Available {name} fields: {fields}.'
 mock.msg.postProcessorDescription = 'Post-processing refers to secondary processing performed after the request response data is obtained. It can use both request and response data, can modify the response status code or headers, and returns new response data, usually response.body.'
 mock.label.dictBasic = 'Basic'
 mock.label.dictDateTime = 'Date/Time'

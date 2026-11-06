@@ -1,12 +1,13 @@
 import * as monaco from 'monaco-editor'
 import BetterMockJsCode from 'better-mock/typings/index.d.ts?raw'
 import RequestHintDataCode from '@/vendors/mockjs/RequestHintData.d.ts?raw'
+import { $i18nBundle } from '@/messages'
 import DayjsCode from 'dayjs/index.d.ts?raw'
 import { configToHover, getMockJsPlaceholders, hoverMockRandom } from '@/vendors/mockjs/MockJsonHintData'
 import { initXmlWithJs, XML_WITH_JS_ID } from '@/vendors/mockjs/XmlWithJs'
 
 const REQUEST_DIAGNOSTICS_OWNER = 'simple-mock-request-diagnostics'
-const OBJECT_MEMBER_REGEXP = /\b(request|response)\s*\.\s*([A-Za-z_$][\w$]*)\b/g
+const OBJECT_MEMBER_REGEXP = /\b(request|response)\s*\.\s*([A-Za-z_$][\w$]*)/g
 const GLOBAL_OBJECT_FIELDS = {
   request: 'url method contentType headers parameters pathParameters cookies body headersStr parametersStr bodyStr path host protocol ip userAgent params query header type queryString'.split(' '),
   response: 'statusCode body bodyStr headers'.split(' ')
@@ -15,48 +16,59 @@ const GLOBAL_OBJECT_FIELD_SETS = Object.fromEntries(
   Object.entries(GLOBAL_OBJECT_FIELDS).map(([objectName, fields]) => [objectName, new Set(fields)])
 )
 
-const isInsideTemplateExpression = (content, offset) => {
-  const before = content.slice(0, offset)
-  const openIndex = before.lastIndexOf('{{')
-  const closeBeforeOpenIndex = before.lastIndexOf('}}')
-  if (openIndex === -1 || closeBeforeOpenIndex > openIndex) {
-    return false
-  }
-  const after = content.slice(offset)
-  const closeIndex = after.indexOf('}}')
-  const nextOpenIndex = after.indexOf('{{')
-  return closeIndex !== -1 && (nextOpenIndex === -1 || closeIndex < nextOpenIndex)
+const postProcessorEditors = new Set()
+
+export const bindPostProcessorDiagnostics = editor => {
+  if (postProcessorEditors.has(editor)) return
+  postProcessorEditors.add(editor)
+  let model = editor.getModel()
+  refreshRequestDiagnostics(model)
+  editor.onDidChangeModel(() => {
+    refreshRequestDiagnostics(model)
+    model = editor.getModel()
+    refreshRequestDiagnostics(model)
+  })
+  editor.onDidDispose(() => {
+    postProcessorEditors.delete(editor)
+    refreshRequestDiagnostics(model)
+  })
 }
 
 const refreshRequestDiagnostics = (model) => {
+  if (!model || model.isDisposed()) return
   const languageId = model.getLanguageId()
   if (!['javascript', XML_WITH_JS_ID].includes(languageId)) {
     monaco.editor.setModelMarkers(model, REQUEST_DIAGNOSTICS_OWNER, [])
     return
   }
   const content = model.getValue()
+  const hasResponse = [...postProcessorEditors].some(editor => editor.getModel() === model)
+  // Match the backend template boundaries, including opening braces inside JS strings.
+  const scripts = languageId === XML_WITH_JS_ID
+    ? [...content.matchAll(/\{\{([\s\S]+?)}}/g)].map(match => ({ code: match[1], offset: match.index + 2 }))
+    : [{ code: content, offset: 0 }]
   const markers = []
-  let match
-  OBJECT_MEMBER_REGEXP.lastIndex = 0
-  while ((match = OBJECT_MEMBER_REGEXP.exec(content)) !== null) {
-    if (languageId === XML_WITH_JS_ID && !isInsideTemplateExpression(content, match.index)) {
-      continue
+  for (const { code, offset } of scripts) {
+    // A bare identifier may be a declaration or parameter. Skip uncertain scopes.
+    const uncertainObjects = new Set(Object.keys(GLOBAL_OBJECT_FIELDS).filter(name =>
+      new RegExp(`\\b${name}\\b(?!\\s*\\.)`).test(code)))
+    for (const match of code.matchAll(OBJECT_MEMBER_REGEXP)) {
+      const [, objectName, field] = match
+      if ((objectName === 'response' && !hasResponse) || uncertainObjects.has(objectName) ||
+        GLOBAL_OBJECT_FIELD_SETS[objectName].has(field)) {
+        continue
+      }
+      const start = model.getPositionAt(offset + match.index)
+      const end = model.getPositionAt(offset + match.index + match[0].length)
+      markers.push({
+        severity: monaco.MarkerSeverity.Warning,
+        message: $i18nBundle('mock.msg.unknownScriptField', { name: objectName, field, fields: GLOBAL_OBJECT_FIELDS[objectName].join(', ') }),
+        startLineNumber: start.lineNumber,
+        startColumn: start.column,
+        endLineNumber: end.lineNumber,
+        endColumn: end.column
+      })
     }
-    const objectName = match[1]
-    const field = match[2]
-    if (GLOBAL_OBJECT_FIELD_SETS[objectName].has(field)) {
-      continue
-    }
-    const start = model.getPositionAt(match.index)
-    const end = model.getPositionAt(match.index + match[0].length)
-    markers.push({
-      severity: monaco.MarkerSeverity.Warning,
-      message: `${objectName}.${field} is undefined. Available ${objectName} fields: ${GLOBAL_OBJECT_FIELDS[objectName].join(', ')}.`,
-      startLineNumber: start.lineNumber,
-      startColumn: start.column,
-      endLineNumber: end.lineNumber,
-      endColumn: end.column
-    })
   }
   monaco.editor.setModelMarkers(model, REQUEST_DIAGNOSTICS_OWNER, markers)
 }

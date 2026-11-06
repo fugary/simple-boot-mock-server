@@ -1,4 +1,5 @@
 import { useMonacoEditorOptions } from '@/vendors/monaco-editor'
+import { bindPostProcessorDiagnostics } from '@/vendors/mockjs/MockJsHints'
 import { $i18nBundle, $i18nKey } from '@/messages'
 import { showCodeWindow, showMockTips } from '@/utils/DynamicUtils'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
@@ -33,6 +34,7 @@ export const useMockMonacoFieldOption = (modelRef, config) => {
     language: 'javascript',
     showTips: true
   }, config)
+  const onEditorMount = prop === 'postProcessor' ? bindPostProcessorDiagnostics : undefined
   const { contentRef, languageRef, monacoEditorOptions } = useMonacoEditorOptions({
     readOnly: false,
     minimap: { enabled: false }
@@ -46,6 +48,7 @@ export const useMockMonacoFieldOption = (modelRef, config) => {
       tooltipIcon: 'EditPen',
       tooltipFunc: () => showCodeWindow(modelRef.value?.[prop], {
         language: 'javascript',
+        onEditorMount,
         title: $i18nKey('common.label.commonEdit', labelKey),
         readOnly: false,
         change: (value, lang) => {
@@ -65,6 +68,7 @@ export const useMockMonacoFieldOption = (modelRef, config) => {
     }],
     attrs: {
       class: 'common-resize-vertical',
+      onMount: onEditorMount,
       defaultValue: modelRef.value?.[prop],
       value: modelRef.value?.[prop],
       'onUpdate:value': (value) => {
