@@ -4,6 +4,7 @@ import { MdPreview } from 'md-editor-v3'
 import DOMPurify from 'dompurify'
 import { $i18nBundle } from '@/messages'
 import { useGlobalConfigStore } from '@/stores/GlobalConfigStore'
+import { defineMonacoOptions } from '@/vendors/monaco-editor'
 import 'md-editor-v3/lib/preview.css'
 import { MD_AUTO_FOLD_THRESHOLD, initMarkdownTheme, handleMarkdownLink } from '@/vendors/markdown'
 
@@ -20,7 +21,7 @@ const modeOptions = computed(() => [
   { label: $i18nBundle('mock.label.aiAnswerSource'), value: 'source' }
 ])
 const sourceHeight = computed(() => `${Math.min(props.maxHeight > 0 ? props.maxHeight : 460, Math.max(160, props.content.split('\n').length * 20 + 12))}px`)
-const sourceOptions = { readOnly: true, domReadOnly: true, automaticLayout: true, minimap: { enabled: false }, scrollBeyondLastLine: false, wordWrap: 'on' }
+const sourceOptions = defineMonacoOptions({ domReadOnly: true, minimap: { enabled: false } })
 const sanitize = html => DOMPurify.sanitize(html)
 const isJson = computed(() => {
   if (props.loading) return false
