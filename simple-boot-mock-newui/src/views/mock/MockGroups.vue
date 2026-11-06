@@ -246,7 +246,7 @@ const projectHeaderTags = computed(() => {
 })
 
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
-const { projects, projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
+const { projects, projectOptions, projectSelectSlots, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, false)
 const writableProjectOptions = computed(() => {
   return filterProjectOptionsByAuthority(projects.value, projectOptions.value, checkProjectWritable)
 })
@@ -664,6 +664,7 @@ const searchFormOptions = computed(() => {
     type: 'select',
     enabled: projectOptions.value.length > 1 || searchParam.value?.projectId != null || !!searchParam.value?.projectCode,
     children: projectOptions.value,
+    slots: projectSelectSlots,
     attrs: {
       filterable: true,
       clearable: !props.publicFlag && !routeProjectLocked.value
@@ -803,6 +804,7 @@ const editFormOptions = computed(() => {
     type: 'select',
     enabled: canChangeCurrentGroupProject.value,
     children: writableProjectOptions.value,
+    slots: projectSelectSlots,
     attrs: {
       clearable: false
     },

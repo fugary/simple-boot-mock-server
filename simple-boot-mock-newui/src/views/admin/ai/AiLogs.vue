@@ -1,5 +1,5 @@
-<script setup>
-import { computed, h, onActivated, onMounted, ref, watch } from 'vue'
+<script setup lang="jsx">
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInitLoadOnce, useTableAndSearchForm } from '@/hooks/CommonHooks'
 import { AiLogApi, loadAiConfigOptions } from '@/api/mock/AiApi'
@@ -59,11 +59,16 @@ const changeConfig = async () => {
   await router.replace({ query: { ...route.query, configId: searchParam.value.configId } })
   await searchMethod(1)
 }
+const selectedConfig = computed(() => configs.value.find(config => config.id === searchParam.value.configId) || {
+  id: searchParam.value.configId,
+  configName: '#' + searchParam.value.configId,
+  deleted: true
+})
 const configOptions = computed(() => {
   const records = [...configs.value]
   const selectedId = searchParam.value.configId
   if (selectedId && !records.some(record => record.id === selectedId)) {
-    records.push({ id: selectedId, configName: '#' + selectedId, deleted: true })
+    records.push(selectedConfig.value)
   }
   return records.map(record => {
     const provider = AI_PROVIDERS.find(provider => provider.value === record.provider)
@@ -75,7 +80,7 @@ const configOptions = computed(() => {
       value: record.id,
       label: [provider ? $i18nBundle(provider.labelKey) : '', record.configName, record.baseUrl, ...markers].filter(Boolean).join(' · '),
       slots: {
-        default: () => h(AiConfigLabel, { config: record })
+        default: () => <AiConfigLabel config={record} />
       }
     }
   })
@@ -122,6 +127,7 @@ const options = computed(() => [
     type: 'select',
     children: configOptions.value,
     attrs: { filterable: true, clearable: true },
+    slots: { label: () => <AiConfigLabel config={selectedConfig.value} class="ai-config-label--selected" /> },
     change: changeConfig
   },
   { labelKey: 'mock.label.aiModel', prop: 'model' },
@@ -136,9 +142,9 @@ const options = computed(() => [
 ])
 const columns = computed(() => [
   { labelKey: 'common.label.username', prop: 'userName', width: '100px', attrs: { showOverflowTooltip: true } },
-  { labelKey: 'mock.label.aiConfigName', prop: 'configName', minWidth: '360px', formatter: row => h(AiConfigLabel, { config: recordConfig(row) }) },
+  { labelKey: 'mock.label.aiConfigName', prop: 'configName', minWidth: '360px', formatter: row => <AiConfigLabel config={recordConfig(row)} /> },
   { labelKey: 'mock.label.aiModel', prop: 'model', minWidth: '180px', attrs: { showOverflowTooltip: true } },
-  { labelKey: 'common.label.status', width: '80px', attrs: { align: 'center' }, formatter: row => h(ElTag, { type: row.status === 1 ? 'success' : 'danger' }, () => $i18nBundle(row.status === 1 ? 'mock.label.aiSuccess' : 'mock.label.aiFailed')) },
+  { labelKey: 'common.label.status', width: '80px', attrs: { align: 'center' }, formatter: row => <ElTag type={row.status === 1 ? 'success' : 'danger'}>{$i18nBundle(row.status === 1 ? 'mock.label.aiSuccess' : 'mock.label.aiFailed')}</ElTag> },
   { labelKey: 'mock.label.aiDuration', prop: 'durationMs', width: '100px', attrs: { align: 'center' } },
   { labelKey: 'mock.label.aiTotalTokens', prop: 'totalTokens', width: '110px', attrs: { align: 'center' } },
   { labelKey: 'mock.label.aiError', prop: 'errorMessage', minWidth: '140px', attrs: { showOverflowTooltip: true } },

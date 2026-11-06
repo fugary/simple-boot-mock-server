@@ -54,6 +54,9 @@ export const filterProjectOptionsByAuthority = (projects = [], options = [], aut
 export const useSelectProjects = (searchParam, autoSelect) => {
   const projects = ref([])
   const projectOptions = ref([])
+  const projectSelectSlots = {
+    label: ({ value, label }) => projectOptions.value.find(option => option.value === value)?.slots?.default?.() ?? label
+  }
   const loadSelectProjects = (data, config) => {
     return selectProjects(data, config).then(result => {
       projects.value = result || []
@@ -90,7 +93,6 @@ export const useSelectProjects = (searchParam, autoSelect) => {
         }
         return {
           label,
-          labelComp,
           value: project.projectCode,
           userName: project.userName,
           projectId: project.id,
@@ -127,6 +129,7 @@ export const useSelectProjects = (searchParam, autoSelect) => {
   return {
     projects,
     projectOptions,
+    projectSelectSlots,
     loadSelectProjects,
     loadProjectsAndRefreshOptions
   }

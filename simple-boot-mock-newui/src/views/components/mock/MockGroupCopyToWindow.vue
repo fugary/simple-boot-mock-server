@@ -31,7 +31,7 @@ const searchParam = ref({
   publicFlag: false
 })
 const { userOptions, loadUsersAndRefreshOptions } = useAllUsers(searchParam)
-const { projects, projectOptions, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, true)
+const { projects, projectOptions, projectSelectSlots, loadProjectsAndRefreshOptions } = useSelectProjects(searchParam, true)
 const currentGroups = ref([])
 const writableProjectOptions = computed(() => {
   return filterProjectOptionsByAuthority(projects.value, projectOptions.value, checkProjectWritable)
@@ -156,6 +156,7 @@ const options = computed(() => {
     type: 'select',
     required: true,
     children: writableProjectOptions.value,
+    slots: projectSelectSlots,
     attrs: {
       filterable: true,
       clearable: false
